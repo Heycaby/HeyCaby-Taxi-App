@@ -1,0 +1,28 @@
+---
+description: Rider app security, identity, and backend integration rules for the taxi platform.
+globs: |
+  apps/rider/lib/**/*.dart
+  packages/heycaby_api/lib/**/*.dart
+alwaysApply: false
+---
+
+# Rider Security and Backend Rules
+
+## Sensitive data handling
+
+- Do not log raw tokens, identity IDs, emails, or other secrets.
+- When logging identifiers for debugging, mask or shorten them so they cannot be abused.
+- Never print `.env` contents or Supabase keys.
+
+## Identity and secure storage
+
+- Use the secure storage wrappers defined in `heycaby_api` for all persisted rider identity and settings values.
+- Do not bypass these wrappers with direct `SharedPreferences` or platform storage in Rider code.
+- Keep the rider identity, token, and email in sync with the backend through the existing providers and notifiers.
+
+## Database and backend safety
+
+- Interact with Supabase using the shared Supabase client and typed helpers from `heycaby_api`.
+- When generating or modifying SQL/DDL (if ever needed), prefer `IF NOT EXISTS` and other non-destructive patterns.
+- Avoid any code path that could drop tables or irreversibly change schema from the mobile app.
+

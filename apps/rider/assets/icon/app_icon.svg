@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="256" fill="url(#bgGradient)"/>
+  
+  <!-- Gradient Definitions -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF6B6B"/>
+      <stop offset="50%" stop-color="#FFE66D"/>
+      <stop offset="100%" stop-color="#FF6B6B"/>
+    </linearGradient>
+    <linearGradient id="carGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F0F0F0"/>
+    </linearGradient>
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4ECDC4"/>
+      <stop offset="100%" stop-color="#45B7AA"/>
+    </linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000000" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+  
+  <!-- Location Pin Base -->
+  <path d="M512 200C410 200 328 282 328 384C328 520 512 720 512 720C512 720 696 520 696 384C696 282 614 200 512 200Z" fill="url(#accentGradient)" filter="url(#shadow)"/>
+  
+  <!-- Location Pin Inner Circle -->
+  <circle cx="512" cy="384" r="96" fill="#FFFFFF"/>
+  
+  <!-- Car Icon Inside Pin -->
+  <g transform="translate(448, 320) scale(0.5)">
+    <!-- Car Body -->
+    <path d="M128 192H384C400.569 192 414.627 182.928 421.941 169.473C429.255 156.018 428.044 139.25 418.745 126.902L386.745 82.902C378.941 72.098 366.196 66 352.529 66H159.471C145.804 66 133.059 72.098 125.255 82.902L93.255 126.902C83.956 139.25 82.745 156.018 90.059 169.473C97.373 182.928 111.431 192 128 192Z" fill="#2D3436"/>
+    <!-- Car Top -->
+    <path d="M160 66L192 26H320L352 66H160Z" fill="#2D3436"/>
+    <!-- Windows -->
+    <path d="M176 66L200 34H312L336 66H176Z" fill="#74B9FF"/>
+    <!-- Wheels -->
+    <circle cx="144" cy="192" r="32" fill="#2D3436"/>
+    <circle cx="368" cy="192" r="32" fill="#2D3436"/>
+    <circle cx="144" cy="192" r="16" fill="#B2BEC3"/>
+    <circle cx="368" cy="192" r="16" fill="#B2BEC3"/>
+    <!-- Headlights -->
+    <ellipse cx="120" cy="144" rx="12" ry="20" fill="#FFE66D"/>
+    <ellipse cx="392" cy="144" rx="12" ry="20" fill="#FFE66D"/>
+  </g>
+  
+  <!-- Pulse Rings (indicating live/active) -->
+  <circle cx="512" cy="720" r="40" fill="#4ECDC4" opacity="0.3">
+    <animate attributeName="r" values="40;80;40" dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.3;0;0.3" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="512" cy="720" r="60" fill="#4ECDC4" opacity="0.2">
+    <animate attributeName="r" values="60;100;60" dur="2s" begin="0.5s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.2;0;0.2" dur="2s" begin="0.5s" repeatCount="indefinite"/>
+  </circle>
+  
+  <!-- App Name Initials -->
+  <text x="512" y="880" text-anchor="middle" font-family="DM Sans, sans-serif" font-weight="800" font-size="120" fill="#FFFFFF" letter-spacing="-4">RYD</text>
+  <text x="512" y="960" text-anchor="middle" font-family="DM Sans, sans-serif" font-weight="600" font-size="48" fill="#FFFFFF" opacity="0.9" letter-spacing="8">TAP</text>
+</svg>

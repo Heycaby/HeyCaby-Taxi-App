@@ -1,0 +1,278 @@
+# Single pipeline for the monorepo — one `.gitlab-ci.yml`, not two GitLab projects.
+#
+# Safety model:
+# - main & tags: always run analyze, both test jobs, both APK builds (integration-safe).
+# - merge requests: Rider jobs only if apps/rider/** or shared paths changed; Driver jobs only
+#   if apps/driver/** or shared paths changed. Shared = packages/**, melos, root pubspec, CI, supabase.
+#
+# Secrets: set SUPABASE_URL, SUPABASE_ANON_KEY, MAPBOX_ACCESS_TOKEN as masked CI/CD variables.
+#
+# Runners (permanent model — you cannot build iOS on Linux):
+# - Android APK jobs: GitLab Linux runners (Docker image ubuntu:24.04 below) + Android SDK in before_script.
+# - iOS IPA jobs: require a macOS runner with Xcode (Apple silicon). Options:
+#   (1) GitLab.com hosted macOS runners (paid / Ultimate + compute — see GitLab “Hosted runners for macOS”).
+#   (2) Self-hosted: register gitlab-runner on a Mac (shell executor), tag it e.g. ios-macos, then change
+#       tags on build_ipa_* jobs to match your tag.
+# Set CI/CD variable ENABLE_MACOS_IOS_JOBS=true when macOS runners are available; otherwise IPA jobs
+# are skipped so pipelines do not sit “pending” forever. Configure code signing (certs / ASC API) for
+# production IPAs; see https://docs.flutter.dev/deployment/ios
+
+image: ubuntu:24.04
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_TAG
+    - when: never
+
+stages:
+  - analyze
+  - test
+  - build
+  - deploy
+
+variables:
+  SUPABASE_URL: ${SUPABASE_URL}
+  SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+  MAPBOX_ACCESS_TOKEN: ${MAPBOX_ACCESS_TOKEN}
+  FLUTTER_VERSION: "3.41.6"
+
+# -----------------------------------------------------------------------------
+# Default: Flutter toolchain + melos. Overridden on security_scan (Trivy image).
+# -----------------------------------------------------------------------------
+default:
+  cache:
+    key: flutter-android-${FLUTTER_VERSION}-sdk36
+    paths:
+      - /flutter
+      - /opt/android-sdk
+  before_script:
+    - apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq curl git unzip xz-utils zip openjdk-17-jdk
+    - export ANDROID_HOME=/opt/android-sdk
+    - export JAVA_HOME="$(dirname "$(dirname "$(readlink -f "$(command -v javac)")")")"
+    - export PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:/flutter/bin"
+    - |
+      if [ ! -x "/flutter/bin/flutter" ]; then
+        curl -fsSL "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${FLUTTER_VERSION}-stable.tar.xz" -o /tmp/flutter.tar.xz
+        tar xf /tmp/flutter.tar.xz -C / && rm -f /tmp/flutter.tar.xz
+      fi
+    - |
+      if [ ! -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
+        mkdir -p "$ANDROID_HOME/cmdline-tools"
+        curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdline-tools.zip
+        unzip -q -o /tmp/cmdline-tools.zip -d "$ANDROID_HOME/cmdline-tools"
+        rm -f /tmp/cmdline-tools.zip
+        mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
+      fi
+    - 'yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null 2>&1 || true'
+    - '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "platforms;android-34" "build-tools;35.0.0" "build-tools;28.0.3"'
+    - git config --global --add safe.directory /flutter
+    - git config --global --add safe.directory "${CI_PROJECT_DIR}"
+    - flutter config --no-analytics
+    - flutter doctor
+    - dart pub global activate melos 2.9.0
+    - export PATH="$PATH:$HOME/.pub-cache/bin"
+    - melos bootstrap
+    - cd apps/driver && flutter pub get && cd ../..
+    - cd apps/rider && flutter pub get && cd ../..
+
+.rules_analyze:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_TAG
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - apps/rider/**/*
+        - apps/driver/**/*
+        - packages/**/*
+        - melos.yaml
+        - pubspec.yaml
+        - .gitlab-ci.yml
+        - supabase/**/*
+
+.rules_rider:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_TAG
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - apps/rider/**/*
+        - packages/**/*
+        - melos.yaml
+        - pubspec.yaml
+        - .gitlab-ci.yml
+        - supabase/**/*
+
+.rules_driver:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_TAG
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - apps/driver/**/*
+        - packages/**/*
+        - melos.yaml
+        - pubspec.yaml
+        - .gitlab-ci.yml
+        - supabase/**/*
+
+analyze:
+  stage: analyze
+  extends: .rules_analyze
+  script:
+    - export PATH="$PATH:$HOME/.pub-cache/bin"
+    - flutter analyze --no-fatal-infos --no-fatal-warnings apps/rider/lib apps/driver/lib packages/
+  allow_failure: true
+
+test_driver:
+  stage: test
+  extends: .rules_driver
+  script:
+    - cd apps/driver && flutter test test/ --no-pub || true
+  allow_failure: true
+
+test_rider:
+  stage: test
+  extends: .rules_rider
+  script:
+    - cd apps/rider && flutter test test/ --no-pub || true
+  allow_failure: true
+
+build_apk_driver:
+  stage: build
+  extends: .rules_driver
+  script:
+    - cd apps/driver
+    - flutter build apk --debug --dart-define=SUPABASE_URL=${SUPABASE_URL} --dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY} --dart-define=MAPBOX_ACCESS_TOKEN=${MAPBOX_ACCESS_TOKEN}
+  artifacts:
+    paths:
+      - apps/driver/build/app/outputs/flutter-apk/*.apk
+    expire_in: 1 week
+
+build_apk_rider:
+  stage: build
+  extends: .rules_rider
+  script:
+    - cd apps/rider
+    - flutter build apk --debug --dart-define=SUPABASE_URL=${SUPABASE_URL} --dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY} --dart-define=MAPBOX_ACCESS_TOKEN=${MAPBOX_ACCESS_TOKEN}
+  artifacts:
+    paths:
+      - apps/rider/build/app/outputs/flutter-apk/*.apk
+    expire_in: 1 week
+
+# macOS + Xcode only. Does not use default: image/before_script (those are Linux/Docker).
+# Hosted runner image list: https://docs.gitlab.com/ci/runners/hosted_runners/macos/
+.macos_ipa_setup: &macos_ipa_setup
+  tags:
+    - macos
+    - flutter
+  interruptible: true
+  cache:
+    key: flutter-macos-arm64-${FLUTTER_VERSION}
+    paths:
+      - flutter-sdk/
+      - .pub-cache/
+  before_script:
+    - flutter config --no-analytics
+    - flutter doctor
+    - dart pub global activate melos 2.9.0
+    - export PATH="$PATH:$HOME/.pub-cache/bin"
+    - melos bootstrap
+    - cd apps/driver && flutter pub get && cd ../..
+    - cd apps/rider && flutter pub get && cd ../..
+
+.rules_ipa_rider:
+  rules:
+    - if: $ENABLE_MACOS_IOS_JOBS != "true"
+      when: never
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_TAG
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - apps/rider/**/*
+        - packages/**/*
+        - melos.yaml
+        - pubspec.yaml
+        - .gitlab-ci.yml
+        - supabase/**/*
+
+.rules_ipa_driver:
+  rules:
+    - if: $ENABLE_MACOS_IOS_JOBS != "true"
+      when: never
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_TAG
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - apps/driver/**/*
+        - packages/**/*
+        - melos.yaml
+        - pubspec.yaml
+        - .gitlab-ci.yml
+        - supabase/**/*
+
+build_ipa_rider:
+  stage: build
+  extends: .rules_ipa_rider
+  <<: *macos_ipa_setup
+  script:
+    - cd apps/rider
+    - flutter build ipa --dart-define=SUPABASE_URL=${SUPABASE_URL} --dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY} --dart-define=MAPBOX_ACCESS_TOKEN=${MAPBOX_ACCESS_TOKEN}
+  artifacts:
+    paths:
+      - apps/rider/build/ios/ipa/*.ipa
+    expire_in: 1 week
+  allow_failure: true
+
+build_ipa_driver:
+  stage: build
+  extends: .rules_ipa_driver
+  <<: *macos_ipa_setup
+  script:
+    - cd apps/driver
+    - flutter build ipa --dart-define=SUPABASE_URL=${SUPABASE_URL} --dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY} --dart-define=MAPBOX_ACCESS_TOKEN=${MAPBOX_ACCESS_TOKEN}
+  artifacts:
+    paths:
+      - apps/driver/build/ios/ipa/*.ipa
+    expire_in: 1 week
+  allow_failure: true
+
+deploy_testflight_rider:
+  stage: deploy
+  extends: .rules_ipa_rider
+  <<: *macos_ipa_setup
+  script:
+    - cd apps/rider
+    - flutter build ipa --dart-define=SUPABASE_URL=${SUPABASE_URL} --dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY} --dart-define=MAPBOX_ACCESS_TOKEN=${MAPBOX_ACCESS_TOKEN} --export-options-plist ios/ExportOptions.plist
+    - xcrun altool --upload-app --type ios --file build/ios/ipa/*.ipa --username "${APPLE_ID}" --password "${APPLE_APP_PASSWORD}" --asc-provider "${APPLE_TEAM_ID}"
+  dependencies:
+    - build_ipa_rider
+  when: manual
+  allow_failure: true
+
+deploy_testflight_driver:
+  stage: deploy
+  extends: .rules_ipa_driver
+  <<: *macos_ipa_setup
+  script:
+    - cd apps/driver
+    - flutter build ipa --dart-define=SUPABASE_URL=${SUPABASE_URL} --dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY} --dart-define=MAPBOX_ACCESS_TOKEN=${MAPBOX_ACCESS_TOKEN} --export-options-plist ios/ExportOptions.plist
+    - xcrun altool --upload-app --type ios --file build/ios/ipa/*.ipa --username "${APPLE_ID}" --password "${APPLE_APP_PASSWORD}" --asc-provider "${APPLE_TEAM_ID}"
+  dependencies:
+    - build_ipa_driver
+  when: manual
+  allow_failure: true
+
+security_scan:
+  stage: analyze
+  image: aquasec/trivy:latest
+  before_script: []
+  cache: []
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_TAG
+  script:
+    - trivy fs --security-checks vuln,config . || true
+  allow_failure: true

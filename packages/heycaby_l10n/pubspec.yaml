@@ -1,0 +1,13 @@
+name: heycaby_l10n
+description: HeyCaby shared localizations — ARB files and generated AppLocalizations
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+  flutter: '>=3.19.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any

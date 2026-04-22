@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Algemene Voorwaarden Chauffeurs — HeyCaby</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet"/>
+<style>
+/* HeyCaby driver app tokens: kTaxiShade2 bg + kTaxiShade6 gold accent #E6A800 */
+:root{--bg:#FAF8F4;--card:#FFFFFF;--ink:#111111;--muted:#6B7280;--border:#E8E8E6;--accent:#E6A800;--accent-l:#FFF6D6;--green:#1C2B1A;--success:#0D9488;}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;font-size:15px;}
+.topbar{position:sticky;top:0;z-index:100;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;box-shadow:0 1px 0 rgba(0,0,0,.03);}
+.topbar-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:19px;color:var(--accent);letter-spacing:-0.5px;text-decoration:none;}
+.topbar-links{display:flex;gap:16px;align-items:center;}
+.topbar-links a{font-size:13px;font-weight:600;color:var(--ink);opacity:.55;text-decoration:none;transition:opacity .2s,color .2s;}
+.topbar-links a:hover{opacity:1;color:var(--accent);}
+.topbar-links .btn{background:var(--accent);color:var(--ink);padding:8px 16px;border-radius:10px;font-weight:700;font-size:12px;opacity:1;}
+.hero{background:linear-gradient(165deg,var(--card) 0%,var(--bg) 55%);padding:48px 24px 40px;border-bottom:1px solid var(--border);}
+.hero-inner{max-width:760px;margin:0 auto;}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--accent-l);border:1px solid rgba(230,168,0,.35);color:var(--green);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:6px 14px;border-radius:999px;margin-bottom:16px;}
+.hero h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(26px,5vw,40px);color:var(--ink);line-height:1.15;margin-bottom:12px;letter-spacing:-0.5px;}
+.hero h1 span{color:var(--accent);}
+.hero-sub{font-size:14px;color:var(--muted);max-width:520px;}
+.hero-meta{margin-top:24px;display:flex;gap:24px;flex-wrap:wrap;}
+.hero-meta-item{display:flex;flex-direction:column;gap:2px;}
+.hero-meta-item .lbl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+.hero-meta-item .val{font-size:13px;color:var(--ink);font-weight:600;}
+.layout{max-width:960px;margin:0 auto;padding:36px 24px 88px;display:grid;grid-template-columns:210px 1fr;gap:36px;align-items:start;}
+@media(max-width:720px){.layout{grid-template-columns:1fr;}.sidebar{display:none;}}
+.sidebar{position:sticky;top:72px;}
+.toc-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.toc-card h3{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.toc-card ol{list-style:none;counter-reset:toc;}
+.toc-card ol li{counter-increment:toc;margin-bottom:2px;}
+.toc-card ol li a{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--muted);text-decoration:none;line-height:1.4;padding:4px 6px;border-radius:6px;transition:all .15s;}
+.toc-card ol li a::before{content:counter(toc);font-size:10px;font-weight:700;color:var(--accent);min-width:14px;margin-top:1px;}
+.toc-card ol li a:hover{background:var(--accent-l);color:var(--ink);}
+.notice{background:var(--accent-l);border:1px solid rgba(230,168,0,.45);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:14px 18px;font-size:13px;color:var(--green);margin-bottom:28px;line-height:1.6;}
+article{display:flex;flex-direction:column;gap:24px;}
+.art{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.art-head{padding:16px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:11px;}
+.art-num{width:28px;height:28px;border-radius:8px;background:var(--accent);font-family:'Syne',sans-serif;font-size:11px;font-weight:800;color:var(--ink);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.art-head h2{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--ink);}
+.art-body{padding:18px 22px;}
+.art-body p{font-size:14px;margin-bottom:10px;color:#2d2d2d;line-height:1.7;}
+.art-body p:last-child{margin-bottom:0;}
+.art-body ul{margin:8px 0 12px;padding-left:0;list-style:none;}
+.art-body ul li{font-size:14px;color:#2d2d2d;padding:5px 0 5px 18px;position:relative;border-bottom:1px solid #f0ede6;line-height:1.6;}
+.art-body ul li:last-child{border-bottom:none;}
+.art-body ul li::before{content:'';position:absolute;left:0;top:12px;width:5px;height:5px;border-radius:50%;background:var(--accent);}
+.art-body strong{font-weight:600;color:var(--ink);}
+.art-body a{color:var(--accent);text-decoration:underline;font-weight:600;}
+.veriff-box{background:var(--accent-l);border:1px solid rgba(230,168,0,.4);border-radius:12px;padding:16px 18px;margin:12px 0;}
+.veriff-box-head{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.v-badge{background:var(--green);color:var(--card);font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.04em;}
+.veriff-box p{font-size:13px;color:#2d2d2d;margin-bottom:5px;}
+.sub-h{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--ink);margin:14px 0 5px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+footer{background:var(--card);border-top:1px solid var(--border);padding:32px 24px;text-align:center;}
+footer p{font-size:12px;color:var(--muted);margin:4px 0;}
+footer a{color:var(--accent);text-decoration:none;font-weight:600;}
+.footer-links{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin-bottom:10px;}
+.footer-links a{font-size:12px;color:var(--muted);}
+.footer-links a:hover{color:var(--accent);}
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <a class="topbar-logo" href="https://www.heycaby.nl">HeyCaby</a>
+  <div class="topbar-links">
+    <a href="https://www.heycaby.nl/privacy">Privacy</a>
+    <a href="https://www.heycaby.nl/support" class="btn">Support</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">Chauffeurs</div>
+    <h1>Algemene <span>Voorwaarden</span><br>voor Chauffeurs</h1>
+    <p class="hero-sub">Geldig voor alle zelfstandige chauffeurs op het HeyCaby platform in Nederland.</p>
+    <div class="hero-meta">
+      <div class="hero-meta-item"><span class="lbl">Versie</span><span class="val">1.0</span></div>
+      <div class="hero-meta-item"><span class="lbl">Ingangsdatum</span><span class="val">1 april 2026</span></div>
+      <div class="hero-meta-item"><span class="lbl">Uitgegeven door</span><span class="val">HeyCaby B.V., Nederland</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="toc-card">
+      <h3>Inhoud</h3>
+      <ol>
+        <li><a href="#a1">Definities</a></li>
+        <li><a href="#a2">Toegang tot het platform</a></li>
+        <li><a href="#a3">Identiteitsverificatie (Veriff)</a></li>
+        <li><a href="#a4">Verplichte documenten</a></li>
+        <li><a href="#a5">Zelfstandigheid chauffeur</a></li>
+        <li><a href="#a6">Gebruik van de app</a></li>
+        <li><a href="#a7">Tarieven en betalingen</a></li>
+        <li><a href="#a8">Aansprakelijkheid</a></li>
+        <li><a href="#a9">Persoonsgegevens</a></li>
+        <li><a href="#a10">Opschorting en beëindiging</a></li>
+        <li><a href="#a11">Wijzigingen</a></li>
+        <li><a href="#a12">Toepasselijk recht</a></li>
+        <li><a href="#a13">Contact</a></li>
+      </ol>
+    </div>
+  </aside>
+
+  <main>
+    <div class="notice">Lees deze voorwaarden vóór registratie zorgvuldig. Door u te registreren als chauffeur op het HeyCaby platform aanvaardt u deze voorwaarden volledig.</div>
+    <article>
+
+      <div class="art" id="a1">
+        <div class="art-head"><div class="art-num">1</div><h2>Definities</h2></div>
+        <div class="art-body">
+          <ul>
+            <li><strong>HeyCaby:</strong> HeyCaby B.V., gevestigd in Nederland, exploitant van het digitale platform.</li>
+            <li><strong>Platform:</strong> De HeyCaby-app en webdiensten waarmee chauffeurs en passagiers worden gekoppeld.</li>
+            <li><strong>Chauffeur:</strong> De zelfstandige ondernemer (ZZP/BV) die via het Platform ritten aanbiedt.</li>
+            <li><strong>Passagier:</strong> De gebruiker die via het Platform een rit boekt.</li>
+            <li><strong>Rit:</strong> De vervoerdienst die de Chauffeur levert op basis van een via het Platform gesloten overeenkomst.</li>
+            <li><strong>Veriff:</strong> Veriff OÜ, de door HeyCaby ingeschakelde dienstverlener voor identiteitsverificatie.</li>
+            <li><strong>Chauffeurspas:</strong> De taxipas als bedoeld in Wpv 2000 art. 4.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="art" id="a2">
+        <div class="art-head"><div class="art-num">2</div><h2>Toegang tot het platform</h2></div>
+        <div class="art-body">
+          <p>Registratie als Chauffeur is uitsluitend toegestaan indien u:</p>
+          <ul>
+            <li>Minimaal 21 jaar oud bent;</li>
+            <li>Beschikt over een geldige chauffeurspas (Wpv 2000 art. 4);</li>
+            <li>Als zelfstandig ondernemer ingeschreven staat bij de KvK;</li>
+            <li>Beschikt over een als taxi geregistreerd voertuig bij de RDW;</li>
+            <li>De identiteitsverificatie via Veriff met goed gevolg heeft doorlopen;</li>
+            <li>Alle vereiste documenten (artikel 4) zijn ingediend en goedgekeurd.</li>
+          </ul>
+          <p>HeyCaby behoudt zich het recht voor een registratieaanvraag zonder opgave van redenen te weigeren.</p>
+        </div>
+      </div>
+
+      <div class="art" id="a3">
+        <div class="art-head"><div class="art-num">3</div><h2>Identiteitsverificatie via Veriff</h2></div>
+        <div class="art-body">
+          <div class="veriff-box">
+            <div class="veriff-box-head"><span class="v-badge">VERIFF</span> Identiteitsverificatie aangedreven door Veriff</div>
+            <p>HeyCaby maakt gebruik van Veriff (Veriff OÜ, Estland) voor de verificatie van uw identiteit en rijbewijs als onderdeel van de chauffeursonboarding.</p>
+            <p>Privacybeleid: <a href="https://www.veriff.com/privacy-notice" target="_blank">veriff.com/privacy-notice</a> &nbsp;·&nbsp; Voorwaarden: <a href="https://www.veriff.com/terms-of-service" target="_blank">veriff.com/terms-of-service</a></p>
+          </div>
+
+          <div class="sub-h">3.1 Doel</div>
+          <p>De verificatie dient ter naleving van de Wpv 2000, de Wwft en ter waarborging van de passagiersveiligheid op het Platform.</p>
+
+          <div class="sub-h">3.2 Procedure</div>
+          <p>De Chauffeur doorloopt via de Veriff-omgeving de volgende stappen:</p>
+          <ul>
+            <li>Uploaden van een geldig rijbewijs (voor- en achterkant);</li>
+            <li>Selfie of biometrische liveness-check;</li>
+            <li>Eventueel aanvullende documenten op verzoek van Veriff.</li>
+          </ul>
+
+          <div class="sub-h">3.3 Biometrische gegevens</div>
+          <p>Veriff kan bijzondere persoonsgegevens verwerken, waaronder biometrische gegevens, op basis van uw uitdrukkelijke toestemming (AVG art. 9 lid 2 sub a). U kunt uw toestemming te allen tijde intrekken via <a href="mailto:privacy@heycaby.nl">privacy@heycaby.nl</a>. Intrekking laat eerdere rechtmatige verwerking onverlet.</p>
+
+          <div class="sub-h">3.4 Beslissing en gegevensuitwisseling</div>
+          <p>Veriff levert een verificatiebeslissing (goedgekeurd, afgewezen of aanvullende informatie vereist) aan HeyCaby. HeyCaby ontvangt uitsluitend de geverifieerde basisgegevens (naam, geboortedatum, rijbewijsnummer, verloopdatum) en de beslissing. Ruwe biometrische data wordt niet door HeyCaby opgeslagen. HeyCaby is niet aansprakelijk voor vertragingen of fouten veroorzaakt door de Veriff-procedure.</p>
+
+          <div class="sub-h">3.5 Akkoord met Veriff voorwaarden</div>
+          <p>Door de verificatieprocedure te starten gaat u tevens akkoord met de gebruiksvoorwaarden van Veriff, beschikbaar op <a href="https://www.veriff.com/terms-of-service" target="_blank">veriff.com/terms-of-service</a>.</p>
+        </div>
+      </div>
+
+      <div class="art" id="a4">
+        <div class="art-head"><div class="art-num">4</div><h2>Verplichte documenten en compliance</h2></div>
+        <div class="art-body">
+          <p>De Chauffeur is verplicht de volgende documenten in te dienen en geldig te houden:</p>
+          <ul>
+            <li><strong>Chauffeurspas</strong> — geldig conform Wpv 2000 art. 4;</li>
+            <li><strong>Rijbewijs</strong> — geverifieerd via Veriff (zie artikel 3);</li>
+            <li><strong>Taxiverzekering</strong> — commerciële dekking voor betaald passagiersvervoer;</li>
+            <li><strong>KvK-inschrijving</strong> — als zelfstandig ondernemer met relevante SBI-code;</li>
+            <li><strong>Kentekenbewijs</strong> — voertuig geregistreerd als taxi bij de RDW.</li>
+          </ul>
+          <p>Het indienen van valse of verlopen documenten leidt tot onmiddellijke verwijdering van het Platform en kan worden gemeld bij de ILT en andere bevoegde autoriteiten. De Chauffeur is zelf verantwoordelijk voor tijdige verlenging.</p>
+        </div>
+      </div>
+
+      <div class="art" id="a5">
+        <div class="art-head"><div class="art-num">5</div><h2>Zelfstandigheid van de chauffeur</h2></div>
+        <div class="art-body">
+          <p>De Chauffeur treedt te allen tijde op als zelfstandig ondernemer. Er bestaat geen arbeidsovereenkomst, uitzendrelatie of gezagsverhouding tussen HeyCaby en de Chauffeur.</p>
+          <p>HeyCaby is geen vervoersbedrijf in de zin van de Wpv 2000. De vervoersovereenkomst komt uitsluitend tot stand tussen de Chauffeur en de Passagier. HeyCaby faciliteert slechts de technologische koppeling.</p>
+          <ul>
+            <li>De Chauffeur bepaalt zelf zijn werktijden en beschikbaarheid;</li>
+            <li>De Chauffeur stelt zelf zijn tarieven vast;</li>
+            <li>De Chauffeur is zelf verantwoordelijk voor BTW-aangifte en belastingverplichtingen;</li>
+            <li>De Chauffeur draagt zijn eigen ondernemersrisico.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="art" id="a6">
+        <div class="art-head"><div class="art-num">6</div><h2>Gebruik van de applicatie</h2></div>
+        <div class="art-body">
+          <p>Het is de Chauffeur uitdrukkelijk verboden om:</p>
+          <ul>
+            <li>Valse of misleidende informatie te verstrekken aan Passagiers of HeyCaby;</li>
+            <li>Passagiers te intimideren, discrimineren of onbehoorlijk te behandelen;</li>
+            <li>Het Platform te misbruiken voor andere doeleinden dan taxiritten;</li>
+            <li>Technische systemen van HeyCaby te manipuleren of te omzeilen;</li>
+            <li>Persoonsgegevens van Passagiers te verwerken buiten de uitvoering van de Rit.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="art" id="a7">
+        <div class="art-head"><div class="art-num">7</div><h2>Tarieven en betalingen</h2></div>
+        <div class="art-body">
+          <p>De Chauffeur stelt zelf zijn tarieven vast. HeyCaby is geen partij in de betalingsrelatie tussen Chauffeur en Passagier. HeyCaby hanteert een abonnementsmodel zonder commissie per rit. Actuele kosten staan op <a href="https://www.heycaby.nl/tarieven">heycaby.nl/tarieven</a>. De Chauffeur is zelf verantwoordelijk voor het innen van de ritprijs.</p>
+        </div>
+      </div>
+
+      <div class="art" id="a8">
+        <div class="art-head"><div class="art-num">8</div><h2>Aansprakelijkheid</h2></div>
+        <div class="art-body">
+          <p>De Chauffeur is volledig en persoonlijk aansprakelijk voor schade aan Passagiers, derden of eigendommen tijdens de uitvoering van een Rit. HeyCaby is nimmer aansprakelijk voor schade voortvloeiend uit de uitvoering van ritten. De totale aansprakelijkheid van HeyCaby jegens de Chauffeur is beperkt tot het abonnementsgeld over de voorafgaande drie (3) kalendermaanden, tenzij sprake is van opzet of bewuste roekeloosheid (BW 6:74 jo. 6:98).</p>
+        </div>
+      </div>
+
+      <div class="art" id="a9">
+        <div class="art-head"><div class="art-num">9</div><h2>Persoonsgegevens en privacy</h2></div>
+        <div class="art-body">
+          <p>HeyCaby verwerkt persoonsgegevens conform de AVG. De volledige privacyverklaring — inclusief rechtsgronden, bewaartermijnen en uw rechten als betrokkene — is beschikbaar op <a href="https://www.heycaby.nl/privacy">heycaby.nl/privacy</a>. Locatiegegevens worden uitsluitend verwerkt tijdens actieve dienst.</p>
+        </div>
+      </div>
+
+      <div class="art" id="a10">
+        <div class="art-head"><div class="art-num">10</div><h2>Opschorting en beëindiging</h2></div>
+        <div class="art-body">
+          <p>HeyCaby kan toegang tot het Platform onmiddellijk opschorten of beëindigen indien de Chauffeur deze voorwaarden overtreedt, verplichte documenten zijn verlopen, de Veriff-verificatie negatief is uitgevallen, of de beoordeling onder de minimumdrempel daalt. De Chauffeur kan de samenwerking te allen tijde beëindigen via de applicatie of via <a href="mailto:support@heycaby.nl">support@heycaby.nl</a>. Reeds betaalde abonnementskosten worden niet gerestitueerd.</p>
+        </div>
+      </div>
+
+      <div class="art" id="a11">
+        <div class="art-head"><div class="art-num">11</div><h2>Wijzigingen</h2></div>
+        <div class="art-body">
+          <p>HeyCaby behoudt zich het recht voor deze voorwaarden te wijzigen. Materiële wijzigingen worden minimaal 14 dagen vooraf aangekondigd via de app en per e-mail. Voortgezet gebruik na de ingangsdatum geldt als aanvaarding.</p>
+        </div>
+      </div>
+
+      <div class="art" id="a12">
+        <div class="art-head"><div class="art-num">12</div><h2>Toepasselijk recht en geschillen</h2></div>
+        <div class="art-body">
+          <p>Op deze voorwaarden is uitsluitend Nederlands recht van toepassing. Geschillen worden bij voorkeur in der minne geschikt. Is dat niet mogelijk, dan is de bevoegde rechter in het arrondissement Rotterdam exclusief bevoegd, tenzij dwingend recht een andere rechter voorschrijft.</p>
+        </div>
+      </div>
+
+      <div class="art" id="a13">
+        <div class="art-head"><div class="art-num">13</div><h2>Contact</h2></div>
+        <div class="art-body">
+          <ul>
+            <li><strong>Juridische vragen:</strong> <a href="mailto:legal@heycaby.nl">legal@heycaby.nl</a></li>
+            <li><strong>Support:</strong> <a href="https://www.heycaby.nl/support">heycaby.nl/support</a></li>
+            <li><strong>Privacy:</strong> <a href="mailto:privacy@heycaby.nl">privacy@heycaby.nl</a></li>
+            <li><strong>Adres:</strong> HeyCaby B.V., Nederland — KvK nr. volgt na inschrijving</li>
+          </ul>
+          <p style="margin-top:14px;font-size:12px;color:#7a8878;font-style:italic;">Dit document vormt een juridisch startpunt. Laat het beoordelen door een Nederlandse advocaat vóór definitieve publicatie — met name art. 8 (aansprakelijkheid), art. 5 (ZZP-kwalificatie) en art. 9 (AVG-naleving).</p>
+        </div>
+      </div>
+
+    </article>
+  </main>
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="https://www.heycaby.nl">Home</a>
+    <a href="https://www.heycaby.nl/privacy">Privacyverklaring</a>
+    <a href="https://www.heycaby.nl/support">Support</a>
+    <a href="mailto:legal@heycaby.nl">legal@heycaby.nl</a>
+  </div>
+  <p>&copy; 2026 HeyCaby B.V. · Alle rechten voorbehouden</p>
+</footer>
+</body>
+</html>

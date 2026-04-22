@@ -1,0 +1,154 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
+
+function firstName(full: string | null): string | null {
+  if (!full) return null;
+  const t = full.trim().split(/\s+/)[0];
+  return t || null;
+}
+
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers":
+          "authorization, x-client-info, apikey, content-type",
+      },
+    });
+  }
+  if (req.method !== "GET") {
+    return new Response(JSON.stringify({ error: "method_not_allowed" }), {
+      status: 405,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const url = new URL(req.url);
+  const token = url.searchParams.get("token")?.trim();
+  if (!token) {
+    return new Response(JSON.stringify({ error: "missing_token" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, serviceKey);
+
+  const { data: row, error: e1 } = await supabase
+    .from("ride_shares")
+    .select("ride_request_id, is_active, driver_snapshot")
+    .eq("share_token", token)
+    .maybeSingle();
+
+  if (e1 || !row || !row.is_active) {
+    return new Response(JSON.stringify({ error: "not_found" }), {
+      status: 404,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  }
+
+  const rideId = row.ride_request_id as string;
+
+  const { data: ride, error: e2 } = await supabase
+    .from("ride_requests")
+    .select(
+      "id, status, pickup_address, destination_address, driver_id, scheduled_pickup_at",
+    )
+    .eq("id", rideId)
+    .maybeSingle();
+
+  if (e2 || !ride) {
+    return new Response(JSON.stringify({ error: "not_found" }), {
+      status: 404,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  }
+
+  let driver: Record<string, unknown> | null = null;
+  const driverId = ride.driver_id as string | null;
+  if (driverId) {
+    const { data: d } = await supabase
+      .from("drivers")
+      .select("full_name, vehicle_model, vehicle_make, vehicle_plate")
+      .eq("id", driverId)
+      .maybeSingle();
+    driver = d;
+
+    const { data: ts } = await supabase
+      .from("driver_trust_scores")
+      .select("score")
+      .eq("driver_id", driverId)
+      .maybeSingle();
+
+    if (driver && ts?.score != null) {
+      driver = { ...driver, trust_score: ts.score };
+    }
+  }
+
+  let lat: number | null = null;
+  let lng: number | null = null;
+  let heading: number | null = null;
+  let locUpdated: string | null = null;
+  if (driverId) {
+    const { data: loc } = await supabase
+      .from("driver_locations")
+      .select("latitude, longitude, heading, updated_at")
+      .eq("driver_id", driverId)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (loc) {
+      lat = loc.latitude as number;
+      lng = loc.longitude as number;
+      heading = loc.heading as number | null;
+      locUpdated = loc.updated_at as string;
+    }
+  }
+
+  const snap = row.driver_snapshot as Record<string, unknown> | null;
+
+  const body = {
+    ride_id: ride.id,
+    status: ride.status,
+    pickup_address: ride.pickup_address,
+    destination_address: ride.destination_address,
+    scheduled_pickup_at: ride.scheduled_pickup_at,
+    driver: driver
+      ? {
+        first_name: firstName(driver.full_name as string),
+        vehicle: [driver.vehicle_make, driver.vehicle_model].filter(Boolean)
+          .join(" ") || (driver.vehicle_model as string) || null,
+        plate: driver.vehicle_plate,
+        rating: driver.trust_score ?? null,
+      }
+      : snap
+      ? {
+        first_name: (snap.first_name ?? snap.name) as string | null,
+        vehicle: snap.vehicle as string | null,
+        plate: snap.plate as string | null,
+        rating: snap.rating as number | null,
+      }
+      : null,
+    driver_location: lat != null && lng != null
+      ? { lat, lng, heading, updated_at: locUpdated }
+      : null,
+  };
+
+  return new Response(JSON.stringify(body), {
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Cache-Control": "no-store",
+    },
+  });
+});

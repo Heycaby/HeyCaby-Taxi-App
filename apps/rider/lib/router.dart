@@ -1,0 +1,304 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show Scaffold, Widget, Page, FadeTransition, SlideTransition;
+import 'package:flutter/animation.dart' show Curves, Tween, Offset, CurvedAnimation;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart' show GoRouter, GoRouterState, CustomTransitionPage, GoRoute, ShellRoute;
+
+import 'providers/booking_provider.dart';
+import 'services/booking_flow_navigation.dart';
+import 'screens/splash_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/rides_screen.dart';
+import 'screens/account_screen.dart';
+import 'screens/rider_tell_friend_screen.dart';
+import 'screens/search_screen.dart';
+import 'screens/marketplace_screen.dart';
+import 'screens/airport_booking_screen.dart';
+import 'screens/favorites_screen.dart';
+import 'screens/vehicle_category_screen.dart';
+import 'screens/payment_screen.dart';
+import 'screens/trip_summary_screen.dart';
+import 'screens/searching_screen.dart';
+import 'models/ride_matching_variant.dart';
+import 'screens/active_ride_screen.dart';
+import 'screens/chat_screen.dart';
+import 'screens/rating_screen.dart';
+import 'screens/report_screen.dart';
+import 'providers/near_term_ride_request_provider.dart';
+import 'screens/ride_detail_screen.dart';
+import 'screens/upcoming_ride_request_detail_screen.dart';
+import 'screens/location_required_screen.dart';
+import 'screens/faq_screen.dart';
+import 'screens/terms_screen.dart';
+import 'screens/privacy_screen.dart';
+import 'screens/rider_support_screen.dart';
+import 'screens/rider_support_threads_screen.dart';
+import 'screens/rider_support_new_ticket_screen.dart';
+import 'screens/rider_support_chat_screen.dart';
+import 'screens/saved_addresses_screen.dart';
+import 'utils/validation_utils.dart';
+import 'widgets/rider_shell.dart';
+import 'providers/ride_history_provider.dart';
+
+/// Smooth slide-up-and-fade transition used for all full-screen pushes.
+/// 280 ms forward / 220 ms reverse keeps it snappy while feeling premium.
+Page<void> _page(GoRouterState state, Widget child) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 200),
+    reverseTransitionDuration: const Duration(milliseconds: 180),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final fade = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+      );
+      final slide = Tween<Offset>(
+        begin: const Offset(0, 0.04),
+        end: Offset.zero,
+      ).animate(fade);
+      return FadeTransition(
+        opacity: fade,
+        child: SlideTransition(position: slide, child: child),
+      );
+    },
+  );
+}
+
+class _BookingRouteRefresh extends ChangeNotifier {
+  void tick() => notifyListeners();
+}
+
+/// Drives [GoRouter.refreshListenable] when [bookingProvider] changes.
+final bookingRouteRefreshProvider = Provider<_BookingRouteRefresh>((ref) {
+  final notifier = _BookingRouteRefresh();
+  ref.listen<BookingState>(bookingProvider, (_, __) => notifier.tick());
+  ref.onDispose(notifier.dispose);
+  return notifier;
+});
+
+String? _bookingRouteRedirect(Ref ref, GoRouterState state) {
+  final booking = ref.read(bookingProvider);
+  final path = state.matchedLocation;
+
+  if (path == '/summary') {
+    if (booking.pickup == null || booking.destination == null) {
+      return '/search';
+    }
+  }
+
+  if (path == '/payment') {
+    if (booking.pickup == null || booking.destination == null) {
+      return '/search';
+    }
+    final vc = booking.vehicleCategory?.trim() ?? '';
+    if (vc.isEmpty) return '/vehicle-category';
+  }
+
+  return null;
+}
+
+final appRouterProvider = Provider<GoRouter>((ref) {
+  final refresh = ref.watch(bookingRouteRefreshProvider);
+  return GoRouter(
+    initialLocation: '/splash',
+    refreshListenable: refresh,
+    redirect: (context, state) => _bookingRouteRedirect(ref, state),
+    routes: [
+    GoRoute(
+      path: '/splash',
+      pageBuilder: (_, state) => _page(state, const SplashScreen()),
+    ),
+    GoRoute(
+      path: '/location-required',
+      pageBuilder: (_, state) => _page(state, const LocationRequiredScreen()),
+    ),
+    GoRoute(
+      path: '/search',
+      pageBuilder: (_, state) => _page(state, const SearchScreen()),
+    ),
+    GoRoute(
+      path: '/marketplace',
+      pageBuilder: (_, state) => _page(state, const MarketplaceScreen()),
+    ),
+    GoRoute(
+      path: '/airport-booking',
+      pageBuilder: (_, state) => _page(state, const AirportBookingScreen()),
+    ),
+    GoRoute(
+      path: '/favorites',
+      pageBuilder: (_, state) => _page(state, const FavoritesScreen()),
+    ),
+    GoRoute(
+      path: '/saved-addresses',
+      pageBuilder: (_, state) => _page(state, const SavedAddressesScreen()),
+    ),
+    // Legacy compatibility only (deep links, old bookmarks, stale docs).
+    // Canonical flow is search → smart next; consider removing once unused.
+    GoRoute(
+      path: '/confirm',
+      redirect: (context, state) {
+        final b = ref.read(bookingProvider);
+        if (b.pickup == null || b.destination == null) return '/search';
+        return BookingFlowNavigation.routeAfterAddressesComplete(b);
+      },
+    ),
+    GoRoute(
+      path: '/booking-options',
+      redirect: (context, state) {
+        final b = ref.read(bookingProvider);
+        if (b.pickup == null || b.destination == null) return '/search';
+        return BookingFlowNavigation.routeAfterAddressesComplete(b);
+      },
+    ),
+    GoRoute(
+      path: '/vehicle-category',
+      pageBuilder: (_, state) => _page(
+        state,
+        VehicleCategoryScreen(
+          returnToSummaryAfterSave: state.extra == kBookingReturnToSummaryExtra,
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/payment',
+      pageBuilder: (_, state) => _page(
+        state,
+        PaymentScreen(
+          returnToSummaryAfterSave: state.extra == kBookingReturnToSummaryExtra,
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/summary',
+      pageBuilder: (_, state) => _page(state, const TripSummaryScreen()),
+    ),
+    GoRoute(
+      path: '/searching',
+      pageBuilder: (_, state) => _page(
+        state,
+        const SearchingScreen(variant: RideMatchingVariant.instant),
+      ),
+    ),
+    GoRoute(
+      path: '/marketplace-matching',
+      pageBuilder: (_, state) => _page(
+        state,
+        const SearchingScreen(variant: RideMatchingVariant.marketplace),
+      ),
+    ),
+    GoRoute(
+      path: '/scheduled-matching',
+      pageBuilder: (_, state) => _page(
+        state,
+        const SearchingScreen(variant: RideMatchingVariant.scheduled),
+      ),
+    ),
+    GoRoute(
+      path: '/active',
+      pageBuilder: (_, state) => _page(state, const ActiveRideScreen()),
+    ),
+    GoRoute(
+      path: '/chat',
+      pageBuilder: (_, state) => _page(state, const ChatScreen()),
+    ),
+    GoRoute(
+      path: '/rating',
+      pageBuilder: (_, state) => _page(state, const RatingScreen()),
+    ),
+    GoRoute(
+      path: '/report',
+      pageBuilder: (_, state) {
+        final extra = state.extra;
+        String? ridesRowId;
+        var fromActiveRide = false;
+        if (extra is ReportRouteArgs) {
+          ridesRowId = extra.ridesRowId;
+          fromActiveRide = extra.fromActiveRide;
+        } else if (extra is String) {
+          ridesRowId = extra;
+        }
+        return _page(
+          state,
+          ReportScreen(
+            prefilledRidesRowId: ridesRowId,
+            fromActiveRide: fromActiveRide,
+          ),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/ride-detail',
+      pageBuilder: (context, state) {
+        final ride = state.extra;
+        if (ride is! RideHistoryItem) {
+          return _page(state, const Scaffold());
+        }
+        return _page(state, RideDetailScreen(ride: ride));
+      },
+    ),
+    GoRoute(
+      path: '/upcoming-ride',
+      pageBuilder: (context, state) {
+        final extra = state.extra;
+        if (extra is! NearTermRideSnapshot) {
+          return _page(state, const Scaffold());
+        }
+        return _page(state, UpcomingRideRequestDetailScreen(snap: extra));
+      },
+    ),
+    GoRoute(
+      path: '/faq',
+      pageBuilder: (_, state) => _page(state, const FaqScreen()),
+    ),
+    GoRoute(
+      path: '/terms',
+      pageBuilder: (_, state) => _page(state, const TermsScreen()),
+    ),
+    GoRoute(
+      path: '/privacy',
+      pageBuilder: (_, state) => _page(state, const PrivacyScreen()),
+    ),
+    GoRoute(
+      path: '/support',
+      pageBuilder: (_, state) => _page(state, const RiderSupportScreen()),
+    ),
+    GoRoute(
+      path: '/support/threads',
+      pageBuilder: (_, state) =>
+          _page(state, const RiderSupportThreadsScreen()),
+    ),
+    GoRoute(
+      path: '/support/new',
+      pageBuilder: (_, state) =>
+          _page(state, const RiderSupportNewTicketScreen()),
+    ),
+    GoRoute(
+      path: '/support/chat/:ticketId',
+      redirect: (context, state) {
+        if (!isValidUuid(state.pathParameters['ticketId'])) {
+          return '/support';
+        }
+        return null;
+      },
+      pageBuilder: (context, state) {
+        final ticketId = state.pathParameters['ticketId']!;
+        return _page(state, RiderSupportChatScreen(ticketId: ticketId));
+      },
+    ),
+    ShellRoute(
+      builder: (context, state, child) => RiderShell(child: child),
+      routes: [
+        GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
+        GoRoute(path: '/rides', builder: (_, __) => const RidesScreen()),
+        GoRoute(
+          path: '/tell-friend',
+          builder: (_, __) => const RiderTellFriendScreen(),
+        ),
+        GoRoute(path: '/account', builder: (_, __) => const AccountScreen()),
+      ],
+    ),
+  ],
+  );
+});
+

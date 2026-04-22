@@ -1,0 +1,33 @@
+---
+description: Rider theming, design tokens, and glassmorphism usage rules for the taxi app.
+globs: |
+  apps/rider/lib/**/*.dart
+  packages/heycaby_ui/lib/**/*.dart
+alwaysApply: false
+---
+
+# Rider Theme and Glassmorphism
+
+## Design tokens only
+
+- All colors must come from `HeyCabyColorTokens` via `colorsProvider` or theme data.
+- All typography must come from `HeyCabyTypography` via `typographyProvider`.
+- If you need new map-specific or glass-specific colors, add semantic tokens in `heycaby_ui` instead of hard-coding hex values.
+
+## Theme switching
+
+- Use `ThemeNotifier` from `heycaby_ui` as the single source of truth for the active theme.
+- Theme selection UIs (for example, in the Rider account screen) must:
+  - Display valid theme IDs from the shared theme registry.
+  - Call `ThemeNotifier.setTheme(id)` when the user selects a theme.
+
+## Glassmorphism (Apple “liquid glass”)
+
+- Implement glassmorphism using shared widgets in `heycaby_ui` (for example, a `GlassPanel` or `GlassBottomSheet`).
+- Glass panels must:
+  - Use `BackdropFilter` and `ImageFilter.blur` under the hood.
+  - Use colors and opacities derived from theme tokens, not literals.
+- Prefer glass panels for:
+  - Bottom sheets in the booking flow.
+  - Key cards and overlays that should feel like translucent glass.
+

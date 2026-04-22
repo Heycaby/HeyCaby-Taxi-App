@@ -1,0 +1,32 @@
+name: heycaby
+
+packages:
+  - apps/*
+  - packages/*
+
+scripts:
+  rider:dev:
+    run: flutter run
+    packageFilters:
+      scope: heycaby_rider
+
+  driver:dev:
+    run: flutter run
+    packageFilters:
+      scope: heycaby_driver
+
+  get:all:
+    run: melos exec -- flutter pub get
+    description: Run flutter pub get in all packages
+
+  analyze:
+    run: melos exec -- flutter analyze
+    description: Analyze all packages
+
+  test:all:
+    run: melos exec -- flutter test
+    description: Run tests in all packages
+
+  gen:l10n:
+    run: melos exec --scope="heycaby_rider,heycaby_driver" -- flutter gen-l10n
+    description: Generate localizations for both apps

@@ -1,0 +1,57 @@
+# Build script merges, in order (later overrides): repo `.env`, then the *peer*
+# app `.env` (rider when building driver, driver when building rider), then
+# `apps/rider/.env` or `apps/driver/.env` for that IPA. That way Mapbox and
+# Supabase keys you only maintain in one app folder still apply to both IPAs.
+# Exception: SUPABASE_URL, SUPABASE_ANON_KEY, and MAPBOX_ACCESS_TOKEN are never
+# cleared by a later file setting them to empty (avoids a stray `MAPBOX_ACCESS_TOKEN=`
+# in apps/driver/.env wiping the token from rider/root and causing a black map).
+# Optional last layer:
+#   ENV_FILE=/path/to/extra.env ./scripts/build_ios_ipas.sh
+#
+# The IPA script writes `apps/<app>/ios/Flutter/Secrets.xcconfig` (gitignored) for
+# Info.plist `MBXAccessToken`, and `apps/<app>/ios/.ipa_dart_defines.json` for
+# `flutter build ipa --dart-define-from-file` (Dart + reliable token escaping).
+# Use `./scripts/build_ios_ipas.sh` for release IPAs; plain `flutter build ipa` without
+# that file may show a blank map if the plist token is empty.
+#
+# Required for maps + backend (also required for app startup — no hardcoded Supabase in release code):
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+MAPBOX_ACCESS_TOKEN=
+# iOS: the IPA script also injects MAPBOX_ACCESS_TOKEN into Info.plist (MBXAccessToken) via
+# ios/Flutter/Secrets.xcconfig. The apps only call MapboxOptions.setAccessToken when the Dart
+# compile-time define is non-empty, so the plist value is used if defines are ever missing.
+# In Mapbox Account → token restrictions, allow both bundle IDs: nl.heycaby.rider and nl.heycaby.driver.
+
+# Optional — REST API base (default: https://heycaby.nl)
+# API_BASE_URL=
+
+# Optional — public web origin for share links / deep links (default: https://heycaby.nl)
+# APP_PUBLIC_WEB_ORIGIN=
+
+# Rider — per-theme Mapbox style URIs (HeyCaby themes; mapbox://…). Empty = Standard fallback.
+# MAPBOX_STYLE_DAYLIGHT=
+# MAPBOX_STYLE_FRESH=
+# MAPBOX_STYLE_BLOSSOM=
+
+# Legacy theme Mapbox env keys (still read if new keys unset)
+# MAPBOX_STYLE_TAXI_SHADE_6=
+# MAPBOX_STYLE_TAXI_SHADE_2=
+# MAPBOX_STYLE_FOREST_DUSK=
+# MAPBOX_STYLE_ROSE_NOIR=
+# MAPBOX_STYLE_ALPINE_CREAM=
+# MAPBOX_STYLE_WARM_GLOSS=
+# MAPBOX_STYLE_FROSTY_BLACK_WHITE=
+# MAPBOX_STYLE_FROSTY_BLACK_YELLOW=
+# MAPBOX_STYLE_MIDNIGHT_CARBON=
+# MAPBOX_STYLE_DEFAULT=
+
+# Driver — navigation / day style for main map (empty = Standard)
+# MAPBOX_STYLE_NAVIGATION_DAY=
+
+# Driver — Veriff: leave empty for API session flow; set for static HVP URL
+# DRIVER_VERIFF_HVP_URL=
+
+# Driver — legal URLs (have in-app defaults)
+# DRIVER_TERMS_URL=
+# DRIVER_TERMS_VERIFF_URL=

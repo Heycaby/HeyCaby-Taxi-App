@@ -1,0 +1,9 @@
+{
+  "name": "heycaby-tos",
+  "private": true,
+  "description": "Static chauffeur terms & support pages for HeyCaby (Vercel)",
+  "scripts": {
+    "deploy": "vercel deploy --prod --yes --scope qbs-projects-2b124455",
+    "deploy:preview": "vercel deploy --yes --scope qbs-projects-2b124455"
+  }
+}

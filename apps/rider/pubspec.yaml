@@ -1,0 +1,91 @@
+name: heycaby_rider
+description: HeyCaby — Book a ride
+version: 1.0.0+18
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+  flutter: '>=3.19.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.5.0
+
+  # Supabase
+  supabase_flutter: ^2.5.0
+
+  # Maps
+  mapbox_maps_flutter: 2.19.1
+
+  # HTTP
+  dio: ^5.4.0
+
+  # Storage
+  flutter_secure_storage: ^9.0.0
+  shared_preferences: ^2.2.0
+
+  # Location
+  geolocator: ^11.0.0
+  permission_handler: ^11.3.0
+
+  # Sharing
+  share_plus: ^7.2.1
+  qr_flutter: ^4.1.0
+  url_launcher: ^6.2.5
+
+  # SVG Icons
+  flutter_svg: ^2.0.9
+
+  # Audio
+  audioplayers: ^6.0.0
+
+  # Navigation
+  go_router: ^13.2.0
+  app_links: ^6.4.1
+
+  # UI & Animations
+  cached_network_image: ^3.3.0
+  shimmer: ^3.0.0
+  google_fonts: ^6.2.1
+  flutter_animate: ^4.5.0
+
+  # i18n
+  intl: any
+
+  # Local packages
+  heycaby_api:
+    path: ../../packages/heycaby_api
+  heycaby_models:
+    path: ../../packages/heycaby_models
+  heycaby_ui:
+    path: ../../packages/heycaby_ui
+  heycaby_l10n:
+    path: ../../packages/heycaby_l10n
+  heycaby_map:
+    path: ../../packages/heycaby_map
+  heycaby_utils:
+    path: ../../packages/heycaby_utils
+  home_widget: ^0.9.0
+  flutter_local_notifications: ^21.0.0
+  live_activities: ^2.4.3
+  firebase_core: ^3.8.0
+  firebase_messaging: ^15.1.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  generate: true
+  
+  assets:
+    - assets/icons/
+    - assets/sounds/driver/
+    - assets/sounds/rider/
+    - assets/sounds/shared/

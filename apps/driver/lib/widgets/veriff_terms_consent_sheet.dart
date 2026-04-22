@@ -1,0 +1,178 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heycaby_ui/heycaby_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../config/driver_legal_urls.dart';
+import '../l10n/driver_strings.dart';
+
+/// Shows terms + consent before opening the Veriff session URL. Returns `true` if the user agreed.
+Future<bool> showVeriffTermsConsentSheet(BuildContext context) async {
+  final result = await showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) => const _VeriffTermsSheet(),
+  );
+  return result == true;
+}
+
+class _VeriffTermsSheet extends ConsumerStatefulWidget {
+  const _VeriffTermsSheet();
+
+  @override
+  ConsumerState<_VeriffTermsSheet> createState() => _VeriffTermsSheetState();
+}
+
+class _VeriffTermsSheetState extends ConsumerState<_VeriffTermsSheet> {
+  bool _agreed = false;
+
+  Future<void> _open(String url) async {
+    final u = Uri.parse(url);
+    if (await canLaunchUrl(u)) {
+      await launchUrl(u, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = ref.watch(colorsProvider);
+    final typo = ref.watch(typographyProvider);
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.card,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          boxShadow: [
+            BoxShadow(
+              color: colors.text.withValues(alpha: 0.08),
+              blurRadius: 24,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        padding: EdgeInsets.fromLTRB(20, 12, 20, 16 + bottomInset),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: colors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: colors.accentL,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.verified_user_rounded, color: colors.accent, size: 26),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      DriverStrings.veriffTermsGateTitle,
+                      style: typo.titleMedium.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(
+                DriverStrings.veriffTermsGateBody,
+                style: typo.bodyMedium.copyWith(color: colors.textSoft, height: 1.45),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  TextButton.icon(
+                    onPressed: () => _open(kDriverTermsUrl),
+                    icon: Icon(Icons.open_in_new_rounded, size: 18, color: colors.accent),
+                    label: Text(
+                      DriverStrings.veriffTermsReadFull,
+                      style: typo.labelLarge.copyWith(color: colors.accent, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => _open(kDriverTermsVeriffSectionUrl),
+                    icon: Icon(Icons.article_outlined, size: 18, color: colors.textMid),
+                    label: Text(
+                      DriverStrings.veriffTermsReadVeriffOnly,
+                      style: typo.labelLarge.copyWith(color: colors.textMid, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              CheckboxListTile(
+                value: _agreed,
+                onChanged: (v) => setState(() => _agreed = v ?? false),
+                contentPadding: EdgeInsets.zero,
+                activeColor: colors.accent,
+                checkColor: colors.onAccent,
+                title: Text(
+                  DriverStrings.veriffTermsCheckbox,
+                  style: typo.bodySmall.copyWith(color: colors.text, height: 1.4),
+                ),
+                controlAffinity: ListTileControlAffinity.leading,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: colors.text,
+                        side: BorderSide(color: colors.border),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: Text(DriverStrings.veriffTermsCancel),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton(
+                      onPressed: !_agreed
+                          ? null
+                          : () => Navigator.of(context).pop(true),
+                      style: FilledButton.styleFrom(
+                          disabledBackgroundColor: colors.border,
+                          disabledForegroundColor: colors.textMid,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      child: Text(
+                        DriverStrings.veriffTermsContinue,
+                        style: typo.labelLarge.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

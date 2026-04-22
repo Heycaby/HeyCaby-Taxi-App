@@ -1,0 +1,21 @@
+name: heycaby_map
+description: HeyCaby shared map services — Mapbox wrappers for geocoding, routing, navigation
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+  flutter: '>=3.19.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.5.0
+  mapbox_maps_flutter: 2.19.1
+  dio: ^5.4.0
+  http: ^1.2.2
+  heycaby_models:
+    path: ../heycaby_models
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0

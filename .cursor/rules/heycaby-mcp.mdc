@@ -1,0 +1,14 @@
+---
+description: Prefer Cursor MCP tools for external services (Notion, Datadog, Supabase, etc.)
+alwaysApply: true
+---
+
+# MCP first
+
+When the task touches an external system and this workspace has a **configured MCP server** for it, **use MCP** (read tool schemas, then call tools) instead of improvising with curl, undocumented APIs, or guessing.
+
+- **Before calling an MCP tool:** inspect the tool’s schema/descriptor so arguments match what the server expects.
+- **If multiple approaches exist** (e.g. Supabase Dashboard vs CLI vs MCP): prefer **MCP** when it is connected and covers the operation.
+- **If MCP is not available** for that system in this session, say so briefly and fall back to the repo’s documented workflow (e.g. `supabase` CLI, scripts in `scripts/`).
+
+This matches the project owner preference: **always use MCP when it applies.**

@@ -1,0 +1,26 @@
+{
+  "_note": "HeyCaby monorepo — iOS: apps/driver, apps/rider. Upstream skill: https://github.com/itsncki-design/app-store-submission-auditor",
+  "mode": "developer",
+  "stack": "flutter",
+  "has_subscriptions": false,
+  "has_social_features": true,
+  "has_location": true,
+  "eu_distribution": true,
+  "first_time_submitter": false,
+  "last_audit": "2026-04-03",
+  "issues_fixed": [
+    "ITSAppUsesNonExemptEncryption false (both iOS targets) — apps/rider & apps/driver Info.plist",
+    "PrivacyInfo.xcprivacy in Runner + Xcode Resources (both apps)",
+    "Rider: removed NSLocationAlwaysAndWhenInUseUsageDescription; clarified when-in-use string",
+    "In-app account deletion: Rider (fn_delete_rider_account + optional Auth delete), Driver (fn_delete_driver_owned_data + Auth DELETE /auth/v1/user)",
+    "Ride chat: fn_ride_chat_block_participant + list_blocks + client filtering",
+    "Svelte PWAs removed — Flutter-only product surface"
+  ],
+  "issues_outstanding": [
+    "Apply supabase/migrations to production DB; smoke-test RPCs (preride_commitment_fee_euros, account deletion, chat)",
+    "After archive: verify embedded Runner entitlements show aps-environment production + correct App Groups",
+    "App Store Connect: privacy labels, URLs, age rating (chat), screenshots, review notes + OTP test email",
+    "Replace default iOS app icons if still placeholder",
+    "Optional: swap placeholder silent MP3s in apps/rider/assets/sounds/ with branded audio"
+  ]
+}

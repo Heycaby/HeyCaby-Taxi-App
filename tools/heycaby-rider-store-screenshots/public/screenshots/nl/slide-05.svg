@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1179" height="2556" viewBox="0 0 1179 2556">
+  <rect width="100%" height="100%" fill="#fbf9f4"/>
+  <text x="589" y="200" text-anchor="middle" font-family="system-ui,sans-serif" font-size="36" fill="#1a1a1a" font-weight="600">Payment options</text>
+  <text x="589" y="260" text-anchor="middle" font-family="system-ui,sans-serif" font-size="26" fill="#4a4a4a">Replace: Cash / PIN / Tikkie</text>
+  <rect x="120" y="500" width="939" height="100" rx="16" fill="#fff" stroke="#e8e4dc"/>
+  <rect x="120" y="640" width="939" height="100" rx="16" fill="#fff" stroke="#e8e4dc"/>
+  <rect x="120" y="780" width="939" height="100" rx="16" fill="#fff" stroke="#e8e4dc"/>
+</svg>

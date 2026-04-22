@@ -1,0 +1,38 @@
+---
+description: Core Rider Flutter standards for structure, theming, localization, navigation, and file size limits.
+globs: apps/rider/lib/**/*.dart
+alwaysApply: false
+---
+
+# Rider Flutter Standards
+
+## File and widget size
+
+- Keep each Dart file under approximately 300 lines of code.
+- Keep each widget, class, and function body comfortably under 300 lines.
+- When a screen grows too large, split it into:
+  - Smaller widgets for map sections, bottom sheets, and app bars.
+  - Shared widgets in `apps/rider/lib/widgets/` for reusable elements.
+
+## Theming and typography
+
+- Do not hard-code colors or fonts in Rider code.
+- Always obtain colors from `colorsProvider` (`HeyCabyColorTokens`) and text styles from `typographyProvider` (`HeyCabyTypography`).
+- If a new color is needed, add a semantic token in `heycaby_ui` theme data instead of using hex literals.
+
+## Localization
+
+- All user-visible text must come from `AppLocalizations`.
+- Do not add inline string literals for UI copy in Rider screens.
+- When adding new strings, update all supported languages in the l10n files.
+
+## Navigation
+
+- Use the shared `GoRouter` configuration in `appRouter` for navigation.
+- Pass data via typed models and `state.extra` where appropriate instead of raw maps.
+
+## Separation of concerns
+
+- Keep side effects (network calls, identity access, secure storage) in providers, services, or notifiers, not directly inside large build methods.
+- Prefer small, focused widgets that compose into screens rather than one monolithic widget per screen.
+

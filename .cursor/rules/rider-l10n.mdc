@@ -1,0 +1,27 @@
+---
+description: Rider localization rules for language handling, device locale, and string usage.
+globs: apps/rider/lib/**/*.dart
+alwaysApply: false
+---
+
+# Rider Localization Rules
+
+## Device language and overrides
+
+- By default, the Rider app should adopt the device language using `AppLocalizations.supportedLocales`.
+- If a user has chosen a language in settings, the effective locale should:
+  - Prefer the user’s explicit choice when present.
+  - Fall back to the device language or English when needed.
+- `MaterialApp.locale` should be driven by a provider that combines device locale and user override.
+
+## String usage
+
+- All user-facing strings must come from `AppLocalizations`.
+- Do not introduce new inline string literals in Rider screens or widgets.
+- When adding a new key, update all supported languages in the l10n files to keep translations in sync.
+
+## RTL safety
+
+- Prefer directional APIs such as `EdgeInsetsDirectional`, `AlignmentDirectional`, and `TextDirection`-aware layouts.
+- Do not assume left-to-right layouts in padding, alignment, or icons.
+

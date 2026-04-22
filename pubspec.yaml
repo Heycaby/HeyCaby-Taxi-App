@@ -1,0 +1,5 @@
+name: heycaby_workspace
+description: HeyCaby Flutter monorepo root
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'

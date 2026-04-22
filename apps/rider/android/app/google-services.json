@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "486543076754",
+    "project_id": "heycaby-2457a",
+    "storage_bucket": "heycaby-2457a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:486543076754:android:80bb6b0a3316fc69f8654b",
+        "android_client_info": {
+          "package_name": "com.heycaby.rider"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCfm1nkk1H_LygQ70J2N3S8fnxudqfeDR4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
