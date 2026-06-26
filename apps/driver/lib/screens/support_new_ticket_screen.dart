@@ -5,6 +5,9 @@ import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
+import '../theme/driver_colors.dart';
+import '../theme/driver_typography.dart';
+import '../widgets/driver_raise_issue_body.dart';
 
 class SupportNewTicketScreen extends ConsumerStatefulWidget {
   const SupportNewTicketScreen({super.key});
@@ -33,152 +36,125 @@ class _SupportNewTicketScreenState
     super.dispose();
   }
 
-  Future<void> _submit() async {
+  Future<void> _showSentSuccessDialog() async {
+    if (!mounted) return;
+    final colors = ref.read(colorsProvider);
+    final typo = ref.read(typographyProvider);
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          DriverStrings.supportMessageSentTitle,
+          style: typo.titleMedium.copyWith(color: colors.text),
+        ),
+        content: Text(
+          DriverStrings.supportMessageSentBody,
+          style: typo.bodyMedium.copyWith(color: colors.textMid, height: 1.45),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text(DriverStrings.done),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              if (mounted) context.push('/driver/support/lee');
+            },
+            child: const Text(DriverStrings.chatWithLee),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showSendFailedDialog() async {
+    if (!mounted) return;
+    final colors = ref.read(colorsProvider);
+    final typo = ref.read(typographyProvider);
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          DriverStrings.supportMessageSendFailedTitle,
+          style: typo.titleMedium.copyWith(color: colors.text),
+        ),
+        content: Text(
+          DriverStrings.supportMessageSendFailedBody,
+          style: typo.bodyMedium.copyWith(color: colors.textMid, height: 1.45),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text(DriverStrings.close),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              if (mounted) context.push('/driver/support/lee');
+            },
+            child: const Text(DriverStrings.chatWithLee),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _sendSupportMessage() async {
     final text = _controller.text.trim();
     if (text.isEmpty || _sending) return;
+    HapticService.mediumTap();
     setState(() => _sending = true);
     try {
       final client = HeyCabySupabase.client;
       final userId = client.auth.currentUser?.id;
-      if (userId == null) return;
+      if (userId == null) {
+        await _showSendFailedDialog();
+        return;
+      }
       final msgId = DateTime.now().millisecondsSinceEpoch.toString();
-      final res = await client
-          .from('tickets')
-          .insert({
-            'user_type': 'driver',
-            'user_id': userId,
-            'category': _category,
-            'messages': [
-              {
-                'id': msgId,
-                'sender_type': 'driver',
-                'body': text,
-                'created_at': DateTime.now().toUtc().toIso8601String(),
-                'read_at': null,
-              }
-            ],
-          })
-          .select('id')
-          .single();
-      if (mounted) {
-        final ticketId = res['id'] as String;
-        context.push('/driver/support/chat/$ticketId');
-      }
+      await client.from('tickets').insert({
+        'user_type': 'driver',
+        'user_id': userId,
+        'category': _category,
+        'status': 'open',
+        'ai_handled': false,
+        'messages': [
+          {
+            'id': msgId,
+            'sender_type': 'driver',
+            'role': 'user',
+            'body': text,
+            'content': text,
+            'created_at': DateTime.now().toUtc().toIso8601String(),
+            'read_at': null,
+          }
+        ],
+      });
+      _controller.clear();
+      await _showSentSuccessDialog();
     } catch (_) {
-      if (mounted) {
-        setState(() => _sending = false);
-      }
+      await _showSendFailedDialog();
     }
+    if (mounted) setState(() => _sending = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = ref.watch(colorsProvider);
-    final typo = ref.watch(typographyProvider);
+    final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
 
-    return Scaffold(
-      backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.card,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colors.text),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          DriverStrings.nieuwBericht,
-          style: typo.headingLarge.copyWith(color: colors.text),
-        ),
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Categorie',
-              style: typo.titleMedium.copyWith(color: colors.text),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: _categories.map((cat) {
-                final selected = cat == _category;
-                return ChoiceChip(
-                  label: Text(cat),
-                  selected: selected,
-                  selectedColor: colors.accent,
-                  backgroundColor: colors.card,
-                  labelStyle: typo.bodySmall.copyWith(
-                    color: selected ? colors.card : colors.text,
-                  ),
-                  side: BorderSide(
-                    color: selected ? colors.accent : colors.border,
-                  ),
-                  onSelected: (_) => setState(() => _category = cat),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: TextField(
-                controller: _controller,
-                maxLines: null,
-                maxLength: 500,
-                expands: true,
-                textAlignVertical: TextAlignVertical.top,
-                style: typo.bodyMedium.copyWith(color: colors.text),
-                decoration: InputDecoration(
-                  hintText: DriverStrings.berichtTypen,
-                  hintStyle: typo.bodyMedium.copyWith(color: colors.textSoft),
-                  filled: true,
-                  fillColor: colors.card,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: colors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: colors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: colors.accent),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: FilledButton(
-                onPressed: _sending ? null : _submit,
-                style: FilledButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                child: _sending
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: colors.onAccent,
-                        ),
-                      )
-                    : Text(
-                        DriverStrings.versturen,
-                        style: typo.labelLarge.copyWith(fontWeight: FontWeight.w600),
-                      ),
-              ),
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
-          ],
-        ),
-      ),
+    return DriverRaiseIssueBody(
+      colors: colors,
+      typography: typography,
+      categories: _categories,
+      selectedCategory: _category,
+      messageController: _controller,
+      sending: _sending,
+      onBack: _sending ? () {} : () => context.pop(),
+      onCategorySelected: (cat) => setState(() => _category = cat),
+      onSend: _sendSupportMessage,
     );
   }
 }

@@ -4,6 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../theme/driver_colors.dart';
+import '../theme/driver_typography.dart';
+import '../widgets/driver_onboarding_gate_body.dart';
+
+/// **Onboarding Gate** — join as a driver with confidence.
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
@@ -25,6 +30,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Future<void> _signUp() async {
+    HapticService.mediumTap();
     setState(() {
       _loading = true;
       _error = null;
@@ -33,9 +39,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       await HeyCabySupabase.client.auth.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        data: const {'user_type': 'driver'},
       );
       if (!mounted) return;
-      context.go('/driver');
+      context.go('/driver/onboarding/plate');
     } on Exception catch (e) {
       if (!mounted) return;
       setState(() {
@@ -49,84 +56,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = ref.watch(colorsProvider);
-    final typo = ref.watch(typographyProvider);
+    final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
+    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final compact = MediaQuery.sizeOf(context).height < 720;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/login'),
-        ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Create account',
-                style: typo.headingLarge.copyWith(color: colors.text),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Register as a driver',
-                style: typo.bodyMedium.copyWith(color: colors.textMid),
-              ),
-              const SizedBox(height: 32),
-              TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Password (min 6 characters)',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              if (_error != null) ...[
-                const SizedBox(height: 16),
-                Text(
-                  _error!,
-                  style: typo.bodySmall.copyWith(color: colors.error),
-                ),
-              ],
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: _loading ? null : _signUp,
-                style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                child: _loading
-                    ? SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: colors.onAccent,
-                        ),
-                      )
-                    : const Text('Create account'),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return DriverOnboardingGateBody(
+      colors: colors,
+      typography: typography,
+      compact: compact,
+      emailController: _emailController,
+      passwordController: _passwordController,
+      loading: _loading,
+      error: _error,
+      onBack: () => context.go('/login'),
+      onSubmit: _signUp,
     );
   }
 }

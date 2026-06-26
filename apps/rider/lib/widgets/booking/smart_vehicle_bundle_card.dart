@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
@@ -12,8 +13,6 @@ class SmartVehicleBundleCard extends StatefulWidget {
     required this.estimates,
     required this.selectedKeys,
     required this.onSelectionChanged,
-    required this.petFriendly,
-    required this.onPetFriendlyChanged,
     required this.colors,
     required this.typography,
     required this.l10n,
@@ -22,8 +21,6 @@ class SmartVehicleBundleCard extends StatefulWidget {
   final List<TripCategoryEstimate> estimates;
   final Set<String> selectedKeys;
   final ValueChanged<Set<String>> onSelectionChanged;
-  final bool petFriendly;
-  final ValueChanged<bool> onPetFriendlyChanged;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typography;
   final AppLocalizations l10n;
@@ -33,7 +30,8 @@ class SmartVehicleBundleCard extends StatefulWidget {
 }
 
 class _SmartVehicleBundleCardState extends State<SmartVehicleBundleCard> {
-  bool _expanded = false;
+  // Keep options visible by default so riders don't need to guess they can tap.
+  bool _expanded = true;
 
   List<TripCategoryEstimate> get _est => widget.estimates;
 
@@ -49,29 +47,21 @@ class _SmartVehicleBundleCardState extends State<SmartVehicleBundleCard> {
     return (min: prices.first, max: prices.last);
   }
 
-  String _fmtEuro(double v) =>
-      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
-
   String _priceLabel() {
     final b = _bandFor(_sel);
     if (b.min <= 0 && b.max <= 0) return '—';
-    if ((b.min - b.max).abs() < 0.01) {
-      return widget.l10n.smartBundlePriceSingle(_fmtEuro(b.min));
-    }
-    return widget.l10n.smartBundlePriceBand(_fmtEuro(b.min), _fmtEuro(b.max));
-  }
-
-  String _includedNames() {
-    final names = _est
-        .where((e) => _sel.contains(e.categoryKey))
-        .map((e) => e.label)
-        .toList();
-    return names.join(', ');
+    final formatter = NumberFormat.currency(
+      locale: 'nl_NL',
+      symbol: '€',
+      decimalDigits: 0,
+    );
+    final min = formatter.format(b.min);
+    final max = formatter.format(b.max);
+    return widget.l10n.smartBundleEstimatedPrice(min, max);
   }
 
   String _footnote() {
     if (_sel.length >= _est.length) return widget.l10n.smartBundleFootnoteWide;
-    if (_sel.length <= 1) return widget.l10n.smartBundleFootnoteSingle;
     return widget.l10n.smartBundleFootnoteNarrow;
   }
 
@@ -155,7 +145,7 @@ class _SmartVehicleBundleCardState extends State<SmartVehicleBundleCard> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  l10n.smartBundleTitle,
+                                  l10n.smartBundleRideTypeOptions,
                                   style: typo.labelSmall.copyWith(
                                     color: colors.accent,
                                     fontWeight: FontWeight.w700,
@@ -173,10 +163,11 @@ class _SmartVehicleBundleCardState extends State<SmartVehicleBundleCard> {
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
-                                  l10n.smartBundleIncludes(_includedNames()),
-                                  style: typo.bodySmall.copyWith(
-                                    color: colors.textMid,
-                                    height: 1.4,
+                                  l10n.smartBundleDriverPricingNote,
+                                  style: typo.bodyMedium.copyWith(
+                                    color: colors.text,
+                                    height: 1.45,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ],
@@ -193,8 +184,10 @@ class _SmartVehicleBundleCardState extends State<SmartVehicleBundleCard> {
                       ),
                       const SizedBox(height: 14),
                       Text(
-                        l10n.smartBundleTapToExpand,
-                        style: typo.titleSmall.copyWith(
+                        _expanded
+                            ? l10n.smartBundleTapToHide
+                            : l10n.smartBundleTapToExpand,
+                        style: typo.titleMedium.copyWith(
                           color: colors.text,
                           fontWeight: FontWeight.w700,
                           height: 1.25,
@@ -203,9 +196,10 @@ class _SmartVehicleBundleCardState extends State<SmartVehicleBundleCard> {
                       const SizedBox(height: 4),
                       Text(
                         l10n.smartBundleExpandSubtitle,
-                        style: typo.bodySmall.copyWith(
-                          color: colors.textSoft,
+                        style: typo.bodyMedium.copyWith(
+                          color: colors.textMid,
                           height: 1.4,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                       const SizedBox(height: 14),
@@ -239,58 +233,6 @@ class _SmartVehicleBundleCardState extends State<SmartVehicleBundleCard> {
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(14, 0, 14, 14),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: colors.surface.withValues(alpha: 0.65),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: colors.border.withValues(alpha: 0.55),
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsetsDirectional.fromSTEB(
-                    12, 10, 8, 10,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.pets_rounded, color: colors.accent, size: 22),
-                      SizedBox(width: HeyCabySpacing.component),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              l10n.smartBundlePetRowTitle,
-                              style: typo.titleSmall.copyWith(
-                                color: colors.text,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            Text(
-                              l10n.petFriendlyDesc,
-                              style: typo.bodySmall.copyWith(
-                                color: colors.textSoft,
-                                height: 1.35,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Switch.adaptive(
-                        value: widget.petFriendly,
-                        onChanged: (v) {
-                          HapticService.lightTap();
-                          widget.onPetFriendlyChanged(v);
-                        },
-                        activeTrackColor: colors.accent,
                       ),
                     ],
                   ),

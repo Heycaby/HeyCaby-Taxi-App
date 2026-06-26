@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
+import 'package:dio/dio.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:heycaby_api/heycaby_api.dart';
@@ -15,10 +16,14 @@ import '../providers/active_search_provider.dart';
 import '../providers/location_provider.dart';
 import '../providers/booking_provider.dart';
 import '../providers/recent_destinations_provider.dart';
+import '../providers/near_term_ride_request_provider.dart';
 import '../services/booking_flow_navigation.dart';
 import '../services/heycaby_widget_sync.dart';
 import '../services/rider_notify_search_notifications.dart';
 import '../services/location_service.dart';
+import '../services/rider_runtime_config_service.dart';
+import '../services/sound_service.dart';
+import '../services/stale_ride_cleanup.dart';
 import '../utils/map_style_helper.dart';
 import '../constants/rider_search_window.dart';
 import '../providers/saved_addresses_provider.dart';
@@ -32,6 +37,7 @@ import '../widgets/email_modal.dart';
 import '../widgets/rider_profile_home_nudge.dart';
 import '../widgets/saved_addresses_sheet.dart';
 import '../widgets/welcome_profile_modals.dart';
+import 'location_required_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -49,6 +55,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late final DraggableScrollableController _sheetController;
   Timer? _notifyExpiryTimer;
   DateTime? _notifyExpiryScheduledFor;
+  Timer? _globalSearchExpiryTimer;
+  bool _globalExpiryModalShowing = false;
   Timer? _welcomeProfileTimer;
   Timer? _notifyWidgetSyncTimer;
 
@@ -58,7 +66,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _sheetController = DraggableScrollableController();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(locationProvider.notifier).requestPermissionAndStart();
+      ref.read(locationProvider.notifier).refreshIfPermitted();
       _welcomeProfileTimer = Timer(const Duration(seconds: 3), () {
         unawaited(
           maybePresentWelcomeProfileFlow(context: context, ref: ref),
@@ -72,6 +80,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _welcomeProfileTimer?.cancel();
     _notifyWidgetSyncTimer?.cancel();
     _notifyExpiryTimer?.cancel();
+    _globalSearchExpiryTimer?.cancel();
     _sheetController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -80,7 +89,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      unawaited(riderRuntimeConfig.refresh());
       unawaited(ref.read(activeSearchProvider.notifier).expireIfStale());
+      unawaited(_enforceGlobalSearchWindow());
     }
   }
 
@@ -116,7 +127,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
     _notifyExpiryScheduledFor = startedAt;
     _notifyExpiryTimer?.cancel();
-    const limit = kRiderDriverSearchWindow;
+    final limit = kRiderDriverSearchWindow;
     final left = limit - DateTime.now().difference(startedAt);
     if (left <= Duration.zero) {
       unawaited(_onNotifySearchWindowEnded());
@@ -128,6 +139,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Future<void> _onNotifySearchWindowEnded() async {
     if (!mounted) return;
     await ref.read(activeSearchProvider.notifier).clear();
+    unawaited(SoundService().playRideCancelled());
     if (!mounted) return;
     if (await ref.read(activeSearchProvider.notifier).isGrowthModalDismissed()) {
       return;
@@ -138,6 +150,73 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ref,
       markGrowthModalDismissedAfter: true,
     );
+  }
+
+  Future<void> _enforceGlobalSearchWindow() async {
+    if (!mounted) return;
+    final identity = await ref.read(riderIdentityProvider.future);
+    final token = identity.riderToken;
+    if (!identity.hasSession || token == null || token.isEmpty) return;
+
+    final now = DateTime.now();
+    bool cancelledAny = false;
+    try {
+      final rows = await HeyCabySupabase.client
+          .from('ride_requests')
+          .select('id, created_at')
+          .eq('rider_token', token)
+          .inFilter('status', ['pending', 'bidding'])
+          .order('created_at', ascending: false)
+          .limit(25);
+      for (final raw in (rows as List<dynamic>)) {
+        final m = Map<String, dynamic>.from(raw as Map);
+        final id = m['id'] as String?;
+        if (id == null) continue;
+        final created =
+            DateTime.tryParse((m['created_at'] ?? '').toString());
+        if (created == null) continue;
+        if (now.difference(created) <= kRiderDriverSearchWindow) continue;
+        await cancelExpiredRiderOpenRide(rideId: id, riderToken: token);
+        cancelledAny = true;
+      }
+    } catch (_) {
+      return;
+    }
+
+    if (!mounted || !cancelledAny || _globalExpiryModalShowing) return;
+    unawaited(SoundService().playRideCancelled());
+    _globalExpiryModalShowing = true;
+    try {
+      await showDriverSearchExpiredDialog(
+        context,
+        ref,
+        markGrowthModalDismissedAfter: false,
+      );
+    } finally {
+      _globalExpiryModalShowing = false;
+    }
+  }
+
+  void _armGlobalSearchExpiryTimer(List<NearTermRideSnapshot> rides) {
+    _globalSearchExpiryTimer?.cancel();
+    final now = DateTime.now();
+    DateTime? soonestExpiry;
+    for (final r in rides) {
+      final expiry = r.createdAt.add(kRiderDriverSearchWindow);
+      if (!expiry.isAfter(now)) continue;
+      if (soonestExpiry == null || expiry.isBefore(soonestExpiry)) {
+        soonestExpiry = expiry;
+      }
+    }
+    if (soonestExpiry == null) return;
+    final left = soonestExpiry.difference(now);
+    if (left <= Duration.zero) {
+      unawaited(_enforceGlobalSearchWindow());
+      return;
+    }
+    _globalSearchExpiryTimer = Timer(left, () {
+      unawaited(_enforceGlobalSearchWindow());
+    });
   }
 
   void _onMapCreated(MapboxMap map) async {
@@ -224,44 +303,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   Future<void> _fetchNearbyTaxiCount(double lat, double lng) async {
     try {
-      final supabase = HeyCabySupabase.client;
-      
-      // Calculate bounding box for 8km radius
-      // 1 degree latitude ≈ 111km, 1 degree longitude ≈ 111km * cos(latitude)
-      final latDelta = 8.0 / 111.0;
-      final lngDelta = 8.0 / (111.0 * 0.7); // cos(52°) ≈ 0.7 for Netherlands
-      
-      // Schema: driver_locations uses latitude/longitude + driver_id (no status).
-      // Online state lives on public.drivers.status (driver_status enum).
-      final locResponse = await supabase
-          .from('driver_locations')
-          .select('driver_id')
-          .gte('latitude', lat - latDelta)
-          .lte('latitude', lat + latDelta)
-          .gte('longitude', lng - lngDelta)
-          .lte('longitude', lng + lngDelta);
-
-      final locRows = locResponse as List<dynamic>;
-      final driverIds = <String>{};
-      for (final row in locRows) {
-        final id = (row as Map<String, dynamic>)['driver_id'] as String?;
-        if (id != null && id.isNotEmpty) driverIds.add(id);
+      final dio = Dio(
+        BaseOptions(
+          baseUrl: 'https://heycaby.nl',
+          connectTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 15),
+          headers: {'Content-Type': 'application/json'},
+        ),
+      );
+      final token = HeyCabySupabase.client.auth.currentSession?.accessToken;
+      if (token != null && token.isNotEmpty) {
+        dio.options.headers['Authorization'] = 'Bearer $token';
       }
-
-      if (driverIds.isEmpty) {
-        if (mounted) setState(() => _nearbyTaxiCount = 0);
-        return;
-      }
-
-      final driversResponse = await supabase
-          .from('drivers')
-          .select('id')
-          .inFilter('id', driverIds.toList())
-          .inFilter('status', ['available', 'on_ride']);
+      final response = await dio.get<Map<String, dynamic>>(
+        '/api/v1/rider/nearby-supply',
+        queryParameters: {'lat': lat, 'lng': lng},
+      );
+      final count = (response.data?['count'] as num?)?.toInt() ??
+          ((response.data?['drivers'] as List?)?.length ?? 0);
 
       if (mounted) {
         setState(() {
-          _nearbyTaxiCount = (driversResponse as List).length;
+          _nearbyTaxiCount = count;
         });
       }
     } catch (e) {
@@ -334,6 +397,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         _notifyExpiryScheduledFor = null;
       }
     });
+
+    final upcoming = ref.watch(ridesTabUpcomingRequestsProvider).valueOrNull ?? const [];
+    if (upcoming.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _armGlobalSearchExpiryTimer(upcoming);
+      });
+    } else {
+      _globalSearchExpiryTimer?.cancel();
+    }
 
     final activeSchedule = ref.watch(activeSearchProvider).valueOrNull;
     if (activeSchedule != null) {
@@ -603,11 +676,10 @@ class _WhereToBar extends ConsumerWidget {
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () async {
-                final pos = await LocationService.requestAndGetLocation();
-                if (pos == null) {
-                  if (context.mounted) context.go('/location-required');
-                  return;
-                }
+                final ok = await ensureLocationForBooking(context: context, ref: ref);
+                if (!ok) return;
+                // Entering the standard search flow from home should default to instant.
+                ref.read(bookingProvider.notifier).setInstant();
                 if (context.mounted) context.go('/search');
               },
               child: Padding(
@@ -645,11 +717,8 @@ class _HomeButton extends ConsumerWidget {
   const _HomeButton({required this.colors, required this.l10n});
 
   Future<void> _handleHomeTap(BuildContext context, WidgetRef ref) async {
-    final pos = await LocationService.requestAndGetLocation();
-    if (pos == null) {
-      if (context.mounted) context.go('/location-required');
-      return;
-    }
+    final ok = await ensureLocationForBooking(context: context, ref: ref);
+    if (!ok) return;
     if (!context.mounted) return;
 
     // Show saved addresses sheet; if rider picks one, set it as destination
@@ -701,11 +770,8 @@ class _ScheduleButton extends ConsumerWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () async {
-        final pos = await LocationService.requestAndGetLocation();
-        if (pos == null) {
-          if (context.mounted) context.go('/location-required');
-          return;
-        }
+        final ok = await ensureLocationForBooking(context: context, ref: ref);
+        if (!ok) return;
         ref.read(bookingProvider.notifier).setScheduled();
         if (context.mounted) context.go('/search');
       },
@@ -1015,11 +1081,8 @@ class _AirportBookingHomeCard extends ConsumerWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: () async {
-          final pos = await LocationService.requestAndGetLocation();
-          if (pos == null) {
-            if (context.mounted) context.go('/location-required');
-            return;
-          }
+          final ok = await ensureLocationForBooking(context: context, ref: ref);
+          if (!ok) return;
           if (context.mounted) context.push('/airport-booking');
         },
         borderRadius: BorderRadius.circular(16),

@@ -56,7 +56,6 @@ class ScheduledPrerideActions extends ConsumerWidget {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: colors.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -262,7 +261,9 @@ class ScheduledPrerideActions extends ConsumerWidget {
                 );
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Tikkie-link gekopieerd')),
+                  const SnackBar(
+                    content: Text(DriverStrings.prerideTikkieLinkCopied),
+                  ),
                 );
               },
               icon: Icon(Icons.copy, size: 18, color: colors.accent),

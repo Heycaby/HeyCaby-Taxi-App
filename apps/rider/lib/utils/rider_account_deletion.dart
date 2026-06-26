@@ -6,6 +6,7 @@ import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../providers/booking_provider.dart';
+import '../providers/settings_provider.dart';
 
 /// Confirmation dialog: owns its [TextEditingController] so overlay dispose
 /// does not fight a controller owned by the async helper (avoids framework
@@ -295,6 +296,7 @@ Future<void> performRiderAccountDeletion(
     }
 
     await ref.read(riderIdentityProvider.notifier).clearSession();
+    await ref.read(settingsProvider.notifier).clearUserName();
     ref.read(bookingProvider.notifier).reset();
     if (context.mounted) {
       await showDialog<void>(

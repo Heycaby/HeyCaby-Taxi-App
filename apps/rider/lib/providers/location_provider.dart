@@ -23,6 +23,24 @@ class LocationNotifier extends AsyncNotifier<Position?> {
     }
   }
 
+  /// Refreshes location only when permission is already granted.
+  /// This avoids showing OS prompts on app startup and keeps permission asks
+  /// contextual to rider actions (e.g. starting a booking flow).
+  Future<void> refreshIfPermitted() async {
+    final perm = await Geolocator.checkPermission();
+    if (perm == LocationPermission.whileInUse ||
+        perm == LocationPermission.always) {
+      try {
+        final pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
+        state = AsyncData(pos);
+        return;
+      } catch (_) {}
+    }
+    state = const AsyncData(null);
+  }
+
   /// Set position from an external flow (e.g. splash after [LocationService.requestAndGetLocation]).
   void setPosition(Position position) {
     state = AsyncData(position);

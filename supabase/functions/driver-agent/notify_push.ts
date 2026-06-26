@@ -15,10 +15,15 @@ export async function sendFcmNotification(
     body: string | null
     data?: Record<string, unknown>
     priority?: string
+    androidChannelId?: string
   },
 ): Promise<void> {
   if (!fcmToken || fcmToken.length < 10) return
-  await sendFcmV1ToToken(fcmToken, notification)
+  const channelFromData = notification.data?.android_channel_id as string | undefined
+  await sendFcmV1ToToken(fcmToken, {
+    ...notification,
+    androidChannelId: notification.androidChannelId ?? channelFromData,
+  })
 }
 
 export async function recentPrerideNotification(supabase: SupabaseClient, rideRequestId: string): Promise<boolean> {

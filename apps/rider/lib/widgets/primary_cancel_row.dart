@@ -67,7 +67,12 @@ class PrimaryCancelRow extends StatelessWidget {
           child: SizedBox(
             height: 52,
             child: ElevatedButton(
-              onPressed: onPrimary,
+              onPressed: onPrimary == null
+                  ? null
+                  : () {
+                      HapticService.heavyTap();
+                      onPrimary!();
+                    },
               style: ElevatedButton.styleFrom(
                   disabledBackgroundColor: colors.border,
                   disabledForegroundColor: colors.textMid,

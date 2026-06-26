@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 
+import '../models/driver_payment_ledger_item.dart';
 import '../services/driver_data_service.dart';
 import '../services/driver_shift_session_service.dart';
 import '../services/ride_swap_service.dart';
@@ -25,6 +26,11 @@ final rideSwapFeedProvider = FutureProvider<List<RideSwapListing>>((ref) async {
     driverLat: pos?.latitude,
     driverLng: pos?.longitude,
   );
+});
+
+/// Persisted “Niet meer tonen” for the Ritwissel intro bottom sheet; invalidate after saving.
+final rideSwapIntroDismissedProvider = FutureProvider<bool>((ref) async {
+  return ref.read(driverDataServiceProvider).isRideSwapIntroDismissed();
 });
 
 final driverShiftSessionServiceProvider =
@@ -92,6 +98,25 @@ final activeRateProfileProvider = FutureProvider<DriverRateProfile?>((ref) async
     if (p.isActive) return p;
   }
   return null;
+});
+
+/// Billing/payment status from backend (platform fee state, due/paid dates, etc.).
+final driverBillingStatusProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
+  await ref.watch(driverIdProvider.future);
+  try {
+    final data = await ref.read(driverApiProvider).fetchDriverStatus();
+    return data;
+  } catch (_) {
+    return null;
+  }
+});
+
+/// Mollie / platform payment rows from GET `/api/driver/payments` (empty if none or route missing).
+final driverPaymentLedgerProvider =
+    FutureProvider<List<DriverPaymentLedgerItem>>((ref) async {
+  await ref.watch(driverIdProvider.future);
+  final raw = await ref.read(driverApiProvider).fetchDriverPaymentLedger();
+  return raw.map(DriverPaymentLedgerItem.fromMap).toList();
 });
 
 /// Driver Hub badge count (open tickets + unresolved safety events). 10 = show "9+".
@@ -198,6 +223,20 @@ final todayRidesProvider = FutureProvider<List<TodayRide>>((ref) async {
   return ref.read(driverDataServiceProvider).getTodayRides(id);
 });
 
+/// All rides for the current driver (history list for My Rides tab).
+final myRidesProvider = FutureProvider<List<MyRideSummary>>((ref) async {
+  final id = await ref.watch(driverIdProvider.future);
+  if (id == null) return [];
+  return ref.read(driverDataServiceProvider).getMyRides(id);
+});
+
+/// Detail payload for one ride entry in My Rides.
+final myRideDetailsProvider =
+    FutureProvider.family<MyRideDetails?, String>((ref, rideId) async {
+  if (rideId.trim().isEmpty) return null;
+  return ref.read(driverDataServiceProvider).getMyRideDetails(rideId);
+});
+
 /// Last 7 days daily earnings for weekly chart.
 final weeklyDailyEarningsProvider = FutureProvider<List<double>>((ref) async {
   final id = await ref.watch(driverIdProvider.future);
@@ -208,6 +247,29 @@ final weeklyDailyEarningsProvider = FutureProvider<List<double>>((ref) async {
 /// Community posts by channel.
 final communityPostsProvider = FutureProvider.family<List<CommunityPost>, String>((ref, channel) async {
   return ref.read(driverDataServiceProvider).getCommunityPosts(channel);
+});
+
+/// Same source as [communityPostsProvider] but a higher limit for the full-channel feed screen.
+final communityChannelFeedProvider =
+    FutureProvider.family<List<CommunityPost>, String>((ref, channel) async {
+  return ref.read(driverDataServiceProvider).getCommunityPosts(channel, limit: 100);
+});
+
+/// Driver notifications for Community bell sheet (latest first).
+final communityNotificationsProvider =
+    FutureProvider<List<DriverNotificationItem>>((ref) async {
+  try {
+    return await ref.read(driverApiProvider).getNotifications(unreadOnly: false, limit: 40);
+  } catch (_) {
+    // Do not fail the community screen if backend auth/session for this endpoint is stale.
+    return const [];
+  }
+});
+
+/// Unread count for the Community bell badge.
+final communityUnreadNotificationsCountProvider = FutureProvider<int>((ref) async {
+  final all = await ref.watch(communityNotificationsProvider.future);
+  return all.where((n) => n.isUnread).length;
 });
 
 /// Driver profile for Me tab.
@@ -249,24 +311,23 @@ final filteredReturnTripsProvider = FutureProvider<List<DriverReturnTrip>>((ref)
   }).toList();
 });
 
-/// Power Mode suggestions (Step 11).
-final powerSuggestionsProvider = FutureProvider<List<DriverPowerCard>>((ref) async {
-  final id = await ref.watch(driverIdProvider.future);
-  if (id == null) return [];
-  return ref.read(driverDataServiceProvider).getPowerSuggestions(id);
-});
-
-/// Union Mode dashboard rows (Step 12).
-final unionDashboardProvider = FutureProvider<List<UnionDashboardRow>>((ref) async {
-  return ref.read(driverDataServiceProvider).getUnionDashboard();
-});
-
-/// Union Mode signals feed (Step 12).
-final marketSignalsProvider = FutureProvider<List<DriverMarketSignal>>((ref) async {
-  return ref.read(driverDataServiceProvider).getMarketSignals(limit: 30);
-});
-
 /// Latest community post for home sheet preview.
 final latestCommunityPostProvider = FutureProvider<CommunityPost?>((ref) async {
   return ref.read(driverDataServiceProvider).getLatestCommunityPost();
+});
+
+/// Top requested app ideas from driver suggestion board.
+final topDriverAppSuggestionsProvider = FutureProvider<List<DriverTopAppSuggestion>>((ref) async {
+  return ref.read(driverDataServiceProvider).getTopAppSuggestions(limit: 8);
+});
+
+/// Finance + Tax metrics for a selected date range.
+final driverFinanceMetricsProvider =
+    FutureProvider.family<DriverFinanceMetrics, DriverFinanceRange>((ref, range) async {
+  final id = await ref.watch(driverIdProvider.future);
+  if (id == null) return const DriverFinanceMetrics();
+  return ref.read(driverDataServiceProvider).getFinanceMetrics(
+        driverId: id,
+        range: range,
+      );
 });

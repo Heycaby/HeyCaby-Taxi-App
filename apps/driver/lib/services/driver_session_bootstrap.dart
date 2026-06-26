@@ -6,6 +6,7 @@ import '../providers/driver_data_providers.dart';
 /// Invalidates profile/compliance/driver id providers. Returns `drivers.id`.
 Future<String?> bootstrapDriverSessionAfterAuth(WidgetRef ref) async {
   final svc = ref.read(driverDataServiceProvider);
+  await svc.ensureDriverJwtUserType();
   final claim = await svc.claimFoundingDriver();
   if (claim != null && claim.isFoundingDriver) {
     ref.read(foundingDriverPostClaimProvider.notifier).state = claim;

@@ -75,6 +75,11 @@ class AppLocalizationsNl extends AppLocalizations {
   String get driverAssigned => 'Chauffeur onderweg';
 
   @override
+  String driverReturnTripDiscount(int pct) {
+    return '$pct% korting retourrit';
+  }
+
+  @override
   String get driverArrived => 'Je chauffeur is er';
 
   @override
@@ -189,7 +194,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get rideBookingFailed =>
-      'De rit kon niet starten — de server weigerde het verzoek. Bij een lokale build: controleer SUPABASE_URL en SUPABASE_ANON_KEY in je .env (Supabase Dashboard → Settings → API) en probeer opnieuw.';
+      'De rit kon niet starten — autorisatie is door de server geweigerd. Vernieuw je sessie (uitloggen en opnieuw inloggen) en probeer daarna opnieuw.';
 
   @override
   String get locationPermissionRequired =>
@@ -200,7 +205,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get locationRequiredMessage =>
-      'HeyCaby heeft je locatie nodig voor je ophaalpunt en om chauffeurs te vinden. Zonder locatie kun je geen rit boeken.';
+      'HeyCaby heeft je locatie nodig voor een nauwkeurig ophaalpunt, het vinden van chauffeurs in de buurt en betrouwbare aankomsttijden. Zonder locatietoegang kunnen we je niet goed helpen en kun je geen rit boeken.';
 
   @override
   String get enableLocation => 'Locatie inschakelen';
@@ -927,7 +932,8 @@ class AppLocalizationsNl extends AppLocalizations {
   String get accountSettingsHeading => 'Instellingen';
 
   @override
-  String get accountLocationNeededBody => 'Locatietoegang nodig';
+  String get accountLocationNeededBody =>
+      'Locatietoegang is nodig voor een nauwkeurig ophaalpunt, matching met chauffeurs in de buurt en betrouwbare ritupdates.';
 
   @override
   String get accountManageLocation => 'Beheer locatietoegang';
@@ -1197,6 +1203,95 @@ class AppLocalizationsNl extends AppLocalizations {
       'Je bericht is opgeslagen. De assistent is offline — support kan het nog steeds lezen.';
 
   @override
+  String get supportAiConsentTitle =>
+      'Maak kennis met Yaz, je AI-supportassistent';
+
+  @override
+  String get supportAiConsentIntro =>
+      'Yaz is de AI-klantenserviceassistent van HeyCaby. Haar taak is om je klacht te begrijpen en eenvoudige supportproblemen snel op te lossen.';
+
+  @override
+  String get supportAiConsentDataSent =>
+      'Om je te helpen sturen we: je bericht, je supportticket-categorie en beperkte accountcontext die nodig is om je vraag te beantwoorden.';
+
+  @override
+  String get supportAiConsentThirdParty =>
+      'AI-verwerking: Yaz gebruikt OpenAI (ChatGPT)-modellen om antwoorden te genereren.';
+
+  @override
+  String get supportAiConsentPolicy =>
+      'Bij serieuze of gevoelige kwesties: deel geen privégegevens in AI-chat. Mail support via hello@heycaby.nl.';
+
+  @override
+  String get supportAiConsentEmailOption =>
+      'Deel geen wachtwoorden, volledige betaalkaartnummers, overheids-ID\'s of andere zeer gevoelige gegevens in AI-chat.';
+
+  @override
+  String get supportAiConsentCheckbox =>
+      'Ik begrijp welke gegevens worden gedeeld, wie ze verwerkt, en ik geef HeyCaby toestemming om deze supportchat-gegevens te delen met Yaz AI-support.';
+
+  @override
+  String get supportAiConsentContinue => 'Ik ga akkoord en ga verder';
+
+  @override
+  String get supportAiConsentSendEmail => 'Stuur liever een e-mail';
+
+  @override
+  String get supportCategoryRideIssue => 'Rit probleem';
+
+  @override
+  String get supportCategoryPayment => 'Betaling';
+
+  @override
+  String get supportCategoryAccount => 'Account';
+
+  @override
+  String get supportMessageSentTitle => 'Bericht verzonden';
+
+  @override
+  String get supportMessageSentBody =>
+      'Bedankt voor je bericht. Ons supportteam bekijkt het en neemt zo snel mogelijk contact met je op.\n\nIs je probleem urgent? Dan kun je chatten met Yaz (AI-supportassistent). Deel geen gevoelige persoonsgegevens in AI-chat.';
+
+  @override
+  String get supportMessageSendFailedTitle =>
+      'Bericht kon niet worden verzonden';
+
+  @override
+  String get supportMessageSendFailedBody =>
+      'We konden je supportbericht nu niet verzenden. Probeer het zo opnieuw, of gebruik Chat met Yaz voor urgente hulp.';
+
+  @override
+  String get supportChatWithYaz => 'Chat met Yaz';
+
+  @override
+  String get supportSendMessageButton => 'Verstuur bericht';
+
+  @override
+  String get supportYazUnavailableGuestAuthDisabled =>
+      'Yaz-chat is tijdelijk niet beschikbaar omdat gastchat-auth op de server is uitgeschakeld.';
+
+  @override
+  String get supportYazUnavailableTemporary =>
+      'Yaz-chat is tijdelijk niet beschikbaar. Probeer het zo opnieuw.';
+
+  @override
+  String get supportYazFallbackReply =>
+      'Ik kan nu geen antwoord geven. Probeer opnieuw of stuur een e-mail naar support.';
+
+  @override
+  String get supportEmailSupport => 'E-mail support';
+
+  @override
+  String get supportYazAssistantTitle => 'Yaz AI-supportassistent';
+
+  @override
+  String get supportYazAssistantSubtitle =>
+      'Stel vragen over je rit, account of betaling.';
+
+  @override
+  String get supportYazMessageHint => 'Bericht aan Yaz...';
+
+  @override
   String get favouriteDriversAccountSubtitle =>
       'Bewaar vertrouwde chauffeurs en stuur ritten direct naar hen.';
 
@@ -1288,6 +1383,17 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get vehicleSupplyEstimatesNote =>
       'Prijzen en beschikbaarheid zijn schattingen en kunnen veranderen bij het boeken.';
+
+  @override
+  String get returnTripFareEstimatesTitle => 'Retourritten';
+
+  @override
+  String get returnTripFareEstimatesSubtitle =>
+      'Toon chauffeursprijzen met hun actieve retourkorting. Zet uit voor prijzen op het standaardtarief.';
+
+  @override
+  String get returnTripFareEstimatesRequiresRoute =>
+      'Voeg ophaal- en bestemming toe om retourprijzen te zien.';
 
   @override
   String get vehicleSupplyNoPickup =>
@@ -1428,6 +1534,12 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get rideDetails => 'Ritdetails';
+
+  @override
+  String get rideDetailViewReceipt => 'Bekijk bon';
+
+  @override
+  String get rideDetailReceiptLoadFailed => 'Bon kon nu niet worden geladen.';
 
   @override
   String get rebookRide => 'Opnieuw boeken';
@@ -1629,105 +1741,108 @@ class AppLocalizationsNl extends AppLocalizations {
   String get termsTitle => 'Algemene voorwaarden';
 
   @override
-  String get termsWhatIsHeyCaby => 'Wat is HeyCaby';
+  String get termsWhatIsHeyCaby => '1. Over HeyCaby';
 
   @override
   String get termsWhatIsHeyCabyBody =>
-      'HeyCaby is een platform zonder commissie dat reizigers verbindt met professionele, gelicentieerde Nederlandse taxichauffeurs. HeyCaby neemt geen chauffeurs in dienst en stelt geen tarieven vast. Het platform faciliteert alleen de koppeling.';
+      'HeyCaby is een platform dat reizigers koppelt aan onafhankelijke, gelicentieerde taxichauffeurs. Wij nemen chauffeurs niet in dienst en leveren zelf geen vervoersdienst. We faciliteren alleen matching en communicatie.\n\nGebruikersrollen:\n• Reizigers: personen die vervoer aanvragen\n• Chauffeurs: zelfstandige professionals die vervoer uitvoeren\n\nIedere gebruiker is verantwoordelijk voor eigen gedrag op het platform.';
 
   @override
-  String get termsRiderResponsibilities => 'Verantwoordelijkheden reiziger';
+  String get termsRiderResponsibilities =>
+      '2. Verantwoordelijkheden van reizigers';
 
   @override
   String get termsRiderResponsibilitiesBody =>
-      'Reizigers moeten nauwkeurige boekingsinformatie verstrekken, inclusief correcte ophaallocatie en bestemming. Respectvol gedrag tegenover chauffeurs is te allen tijde vereist. Reizigers moeten aanwezig zijn op de ophaallocatie wanneer de chauffeur arriveert.';
+      'Als reiziger ga je akkoord met:\n• Correcte ophaal- en bestemmingsinformatie geven\n• Op tijd aanwezig zijn op de ophaallocatie\n• Respectvol en professioneel omgaan met chauffeurs\n• Voltooide ritten betalen via afgesproken methoden\n• Geen illegaal, beledigend of onveilig gedrag\n\nNiet naleven kan leiden tot accountbeperkingen of schorsing.';
 
   @override
-  String get termsPayment => 'Betaling';
+  String get termsPayment =>
+      '3. Verantwoordelijkheden van chauffeurs en 4. Betalingen';
 
   @override
   String get termsPaymentBody =>
-      'Alle betalingen worden rechtstreeks van reiziger aan chauffeur gedaan. HeyCaby verwerkt, bewaart of neemt geen percentage van enige betaling. Beschikbare methoden zijn contant, PIN (betaalpas) en Tikkie.';
+      'Chauffeurs op HeyCaby moeten geldige vergunningen hebben, veilig en wettig vervoer leveren, duidelijk communiceren, eerlijke prijzen hanteren en betalingen direct met reizigers afhandelen.\n\nBetalingen verlopen direct tussen reiziger en chauffeur. HeyCaby verwerkt, bewaart of garandeert geen betalingen. Mogelijke methoden zijn contant, pin (kaart) of externe apps (zoals Tikkie). Betaalgeschillen worden opgelost tussen reiziger en chauffeur.';
 
   @override
-  String get termsCancellation => 'Annulering';
+  String get termsCancellation => '5. Annuleringen';
 
   @override
   String get termsCancellationBody =>
-      'Ritten kunnen gratis worden geannuleerd voordat een chauffeur het verzoek accepteert. Zodra een chauffeur heeft geaccepteerd, kan de chauffeur naar eigen inzicht annuleringskosten in rekening brengen.';
+      'Reizigers kunnen kosteloos annuleren vóórdat een chauffeur accepteert. Na acceptatie kunnen annuleringskosten gelden naar inzicht van de chauffeur. Herhaalde annuleringen of no-shows kunnen tot beperkingen leiden.';
 
   @override
-  String get termsSuspension => 'Account schorsing';
+  String get termsSuspension => '6. Platformgebruik en 8. Accountschorsing';
 
   @override
   String get termsSuspensionBody =>
-      'HeyCaby behoudt zich het recht voor accounts te schorsen in gevallen van fraude, misbruik, herhaalde no-shows of valse meldingen tegen chauffeurs.';
+      'Je gaat ermee akkoord het platform niet te misbruiken, geen valse informatie te geven, geen fraude/betaalmisbruik te plegen en andere gebruikers niet te intimideren of te schaden.\n\nHeyCaby kan accounts schorsen of beëindigen bij fraude, misbruik, intimidatie, herhaalde no-shows/annuleringen of andere schendingen van deze voorwaarden.';
 
   @override
-  String get termsDisputes => 'Geschilbeslechting';
+  String get termsDisputes => '9. Geschillen en 10. Aansprakelijkheid';
 
   @override
   String get termsDisputesBody =>
-      'Geschillen tussen reizigers en chauffeurs moeten eerst worden gemeld via de meldingsfunctie in de app. HeyCaby beoordeelt meldingen en bemiddelt waar mogelijk.';
+      'Gebruikers proberen geschillen eerst onderling op te lossen. Indien nodig kunnen geschillen in de app worden gemeld. HeyCaby kan ondersteunen, maar is niet aansprakelijk voor uitkomsten tussen gebruikers.\n\nHeyCaby is niet aansprakelijk voor gedrag van chauffeurs of reizigers, kwaliteit/veiligheid van ritten, of schade/verlies/geschillen die uit ritten voortkomen. HeyCaby is een facilitator, geen vervoerder.';
 
   @override
-  String get termsGoverningLaw => 'Toepasselijk recht';
+  String get termsGoverningLaw => '11. Wijzigingen van voorwaarden';
 
   @override
   String get termsGoverningLawBody =>
-      'Deze voorwaarden worden beheerst door Nederlands recht. Juridische procedures worden gevoerd voor de bevoegde rechtbanken in Nederland.';
+      'We kunnen deze voorwaarden op elk moment aanpassen. Door het platform te blijven gebruiken, accepteer je de bijgewerkte voorwaarden.';
 
   @override
-  String get termsContact => 'Contact';
+  String get termsContact => '12. Contact';
 
   @override
   String get termsContactBody =>
-      'Voor vragen over deze voorwaarden, neem contact op met ondersteuning via het Account-scherm in de app.';
+      'Voor ondersteuning of geschillen gebruik je de supportfunctie in de app.';
 
   @override
   String get privacyTitle => 'Privacybeleid';
 
   @override
-  String get privacyDataCollected => 'Verzamelde gegevens';
+  String get privacyDataCollected => '1. Welke informatie we verzamelen';
 
   @override
   String get privacyDataCollectedBody =>
-      'HeyCaby verzamelt je e-mailadres (voor identiteitsverificatie), locatiegegevens (alleen tijdens actieve boekingen) en ritgeschiedenis (voor bonnen en rithistorie).';
+      'We verzamelen alleen gegevens die nodig zijn om de dienst te leveren:\n• Accountgegevens: e-mail en basisprofiel voor accountaanmaak en verificatie\n• Locatiegegevens: tijdens actieve boekingen om reizigers met chauffeurs te matchen\n• Ritgegevens: ophaal/afzetlocaties, tijdstempels en rithistorie voor bonnen en verbetering\n• Apparaatgegevens: appversie, apparaattype en push-tokens voor werking en prestaties\n• Supportgegevens: supportticket-berichten en categorie, die bij jouw toestemming in chat door onze AI-supportprovider kunnen worden verwerkt';
 
   @override
-  String get privacyLocationData => 'Locatiegegevens';
+  String get privacyLocationData => '3. Gebruik van locatiegegevens';
 
   @override
   String get privacyLocationDataBody =>
-      'Locatiegegevens worden alleen gebruikt tijdens actieve boekings- en ritsessies. Je locatie wordt nooit langer opgeslagen dan de duur van de rit en wordt niet gebruikt voor tracking buiten ritten.';
+      'Locatie wordt alleen gebruikt tijdens actieve ritten/boekingen. We volgen gebruikers niet op de achtergrond buiten boekingen. Locatiegegevens worden niet langer bewaard dan nodig voor het afronden van de rit.';
 
   @override
-  String get privacyDataSharing => 'Gegevens delen';
+  String get privacyDataSharing => '4. Delen van gegevens';
 
   @override
   String get privacyDataSharingBody =>
-      'Wanneer je een rit boekt, ontvangt de chauffeur alleen je boeknaam en ophaallocatie. Je e-mailadres, telefoonnummer en andere persoonlijke gegevens worden nooit gedeeld met chauffeurs.';
+      'We delen beperkte gegevens alleen wanneer dat nodig is voor de dienst.\n\nChauffeurs ontvangen: reizigersnaam (of alias) en ophaallocatie.\nReizigers ontvangen: chauffeursgegevens die nodig zijn voor de rit.\n\nSupport-AI (na jouw toestemming vóór het eerste bericht): inhoud van supportchat-berichten, ticketcategorie en minimale context die nodig is om je verzoek te beantwoorden worden verwerkt door OpenAI (ChatGPT)-modellen.\n\nWe delen geen e-mailadressen, telefoonnummers (tenzij in toekomstige functies expliciet nodig), of gevoelige persoonsgegevens voor AI-chat.';
 
   @override
-  String get privacyRetention => 'Gegevens bewaren';
+  String get privacyRetention => '5. Bewaartermijnen';
 
   @override
   String get privacyRetentionBody =>
-      'Ritgeschiedenis wordt bewaard voor bon- en historiedoeleinden. Accountgegevens worden bewaard tot je verwijdering aanvraagt. Recente bestemmingen verlopen automatisch na 120 uur.';
+      'Ritgegevens worden bewaard voor bonnen en historie. Accountgegevens worden bewaard totdat verwijdering wordt aangevraagd. Tijdelijke gegevens (zoals recente zoekopdrachten) kunnen automatisch verlopen.';
 
   @override
-  String get privacyGdpr => 'Jouw rechten (AVG)';
+  String get privacyGdpr => '6. Jouw rechten (AVG)';
 
   @override
   String get privacyGdprBody =>
-      'Onder de AVG heb je het recht op inzage, rectificatie en verwijdering. Je kunt je passagiersaccount in de app verwijderen via Account → Mijn account verwijderen. Voor andere verzoeken: ondersteuning via het Account-scherm.';
+      'Als EU-gebruiker heb je recht op inzage, correctie, verwijdering, beperking en bezwaar tegen verwerking.\n\nJe kunt je account direct in de app verwijderen: Account → Delete Account.';
 
   @override
-  String get privacyNoAds => 'Geen reclame';
+  String get privacyNoAds =>
+      '2/7/8/9/10/11/12. Gebruik, AI-support (Yaz), beveiliging, meldingen, derden, wijzigingen, contact';
 
   @override
   String get privacyNoAdsBody =>
-      'HeyCaby toont geen reclame en verkoopt je gegevens niet aan derden. Je gegevens worden uitsluitend gebruikt voor het aanbieden van de ritkoppelingsdienst.';
+      'Je gegevens worden uitsluitend gebruikt om HeyCaby te laten werken: matching, boekingen, communicatie, ritoverzichten, prestatieverbetering en belangrijke meldingen.\n\nAI-support (Yaz): wanneer je kiest voor \"Chat met Yaz\" en in de app expliciet toestemming geeft, worden je supportbericht-inhoud, ticketcategorie en beperkte accountcontext verwerkt door OpenAI (ChatGPT) om supportantwoorden te genereren. AI-chat is optioneel. Je kunt ook niet-AI support gebruiken via \"Nieuw bericht\".\n\nWe instrueren gebruikers om geen zeer gevoelige gegevens in AI-chat te delen (zoals wachtwoorden, volledige betaalkaartnummers of overheids-ID-nummers). Voor gevoelige of complexe kwesties verwijzen we gebruikers naar menselijke support.\n\nWe gebruiken je gegevens niet voor advertenties en verkopen geen gegevens aan derden.\n\nWe nemen technische en organisatorische maatregelen om gegevens te beveiligen, maar geen systeem is 100% veilig.\n\nPushmeldingen kunnen gaan over ritupdates, belangrijke servicemeldingen en incidentele productupdates. Je kunt meldingen altijd uitschakelen in je toestelinstellingen.\n\nWe gebruiken vertrouwde dienstverleners (bijv. betaalproviders, Firebase, Supabase) alleen waar nodig voor de dienst.\n\nWe kunnen dit beleid periodiek aanpassen; door de app te blijven gebruiken accepteer je updates.\n\nVoor privacyverzoeken: neem contact op via support in de app.';
 
   @override
   String distanceRemaining(String km) {
@@ -2036,4 +2151,139 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get scheduledRideLabel => 'Gepland voor';
+
+  @override
+  String get activeRideShareError => 'Rit delen lukt nu niet';
+
+  @override
+  String get activeRideCancelConfirmBody =>
+      'Weet je zeker dat je deze rit wilt annuleren? Opnieuw boeken brengt je mogelijk niet sneller op je bestemming.';
+
+  @override
+  String get activeRideWaitForDriver => 'Wacht op chauffeur';
+
+  @override
+  String get activeRidePickupNotes => 'Nog ophaalnotities?';
+
+  @override
+  String get activeRideChatSubtitle =>
+      'Stuur snel een bericht naar je chauffeur';
+
+  @override
+  String get activeRideFoundingShort => 'Founding';
+
+  @override
+  String get activeRideShareSubtitle => 'Deel je live ritlink';
+
+  @override
+  String get activeRideReportSubtitle => 'Dien een ritmelding in';
+
+  @override
+  String get activeRideSupportSubtitle => 'Veiligheid en hulp';
+
+  @override
+  String get activeRidePickupNotSet => 'Ophaallocatie niet ingesteld';
+
+  @override
+  String get activeRideDestinationNotSet => 'Bestemming niet ingesteld';
+
+  @override
+  String get activeRideShareDetails => 'Deel ritdetails';
+
+  @override
+  String get activeRideContactDriver => 'Contacteer chauffeur';
+
+  @override
+  String activeRideCategoryLabel(String category) {
+    return 'Categorie: $category';
+  }
+
+  @override
+  String get activeRideCancelReasonLongPickup => 'Lange ophaaltijd';
+
+  @override
+  String get activeRideCancelReasonBetterAlternative => 'Betere optie gevonden';
+
+  @override
+  String get activeRideCancelReasonDriverNotCloser =>
+      'Chauffeur komt niet dichterbij';
+
+  @override
+  String get activeRideCancelReasonDriverAskedCancel =>
+      'Chauffeur vroeg om te annuleren';
+
+  @override
+  String get activeRideCancelReasonPriceDispute =>
+      'Prijsdiscussie met chauffeur';
+
+  @override
+  String get activeRideCancelReasonOutsideAppPayment =>
+      'Chauffeur vroeg betaling buiten de app';
+
+  @override
+  String get activeRidePlateNumber => 'Kenteken';
+
+  @override
+  String get activeRideUnknownPlate => 'ONBEKEND';
+
+  @override
+  String get activeRideFoundingMember => 'Founding Member';
+
+  @override
+  String get activeRideVerifyPlate =>
+      'Controleer dit kenteken voordat je instapt.';
+
+  @override
+  String get openAction => 'Openen';
+
+  @override
+  String get rideReceiptTitle => 'Ritbon';
+
+  @override
+  String get rideReceiptUnavailable => 'Bon is nog niet beschikbaar.';
+
+  @override
+  String get rideReceiptSettlement => 'Afrekening';
+
+  @override
+  String get rideReceiptRideId => 'Rit-ID';
+
+  @override
+  String get rideReceiptExpected => 'Verwacht';
+
+  @override
+  String get rideReceiptPaid => 'Betaald';
+
+  @override
+  String get rideReceiptMethod => 'Methode';
+
+  @override
+  String get rideReceiptNote => 'Notitie';
+
+  @override
+  String get rideReceiptOutstanding => 'Openstaand';
+
+  @override
+  String get rideReceiptOverpaid => 'Te veel betaald';
+
+  @override
+  String get rideReceiptStatus => 'Status';
+
+  @override
+  String get rideReceiptSettlementComplete => 'Afrekening voltooid';
+
+  @override
+  String get smartBundleRideTypeOptions => 'Ritopties';
+
+  @override
+  String smartBundleEstimatedPrice(String min, String max) {
+    return 'Geschatte prijs: $min - $max';
+  }
+
+  @override
+  String get smartBundleDriverPricingNote =>
+      'Chauffeurs bepalen hun eigen prijzen. Wij matchen je met de beste opties in de buurt.';
+
+  @override
+  String get smartBundleTapToHide => 'Tik om ritklassen te verbergen';
 }

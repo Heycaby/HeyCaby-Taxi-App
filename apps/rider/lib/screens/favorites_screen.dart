@@ -5,7 +5,7 @@ import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../providers/favorites_provider.dart';
-import '../services/location_service.dart';
+import 'location_required_screen.dart';
 
 class FavoritesScreen extends ConsumerStatefulWidget {
   const FavoritesScreen({super.key});
@@ -86,11 +86,8 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                     });
                   },
                   onPostRide: () async {
-                    final pos = await LocationService.requestAndGetLocation();
-                    if (pos == null) {
-                      if (context.mounted) context.go('/location-required');
-                      return;
-                    }
+                    final ok = await ensureLocationForBooking(context: context, ref: ref);
+                    if (!ok) return;
                     if (context.mounted) context.go('/search');
                   },
                 );
@@ -160,6 +157,7 @@ class _FavoritesList extends StatelessWidget {
                   isSelected: isSelected,
                   colors: colors,
                   typo: typo,
+                  l10n: l10n,
                   onTap: () => onDriverTap(driver),
                 );
               },
@@ -302,6 +300,7 @@ class _DriverCard extends StatelessWidget {
   final bool isSelected;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
+  final AppLocalizations l10n;
   final VoidCallback onTap;
 
   const _DriverCard({
@@ -309,6 +308,7 @@ class _DriverCard extends StatelessWidget {
     required this.isSelected,
     required this.colors,
     required this.typo,
+    required this.l10n,
     required this.onTap,
   });
 
@@ -393,7 +393,7 @@ class _DriverCard extends StatelessWidget {
   }
 
   String _getStatusText() {
-    return 'Rating: ${driver.rating.toStringAsFixed(1)} · ${driver.totalRides} rides';
+    return '${l10n.rateDriver}: ${driver.rating.toStringAsFixed(1)} · ${driver.totalRides} ${l10n.rides.toLowerCase()}';
   }
 }
 

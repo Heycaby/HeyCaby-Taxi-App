@@ -15,8 +15,12 @@ final nearbyCategorySupplyProvider = FutureProvider.autoDispose<
         c: CategorySupplySnapshot.empty(c),
     };
   }
+  final fullRoute =
+      booking.pickup != null && booking.destination != null;
   return NearbySupplyService.loadForPickup(
     pickup: pickup,
     destination: booking.destination,
+    returnTripFareEstimatesEnabled:
+        fullRoute && booking.returnTripFareEstimatesEnabled,
   );
 });

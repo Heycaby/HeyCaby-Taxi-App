@@ -10,17 +10,30 @@ class DriverComplianceOverallBanner extends StatelessWidget {
   const DriverComplianceOverallBanner({
     super.key,
     required this.snap,
+    required this.profilePhotoUrl,
+    required this.vehiclePhotoUrls,
     required this.colors,
     required this.typo,
   });
 
   final DriverComplianceSnapshot snap;
+  final String? profilePhotoUrl;
+  final List<String> vehiclePhotoUrls;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
 
   @override
   Widget build(BuildContext context) {
     final st = complianceBannerStyle(snap.complianceStatus, colors);
+    final progress = driverComplianceProgress(
+      snap,
+      profilePhotoUrl: profilePhotoUrl,
+      vehiclePhotoUrls: vehiclePhotoUrls,
+    );
+    final percent = ((progress.completed / progress.total) * 100).round();
+    final progressValue = (progress.completed / progress.total).clamp(0.0, 1.0);
+    final licensePendingManual =
+        progress.licenseStepDone && snap.rijbewijsVerified != true;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -46,6 +59,57 @@ class DriverComplianceOverallBanner extends StatelessWidget {
                   st.title,
                   style: typo.titleMedium.copyWith(color: st.fg, fontWeight: FontWeight.w800),
                 ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Text(
+                      DriverStrings.complianceProgressTitle,
+                      style: typo.labelSmall.copyWith(
+                        color: colors.textSoft,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      DriverStrings.complianceProgressPercent(percent),
+                      style: typo.labelSmall.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    value: progressValue,
+                    minHeight: 8,
+                    backgroundColor: colors.border.withValues(alpha: 0.45),
+                    valueColor: AlwaysStoppedAnimation<Color>(colors.accent),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  DriverStrings.complianceProgressCount(
+                    progress.completed,
+                    progress.total,
+                  ),
+                  style: typo.labelSmall.copyWith(
+                    color: colors.textSoft,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (licensePendingManual) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    DriverStrings.complianceManualLicensePending,
+                    style: typo.labelSmall.copyWith(
+                      color: colors.warning,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -136,7 +200,27 @@ String subtitleVehicle(DriverComplianceSnapshot? d) {
 }
 
 (String, Color, Color) chipChauffeurspas(DriverComplianceSnapshot? d, HeyCabyColorTokens colors) {
-  return rowChip(d?.chauffeurspasVerified, d?.chauffeurspasExpiry, colors);
+  if (d == null) {
+    return (
+      DriverStrings.statusActionNeeded,
+      colors.warning,
+      colors.warning.withValues(alpha: 0.14),
+    );
+  }
+  final now = DateTime.now();
+  final expiry = d.chauffeurspasExpiry;
+  final hasNumber = (d.chauffeurspasNumber ?? '').trim().isNotEmpty;
+  if (expiry != null && expiry.isBefore(now)) {
+    return (DriverStrings.statusExpired, colors.error, colors.error.withValues(alpha: 0.12));
+  }
+  if (hasNumber && expiry != null) {
+    return (DriverStrings.statusVerified, colors.success, colors.success.withValues(alpha: 0.12));
+  }
+  return (
+    DriverStrings.statusActionNeeded,
+    colors.warning,
+    colors.warning.withValues(alpha: 0.14),
+  );
 }
 
 (String, Color, Color) rowChip(bool? verified, DateTime? expiry, HeyCabyColorTokens colors) {
@@ -174,4 +258,57 @@ String subtitleVehicle(DriverComplianceSnapshot? d) {
     return (DriverStrings.statusActionNeeded, colors.warning, colors.warning.withValues(alpha: 0.14));
   }
   return (DriverStrings.statusPending, colors.textMid, colors.border.withValues(alpha: 0.35));
+}
+
+class DriverComplianceProgress {
+  const DriverComplianceProgress({
+    required this.completed,
+    required this.total,
+    required this.licenseStepDone,
+  });
+
+  final int completed;
+  final int total;
+  final bool licenseStepDone;
+}
+
+DriverComplianceProgress driverComplianceProgress(
+  DriverComplianceSnapshot d, {
+  required String? profilePhotoUrl,
+  required List<String> vehiclePhotoUrls,
+}) {
+  bool hasText(String? v) => (v ?? '').trim().isNotEmpty;
+
+  final pictureDone = hasText(profilePhotoUrl);
+  final carDone = vehiclePhotoUrls.where((e) => e.trim().isNotEmpty).isNotEmpty;
+  final kvkDone = hasText(d.kvkNumber) && hasText(d.kvkAddress);
+  final insuranceDone = hasText(d.taxiInsuranceProvider) &&
+      hasText(d.taxiInsurancePolicyNumber) &&
+      d.taxiInsuranceExpiry != null &&
+      hasText(d.taxiInsurancePhotoUrl);
+  final licenceDone = d.rijbewijsVerified == true || veriffDecisionLooksApproved(d.veriffStatus);
+  final chauffeurDone = hasText(d.chauffeurspasNumber) && d.chauffeurspasExpiry != null;
+  final vehicleAndApkDone = hasText(d.vehiclePlate) && d.apkExpiry != null;
+  final termsDone = d.termsAcceptedAt != null;
+  final shortQuizDone = d.indemnificationQuizPassed == true;
+  final indemnificationDone = d.indemnificationReadAt != null && shortQuizDone;
+
+  final checks = <bool>[
+    pictureDone,
+    carDone,
+    kvkDone,
+    insuranceDone,
+    licenceDone,
+    chauffeurDone,
+    vehicleAndApkDone,
+    termsDone,
+    shortQuizDone,
+    indemnificationDone,
+  ];
+  final completed = checks.where((it) => it).length;
+  return DriverComplianceProgress(
+    completed: completed,
+    total: checks.length,
+    licenseStepDone: licenceDone,
+  );
 }

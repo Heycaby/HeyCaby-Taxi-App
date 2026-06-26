@@ -6,6 +6,7 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
 import '../services/driver_data_service.dart';
+import 'heycaby_driver_logo.dart';
 
 /// One-time welcome after Edge Function `claim-founding-driver` linked the web signup.
 Future<void> showFoundingDriverWelcomeDialog(
@@ -21,10 +22,19 @@ Future<void> showFoundingDriverWelcomeDialog(
     barrierDismissible: false,
     builder: (dialogContext) {
       return AlertDialog(
-        backgroundColor: colors.card,
-        title: Text(
-          DriverStrings.foundingDriverWelcomeTitle,
-          style: typo.titleLarge.copyWith(color: colors.text),
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Center(
+              child: HeyCabyDriverLogo(width: 140),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              DriverStrings.foundingDriverWelcomeTitle,
+              style: typo.titleLarge.copyWith(color: colors.text),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
         content: SingleChildScrollView(
           child: Column(

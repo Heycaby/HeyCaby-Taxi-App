@@ -6,7 +6,9 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DEST="${HEYCABY_WEB_ROOT:?Set HEYCABY_WEB_ROOT to your HeyCaby web repo path}"
-mkdir -p "$DEST/public/chauffeur/voorwaarden" "$DEST/public/support"
+mkdir -p "$DEST/public/chauffeur/voorwaarden" "$DEST/public/chauffeur/vrijwaring" "$DEST/public/chauffeur/founding-member-contract" "$DEST/public/support"
 cp "$ROOT/heycaby-tos/chauffeur/voorwaarden/index.html" "$DEST/public/chauffeur/voorwaarden/index.html"
+cp "$ROOT/heycaby-tos/chauffeur/vrijwaring/index.html" "$DEST/public/chauffeur/vrijwaring/index.html"
+cp "$ROOT/heycaby-tos/chauffeur/founding-member-contract/index.html" "$DEST/public/chauffeur/founding-member-contract/index.html"
 cp "$ROOT/heycaby-tos/support/index.html" "$DEST/public/support/index.html"
 echo "OK: synced into $DEST/public — commit and push your HeyCaby web deployment"

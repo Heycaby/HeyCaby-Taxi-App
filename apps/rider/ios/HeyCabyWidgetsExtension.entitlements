@@ -4,8 +4,8 @@
 <dict>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.nl.heycaby.rider</string>
-		<string>group.nl.heycaby.rider.widgets</string>
+		<string>group.nl.heycaby.rider.app</string>
+		<string>group.nl.heycaby.rider.app.widgets</string>
 	</array>
 </dict>
 </plist>

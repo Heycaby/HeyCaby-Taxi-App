@@ -2,14 +2,26 @@ import 'dart:async' show unawaited;
 import 'dart:convert' show jsonDecode;
 import 'dart:io' show TlsException;
 
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:heycaby_api/heycaby_api.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions, FunctionException;
+import 'package:supabase_flutter/supabase_flutter.dart'
+    show FileOptions, FunctionException, UserAttributes;
 
 /// Thrown when profile photo upload fails due to TLS/network (e.g. SSLV3_ALERT_BAD_RECORD_MAC).
 /// UI should show a connection-specific message; this is not a code or backend bug.
 class ProfilePhotoConnectionException implements Exception {
   const ProfilePhotoConnectionException();
+}
+
+/// Thrown when driver reached the in-app profile photo change limit.
+class ProfilePhotoLimitException implements Exception {
+  const ProfilePhotoLimitException();
+}
+
+/// Thrown when driver reached the in-app vehicle photo limit.
+class VehiclePhotoLimitException implements Exception {
+  const VehiclePhotoLimitException();
 }
 
 /// Error code returned in `save_vehicle_info` RPC map when kenteken is taken ([DriverDataService]).
@@ -207,6 +219,22 @@ class DriverDataService {
     }
   }
 
+  /// Ensures JWT `user_metadata.user_type` is `driver` so the Go API accepts driver routes.
+  /// Older accounts signed up without this field and received HTTP 403 on go-online.
+  Future<void> ensureDriverJwtUserType() async {
+    final user = _client.auth.currentUser;
+    if (user == null) return;
+    final meta = Map<String, dynamic>.from(user.userMetadata ?? {});
+    if (meta['user_type'] == 'driver') return;
+    meta['user_type'] = 'driver';
+    try {
+      await _client.auth.updateUser(UserAttributes(data: meta));
+      await _client.auth.refreshSession();
+    } catch (e) {
+      if (kDebugMode) debugPrint('ensureDriverJwtUserType: $e');
+    }
+  }
+
   /// Idempotent: call after login / on app start so `drivers` + onboarding rows exist.
   /// Always invokes `get_or_create_driver` when present (server ensures row); returns `drivers.id`.
   Future<String?> bootstrapDriverRow() async {
@@ -275,8 +303,50 @@ class DriverDataService {
         'get_driver_earnings_summary',
         params: {'p_driver_id': driverId},
       ) as Map<String, dynamic>?;
-      if (res == null) return null;
-      return DriverEarningsSummary.fromJson(res);
+      if (res != null) {
+        return DriverEarningsSummary.fromJson(res);
+      }
+    } catch (_) {
+      // RPC can be absent on older DB schemas; fallback below.
+    }
+    try {
+      final nowLocal = DateTime.now();
+      final todayStart = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
+      final weekStart = todayStart.subtract(Duration(days: todayStart.weekday - 1));
+      final monthStart = DateTime(nowLocal.year, nowLocal.month, 1);
+      final monthTrips = await _loadCompletedTripEarningsSince(
+        driverId: driverId,
+        sinceUtc: monthStart.toUtc(),
+      );
+      double todayEuros = 0;
+      int todayRides = 0;
+      double weekEuros = 0;
+      int weekRides = 0;
+      double monthEuros = 0;
+      int monthRides = 0;
+      for (final trip in monthTrips) {
+        final localTime = trip.completedAt.toLocal();
+        final fare = trip.fare;
+        if (localTime.isBefore(monthStart)) continue;
+        monthEuros += fare;
+        monthRides += 1;
+        if (!localTime.isBefore(weekStart)) {
+          weekEuros += fare;
+          weekRides += 1;
+        }
+        if (!localTime.isBefore(todayStart)) {
+          todayEuros += fare;
+          todayRides += 1;
+        }
+      }
+      return DriverEarningsSummary(
+        todayEuros: todayEuros,
+        todayRides: todayRides,
+        weekEuros: weekEuros,
+        weekRides: weekRides,
+        monthEuros: monthEuros,
+        monthRides: monthRides,
+      );
     } catch (_) {
       return null;
     }
@@ -285,14 +355,19 @@ class DriverDataService {
   /// zone_demand_live view — poll every 30s for map circles.
   Future<List<ZoneDemand>> getZoneDemand() async {
     try {
-      final res = await _client
-          .from('zone_demand_live')
-          .select('zone_id, zone_name, center_lat, center_lng, radius_m, waiting_passengers, demand_level');
-      return (res as List)
+      final smart = await _client.rpc('fn_driver_hotspots_smart');
+      final list = (smart as List)
           .map((e) => ZoneDemand.fromJson(e as Map<String, dynamic>))
           .toList();
+      if (list.isNotEmpty) return list;
+    } catch (_) {}
+    try {
+      final res = await _client.from('zone_demand_live').select(
+            'zone_id, zone_name, center_lat, center_lng, radius_m, waiting_passengers, demand_level',
+          );
+      return (res as List).map((e) => ZoneDemand.fromJson(e as Map<String, dynamic>)).toList();
     } catch (_) {
-      return [];
+      return const [];
     }
   }
 
@@ -362,15 +437,21 @@ class DriverDataService {
     }
   }
 
-  /// fn_switch_rate_profile(driver_id, profile_id). On success returns updated state.
+  /// fn_switch_rate_profile(p_driver_id, p_profile_id). On success returns updated state.
   Future<bool> switchRateProfile(String driverId, String profileId) async {
     try {
-      await _client.rpc(
+      debugPrint('RPC: fn_switch_rate_profile($driverId, $profileId)');
+      final res = await _client.rpc(
         'fn_switch_rate_profile',
-        params: {'driver_id': driverId, 'profile_id': profileId},
+        params: {'p_driver_id': driverId, 'p_profile_id': profileId},
       );
-      return true;
-    } catch (_) {
+      debugPrint('RPC result: $res');
+      if (res is Map && res['success'] == true) return true;
+      debugPrint('RPC failed: success=${res is Map ? res['success'] : 'n/a'}');
+      return false;
+    } catch (e, st) {
+      debugPrint('RPC error: $e');
+      debugPrint('Stack: $st');
       return false;
     }
   }
@@ -380,12 +461,13 @@ class DriverDataService {
     try {
       int tickets = 0;
       if (userId != null) {
+        // Match support chat: terminal statuses must not badge (`.neq('resolved')` missed `closed`).
         final r = await _client
             .from('tickets')
             .select('id')
             .eq('user_type', 'driver')
             .eq('user_id', userId)
-            .neq('status', 'resolved')
+            .not('status', 'in', ['resolved', 'closed', 'auto_resolved'])
             .limit(10);
         tickets = (r as List).length;
       }
@@ -440,6 +522,87 @@ class DriverDataService {
     }
   }
 
+  /// Ensure day-part presets exist so drivers can switch quickly from the nudge.
+  /// Creates missing profiles only; preserves existing rows and active selection.
+  Future<bool> ensureTariffPresetProfiles(String driverId) async {
+    try {
+      final existing = await getRateProfiles(driverId);
+      if (existing.isEmpty) {
+        await createFirstRateProfile(driverId);
+      }
+      final refreshed = await getRateProfiles(driverId);
+      if (refreshed.isEmpty) return false;
+
+      final source = refreshed.firstWhere(
+        (p) => p.isActive,
+        orElse: () => refreshed.first,
+      );
+
+      final existingNames =
+          refreshed.map((p) => p.profileName.toLowerCase().trim()).toSet();
+      final inserts = <Map<String, dynamic>>[];
+
+      void addIfMissing({
+        required String profileName,
+        required int sortOrder,
+        required double multiplier,
+      }) {
+        final key = profileName.toLowerCase().trim();
+        if (existingNames.contains(key)) return;
+        inserts.add({
+          'driver_id': driverId,
+          'profile_name': profileName,
+          'base_fare': (source.baseFare * multiplier),
+          'per_km_rate': (source.perKmRate * multiplier),
+          'per_min_rate': (source.perMinRate * multiplier),
+          'minimum_fare': (source.minimumFare * multiplier),
+          'waiting_rate': (source.waitingRate * multiplier),
+          'is_active': false,
+          'sort_order': sortOrder,
+        });
+      }
+
+      addIfMissing(profileName: 'Morning', sortOrder: 10, multiplier: 1.0);
+      addIfMissing(profileName: 'Evening', sortOrder: 20, multiplier: 1.1);
+      addIfMissing(profileName: 'Late Night', sortOrder: 30, multiplier: 1.25);
+
+      if (inserts.isNotEmpty) {
+        await _client.from('driver_rate_profiles').insert(inserts);
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Update pricing fields for a profile (auth must own [driverId]). Syncs `drivers` when profile is active.
+  Future<bool> updateRateProfileValues({
+    required String driverId,
+    required String profileId,
+    required double baseFare,
+    required double perKmRate,
+    required double perMinRate,
+    required double waitingRate,
+  }) async {
+    try {
+      final res = await _client.rpc(
+        'fn_update_driver_rate_profile_rates',
+        params: {
+          'p_driver_id': driverId,
+          'p_profile_id': profileId,
+          'p_base_fare': baseFare,
+          'p_per_km_rate': perKmRate,
+          'p_per_min_rate': perMinRate,
+          'p_waiting_rate': waitingRate,
+        },
+      );
+      return res is Map && res['success'] == true;
+    } catch (e) {
+      if (kDebugMode) debugPrint('updateRateProfileValues: $e');
+      return false;
+    }
+  }
+
   /// driver_earnings_targets — for Driver Hub section 1.
   Future<Map<String, double>> getEarningsTargets(String driverId) async {
     try {
@@ -477,7 +640,7 @@ class DriverDataService {
     try {
       final res = await _client
           .from('tickets')
-          .select('id, created_at, status, messages, ride_request_id')
+          .select('id, created_at, status, messages, ride_request_id, category')
           .eq('user_type', 'driver')
           .eq('user_id', userId)
           .order('created_at', ascending: false)
@@ -611,6 +774,34 @@ class DriverDataService {
           .toList();
     } catch (_) {
       return [];
+    }
+  }
+
+  /// Active in-progress ride for cold-start restore (Program 3B).
+  Future<Map<String, dynamic>?> getActiveRideForRestore(String driverId) async {
+    try {
+      final row = await _client
+          .from('ride_requests')
+          .select(
+            'id, status, pickup_address, pickup_lat, pickup_lng, '
+            'destination_address, destination_lat, destination_lng, '
+            'booking_mode, payment_method, payment_methods, pickup_contact_name',
+          )
+          .eq('driver_id', driverId)
+          .inFilter('status', [
+            'accepted',
+            'assigned',
+            'driver_arrived',
+            'in_progress',
+          ])
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      if (row == null) return null;
+      return Map<String, dynamic>.from(row);
+    } catch (e) {
+      if (kDebugMode) debugPrint('getActiveRideForRestore: $e');
+      return null;
     }
   }
 
@@ -767,43 +958,18 @@ class DriverDataService {
     try {
       final now = DateTime.now();
       final start = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
-      final startStr = start.toUtc().toIso8601String().split('T').first;
-      final res = await _client
-          .from('driver_trip_history')
-          .select('ride_request_id, completed_at')
-          .eq('driver_id', driverId)
-          .gte('completed_at', startStr)
-          .order('completed_at', ascending: true);
-      final list = res as List;
+      final list = await _loadCompletedTripEarningsSince(
+        driverId: driverId,
+        sinceUtc: start.toUtc(),
+      );
       if (list.isEmpty) return List.filled(7, 0.0);
-      final rrIds = list
-          .map((e) => e['ride_request_id'] as String?)
-          .whereType<String>()
-          .where((s) => s.isNotEmpty)
-          .toSet()
-          .toList();
-      final fareMap = <String, double>{};
-      if (rrIds.isNotEmpty) {
-        final rrs = await _client
-            .from('ride_requests')
-            .select('id, final_fare')
-            .inFilter('id', rrIds);
-        for (final rr in rrs as List) {
-          final id = rr['id'] as String?;
-          if (id != null) {
-            fareMap[id] = (rr['final_fare'] as num?)?.toDouble() ?? 0;
-          }
-        }
-      }
       final daily = List.filled(7, 0.0);
       for (final row in list) {
-        final dt = _parseDateTime(row['completed_at']);
-        if (dt == null) continue;
-        final dayStart = DateTime(dt.year, dt.month, dt.day);
+        final localTime = row.completedAt.toLocal();
+        final dayStart = DateTime(localTime.year, localTime.month, localTime.day);
         final dayIndex = dayStart.difference(start).inDays;
         if (dayIndex >= 0 && dayIndex < 7) {
-          final rrId = row['ride_request_id'] as String?;
-          daily[dayIndex] += rrId != null ? (fareMap[rrId] ?? 0) : 0;
+          daily[dayIndex] += row.fare;
         }
       }
       return daily;
@@ -853,53 +1019,430 @@ class DriverDataService {
     }
   }
 
+  /// Full ride history for current driver, including manual rides.
+  Future<List<MyRideSummary>> getMyRides(String driverId) async {
+    try {
+      final res = await _client
+          .from('ride_requests')
+          .select(
+              'id, created_at, status, pickup_address, destination_address, final_fare, manual_fare_cents, manual_entry, currency')
+          .eq('driver_id', driverId)
+          .order('created_at', ascending: false)
+          .limit(200);
+      final rows = (res as List).whereType<Map>().toList();
+      return rows
+          .map((raw) => MyRideSummary.fromJson(Map<String, dynamic>.from(raw)))
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// Ride detail payload for "My Rides" full-screen details.
+  Future<MyRideDetails?> getMyRideDetails(String rideId) async {
+    try {
+      final row = await _client
+          .from('ride_requests')
+          .select(
+              'id, created_at, status, pickup_address, destination_address, final_fare, manual_fare_cents, manual_entry, currency, payment_method, manual_payment_method, platform_fee_cents, driver_earnings_cents, distance_km')
+          .eq('id', rideId)
+          .maybeSingle();
+      if (row == null) return null;
+      return MyRideDetails.fromJson(Map<String, dynamic>.from(row));
+    } catch (_) {
+      return null;
+    }
+  }
+
   DateTime? _parseDateTime(dynamic v) {
     if (v == null) return null;
     if (v is String) return DateTime.tryParse(v);
     return null;
   }
 
+  Future<List<_CompletedTripEarning>> _loadCompletedTripEarningsSince({
+    required String driverId,
+    required DateTime sinceUtc,
+  }) async {
+    final since = sinceUtc.toIso8601String();
+    final tripsRes = await _client
+        .from('driver_trip_history')
+        .select('ride_request_id, completed_at, distance_km')
+        .eq('driver_id', driverId)
+        .gte('completed_at', since)
+        .order('completed_at', ascending: true);
+    final tripsRaw = tripsRes as List;
+    if (tripsRaw.isEmpty) return const [];
+
+    final rrIds = tripsRaw
+        .map((e) => e['ride_request_id'] as String?)
+        .whereType<String>()
+        .where((s) => s.isNotEmpty)
+        .toSet()
+        .toList();
+
+    final fareMap = <String, double>{};
+    if (rrIds.isNotEmpty) {
+      final faresRes = await _client
+          .from('ride_requests')
+          .select('id, final_fare')
+          .inFilter('id', rrIds);
+      for (final row in faresRes as List) {
+        final id = row['id'] as String?;
+        if (id == null || id.isEmpty) continue;
+        fareMap[id] = (row['final_fare'] as num?)?.toDouble() ?? 0;
+      }
+    }
+
+    final out = <_CompletedTripEarning>[];
+    for (final row in tripsRaw) {
+      final completedAt = _parseDateTime(row['completed_at']);
+      if (completedAt == null) continue;
+      final rrId = row['ride_request_id'] as String?;
+      out.add(
+        _CompletedTripEarning(
+          completedAt: completedAt,
+          fare: rrId != null ? (fareMap[rrId] ?? 0) : 0,
+          distanceKm: (row['distance_km'] as num?)?.toDouble() ?? 0,
+        ),
+      );
+    }
+    return out;
+  }
+
+  /// Finance + Tax dashboard metrics for a selected date range.
+  Future<DriverFinanceMetrics> getFinanceMetrics({
+    required String driverId,
+    required DriverFinanceRange range,
+  }) async {
+    try {
+      final rpc = await _client.rpc(
+        'fn_driver_finance_metrics',
+        params: {
+          'p_driver_id': driverId,
+          'p_start': range.start.toUtc().toIso8601String(),
+          'p_end': range.end.toUtc().toIso8601String(),
+        },
+      );
+      if (rpc is Map) {
+        return DriverFinanceMetrics.fromJson(Map<String, dynamic>.from(rpc));
+      }
+    } catch (e) {
+      await logClientTelemetry(
+        scope: 'finance',
+        event: 'finance_metrics_rpc_fallback',
+        detail: e.toString(),
+        extra: {
+          'start': range.start.toUtc().toIso8601String(),
+          'end': range.end.toUtc().toIso8601String(),
+        },
+      );
+    }
+    try {
+      final rows = await _loadCompletedTripEarningsSince(
+        driverId: driverId,
+        sinceUtc: range.start.toUtc(),
+      );
+      double gross = 0;
+      int rides = 0;
+      double km = 0;
+      for (final row in rows) {
+        final at = row.completedAt.toUtc();
+        if (at.isBefore(range.start.toUtc()) || at.isAfter(range.end.toUtc())) {
+          continue;
+        }
+        gross += row.fare;
+        km += row.distanceKm;
+        rides += 1;
+      }
+      final cancelled = await _loadCancelledRideFinance(
+        driverId: driverId,
+        range: range,
+      );
+      return DriverFinanceMetrics(
+        grossEarnings: gross,
+        netEarnings: gross,
+        totalRides: rides,
+        totalKilometers: km,
+        platformFees: null,
+        tips: null,
+        completedRides: rides,
+        cancelledRides: cancelled.count,
+        cancellationFees: cancelled.cancellationFees,
+      );
+    } catch (e) {
+      await logClientTelemetry(
+        scope: 'finance',
+        event: 'finance_metrics_failed',
+        detail: e.toString(),
+      );
+      return const DriverFinanceMetrics();
+    }
+  }
+
+  Future<_CancelledRideFinance> _loadCancelledRideFinance({
+    required String driverId,
+    required DriverFinanceRange range,
+  }) async {
+    final timestampColumns = ['cancelled_at', 'updated_at', 'created_at'];
+    for (final timeCol in timestampColumns) {
+      try {
+        final res = await _client
+            .from('ride_requests')
+            .select(
+              '$timeCol, preride_commitment_fee_euros, commitment_fee_forfeited_to',
+            )
+            .eq('driver_id', driverId)
+            .eq('status', 'cancelled')
+            .gte(timeCol, range.start.toUtc().toIso8601String())
+            .lte(timeCol, range.end.toUtc().toIso8601String());
+        final list = res as List;
+        double fees = 0;
+        for (final row in list) {
+          final forfeitedTo = row['commitment_fee_forfeited_to'] as String?;
+          if (forfeitedTo == 'driver') {
+            fees += (row['preride_commitment_fee_euros'] as num?)?.toDouble() ?? 0;
+          }
+        }
+        return _CancelledRideFinance(count: list.length, cancellationFees: fees);
+      } catch (_) {
+        // Try the next timestamp column if this schema doesn't expose the current one.
+      }
+    }
+    return const _CancelledRideFinance();
+  }
+
+  Future<void> logClientTelemetry({
+    required String scope,
+    required String event,
+    String? detail,
+    Map<String, dynamic>? extra,
+  }) async {
+    try {
+      await _client.rpc(
+        'fn_driver_log_client_telemetry',
+        params: {
+          'p_scope': scope,
+          'p_event': event,
+          'p_detail': detail,
+          'p_extra': extra,
+        },
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('telemetry($scope/$event) failed: $e');
+      }
+    }
+  }
+
   /// Community posts by channel.
   Future<List<CommunityPost>> getCommunityPosts(String channel, {int limit = 20}) async {
     try {
+      final cutoff = DateTime.now()
+          .toUtc()
+          .subtract(const Duration(hours: 24))
+          .toIso8601String();
       var query = _client
           .from('community_posts')
           .select('id, driver_id, content, created_at, channel, ride_request_id, swap_status')
-          .eq('channel', channel);
+          .eq('channel', channel)
+          .gte('created_at', cutoff);
       if (channel == 'swap') {
         query = query.eq('swap_status', 'open');
       }
       final res = await query.order('created_at', ascending: false).limit(limit);
-      return (res as List)
+      final list = (res as List)
           .map((e) => CommunityPost.fromJson(e as Map<String, dynamic>))
           .toList();
+      return _mergeCommunityPolls(list, await getDriverId());
     } catch (_) {
       return [];
     }
   }
 
+  /// Loads poll metadata + weighted totals for posts (see `community_polls` migration).
+  Future<List<CommunityPost>> _mergeCommunityPolls(
+    List<CommunityPost> posts,
+    String? voterDriverId,
+  ) async {
+    if (posts.isEmpty) return posts;
+    final postIds = posts.map((e) => e.id).where((e) => e.isNotEmpty).toList();
+    if (postIds.isEmpty) return posts;
+    try {
+      final pollRows = await _client
+          .from('community_polls')
+          .select('id, post_id, question')
+          .inFilter('post_id', postIds) as List;
+      if (pollRows.isEmpty) return posts;
+
+      final pollMetaByPost = <String, Map<String, dynamic>>{};
+      final pollIds = <String>[];
+      for (final raw in pollRows) {
+        final m = raw as Map<String, dynamic>;
+        final postId = m['post_id'] as String?;
+        final pollId = m['id'] as String?;
+        if (postId == null || pollId == null) continue;
+        pollMetaByPost[postId] = m;
+        pollIds.add(pollId);
+      }
+      if (pollIds.isEmpty) return posts;
+
+      final optRows = await _client
+          .from('community_poll_options')
+          .select('id, poll_id, label, position')
+          .inFilter('poll_id', pollIds)
+          .order('position', ascending: true);
+
+      final optionsByPoll = <String, List<Map<String, dynamic>>>{};
+      for (final raw in (optRows as List)) {
+        final m = raw as Map<String, dynamic>;
+        final pid = m['poll_id'] as String?;
+        if (pid == null) continue;
+        optionsByPoll.putIfAbsent(pid, () => []).add(m);
+      }
+
+      final weightByPollOption = <String, Map<String, double>>{};
+      final countByPollOption = <String, Map<String, int>>{};
+      void addAgg(String pollId, String optionId, double w) {
+        final om = weightByPollOption.putIfAbsent(pollId, () => {});
+        om[optionId] = (om[optionId] ?? 0) + w;
+        final cm = countByPollOption.putIfAbsent(pollId, () => {});
+        cm[optionId] = (cm[optionId] ?? 0) + 1;
+      }
+
+      final voteRows = await _client
+          .from('community_poll_votes')
+          .select('poll_id, option_id, vote_weight')
+          .inFilter('poll_id', pollIds);
+      for (final raw in (voteRows as List)) {
+        final m = raw as Map<String, dynamic>;
+        final pid = m['poll_id'] as String?;
+        final oid = m['option_id'] as String?;
+        final w = (m['vote_weight'] as num?)?.toDouble() ?? 1;
+        if (pid == null || oid == null) continue;
+        addAgg(pid, oid, w);
+      }
+
+      final myOptionByPoll = <String, String>{};
+      if (voterDriverId != null && voterDriverId.isNotEmpty) {
+        final mine = await _client
+            .from('community_poll_votes')
+            .select('poll_id, option_id')
+            .eq('driver_id', voterDriverId)
+            .inFilter('poll_id', pollIds);
+        for (final raw in (mine as List)) {
+          final m = raw as Map<String, dynamic>;
+          final pid = m['poll_id'] as String?;
+          final oid = m['option_id'] as String?;
+          if (pid != null && oid != null) myOptionByPoll[pid] = oid;
+        }
+      }
+
+      return posts.map((p) {
+        final meta = pollMetaByPost[p.id];
+        if (meta == null) return p;
+        final pollId = meta['id'] as String? ?? '';
+        final question = (meta['question'] as String?) ?? '';
+        final optMaps = optionsByPoll[pollId] ?? const <Map<String, dynamic>>[];
+        final wmap = weightByPollOption[pollId] ?? const <String, double>{};
+        final cmap = countByPollOption[pollId] ?? const <String, int>{};
+        final opts = <CommunityPollOptionView>[];
+        for (final m in optMaps) {
+          final oid = m['id'] as String? ?? '';
+          if (oid.isEmpty) continue;
+          opts.add(
+            CommunityPollOptionView(
+              id: oid,
+              label: (m['label'] as String?) ?? '',
+              position: (m['position'] as num?)?.toInt() ?? 0,
+              weightedTotal: wmap[oid] ?? 0,
+              voterCount: cmap[oid] ?? 0,
+            ),
+          );
+        }
+        if (opts.isEmpty) return p;
+        return p.withPoll(
+          CommunityPollData(
+            pollId: pollId,
+            postId: p.id,
+            question: question,
+            options: opts,
+            myOptionId: myOptionByPoll[pollId],
+          ),
+        );
+      }).toList();
+    } catch (e) {
+      if (kDebugMode) debugPrint('_mergeCommunityPolls: $e');
+      return posts;
+    }
+  }
+
+  /// Search community posts by content/title prefix from Supabase (no mock client-side data).
+  Future<List<CommunityPost>> searchCommunityPosts(String query, {int limit = 20}) async {
+    final q = query.trim();
+    if (q.isEmpty) return const [];
+    try {
+      final escaped = q.replaceAll('%', r'\%').replaceAll(',', r'\,');
+      final pattern = '%$escaped%';
+      final res = await _client
+          .from('community_posts')
+          .select('id, driver_id, content, created_at, channel, ride_request_id, swap_status')
+          .or('content.ilike.$pattern,title.ilike.$pattern')
+          .eq('is_deleted', false)
+          .order('created_at', ascending: false)
+          .limit(limit);
+      return (res as List)
+          .map((e) => CommunityPost.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
   /// Driver profile for Me tab.
   Future<DriverProfile?> getDriverProfile(String driverId) async {
+    const extendedCols =
+        'full_name, vehicle_plate, vehicle_make, vehicle_model, vehicle_year, '
+        'rating, avg_rating, pickup_distance_max_km, active_return_discount_pct, payment_methods, '
+        'is_pet_friendly, is_wheelchair_accessible, profile_photo_url, profile_photo_locked, '
+        'profile_photo_change_count, vehicle_photo_urls, '
+        'is_verified_badge, profile_status, compliance_status, '
+        'congratulations_modal_shown, '
+        'heading_home_zone_id, home_city, '
+        'chauffeurspas_expiry, rijbewijs_expiry, vog_expires_at, taxi_insurance_expiry, '
+        'onboarding_feature_tour_shown, '
+        'is_founding_driver, founding_number';
     try {
       final res = await _client
           .from('drivers')
-          .select(
-            'full_name, vehicle_plate, vehicle_make, vehicle_model, vehicle_year, '
-            'rating, avg_rating, pickup_distance_max_km, payment_methods, '
-            'is_pet_friendly, is_wheelchair_accessible, profile_photo_url, profile_photo_locked, '
-            'is_verified_badge, profile_status, compliance_status, '
-            'congratulations_modal_shown, '
-            'heading_home_zone_id, home_city, '
-            'chauffeurspas_expiry, rijbewijs_expiry, vog_expires_at, taxi_insurance_expiry, '
-            'onboarding_feature_tour_shown, '
-            'is_founding_driver, founding_number',
-          )
+          .select(extendedCols)
           .eq('id', driverId)
           .maybeSingle();
       if (res == null) return null;
       return DriverProfile.fromJson(res);
-    } catch (_) {
-      return null;
+    } catch (e) {
+      if (kDebugMode) debugPrint('getDriverProfile extended select failed: $e');
+      try {
+        final res = await _client
+            .from('drivers')
+            .select(
+              'full_name, vehicle_plate, vehicle_make, vehicle_model, vehicle_year, '
+              'rating, avg_rating, pickup_distance_max_km, payment_methods, '
+              'is_pet_friendly, is_wheelchair_accessible, profile_photo_url, profile_photo_locked, '
+              'is_verified_badge, profile_status, compliance_status, '
+              'congratulations_modal_shown, '
+              'heading_home_zone_id, home_city, '
+              'chauffeurspas_expiry, rijbewijs_expiry, vog_expires_at, taxi_insurance_expiry, '
+              'onboarding_feature_tour_shown, '
+              'is_founding_driver, founding_number',
+            )
+            .eq('id', driverId)
+            .maybeSingle();
+        if (res == null) return null;
+        return DriverProfile.fromJson(res);
+      } catch (_) {
+        return null;
+      }
     }
   }
 
@@ -911,6 +1454,7 @@ class DriverDataService {
         'taxi_insurance_verified, taxi_insurance_expiry, taxi_insurance_photo_url, '
         'taxi_insurance_provider, taxi_insurance_policy_number, '
         'kvk_verified, kvk_number, kvk_business_name, kvk_address, '
+        'indemnification_read_at, indemnification_quiz_passed, '
         'veriff_status, veriff_session_url, veriff_full_name, veriff_id_expiry, '
         'vehicle_verified, vehicle_verification_status, '
         'rdw_apk_vervaldatum, rdw_wam_verzekerd, '
@@ -927,13 +1471,27 @@ class DriverDataService {
         final res = await _client
             .from('drivers')
             .select(
-              'compliance_status, vehicle_plate, chauffeurspas_expiry, rijbewijs_expiry, '
-              'vog_expires_at, taxi_insurance_expiry',
+              'compliance_status, chauffeurspas_verified, chauffeurspas_number, chauffeurspas_expiry, '
+              'vog_verified, vog_implied_by_chauffeurspas, vog_expires_at, '
+              'rijbewijs_verified, rijbewijs_expiry, taxidiploma_verified, '
+              'taxi_insurance_verified, taxi_insurance_expiry, taxi_insurance_photo_url, '
+              'taxi_insurance_provider, taxi_insurance_policy_number, '
+              'kvk_verified, kvk_number, kvk_business_name, kvk_address, '
+              'indemnification_accepted, indemnification_accepted_at, '
+              'veriff_status, veriff_session_url, veriff_full_name, veriff_id_expiry, '
+              'vehicle_verified, vehicle_verification_status, '
+              'rdw_apk_vervaldatum, rdw_wam_verzekerd, '
+              'vehicle_plate, rdw_merk, rdw_handelsbenaming',
             )
             .eq('id', driverId)
             .maybeSingle();
         if (res == null) return null;
-        return DriverComplianceSnapshot.fromJsonMinimal(Map<String, dynamic>.from(res));
+        final patched = Map<String, dynamic>.from(res);
+        patched['indemnification_read_at'] =
+            patched['indemnification_accepted_at'];
+        patched['indemnification_quiz_passed'] =
+            patched['indemnification_accepted'];
+        return DriverComplianceSnapshot.fromJson(patched);
       } catch (_) {
         return null;
       }
@@ -1070,36 +1628,40 @@ class DriverDataService {
       return const ChauffeurspasVerifyOutcome(ok: false, message: 'Enter an 8-digit chauffeurspas number.');
     }
     try {
-      final res = await _client.functions.invoke(
-        'verify-chauffeurspas',
-        body: {'number': normalized},
+      final baseUrl = await DriverApiBaseResolver.resolve();
+      final dio = Dio(
+        BaseOptions(
+          baseUrl: baseUrl,
+          connectTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 15),
+          headers: {'Content-Type': 'application/json'},
+        ),
       );
-      if (res.status != 200) {
+      final token = _client.auth.currentSession?.accessToken;
+      if (token != null && token.isNotEmpty) {
+        dio.options.headers['Authorization'] = 'Bearer $token';
+      }
+      final res = await dio.post<Map<String, dynamic>>(
+        '/api/v1/driver/document/validate',
+        data: {'doc_type': 'chauffeurspas', 'value': normalized},
+      );
+      if (res.statusCode != 200) {
         return ChauffeurspasVerifyOutcome(
           ok: false,
-          message: res.data?.toString() ?? 'Service error (${res.status})',
+          message: res.data?.toString() ?? 'Service error (${res.statusCode})',
         );
       }
-      final data = res.data;
-      if (data is Map) {
-        final map = Map<String, dynamic>.from(data);
-        if (map['error'] != null) {
-          return ChauffeurspasVerifyOutcome(ok: false, message: map['error'].toString());
-        }
-        if (map['success'] == true || map['valid'] == true || map['verified'] == true) {
-          return ChauffeurspasVerifyOutcome(
-            ok: true,
-            message: map['message']?.toString() ?? 'Verified',
-          );
-        }
-        if (map['ok'] == false || map['valid'] == false) {
-          return ChauffeurspasVerifyOutcome(
-            ok: false,
-            message: map['message']?.toString() ?? 'Not valid',
-          );
-        }
+      final map = Map<String, dynamic>.from(res.data ?? const {});
+      if (map['valid'] == true) {
+        return ChauffeurspasVerifyOutcome(
+          ok: true,
+          message: map['message']?.toString() ?? 'Verified',
+        );
       }
-      return const ChauffeurspasVerifyOutcome(ok: true, message: 'OK');
+      return ChauffeurspasVerifyOutcome(
+        ok: false,
+        message: map['error']?.toString() ?? map['message']?.toString() ?? 'Not valid',
+      );
     } catch (e) {
       return ChauffeurspasVerifyOutcome(ok: false, message: e.toString());
     }
@@ -1114,6 +1676,7 @@ class DriverDataService {
           .limit(limit);
       return (res as List)
           .map((e) => DriverReturnTrip.fromJson(e as Map<String, dynamic>))
+          .where((t) => t.isDisplayable)
           .toList();
     } catch (_) {
       return [];
@@ -1135,108 +1698,6 @@ class DriverDataService {
     }
   }
 
-  /// Power Mode cards (Step 11). Source: fn_get_power_suggestions(driver_id).
-  Future<List<DriverPowerCard>> getPowerSuggestions(String driverId) async {
-    try {
-      dynamic res;
-      try {
-        res = await _client.rpc('fn_get_power_suggestions', params: {'p_driver_id': driverId});
-      } catch (_) {
-        res = await _client.rpc('fn_get_power_suggestions', params: {'driver_id': driverId});
-      }
-      final list = res is List ? res : (res is Map ? [res] : const []);
-      return list
-          .whereType<Map>()
-          .map((e) => DriverPowerCard.fromJson(Map<String, dynamic>.from(e)))
-          .toList();
-    } catch (_) {
-      return [];
-    }
-  }
-
-  Future<bool> dismissPowerCard({required String cardId, required String driverId}) async {
-    try {
-      try {
-        await _client.rpc('fn_dismiss_power_card', params: {'p_card_id': cardId, 'p_driver_id': driverId});
-      } catch (_) {
-        await _client.rpc('fn_dismiss_power_card', params: {'card_id': cardId, 'driver_id': driverId});
-      }
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  /// Union Mode dashboard rows (Step 12). Source: union_mode_dashboard view.
-  Future<List<UnionDashboardRow>> getUnionDashboard() async {
-    try {
-      final res = await _client.from('union_mode_dashboard').select().limit(200);
-      return (res as List)
-          .map((e) => UnionDashboardRow.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } catch (_) {
-      return [];
-    }
-  }
-
-  /// Union Mode community signals feed (Step 12).
-  Future<List<DriverMarketSignal>> getMarketSignals({int limit = 30}) async {
-    try {
-      final res = await _client
-          .from('driver_market_signals')
-          .select('id, zone_id, signal_type, description, upvotes, created_at')
-          .order('upvotes', ascending: false)
-          .limit(limit);
-      return (res as List)
-          .map((e) => DriverMarketSignal.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } catch (_) {
-      return [];
-    }
-  }
-
-  Future<bool> upvoteMarketSignal(DriverMarketSignal signal) async {
-    try {
-      await _client.from('driver_market_signals').update({'upvotes': signal.upvotes + 1}).eq('id', signal.id);
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  /// Insert signal with duplicate check (same zone/type within 1h). If duplicate found, upvotes it.
-  Future<bool> createOrUpvoteMarketSignal({
-    required String zoneId,
-    required String signalType,
-    String? description,
-  }) async {
-    try {
-      final recent = await _client
-          .from('driver_market_signals')
-          .select('id, upvotes')
-          .eq('zone_id', zoneId)
-          .eq('signal_type', signalType)
-          .gte('created_at', DateTime.now().subtract(const Duration(hours: 1)).toIso8601String())
-          .maybeSingle();
-      if (recent != null) {
-        final id = recent['id'] as String?;
-        final up = (recent['upvotes'] as num?)?.toInt() ?? 0;
-        if (id != null) {
-          await _client.from('driver_market_signals').update({'upvotes': up + 1}).eq('id', id);
-          return true;
-        }
-      }
-      await _client.from('driver_market_signals').insert({
-        'zone_id': zoneId,
-        'signal_type': signalType,
-        'description': (description != null && description.trim().isNotEmpty) ? description.trim() : null,
-      });
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
   /// Update vehicle info. Returns true on success.
   Future<bool> updateVehicle(String driverId, {
     String? plate,
@@ -1251,6 +1712,70 @@ class DriverDataService {
         if (model != null) 'vehicle_model': model,
         if (year != null) 'vehicle_year': year,
       }).eq('id', driverId);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Driver feature request from Hub -> Suggestion for the app.
+  Future<bool> submitAppSuggestion({
+    required String userId,
+    String? driverId,
+    required String suggestionText,
+  }) async {
+    final text = suggestionText.trim();
+    if (text.length < 10) return false;
+    try {
+      await _client.from('driver_app_suggestions').insert({
+        'user_id': userId,
+        'driver_id': (driverId != null && driverId.isNotEmpty) ? driverId : null,
+        'suggestion_text': text,
+      });
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<List<DriverTopAppSuggestion>> getTopAppSuggestions({int limit = 8}) async {
+    try {
+      final res = await _client.rpc(
+        'fn_driver_top_app_suggestions',
+        params: {'p_limit': limit},
+      );
+      return (res as List)
+          .map((e) => DriverTopAppSuggestion.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// Ride Swap helper modal preference.
+  Future<bool> isRideSwapIntroDismissed() async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return false;
+    try {
+      final row = await _client
+          .from('driver_ui_flags')
+          .select('ride_swap_intro_dismissed')
+          .eq('user_id', uid)
+          .maybeSingle();
+      return (row?['ride_swap_intro_dismissed'] as bool?) ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> setRideSwapIntroDismissed(bool dismissed) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return false;
+    try {
+      await _client.from('driver_ui_flags').upsert({
+        'user_id': uid,
+        'ride_swap_intro_dismissed': dismissed,
+      });
       return true;
     } catch (_) {
       return false;
@@ -1357,6 +1882,297 @@ class DriverDataService {
     }
   }
 
+  /// Saves chauffeur card fields and guarantees persistence on the current driver's row.
+  /// Some environments can return RPC success without persisting these two fields.
+  Future<Map<String, dynamic>?> saveChauffeurspasDocument({
+    required String chauffeurspasNumber,
+    required String chauffeurspasExpiry,
+  }) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return null;
+    final driverId = await getDriverId();
+
+    Future<bool> isPersisted() async {
+      try {
+        final row = await _client
+            .from('drivers')
+            .select('chauffeurspas_number, chauffeurspas_expiry')
+            .eq('user_id', uid)
+            .maybeSingle();
+        if (row == null) return false;
+        final storedNumber = (row['chauffeurspas_number'] as String? ?? '').trim();
+        final storedExpiry = (row['chauffeurspas_expiry']?.toString() ?? '').trim();
+        return storedNumber == chauffeurspasNumber.trim() &&
+            storedExpiry.startsWith(chauffeurspasExpiry);
+      } catch (_) {
+        return false;
+      }
+    }
+
+    final rpcRes = await saveDriverDocument(
+      documentType: 'chauffeurspas',
+      chauffeurspasNumber: chauffeurspasNumber,
+      chauffeurspasExpiry: chauffeurspasExpiry,
+    );
+
+    if (rpcRes?['success'] == true && await isPersisted()) {
+      return rpcRes;
+    }
+
+    // Fallback: write directly to the same `drivers` row (prefer id, then user_id).
+    try {
+      final payload = {
+        'chauffeurspas_number': chauffeurspasNumber,
+        'chauffeurspas_expiry': chauffeurspasExpiry,
+      };
+      if (driverId != null) {
+        await _client.from('drivers').update(payload).eq('id', driverId);
+      } else {
+        await _client.from('drivers').update(payload).eq('user_id', uid);
+      }
+      final ok = await isPersisted();
+      return {
+        'success': ok,
+        if (!ok) 'error': 'Chauffeurspas could not be persisted',
+      };
+    } catch (e) {
+      if (kDebugMode) debugPrint('saveChauffeurspasDocument fallback: $e');
+      return {
+        'success': false,
+        'error': e.toString(),
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>?> saveKvkDocument({
+    required String kvkNumber,
+    required String kvkBusinessName,
+    required String kvkAddress,
+  }) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return null;
+    final driverId = await getDriverId();
+
+    Future<bool> isPersisted() async {
+      try {
+        final row = await _client
+            .from('drivers')
+            .select('kvk_number, kvk_business_name, kvk_address')
+            .eq('user_id', uid)
+            .maybeSingle();
+        if (row == null) return false;
+        final storedNumber = (row['kvk_number'] as String? ?? '').trim();
+        final storedName = (row['kvk_business_name'] as String? ?? '').trim();
+        final storedAddress = (row['kvk_address'] as String? ?? '').trim();
+        return storedNumber == kvkNumber.trim() &&
+            storedName == kvkBusinessName.trim() &&
+            storedAddress == kvkAddress.trim();
+      } catch (_) {
+        return false;
+      }
+    }
+
+    final rpcRes = await saveDriverDocument(
+      documentType: 'kvk',
+      kvkNumber: kvkNumber,
+      kvkBusinessName: kvkBusinessName,
+      kvkAddress: kvkAddress,
+    );
+    if (rpcRes?['success'] == true && await isPersisted()) {
+      return rpcRes;
+    }
+
+    try {
+      final payload = {
+        'kvk_number': kvkNumber,
+        'kvk_business_name': kvkBusinessName,
+        'kvk_address': kvkAddress,
+      };
+      if (driverId != null) {
+        await _client.from('drivers').update(payload).eq('id', driverId);
+      } else {
+        await _client.from('drivers').update(payload).eq('user_id', uid);
+      }
+      final ok = await isPersisted();
+      return {
+        'success': ok,
+        if (!ok) 'error': 'KvK could not be persisted',
+      };
+    } catch (e) {
+      if (kDebugMode) debugPrint('saveKvkDocument fallback: $e');
+      return {
+        'success': false,
+        'error': e.toString(),
+      };
+    }
+  }
+
+  /// Saves taxi insurance fields and guarantees persistence on the current driver's row.
+  Future<Map<String, dynamic>?> saveTaxiInsuranceDocument({
+    required String insurancePhotoUrl,
+    required String insuranceProvider,
+    required String insurancePolicyNr,
+    required String insuranceExpiry,
+  }) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return null;
+    final driverId = await getDriverId();
+
+    Future<bool> isPersisted() async {
+      try {
+        final row = await _client
+            .from('drivers')
+            .select(
+              'taxi_insurance_photo_url, taxi_insurance_provider, '
+              'taxi_insurance_policy_number, taxi_insurance_expiry',
+            )
+            .eq('user_id', uid)
+            .maybeSingle();
+        if (row == null) return false;
+        final storedPhoto = (row['taxi_insurance_photo_url'] as String? ?? '').trim();
+        final storedProvider = (row['taxi_insurance_provider'] as String? ?? '').trim();
+        final storedPolicy =
+            (row['taxi_insurance_policy_number'] as String? ?? '').trim();
+        final storedExpiry = (row['taxi_insurance_expiry']?.toString() ?? '').trim();
+        return storedPhoto == insurancePhotoUrl.trim() &&
+            storedProvider == insuranceProvider.trim() &&
+            storedPolicy == insurancePolicyNr.trim() &&
+            storedExpiry.startsWith(insuranceExpiry);
+      } catch (_) {
+        return false;
+      }
+    }
+
+    final rpcRes = await saveDriverDocument(
+      documentType: 'taxi_insurance',
+      insurancePhotoUrl: insurancePhotoUrl,
+      insuranceProvider: insuranceProvider,
+      insurancePolicyNr: insurancePolicyNr,
+      insuranceExpiry: insuranceExpiry,
+    );
+    if (rpcRes?['success'] == true && await isPersisted()) {
+      return rpcRes;
+    }
+
+    try {
+      final payload = {
+        'taxi_insurance_photo_url': insurancePhotoUrl,
+        'taxi_insurance_provider': insuranceProvider,
+        'taxi_insurance_policy_number': insurancePolicyNr,
+        'taxi_insurance_expiry': insuranceExpiry,
+      };
+      if (driverId != null) {
+        await _client.from('drivers').update(payload).eq('id', driverId);
+      } else {
+        await _client.from('drivers').update(payload).eq('user_id', uid);
+      }
+      final ok = await isPersisted();
+      return {
+        'success': ok,
+        if (!ok) 'error': 'Taxi insurance could not be persisted',
+      };
+    } catch (e) {
+      if (kDebugMode) debugPrint('saveTaxiInsuranceDocument fallback: $e');
+      return {
+        'success': false,
+        'error': e.toString(),
+      };
+    }
+  }
+
+  Future<bool> saveIndemnificationAcknowledgement({
+    required bool quizPassed,
+  }) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return false;
+    try {
+      await _client.from('drivers').update({
+        'indemnification_read_at': DateTime.now().toUtc().toIso8601String(),
+        'indemnification_quiz_passed': quizPassed,
+      }).eq('user_id', uid);
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint(
+          'saveIndemnificationAcknowledgement new columns failed: $e',
+        );
+      }
+      try {
+        await _client.from('drivers').update({
+          'indemnification_accepted_at': DateTime.now().toUtc().toIso8601String(),
+          'indemnification_accepted': quizPassed,
+        }).eq('user_id', uid);
+        return true;
+      } catch (legacyErr) {
+        if (kDebugMode) {
+          debugPrint(
+            'saveIndemnificationAcknowledgement legacy columns failed: $legacyErr',
+          );
+        }
+        return false;
+      }
+    }
+  }
+
+  /// Persists Terms of Service acknowledgement.
+  Future<bool> saveTermsOfServiceAcknowledgement() async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return false;
+    try {
+      await _client.from('drivers').update({
+        'terms_accepted_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('user_id', uid);
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('saveTermsOfServiceAcknowledgement failed: $e');
+      }
+      return false;
+    }
+  }
+
+  /// Persists indemnification document read acknowledgement (without forcing quiz pass).
+  /// Keeps existing quiz state untouched.
+  Future<bool> saveIndemnificationReadAcknowledgement() async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return false;
+    try {
+      final row = await _client
+          .from('drivers')
+          .select('indemnification_quiz_passed')
+          .eq('user_id', uid)
+          .maybeSingle();
+      final existingQuizPassed = (row?['indemnification_quiz_passed'] as bool?) ?? false;
+      await _client.from('drivers').update({
+        'indemnification_read_at': DateTime.now().toUtc().toIso8601String(),
+        'indemnification_quiz_passed': existingQuizPassed,
+      }).eq('user_id', uid);
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('saveIndemnificationReadAcknowledgement new columns failed: $e');
+      }
+      try {
+        await _client.from('drivers').update({
+          'indemnification_accepted_at': DateTime.now().toUtc().toIso8601String(),
+          'indemnification_accepted': true,
+        }).eq('user_id', uid);
+        return true;
+      } catch (legacyErr) {
+        if (kDebugMode) {
+          debugPrint(
+            'saveIndemnificationReadAcknowledgement legacy columns failed: $legacyErr',
+          );
+        }
+        return false;
+      }
+    }
+  }
+
+  /// Backward-compatible wrapper retained for existing call sites.
+  Future<bool> saveLegalReadAcknowledgement() =>
+      saveIndemnificationReadAcknowledgement();
+
   /// RDW + vehicle save via `save_vehicle_info` RPC.
   Future<Map<String, dynamic>?> saveVehicleInfo({
     required String vehiclePlate,
@@ -1429,6 +2245,37 @@ class DriverDataService {
     }
   }
 
+  /// Onboarding V2 — claim plate via vehicle registry + session RPC.
+  Future<Map<String, dynamic>?> claimVehiclePlateV2({
+    required String vehiclePlate,
+    required String vehiclePlateEntered,
+    required Map<String, dynamic> rdwSnapshot,
+    required String vehicleVerificationStatus,
+    bool sharedFleetAck = false,
+  }) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return null;
+    try {
+      final res = await _client.rpc(
+        'fn_driver_onboarding_v2_claim_plate',
+        params: {
+          'p_user_id': uid,
+          'p_vehicle_plate': vehiclePlate,
+          'p_vehicle_plate_entered': vehiclePlateEntered,
+          'p_rdw_snapshot': rdwSnapshot,
+          'p_vehicle_verification_status': vehicleVerificationStatus,
+          'p_shared_fleet_ack': sharedFleetAck,
+        },
+      );
+      if (res is Map<String, dynamic>) return res;
+      if (res is Map) return Map<String, dynamic>.from(res);
+      return null;
+    } catch (e) {
+      if (kDebugMode) debugPrint('claimVehiclePlateV2: $e');
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
   /// After admin approval — mark congratulations modal as seen.
   Future<bool> dismissCongratulationsModal() async {
     final uid = _client.auth.currentUser?.id;
@@ -1480,8 +2327,7 @@ class DriverDataService {
   /// Public bucket for profile photos (`driver-documents` is private — public URLs 403).
   static const _profilePhotoBucket = 'driver-photos';
 
-  /// Upload profile photo once, set public URL on `drivers` and lock further driver-side changes.
-  /// [profilePhotoLocked] prevents replacement in-app; admin must unlock in DB if needed.
+  /// Upload profile photo (max 2 in-app changes), then lock further driver-side changes.
   /// Retries up to 3 times on [TlsException] (network-level SSL errors); throws
   /// [ProfilePhotoConnectionException] on final failure so UI can show a connection-specific message.
   Future<String?> uploadDriverProfilePhotoOnce({
@@ -1494,7 +2340,64 @@ class DriverDataService {
     if (uid == null) return null;
     const maxTlsRetries = 3;
 
+    Future<Map<String, dynamic>?> readPhotoState() async {
+      try {
+        final row = await _client
+            .from('drivers')
+            .select('profile_photo_change_count, profile_photo_url')
+            .eq('id', driverId)
+            .maybeSingle();
+        if (row == null) return null;
+        return Map<String, dynamic>.from(row);
+      } catch (_) {
+        // Backward compatible with older DBs that don't have `profile_photo_change_count` yet.
+        try {
+          final row = await _client
+              .from('drivers')
+              .select('profile_photo_url')
+              .eq('id', driverId)
+              .maybeSingle();
+          if (row == null) return null;
+          final map = Map<String, dynamic>.from(row);
+          final hasPhoto = (map['profile_photo_url'] as String?)?.trim().isNotEmpty ?? false;
+          return {
+            'profile_photo_url': map['profile_photo_url'],
+            'profile_photo_change_count': hasPhoto ? 1 : 0,
+          };
+        } catch (_) {
+          return null;
+        }
+      }
+    }
+
+    Future<void> persistPhotoCounters({
+      required int nextCount,
+      required String url,
+    }) async {
+      try {
+        await _client.from('drivers').update({
+          'profile_photo_url': url,
+          'profile_photo_change_count': nextCount,
+          'profile_photo_locked': nextCount >= 2,
+        }).eq('id', driverId);
+        return;
+      } catch (_) {
+        // Compatibility fallback: older schema without `profile_photo_change_count`.
+        await _client.from('drivers').update({
+          'profile_photo_url': url,
+          // Keep unlocked on legacy schema so second change remains possible for testing.
+          'profile_photo_locked': false,
+        }).eq('id', driverId);
+      }
+    }
+
     Future<String?> doUpload() async {
+      final state = await readPhotoState();
+      final rawCount = (state?['profile_photo_change_count'] as num?)?.toInt() ?? 0;
+      final existingPhoto = (state?['profile_photo_url'] as String?)?.trim() ?? '';
+      // Backward compatible: old rows may have photo URL but no explicit counter.
+      final count = rawCount > 0 ? rawCount : (existingPhoto.isNotEmpty ? 1 : 0);
+      if (count >= 2) throw const ProfilePhotoLimitException();
       final path = '$driverId/profile-photo.$fileExtension';
       await _client.storage.from(_profilePhotoBucket).uploadBinary(
             path,
@@ -1505,18 +2408,28 @@ class DriverDataService {
       final rpc = await saveDriverProfileRpc(userId: uid, profilePhotoUrl: url);
       if (rpc != null) {
         final ok = rpc['success'] == true;
-        if (ok) return url;
+        if (ok) {
+          final nextCount = (count + 1).clamp(0, 999);
+          await persistPhotoCounters(nextCount: nextCount, url: url);
+          return url;
+        }
         if (rpc['error'] == 'profile_photo_locked') {
-          if (kDebugMode) debugPrint('uploadDriverProfilePhotoOnce: profile_photo_locked');
+          // Legacy RPC rule (old one-time lock). Continue with direct update using new 2-change rule.
+          if (kDebugMode) {
+            debugPrint(
+              'uploadDriverProfilePhotoOnce: legacy profile_photo_locked from RPC, fallback to direct update',
+            );
+          }
+          final nextCount = (count + 1).clamp(0, 999);
+          await persistPhotoCounters(nextCount: nextCount, url: url);
+          return url;
         } else if (kDebugMode) {
           debugPrint('save_driver_profile: $rpc');
         }
         return null;
       }
-      await _client.from('drivers').update({
-        'profile_photo_url': url,
-        'profile_photo_locked': true,
-      }).eq('id', driverId);
+      final nextCount = (count + 1).clamp(0, 999);
+      await persistPhotoCounters(nextCount: nextCount, url: url);
       return url;
     }
 
@@ -1537,9 +2450,51 @@ class DriverDataService {
         }
       }
       throw const ProfilePhotoConnectionException();
+    } on ProfilePhotoLimitException {
+      rethrow;
     } catch (e) {
       if (e is ProfilePhotoConnectionException) rethrow;
       if (kDebugMode) debugPrint('uploadDriverProfilePhotoOnce: $e');
+      return null;
+    }
+  }
+
+  /// Upload up to 2 rider-visible vehicle photos for the driver profile.
+  Future<List<String>?> uploadDriverVehiclePhoto({
+    required String driverId,
+    required Uint8List bytes,
+    required String contentType,
+    String fileExtension = 'jpg',
+  }) async {
+    try {
+      final row = await _client
+          .from('drivers')
+          .select('vehicle_photo_urls')
+          .eq('id', driverId)
+          .maybeSingle();
+      final existing = ((row?['vehicle_photo_urls'] as List?) ?? const [])
+          .map((e) => e.toString())
+          .where((e) => e.trim().isNotEmpty)
+          .toList();
+      if (existing.length >= 2) throw const VehiclePhotoLimitException();
+
+      final path =
+          '$driverId/vehicle-${existing.length + 1}-${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
+      await _client.storage.from(_profilePhotoBucket).uploadBinary(
+            path,
+            bytes,
+            fileOptions: FileOptions(contentType: contentType, upsert: false),
+          );
+      final url = _client.storage.from(_profilePhotoBucket).getPublicUrl(path);
+      final updated = [...existing, url];
+      await _client.from('drivers').update({
+        'vehicle_photo_urls': updated,
+      }).eq('id', driverId);
+      return updated;
+    } on VehiclePhotoLimitException {
+      rethrow;
+    } catch (e) {
+      if (kDebugMode) debugPrint('uploadDriverVehiclePhoto: $e');
       return null;
     }
   }
@@ -1711,6 +2666,168 @@ class DriverDataService {
         'driver_id': driverId,
         'channel': channel,
         'content': text,
+      });
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Creates a poll post (`[poll]` marker) + options; vote weights are applied on the server.
+  Future<String?> createCommunityPoll({
+    required String question,
+    required List<String> options,
+  }) async {
+    final q = question.trim();
+    final opts = options.map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    if (q.length < 3 || opts.length < 2 || opts.length > 6) return null;
+    try {
+      final res = await _client.rpc(
+        'create_community_poll',
+        params: {'p_question': q, 'p_options': opts},
+      );
+      if (res is String && res.isNotEmpty) return res;
+      if (res != null) return res.toString();
+      return null;
+    } catch (e) {
+      if (kDebugMode) debugPrint('createCommunityPoll: $e');
+      return null;
+    }
+  }
+
+  /// Upsert this driver's vote; `vote_weight` is set by DB trigger from founding status.
+  Future<bool> upsertCommunityPollVote({
+    required String pollId,
+    required String optionId,
+    required String driverId,
+  }) async {
+    try {
+      await _client.from('community_poll_votes').upsert(
+        {
+          'poll_id': pollId,
+          'option_id': optionId,
+          'driver_id': driverId,
+        },
+        onConflict: 'poll_id,driver_id',
+      );
+      return true;
+    } catch (e) {
+      if (kDebugMode) debugPrint('upsertCommunityPollVote: $e');
+      return false;
+    }
+  }
+
+  Future<bool> updateCommunityPost({
+    required String postId,
+    required String content,
+  }) async {
+    final text = content.trim();
+    if (text.isEmpty) return false;
+    try {
+      await _client
+          .from('community_posts')
+          .update({'content': text})
+          .eq('id', postId);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteCommunityPost(String postId) async {
+    try {
+      await _client.from('community_posts').delete().eq('id', postId);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> toggleCommunityReaction({
+    required String postId,
+    required String driverId,
+    required String reactionType,
+  }) async {
+    try {
+      final existing = await _client
+          .from('community_post_reactions')
+          .select('id')
+          .eq('post_id', postId)
+          .eq('driver_id', driverId)
+          .eq('reaction_type', reactionType)
+          .maybeSingle();
+      if (existing != null) {
+        await _client
+            .from('community_post_reactions')
+            .delete()
+            .eq('id', existing['id']);
+      } else {
+        await _client.from('community_post_reactions').insert({
+          'post_id': postId,
+          'driver_id': driverId,
+          'reaction_type': reactionType,
+        });
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<Map<String, CommunityReactionSummary>> getCommunityReactionSummary(
+    List<String> postIds, {
+    required String driverId,
+  }) async {
+    if (postIds.isEmpty) return const {};
+    try {
+      final res = await _client
+          .from('community_post_reactions')
+          .select('post_id,driver_id,reaction_type')
+          .inFilter('post_id', postIds);
+      final map = <String, CommunityReactionSummary>{};
+      for (final id in postIds) {
+        map[id] = const CommunityReactionSummary();
+      }
+      for (final row in (res as List)) {
+        final postId = row['post_id'] as String?;
+        final type = row['reaction_type'] as String?;
+        final who = row['driver_id'] as String?;
+        if (postId == null || type == null) continue;
+        final prev = map[postId] ?? const CommunityReactionSummary();
+        map[postId] = prev.merge(
+          reactionType: type,
+          isMine: who == driverId,
+        );
+      }
+      return map;
+    } catch (_) {
+      return const {};
+    }
+  }
+
+  Future<bool> isCommunityDisclaimerAccepted() async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return false;
+    try {
+      final row = await _client
+          .from('driver_ui_flags')
+          .select('community_disclaimer_accepted')
+          .eq('user_id', uid)
+          .maybeSingle();
+      return (row?['community_disclaimer_accepted'] as bool?) ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> setCommunityDisclaimerAccepted() async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return false;
+    try {
+      await _client.from('driver_ui_flags').upsert({
+        'user_id': uid,
+        'community_disclaimer_accepted': true,
+        'community_disclaimer_accepted_at': DateTime.now().toIso8601String(),
       });
       return true;
     } catch (_) {
@@ -1905,10 +3022,15 @@ class DriverDataService {
   /// Latest post from general channel for home sheet preview.
   Future<CommunityPost?> getLatestCommunityPost() async {
     try {
+      final cutoff = DateTime.now()
+          .toUtc()
+          .subtract(const Duration(hours: 24))
+          .toIso8601String();
       final res = await _client
           .from('community_posts')
           .select('id, driver_id, content, created_at')
           .eq('channel', 'general')
+          .gte('created_at', cutoff)
           .order('created_at', ascending: false)
           .limit(1)
           .maybeSingle();
@@ -1961,6 +3083,17 @@ class ZoneDemand {
   final double? radiusM;
   final int waitingPassengers;
   final String? demandLevel;
+  final double? smartTargetLat;
+  final double? smartTargetLng;
+  final String? smartTargetLabel;
+  final String? smartTargetReason;
+  final double? smartTargetScore;
+  /// Ride requests with pickup in zone, last 120 minutes (`fn_driver_hotspots_smart`).
+  final int recentBookings120m;
+  /// Mean `offered_fare` when present (null if no fares in window).
+  final double? avgOfferedFareEur;
+  /// Online drivers (fresh location) assigned to this zone.
+  final int onlineDriversInZone;
 
   const ZoneDemand({
     required this.zoneId,
@@ -1970,6 +3103,14 @@ class ZoneDemand {
     this.radiusM,
     this.waitingPassengers = 0,
     this.demandLevel,
+    this.smartTargetLat,
+    this.smartTargetLng,
+    this.smartTargetLabel,
+    this.smartTargetReason,
+    this.smartTargetScore,
+    this.recentBookings120m = 0,
+    this.avgOfferedFareEur,
+    this.onlineDriversInZone = 0,
   });
 
   static ZoneDemand fromJson(Map<String, dynamic> j) {
@@ -1981,6 +3122,14 @@ class ZoneDemand {
       radiusM: (j['radius_m'] as num?)?.toDouble(),
       waitingPassengers: (j['waiting_passengers'] as num?)?.toInt() ?? 0,
       demandLevel: j['demand_level'] as String?,
+      smartTargetLat: (j['smart_target_lat'] as num?)?.toDouble(),
+      smartTargetLng: (j['smart_target_lng'] as num?)?.toDouble(),
+      smartTargetLabel: j['smart_target_label'] as String?,
+      smartTargetReason: j['smart_target_reason'] as String?,
+      smartTargetScore: (j['smart_target_score'] as num?)?.toDouble(),
+      recentBookings120m: (j['recent_bookings_120m'] as num?)?.toInt() ?? 0,
+      avgOfferedFareEur: (j['avg_offered_fare_eur'] as num?)?.toDouble(),
+      onlineDriversInZone: (j['online_drivers_in_zone'] as num?)?.toInt() ?? 0,
     );
   }
 }
@@ -2040,6 +3189,7 @@ class DriverTicket {
   final String status;
   final List<dynamic> messages;
   final String? rideRequestId;
+  final String? category;
   final String? zoneName;
 
   const DriverTicket({
@@ -2048,6 +3198,7 @@ class DriverTicket {
     this.status = 'open',
     this.messages = const [],
     this.rideRequestId,
+    this.category,
     this.zoneName,
   });
 
@@ -2061,19 +3212,32 @@ class DriverTicket {
     return DriverTicket(
       id: j['id'] as String? ?? '',
       createdAt: parse(j['created_at']),
-      status: j['status'] as String? ?? 'open',
+      status: (j['status'] as String? ?? 'open').toLowerCase(),
       messages: msgs is List ? msgs : const [],
       rideRequestId: j['ride_request_id'] as String?,
+      category: j['category'] as String?,
       zoneName: j['zone_name'] as String?,
     );
   }
 
-  bool get hasDriverReplied => messages.isNotEmpty;
-  String get statusLabel => status == 'resolved'
-      ? 'Opgelost'
-      : hasDriverReplied
-          ? 'In behandeling'
-          : 'U heeft niet gereageerd';
+  /// Same idea as the driver support / threads ticket rows: a driver “reply”
+  /// is a user-role message or legacy `sender_type: driver` — not any non-empty list.
+  bool get hasDriverReplied {
+    for (final m in messages) {
+      if (m is! Map) continue;
+      final map = Map<String, dynamic>.from(m);
+      if (map['role'] == 'user') return true;
+      if (map['sender_type'] == 'driver') return true;
+    }
+    return false;
+  }
+
+  String get statusLabel =>
+      (status == 'resolved' || status == 'closed')
+          ? 'Opgelost'
+          : hasDriverReplied
+              ? 'In behandeling'
+              : 'U heeft niet gereageerd';
 }
 
 /// One row from `driver_my_rating` / `driver_trust_scores` (migration 040).
@@ -2459,6 +3623,206 @@ class TodayRide {
 }
 
 @immutable
+class MyRideSummary {
+  final String id;
+  final DateTime? createdAt;
+  final String status;
+  final String? pickupAddress;
+  final String? destinationAddress;
+  final double? fare;
+  final String? currency;
+  final bool manualEntry;
+
+  const MyRideSummary({
+    required this.id,
+    required this.createdAt,
+    required this.status,
+    required this.pickupAddress,
+    required this.destinationAddress,
+    required this.fare,
+    required this.currency,
+    required this.manualEntry,
+  });
+
+  factory MyRideSummary.fromJson(Map<String, dynamic> j) {
+    final manualFare = (j['manual_fare_cents'] as num?)?.toDouble();
+    final finalFare = (j['final_fare'] as num?)?.toDouble();
+    return MyRideSummary(
+      id: (j['id'] as String?) ?? '',
+      createdAt: DateTime.tryParse((j['created_at'] as String?) ?? ''),
+      status: (j['status'] as String?) ?? 'unknown',
+      pickupAddress: j['pickup_address'] as String?,
+      destinationAddress: j['destination_address'] as String?,
+      fare: manualFare != null ? (manualFare / 100.0) : finalFare,
+      currency: j['currency'] as String?,
+      manualEntry: j['manual_entry'] == true,
+    );
+  }
+}
+
+@immutable
+class MyRideDetails extends MyRideSummary {
+  final String? paymentMethod;
+  final int? platformFeeCents;
+  final int? driverEarningsCents;
+  final double? distanceKm;
+
+  const MyRideDetails({
+    required super.id,
+    required super.createdAt,
+    required super.status,
+    required super.pickupAddress,
+    required super.destinationAddress,
+    required super.fare,
+    required super.currency,
+    required super.manualEntry,
+    required this.paymentMethod,
+    required this.platformFeeCents,
+    required this.driverEarningsCents,
+    required this.distanceKm,
+  });
+
+  factory MyRideDetails.fromJson(Map<String, dynamic> j) {
+    final base = MyRideSummary.fromJson(j);
+    return MyRideDetails(
+      id: base.id,
+      createdAt: base.createdAt,
+      status: base.status,
+      pickupAddress: base.pickupAddress,
+      destinationAddress: base.destinationAddress,
+      fare: base.fare,
+      currency: base.currency,
+      manualEntry: base.manualEntry,
+      paymentMethod:
+          (j['manual_payment_method'] as String?) ?? (j['payment_method'] as String?),
+      platformFeeCents: (j['platform_fee_cents'] as num?)?.toInt(),
+      driverEarningsCents: (j['driver_earnings_cents'] as num?)?.toInt(),
+      distanceKm: (j['distance_km'] as num?)?.toDouble(),
+    );
+  }
+}
+
+class _CompletedTripEarning {
+  final DateTime completedAt;
+  final double fare;
+  final double distanceKm;
+
+  const _CompletedTripEarning({
+    required this.completedAt,
+    required this.fare,
+    required this.distanceKm,
+  });
+}
+
+class _CancelledRideFinance {
+  final int count;
+  final double cancellationFees;
+
+  const _CancelledRideFinance({
+    this.count = 0,
+    this.cancellationFees = 0,
+  });
+}
+
+@immutable
+class DriverFinanceRange {
+  final DateTime start;
+  final DateTime end;
+
+  const DriverFinanceRange({
+    required this.start,
+    required this.end,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DriverFinanceRange &&
+          runtimeType == other.runtimeType &&
+          start == other.start &&
+          end == other.end;
+
+  @override
+  int get hashCode => Object.hash(start, end);
+}
+
+@immutable
+class DriverFinanceMetrics {
+  final double grossEarnings;
+  final double netEarnings;
+  final int totalRides;
+  final double totalKilometers;
+  final double? platformFees;
+  final double? tips;
+  final int completedRides;
+  final int cancelledRides;
+  final double cancellationFees;
+
+  const DriverFinanceMetrics({
+    this.grossEarnings = 0,
+    this.netEarnings = 0,
+    this.totalRides = 0,
+    this.totalKilometers = 0,
+    this.platformFees,
+    this.tips,
+    this.completedRides = 0,
+    this.cancelledRides = 0,
+    this.cancellationFees = 0,
+  });
+
+  static DriverFinanceMetrics fromJson(Map<String, dynamic> j) {
+    return DriverFinanceMetrics(
+      grossEarnings: (j['gross_earnings'] as num?)?.toDouble() ?? 0,
+      netEarnings: (j['net_earnings'] as num?)?.toDouble() ?? 0,
+      totalRides: (j['total_rides'] as num?)?.toInt() ?? 0,
+      totalKilometers: (j['total_kilometers'] as num?)?.toDouble() ?? 0,
+      platformFees: (j['platform_fees'] as num?)?.toDouble(),
+      tips: (j['tips'] as num?)?.toDouble(),
+      completedRides: (j['completed_rides'] as num?)?.toInt() ?? 0,
+      cancelledRides: (j['cancelled_rides'] as num?)?.toInt() ?? 0,
+      cancellationFees: (j['cancellation_fees'] as num?)?.toDouble() ?? 0,
+    );
+  }
+}
+
+@immutable
+class CommunityPollOptionView {
+  const CommunityPollOptionView({
+    required this.id,
+    required this.label,
+    required this.position,
+    required this.weightedTotal,
+    required this.voterCount,
+  });
+
+  final String id;
+  final String label;
+  final int position;
+  final double weightedTotal;
+  final int voterCount;
+}
+
+@immutable
+class CommunityPollData {
+  const CommunityPollData({
+    required this.pollId,
+    required this.postId,
+    required this.question,
+    required this.options,
+    this.myOptionId,
+  });
+
+  final String pollId;
+  final String postId;
+  final String question;
+  final List<CommunityPollOptionView> options;
+  final String? myOptionId;
+
+  double get totalWeighted =>
+      options.fold<double>(0, (a, b) => a + b.weightedTotal);
+}
+
+@immutable
 class CommunityPost {
   final String id;
   final String? authorDriverId;
@@ -2467,6 +3831,7 @@ class CommunityPost {
   final String? channel;
   final String? rideRequestId;
   final String? swapStatus;
+  final CommunityPollData? poll;
 
   const CommunityPost({
     required this.id,
@@ -2476,9 +3841,21 @@ class CommunityPost {
     this.channel,
     this.rideRequestId,
     this.swapStatus,
+    this.poll,
   });
 
   bool get isSwapOpen => channel == 'swap' && rideRequestId != null && swapStatus == 'open';
+
+  CommunityPost withPoll(CommunityPollData? poll) => CommunityPost(
+        id: id,
+        authorDriverId: authorDriverId,
+        body: body,
+        createdAt: createdAt,
+        channel: channel,
+        rideRequestId: rideRequestId,
+        swapStatus: swapStatus,
+        poll: poll,
+      );
 
   static CommunityPost fromJson(Map<String, dynamic> j) {
     DateTime? parse(dynamic v) {
@@ -2494,6 +3871,34 @@ class CommunityPost {
       channel: j['channel'] as String?,
       rideRequestId: j['ride_request_id'] as String?,
       swapStatus: j['swap_status'] as String?,
+      poll: null,
+    );
+  }
+}
+
+@immutable
+class CommunityReactionSummary {
+  final int likeCount;
+  final int thanksCount;
+  final bool likedByMe;
+  final bool thankedByMe;
+
+  const CommunityReactionSummary({
+    this.likeCount = 0,
+    this.thanksCount = 0,
+    this.likedByMe = false,
+    this.thankedByMe = false,
+  });
+
+  CommunityReactionSummary merge({
+    required String reactionType,
+    required bool isMine,
+  }) {
+    return CommunityReactionSummary(
+      likeCount: likeCount + (reactionType == 'like' ? 1 : 0),
+      thanksCount: thanksCount + (reactionType == 'thanks' ? 1 : 0),
+      likedByMe: likedByMe || (isMine && reactionType == 'like'),
+      thankedByMe: thankedByMe || (isMine && reactionType == 'thanks'),
     );
   }
 }
@@ -2508,11 +3913,15 @@ class DriverProfile {
   final double? rating;
   final double? avgRating;
   final double? pickupDistanceMaxKm;
+  /// Mirrored from active rate profile for rider discovery; optional on older DB selects.
+  final double? activeReturnDiscountPct;
   final List<String>? paymentMethod;
   final bool isPetFriendly;
   final bool isWheelchairAccessible;
   final String? profilePhotoUrl;
   final bool profilePhotoLocked;
+  final int profilePhotoChangeCount;
+  final List<String> vehiclePhotoUrls;
   final bool isVerifiedBadge;
   final String? profileStatus;
   final String? complianceStatus;
@@ -2536,11 +3945,14 @@ class DriverProfile {
     this.rating,
     this.avgRating,
     this.pickupDistanceMaxKm,
+    this.activeReturnDiscountPct,
     this.paymentMethod,
     this.isPetFriendly = false,
     this.isWheelchairAccessible = false,
     this.profilePhotoUrl,
     this.profilePhotoLocked = false,
+    this.profilePhotoChangeCount = 0,
+    this.vehiclePhotoUrls = const [],
     this.isVerifiedBadge = false,
     this.profileStatus,
     this.complianceStatus,
@@ -2595,11 +4007,18 @@ class DriverProfile {
       rating: (j['rating'] as num?)?.toDouble(),
       avgRating: (j['avg_rating'] as num?)?.toDouble(),
       pickupDistanceMaxKm: (j['pickup_distance_max_km'] as num?)?.toDouble(),
+      activeReturnDiscountPct: (j['active_return_discount_pct'] as num?)?.toDouble(),
       paymentMethod: paymentList ?? const ['cash'],
       isPetFriendly: (j['is_pet_friendly'] as bool?) ?? false,
       isWheelchairAccessible: (j['is_wheelchair_accessible'] as bool?) ?? false,
       profilePhotoUrl: j['profile_photo_url'] as String?,
       profilePhotoLocked: (j['profile_photo_locked'] as bool?) ?? false,
+      profilePhotoChangeCount:
+          (j['profile_photo_change_count'] as num?)?.toInt() ?? 0,
+      vehiclePhotoUrls: ((j['vehicle_photo_urls'] as List?) ?? const [])
+          .map((e) => e.toString())
+          .where((e) => e.trim().isNotEmpty)
+          .toList(),
       isVerifiedBadge: (j['is_verified_badge'] as bool?) ?? false,
       profileStatus: j['profile_status'] as String?,
       complianceStatus: j['compliance_status'] as String?,
@@ -2631,7 +4050,7 @@ class DriverProfile {
   bool get acceptsInvoice => paymentMethod?.contains('invoice') ?? false;
 
   /// Star rating shown in UI (prefer `avg_rating`).
-  double get displayRating => avgRating ?? rating ?? 0.0;
+  double get displayRating => (avgRating ?? rating ?? 5.0).clamp(0.0, 5.0);
 }
 
 /// Live compliance snapshot for driver Documents hub (Dutch Wpv 2000).
@@ -2657,6 +4076,9 @@ class DriverComplianceSnapshot {
   final String? kvkNumber;
   final String? kvkBusinessName;
   final String? kvkAddress;
+  final DateTime? termsAcceptedAt;
+  final DateTime? indemnificationReadAt;
+  final bool? indemnificationQuizPassed;
   final String? veriffStatus;
   final String? veriffSessionUrl;
   final String? veriffFullName;
@@ -2689,6 +4111,9 @@ class DriverComplianceSnapshot {
     this.kvkNumber,
     this.kvkBusinessName,
     this.kvkAddress,
+    this.termsAcceptedAt,
+    this.indemnificationReadAt,
+    this.indemnificationQuizPassed,
     this.veriffStatus,
     this.veriffSessionUrl,
     this.veriffFullName,
@@ -2744,6 +4169,9 @@ class DriverComplianceSnapshot {
       kvkNumber: j['kvk_number'] as String?,
       kvkBusinessName: j['kvk_business_name'] as String?,
       kvkAddress: j['kvk_address'] as String?,
+      termsAcceptedAt: _parseDate(j['terms_accepted_at']),
+      indemnificationReadAt: _parseDate(j['indemnification_read_at']),
+      indemnificationQuizPassed: j['indemnification_quiz_passed'] as bool?,
       veriffStatus: j['veriff_status'] as String?,
       veriffSessionUrl: j['veriff_session_url'] as String?,
       veriffFullName: j['veriff_full_name'] as String?,
@@ -2767,6 +4195,9 @@ class DriverComplianceSnapshot {
       rijbewijsExpiry: _parseDate(j['rijbewijs_expiry']),
       taxiInsuranceExpiry: _parseDate(j['taxi_insurance_expiry']),
       vehiclePlate: j['vehicle_plate'] as String?,
+      termsAcceptedAt: _parseDate(j['terms_accepted_at']),
+      indemnificationReadAt: _parseDate(j['indemnification_read_at']),
+      indemnificationQuizPassed: j['indemnification_quiz_passed'] as bool?,
     );
   }
 }
@@ -2823,105 +4254,38 @@ class DriverReturnTrip {
       estimatedDurationMin: d(j['estimated_duration_min']) ?? d(j['duration_min']),
     );
   }
-}
 
-@immutable
-class DriverPowerCard {
-  final String id;
-  final String cardType;
-  final String? title;
-  final String? subtitle;
-  final String? zoneId;
-  final double? valueA;
-  final double? valueB;
-  final double? valueC;
-  final String? actionUrl;
-
-  const DriverPowerCard({
-    required this.id,
-    required this.cardType,
-    this.title,
-    this.subtitle,
-    this.zoneId,
-    this.valueA,
-    this.valueB,
-    this.valueC,
-    this.actionUrl,
-  });
-
-  static DriverPowerCard fromJson(Map<String, dynamic> j) {
-    double? d(dynamic v) => (v as num?)?.toDouble();
-    return DriverPowerCard(
-      id: j['id'] as String? ?? '',
-      cardType: j['card_type'] as String? ?? '',
-      title: j['title'] as String? ?? j['zone_name'] as String?,
-      subtitle: j['subtitle'] as String?,
-      zoneId: j['zone_id'] as String?,
-      valueA: d(j['value_a']),
-      valueB: d(j['value_b']),
-      valueC: d(j['value_c']),
-      actionUrl: j['action_url'] as String?,
-    );
+  bool get isDisplayable {
+    final hasRoute = (pickupZoneName != null && pickupZoneName!.trim().isNotEmpty) &&
+        (((destinationZoneName != null && destinationZoneName!.trim().isNotEmpty) ||
+            (destinationCity != null && destinationCity!.trim().isNotEmpty)));
+    final hasIdentity = rideRequestId != null && rideRequestId!.trim().isNotEmpty;
+    return hasRoute && hasIdentity;
   }
 }
 
 @immutable
-class UnionDashboardRow {
-  final String? zoneId;
-  final String? zoneName;
-  final int passengersWaiting;
-  final int driversOnline;
-  final String? marketBalance;
-  final double? avgOfferedFare;
-
-  const UnionDashboardRow({
-    this.zoneId,
-    this.zoneName,
-    this.passengersWaiting = 0,
-    this.driversOnline = 0,
-    this.marketBalance,
-    this.avgOfferedFare,
-  });
-
-  static UnionDashboardRow fromJson(Map<String, dynamic> j) {
-    return UnionDashboardRow(
-      zoneId: j['zone_id'] as String?,
-      zoneName: (j['zone_name'] as String?) ?? (j['name_display'] as String?),
-      passengersWaiting: (j['passengers_waiting'] as num?)?.toInt() ?? 0,
-      driversOnline: (j['drivers_online'] as num?)?.toInt() ?? 0,
-      marketBalance: j['market_balance'] as String?,
-      avgOfferedFare: (j['avg_offered_fare'] as num?)?.toDouble(),
-    );
-  }
-}
-
-@immutable
-class DriverMarketSignal {
-  final String id;
-  final String zoneId;
-  final String signalType;
-  final String? description;
-  final int upvotes;
+class DriverTopAppSuggestion {
+  final String suggestionText;
+  final String status;
+  final int votesCount;
   final DateTime? createdAt;
 
-  const DriverMarketSignal({
-    required this.id,
-    required this.zoneId,
-    required this.signalType,
-    this.description,
-    this.upvotes = 0,
+  const DriverTopAppSuggestion({
+    required this.suggestionText,
+    this.status = 'new',
+    this.votesCount = 0,
     this.createdAt,
   });
 
-  static DriverMarketSignal fromJson(Map<String, dynamic> j) {
+  static DriverTopAppSuggestion fromJson(Map<String, dynamic> j) {
     DateTime? parse(dynamic v) => v is String ? DateTime.tryParse(v) : null;
-    return DriverMarketSignal(
-      id: j['id'] as String? ?? '',
-      zoneId: j['zone_id'] as String? ?? '',
-      signalType: j['signal_type'] as String? ?? '',
-      description: j['description'] as String?,
-      upvotes: (j['upvotes'] as num?)?.toInt() ?? 0,
+    return DriverTopAppSuggestion(
+      suggestionText: (j['suggestion_text'] as String? ?? '').trim(),
+      status: (j['status'] as String? ?? 'new').trim(),
+      votesCount: (j['votes_count'] as num?)?.toInt() ?? 0,
       createdAt: parse(j['created_at']),
     );
   }
 }
+

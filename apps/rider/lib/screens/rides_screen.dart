@@ -19,6 +19,7 @@ class RidesScreen extends ConsumerStatefulWidget {
 
 class _RidesScreenState extends ConsumerState<RidesScreen> {
   int _selectedTab = 0;
+
   /// 0 = upcoming open requests, 1 = history from `rides` table.
   int _segment = 0;
 
@@ -264,7 +265,8 @@ class _UpcomingRidesTab extends ConsumerWidget {
     final now = DateTime.now();
 
     return upcoming.when(
-      loading: () => Center(child: CircularProgressIndicator(color: colors.accent)),
+      loading: () =>
+          Center(child: CircularProgressIndicator(color: colors.accent)),
       error: (_, __) => const SizedBox.shrink(),
       data: (items) {
         if (items.isEmpty) {
@@ -333,7 +335,8 @@ class _UpcomingEmpty extends StatelessWidget {
             color: colors.accent.withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
-          child: Icon(Icons.event_available_rounded, size: 44, color: colors.accent),
+          child: Icon(Icons.event_available_rounded,
+              size: 44, color: colors.accent),
         ),
         const SizedBox(height: 20),
         Text(
@@ -387,8 +390,7 @@ class _UpcomingRideRequestCard extends StatelessWidget {
     final badgeLabel = isFutureScheduled
         ? l10n.ridesUpcomingScheduledBadge
         : l10n.ridesUpcomingMatchingBadge;
-    final badgeColor =
-        isFutureScheduled ? colors.accent : colors.warning;
+    final badgeColor = isFutureScheduled ? colors.accent : colors.warning;
 
     return Material(
       color: Colors.transparent,
@@ -602,13 +604,35 @@ class _FilterTabs extends StatelessWidget {
       padding: const EdgeInsetsDirectional.symmetric(horizontal: 20),
       child: Row(
         children: [
-          _Tab(label: l10n.ridesFilterActive, isSelected: selected == 0, colors: colors, typo: typo, onTap: () => onChanged(0)),
+          _Tab(
+              label: l10n.ridesFilterActive,
+              isSelected: selected == 0,
+              colors: colors,
+              typo: typo,
+              onTap: () => onChanged(0)),
           const SizedBox(width: 8),
-          _Tab(label: l10n.ridesFilterBidding, isSelected: selected == 1, colors: colors, typo: typo, onTap: () => onChanged(1)),
+          _Tab(
+              label: l10n.ridesFilterBidding,
+              isSelected: selected == 1,
+              colors: colors,
+              typo: typo,
+              onTap: () => onChanged(1)),
           const SizedBox(width: 8),
-          _Tab(label: l10n.ridesFilterCompleted, icon: Icons.check_circle_outline, isSelected: selected == 2, colors: colors, typo: typo, onTap: () => onChanged(2)),
+          _Tab(
+              label: l10n.ridesFilterCompleted,
+              icon: Icons.check_circle_outline,
+              isSelected: selected == 2,
+              colors: colors,
+              typo: typo,
+              onTap: () => onChanged(2)),
           const SizedBox(width: 8),
-          _Tab(label: l10n.ridesFilterCancelled, badge: '1', isSelected: selected == 3, colors: colors, typo: typo, onTap: () => onChanged(3)),
+          _Tab(
+              label: l10n.ridesFilterCancelled,
+              badge: '1',
+              isSelected: selected == 3,
+              colors: colors,
+              typo: typo,
+              onTap: () => onChanged(3)),
         ],
       ),
     );
@@ -639,7 +663,8 @@ class _Tab extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsetsDirectional.symmetric(horizontal: 20, vertical: 12),
+        padding:
+            const EdgeInsetsDirectional.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected ? colors.accent : colors.card,
           borderRadius: BorderRadius.circular(24),
@@ -652,7 +677,8 @@ class _Tab extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, color: isSelected ? colors.bg : colors.textMid, size: 18),
+              Icon(icon,
+                  color: isSelected ? colors.bg : colors.textMid, size: 18),
               const SizedBox(width: 6),
             ],
             Text(
@@ -665,9 +691,12 @@ class _Tab extends StatelessWidget {
             if (badge != null) ...[
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsetsDirectional.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsetsDirectional.symmetric(
+                    horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isSelected ? colors.bg.withValues(alpha: 0.2) : colors.error,
+                  color: isSelected
+                      ? colors.bg.withValues(alpha: 0.2)
+                      : colors.error,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -893,23 +922,40 @@ class _RideCard extends StatelessWidget {
           if (ride.status == 'completed')
             Padding(
               padding: const EdgeInsetsDirectional.fromSTEB(8, 0, 8, 10),
-              child: Align(
-                alignment: AlignmentDirectional.centerEnd,
-                child: TextButton.icon(
-                  onPressed: () => context.push(
-                    '/report',
-                    extra: ReportRouteArgs(ridesRowId: ride.id),
-                  ),
-                  icon: Icon(Icons.flag_outlined,
-                      color: colors.error, size: 20),
-                  label: Text(
-                    l10n.ridesCardReportRide,
-                    style: typo.labelLarge.copyWith(
-                      color: colors.error,
-                      fontWeight: FontWeight.w700,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton.icon(
+                    onPressed: () => context.push('/receipt/${ride.id}'),
+                    icon: Icon(
+                      Icons.receipt_long_outlined,
+                      color: colors.text,
+                      size: 20,
+                    ),
+                    label: Text(
+                      'View receipt',
+                      style: typo.labelLarge.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                ),
+                  TextButton.icon(
+                    onPressed: () => context.push(
+                      '/report',
+                      extra: ReportRouteArgs(ridesRowId: ride.id),
+                    ),
+                    icon: Icon(Icons.flag_outlined,
+                        color: colors.error, size: 20),
+                    label: Text(
+                      l10n.ridesCardReportRide,
+                      style: typo.labelLarge.copyWith(
+                        color: colors.error,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
         ],

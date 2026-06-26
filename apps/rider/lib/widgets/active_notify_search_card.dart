@@ -63,9 +63,10 @@ class _ActiveNotifySearchCardState extends State<ActiveNotifySearchCard> {
     final elapsedSec = elapsed.inSeconds.clamp(0, totalSec);
     final progress = totalSec == 0 ? 0.0 : elapsedSec / totalSec;
     final remaining = kRiderDriverSearchWindow - elapsed;
+    final maxMinutes = kRiderDriverSearchWindow.inMinutes.clamp(0, 9999);
     final minutesLeft = remaining.isNegative
         ? 0
-        : (remaining.inSeconds / 60).ceil().clamp(0, 30);
+        : (remaining.inSeconds / 60).ceil().clamp(0, maxMinutes);
 
     final typeLabel = rideMatchingTypeShortLabel(l10n, widget.bookingMode);
     final hasRoute = (widget.pickupSummary != null &&
@@ -226,7 +227,7 @@ class _ActiveNotifySearchCardState extends State<ActiveNotifySearchCard> {
                       ],
                       const SizedBox(height: 12),
                       Text(
-                        l10n.activeSearchCardHint,
+                        'HeyCaby is new and growing. This background search stops automatically after $maxMinutes minutes if no driver accepts — you will not be left waiting silently.',
                         style: typo.bodySmall.copyWith(
                           color: colors.textSoft,
                           height: 1.5,

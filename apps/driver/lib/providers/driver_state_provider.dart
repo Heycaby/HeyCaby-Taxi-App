@@ -122,19 +122,56 @@ class DriverStateNotifier extends Notifier<DriverData> {
         appState: DriverAppState.assigned,
       );
 
-  void clearActiveRide() => state = state.copyWith(
-        activeRideId: null,
-        riderPaymentMethod: null,
-        pickupAddress: null,
-        pickupLat: null,
-        pickupLng: null,
-        destinationAddress: null,
-        destinationLat: null,
-        destinationLng: null,
-        bookingMode: null,
-        riderContactName: null,
-        appState: DriverAppState.onlineAvailable,
+  void clearActiveRide({DriverAppState? nextState}) {
+    state = DriverData(
+      appState: nextState ?? DriverAppState.onlineAvailable,
+      driverId: state.driverId,
+      userId: state.userId,
+      radarActive: state.radarActive,
+    );
+  }
+
+  /// Program 3B — apply server snapshot after cold start / login.
+  void applyOperationalRestore({
+    required DriverAppState appState,
+    String? activeRideId,
+    String? pickupAddress,
+    double? pickupLat,
+    double? pickupLng,
+    String? destinationAddress,
+    double? destinationLat,
+    double? destinationLng,
+    String? bookingMode,
+    String? paymentMethod,
+    String? riderContactName,
+    bool clearActiveRide = false,
+  }) {
+    if (clearActiveRide) {
+      state = DriverData(
+        appState: appState,
+        driverId: state.driverId,
+        userId: state.userId,
+        radarActive: state.radarActive,
       );
+      return;
+    }
+    state = DriverData(
+      appState: appState,
+      driverId: state.driverId,
+      userId: state.userId,
+      activeRideId: activeRideId,
+      pickupAddress: pickupAddress,
+      pickupLat: pickupLat,
+      pickupLng: pickupLng,
+      destinationAddress: destinationAddress,
+      destinationLat: destinationLat,
+      destinationLng: destinationLng,
+      bookingMode: bookingMode,
+      riderPaymentMethod: paymentMethod,
+      riderContactName: riderContactName,
+      radarActive: state.radarActive,
+    );
+  }
 
   void setUser(String userId, String? driverId) => state = state.copyWith(
         userId: userId,

@@ -11,7 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/rider_search_window.dart';
 import '../models/ride_matching_variant.dart';
 import '../providers/location_provider.dart';
-import '../services/location_service.dart';
+import '../services/rider_runtime_config_service.dart';
 import '../services/stale_ride_cleanup.dart';
 
 /// First launch: short brand splash (max ~3s). Returning users skip to location flow.
@@ -37,29 +37,22 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final prefs = await SharedPreferences.getInstance();
     final isFirstLaunch = prefs.getBool('is_first_launch') ?? true;
 
-    if (!isFirstLaunch) {
-      await _requestLocationAndContinue();
-      return;
+    if (isFirstLaunch) {
+      if (mounted) setState(() => _showBrandSplash = true);
+      await Future.delayed(const Duration(seconds: 3));
+      if (!mounted) return;
+      await prefs.setBool('is_first_launch', false);
     }
 
-    if (mounted) setState(() => _showBrandSplash = true);
-    await Future.delayed(const Duration(seconds: 3));
-    if (!mounted) return;
-    await _requestLocationAndContinue();
-  }
-
-  Future<void> _requestLocationAndContinue() async {
-    final position = await LocationService.requestAndGetLocation();
-    if (!mounted) return;
-    if (position == null) {
-      context.go('/location-required');
-      return;
+    // Never trigger an OS permission prompt from splash. We only prewarm location
+    // if permission was already granted before.
+    await ref.read(locationProvider.notifier).refreshIfPermitted();
+    try {
+      await riderRuntimeConfig.refresh(force: true);
+    } catch (_) {
+      // Keep startup resilient; app falls back to local defaults.
     }
-    ref.read(locationProvider.notifier).setPosition(position);
     if (!mounted) return;
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('is_first_launch', false);
 
     final activeRoute = await _checkForActiveRide();
     if (!mounted) return;
@@ -75,7 +68,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           .from('ride_requests')
           .select('id, status, created_at, booking_mode')
           .eq('rider_token', identity.riderToken!)
-          .inFilter('status', ['pending', 'bidding', 'accepted', 'driver_arrived', 'in_progress'])
+          .inFilter('status', [
+            'pending',
+            'bidding',
+            'assigned',
+            'accepted',
+            'driver_found',
+            'driver_arrived',
+            'in_progress',
+          ])
           .order('created_at', ascending: false)
           .limit(1)
           .maybeSingle();
@@ -110,6 +111,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           final bm = activeRide['booking_mode'] as String?;
           return rideMatchingVariantForBookingModeString(bm).routePath;
         case 'accepted':
+        case 'assigned':
+        case 'driver_found':
         case 'driver_arrived':
         case 'in_progress':
           return '/active';

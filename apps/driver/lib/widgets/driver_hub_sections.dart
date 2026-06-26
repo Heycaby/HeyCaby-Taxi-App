@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
@@ -11,6 +10,7 @@ import '../l10n/driver_strings.dart';
 import '../theme/app_icons.dart';
 import '../providers/driver_data_providers.dart';
 import '../providers/driver_state_provider.dart';
+import '../utils/driver_ticket_navigation.dart';
 
 /// Section 1 — Goals: hero earned amount, period chips (strong selected), set goal CTA.
 class DriverHubEarningsTargetSection extends ConsumerWidget {
@@ -60,7 +60,7 @@ class DriverHubEarningsTargetSection extends ConsumerWidget {
                 colors: colors,
                 typo: typo,
                 onTap: () {
-                  HapticFeedback.selectionClick();
+                  HapticService.selectionClick();
                   ref.read(_earningsTargetPeriodProvider.notifier).state = 'daily';
                 },
               ),
@@ -71,7 +71,7 @@ class DriverHubEarningsTargetSection extends ConsumerWidget {
                 colors: colors,
                 typo: typo,
                 onTap: () {
-                  HapticFeedback.selectionClick();
+                  HapticService.selectionClick();
                   ref.read(_earningsTargetPeriodProvider.notifier).state = 'weekly';
                 },
               ),
@@ -132,7 +132,6 @@ class DriverHubEarningsTargetSection extends ConsumerWidget {
     final controller = TextEditingController(text: current > 0 ? current.toInt().toString() : '');
     showModalBottomSheet(
       context: context,
-      backgroundColor: colors.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -310,7 +309,7 @@ class DriverHubRatesSection extends ConsumerWidget {
                     colors: colors,
                     typo: typo,
                     onTap: () {
-                      HapticFeedback.mediumImpact();
+                      HapticService.mediumTap();
                       onChipTap(p.id);
                     },
                   ),
@@ -468,9 +467,12 @@ class DriverHubSafetySection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final driver = ref.watch(driverStateProvider);
     final driverId = ref.watch(driverIdProvider).valueOrNull;
-    final isOnRide = driver.appState == DriverAppState.assigned ||
-        driver.appState == DriverAppState.arrived ||
-        driver.appState == DriverAppState.inProgress;
+    // Share live trip details only while a ride is in progress (not after completion / idle).
+    final canShareRideDetails = driver.activeRideId != null &&
+        (driver.appState == DriverAppState.assigned ||
+            driver.appState == DriverAppState.arrived ||
+            driver.appState == DriverAppState.inProgress ||
+            driver.appState == DriverAppState.completingRide);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -482,11 +484,13 @@ class DriverHubSafetySection extends ConsumerWidget {
             style: typo.titleMedium.copyWith(color: colors.text, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
+          // Prominent 112 button - full width, larger for emergency access
           SizedBox(
             width: double.infinity,
+            height: 56,
             child: FilledButton.icon(
               onPressed: () async {
-                HapticFeedback.heavyImpact();
+                HapticService.heavyTap();
                 if (driverId != null && driverId.isNotEmpty) {
                   try {
                     await ref.read(driverDataServiceProvider).insertSafetyEvent(
@@ -502,56 +506,36 @@ class DriverHubSafetySection extends ConsumerWidget {
                   await launchUrl(Uri.parse('tel:112'));
                 }
               },
-              icon: const Icon(AppIcons.emergency, size: 22),
-              label: const Text(DriverStrings.call112),
+              icon: const Icon(AppIcons.emergency, size: 26),
+              label: Text(
+                DriverStrings.call112,
+                style: typo.labelLarge.copyWith(fontWeight: FontWeight.w700),
+              ),
               style: FilledButton.styleFrom(
                 backgroundColor: colors.error,
                 foregroundColor: colors.card,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
             ),
           ),
           const SizedBox(height: 10),
           _SafetyRow(
             icon: AppIcons.share,
-            iconColor: isOnRide ? colors.textMid : colors.textSoft,
+            iconColor: canShareRideDetails ? colors.textMid : colors.textSoft,
             title: DriverStrings.shareTripDetails,
             titleColor: colors.text,
-            subtitle: isOnRide ? DriverStrings.shareTripSubtitleActive : DriverStrings.shareTripSubtitleInactive,
+            subtitle: canShareRideDetails
+                ? DriverStrings.shareTripSubtitleActive
+                : DriverStrings.shareTripSubtitleInactive,
             colors: colors,
             typo: typo,
-            active: isOnRide,
-            onTap: isOnRide && driver.activeRideId != null
+            active: canShareRideDetails,
+            onTap: canShareRideDetails && driver.activeRideId != null
                 ? () async {
                     final url = await ref.read(driverDataServiceProvider).getOrCreateRideShareUrl(driver.activeRideId!);
                     if (url != null && context.mounted) {
                       await Share.share(url);
-                    }
-                  }
-                : null,
-          ),
-          const SizedBox(height: 8),
-          _SafetyRow(
-            icon: AppIcons.audio,
-            iconColor: isOnRide ? colors.textMid : colors.textSoft,
-            title: DriverStrings.audioRecording,
-            titleColor: colors.text,
-            subtitle: isOnRide ? DriverStrings.audioRecordingSubtitleActive : DriverStrings.audioRecordingSubtitleInactive,
-            colors: colors,
-            typo: typo,
-            active: isOnRide,
-            onTap: isOnRide && driverId != null
-                ? () async {
-                    await ref.read(driverDataServiceProvider).insertSafetyEvent(
-                      driverId,
-                      'audio_recording',
-                      rideRequestId: driver.activeRideId,
-                    );
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text(DriverStrings.recordingInProgress)),
-                      );
                     }
                   }
                 : null,
@@ -662,48 +646,6 @@ class DriverHubHelpSection extends ConsumerWidget {
             style: typo.titleMedium.copyWith(color: colors.text, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
-          Material(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-              onTap: () => _openNewTicket(context, ref),
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                child: Row(
-                  children: [
-                    Icon(AppIcons.chat, color: colors.accent, size: 24),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            DriverStrings.chatWithSupport,
-                            style: typo.bodyMedium.copyWith(color: colors.text, fontWeight: FontWeight.w600),
-                          ),
-                          Text(
-                            DriverStrings.chatWithSupportHelper,
-                            style: typo.bodySmall.copyWith(color: colors.textSoft, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(AppIcons.chevronRight, color: colors.textSoft, size: 20),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          _HelpTile(
-            icon: AppIcons.article,
-            title: DriverStrings.helpArticles,
-            colors: colors,
-            typo: typo,
-            onTap: () => _openHelpArticles(context, ref),
-          ),
-          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -722,13 +664,22 @@ class DriverHubHelpSection extends ConsumerWidget {
           ),
           if (tickets.isNotEmpty) ...[
             const SizedBox(height: 8),
-            ...tickets.map((t) => Padding(
+            ...tickets.map((t) {
+              final resolved = t.status == 'resolved' || t.status == 'closed';
+              final title = (t.category != null && t.category!.trim().isNotEmpty)
+                  ? t.category!.trim()
+                  : (t.rideRequestId != null ? 'Rit' : DriverStrings.overige);
+              return Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Material(
                 color: colors.surface,
                 borderRadius: BorderRadius.circular(10),
                 child: InkWell(
-                  onTap: () => context.push('/driver/support'),
+                  onTap: () => openDriverSupportTicketOrRide(
+                    context,
+                    ticketId: t.id,
+                    rideRequestId: t.rideRequestId,
+                  ),
                   borderRadius: BorderRadius.circular(10),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -739,7 +690,7 @@ class DriverHubHelpSection extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                t.zoneName ?? 'Rit',
+                                title,
                                 style: typo.bodyMedium.copyWith(color: colors.text, fontSize: 14),
                               ),
                               Text(
@@ -747,7 +698,11 @@ class DriverHubHelpSection extends ConsumerWidget {
                                     ? '${t.createdAt!.day}/${t.createdAt!.month}/${t.createdAt!.year} · ${t.statusLabel}'
                                     : t.statusLabel,
                                 style: typo.bodySmall.copyWith(
-                                  color: t.status == 'resolved' ? colors.success : t.hasDriverReplied ? colors.warning : colors.error,
+                                  color: resolved
+                                      ? colors.success
+                                      : t.hasDriverReplied
+                                          ? colors.warning
+                                          : colors.error,
                                   fontSize: 12,
                                 ),
                               ),
@@ -760,162 +715,47 @@ class DriverHubHelpSection extends ConsumerWidget {
                   ),
                 ),
               ),
-            )),
+            );
+            }),
           ],
+          const SizedBox(height: 12),
+          // App suggestion moved here from quick actions
+          Material(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              onTap: () => context.push('/driver/app-suggestion'),
+              borderRadius: BorderRadius.circular(10),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(Icons.lightbulb_outline_rounded, color: colors.accent, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            DriverStrings.appSuggestion,
+                            style: typo.bodyMedium.copyWith(color: colors.text, fontSize: 14, fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            DriverStrings.appSuggestionSubtitle,
+                            style: typo.bodySmall.copyWith(color: colors.textSoft, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(AppIcons.chevronRight, color: colors.textSoft, size: 18),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
-
-  void _openNewTicket(BuildContext context, WidgetRef ref) async {
-    final userId = ref.read(driverStateProvider).userId;
-    if (userId == null) return;
-    try {
-      await ref.read(driverDataServiceProvider).createTicket(userId);
-      ref.invalidate(driverRecentTicketsProvider);
-      if (context.mounted) context.push('/driver/support');
-    } catch (e) {
-      if (kDebugMode) debugPrint('Create ticket error: $e');
-    }
-  }
-
-  void _openHelpArticles(BuildContext context, WidgetRef ref) async {
-    final url = await ref.read(driverDataServiceProvider).getDriverHelpUrl();
-    if (context.mounted) context.push('/driver/help-articles', extra: url);
-  }
 }
 
-class _HelpTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final VoidCallback onTap;
-
-  const _HelpTile({
-    required this.icon,
-    required this.title,
-    required this.colors,
-    required this.typo,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: colors.textMid, size: 22),
-      title: Text(title, style: typo.bodyMedium.copyWith(color: colors.text)),
-      trailing: Icon(AppIcons.chevronRight, color: colors.textSoft, size: 20),
-      onTap: onTap,
-      contentPadding: EdgeInsets.zero,
-    );
-  }
-}
-
-/// Bottom — Pro tools compact card: Power Mode + Union Mode.
-class DriverHubPowerUnionRows extends StatelessWidget {
-  const DriverHubPowerUnionRows({super.key, required this.colors, required this.typo});
-
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: Text(
-            DriverStrings.proToolsTitle,
-            style: typo.labelSmall.copyWith(color: colors.textSoft, fontWeight: FontWeight.w600, fontSize: 12),
-          ),
-        ),
-        Material(
-          color: colors.card,
-          borderRadius: BorderRadius.circular(12),
-          child: Column(
-            children: [
-              _HubFeatureRow(
-                icon: AppIcons.bolt,
-                iconColor: colors.accent,
-                title: DriverStrings.driverPowerMode,
-                subtitle: DriverStrings.driverPowerModeSubtitle,
-                colors: colors,
-                typo: typo,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  context.push('/driver/power-mode');
-                },
-              ),
-              Divider(height: 1, color: colors.border),
-              _HubFeatureRow(
-                icon: AppIcons.groups,
-                iconColor: colors.textMid,
-                title: DriverStrings.driverUnionMode,
-                subtitle: DriverStrings.driverUnionModeSubtitle,
-                colors: colors,
-                typo: typo,
-                onTap: () => context.push('/driver/union-mode'),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _HubFeatureRow extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String title;
-  final String subtitle;
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final VoidCallback onTap;
-
-  const _HubFeatureRow({
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.subtitle,
-    required this.colors,
-    required this.typo,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Icon(icon, color: iconColor, size: 24),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    style: typo.bodyMedium.copyWith(color: colors.text, fontWeight: FontWeight.w600, fontSize: 15),
-                  ),
-                  Text(
-                    subtitle,
-                    style: typo.bodySmall.copyWith(color: colors.textSoft, fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-            Icon(AppIcons.chevronRight, color: colors.textSoft, size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-}

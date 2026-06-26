@@ -174,3 +174,57 @@ const kHeyCabyTaxi4 = HeyCabyColorTokens(
   error: Color(0xFFFF453A),
   previewDots: [Color(0xFF3A3630), Color(0xFFE8C547), Color(0xFF3A3630)],
 );
+
+/// Driver — premium green (Phase 1 default). Money, growth, go.
+const kHeyCabyDriverPro = HeyCabyColorTokens(
+  bg: Color(0xFFF5F7F6),
+  bgAlt: Color(0xFFEBEFED),
+  surface: Color(0xFFE2E8E4),
+  card: Color(0xFFFFFFFF),
+  border: Color(0xFFD8DEDD),
+  accent: Color(0xFF00A651),
+  accentL: Color(0xFFE6F7EE),
+  text: Color(0xFF111827),
+  textMid: Color(0xFF4B5563),
+  textSoft: Color(0xFF9CA3AF),
+  success: Color(0xFF00A651),
+  warning: Color(0xFFE65100),
+  error: Color(0xFFDC3545),
+  previewDots: [Color(0xFFD8DEDD), Color(0xFF00A651), Color(0xFFD8DEDD)],
+);
+
+/// Driver dark — night shifts (Phase 8 wiring; tokens defined in Phase 1).
+const kHeyCabyDriverProDark = HeyCabyColorTokens(
+  bg: Color(0xFF0D0F0E),
+  bgAlt: Color(0xFF161918),
+  surface: Color(0xFF1E2220),
+  card: Color(0xFF252A28),
+  border: Color(0xFF3A403D),
+  accent: Color(0xFF34D399),
+  accentL: Color(0xFF1B3D2F),
+  text: Color(0xFFF9FAFB),
+  textMid: Color(0xFF9CA3AF),
+  textSoft: Color(0xFF6B7280),
+  success: Color(0xFF34D399),
+  warning: Color(0xFFFB923C),
+  error: Color(0xFFF87171),
+  previewDots: [Color(0xFF3A403D), Color(0xFF34D399), Color(0xFF3A403D)],
+);
+
+/// Driver — soft warm white, Chacool greys, taxi amber (long-shift friendly).
+const kHeyCabyDriverWarm = HeyCabyColorTokens(
+  bg: Color(0xFFFDFBF7),
+  bgAlt: Color(0xFFF8F5F0),
+  surface: Color(0xFFE8EBED),
+  card: Color(0xFFFFFDF9),
+  border: Color(0xFFD9DCDE),
+  accent: Color(0xFFFFB74D),
+  accentL: Color(0xFFFFE0B2),
+  text: Color(0xFF1A1C1E),
+  textMid: Color(0xFF6C7074),
+  textSoft: Color(0xFFA8ADB2),
+  success: Color(0xFF248A3D),
+  warning: Color(0xFFE65100),
+  error: Color(0xFFDC3545),
+  previewDots: [Color(0xFFD9DCDE), Color(0xFFFFB74D), Color(0xFFD9DCDE)],
+);

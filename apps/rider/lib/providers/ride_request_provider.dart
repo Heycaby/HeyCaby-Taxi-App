@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +13,7 @@ import '../services/booking_draft_storage.dart';
 import '../services/sound_service.dart';
 import '../services/heycaby_widget_sync.dart';
 import '../services/nearby_supply_service.dart';
+import '../services/rider_notification_lifecycle_service.dart';
 import '../services/stale_ride_cleanup.dart';
 import '../utils/wkt_point.dart';
 import 'booking_provider.dart';
@@ -21,8 +23,10 @@ class RideRequestState {
   final String? rideRequestId;
   final String? status;
   final String? error;
+
   /// Server `created_at` for the current ride (used for 30 min search window).
   final DateTime? rideCreatedAt;
+
   /// Server `booking_mode`: instant | marketplace | scheduled (for matching route + UI).
   final String? bookingMode;
 
@@ -91,6 +95,18 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
   @override
   RideRequestState build() => const RideRequestState();
 
+  String _generateGuestRiderToken() {
+    final bytes = List<int>.generate(16, (_) => Random.secure().nextInt(256));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40; // UUID v4
+    bytes[8] = (bytes[8] & 0x3f) | 0x80; // RFC 4122 variant
+    final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    return '${hex.substring(0, 8)}-'
+        '${hex.substring(8, 12)}-'
+        '${hex.substring(12, 16)}-'
+        '${hex.substring(16, 20)}-'
+        '${hex.substring(20, 32)}';
+  }
+
   /// When opening [SearchingScreen], restore an in-progress ride from Supabase
   /// so cold start / deep link does not create a duplicate request.
   /// Stale open searches (pending/bidding beyond [kRiderDriverSearchWindow]) are cancelled and ignored.
@@ -108,7 +124,9 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
           .inFilter('status', [
             'pending',
             'bidding',
+            'assigned',
             'accepted',
+            'driver_found',
             'driver_arrived',
             'in_progress',
           ])
@@ -162,8 +180,7 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
         }
       }
 
-      if (createdAt != null &&
-          (status == 'pending' || status == 'bidding')) {
+      if (createdAt != null && (status == 'pending' || status == 'bidding')) {
         if (DateTime.now().difference(createdAt) > kRiderDriverSearchWindow) {
           await cancelExpiredRiderOpenRide(
             rideId: id,
@@ -182,7 +199,9 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
         rideRequestId: id,
         status: status,
         rideCreatedAt: createdAt ??
-            ((status == 'pending' || status == 'bidding') ? DateTime.now() : null),
+            ((status == 'pending' || status == 'bidding')
+                ? DateTime.now()
+                : null),
         bookingMode: resolvedBookingMode,
       );
       return true;
@@ -199,6 +218,7 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
     final token = identity.riderToken;
     if (id != null && token != null) {
       await cancelExpiredRiderOpenRide(rideId: id, riderToken: token);
+      unawaited(SoundService().playRideCancelled());
     }
     reset();
   }
@@ -206,13 +226,24 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
   // Ride creation ONLY happens here — triggered from [SearchingScreen] after navigation.
   Future<bool> createRide(BookingState booking) async {
     if (booking.pickup == null || booking.destination == null) {
-      if (kDebugMode) debugPrint('CreateRide failed: pickup or destination is null');
+      if (kDebugMode) {
+        debugPrint('CreateRide failed: pickup or destination is null');
+      }
+      return false;
+    }
+    final pickupContactName = booking.pickupContactName?.trim() ?? '';
+    if (pickupContactName.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('CreateRide failed: pickupContactName is required');
+      }
       return false;
     }
     if (booking.effectiveRideMode == BookingMode.marketplace &&
-        (booking.marketplaceBidEuro == null || booking.marketplaceBidEuro! <= 0)) {
+        (booking.marketplaceBidEuro == null ||
+            booking.marketplaceBidEuro! <= 0)) {
       if (kDebugMode) {
-        debugPrint('CreateRide failed: marketplace requires marketplaceBidEuro');
+        debugPrint(
+            'CreateRide failed: marketplace requires marketplaceBidEuro');
       }
       return false;
     }
@@ -227,6 +258,92 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
       final identity = await ref.read(riderIdentityProvider.future);
 
       final supabase = HeyCabySupabase.client;
+      final authUserId = supabase.auth.currentUser?.id;
+      String? riderToken = identity.riderToken;
+      String? verifiedIdentityId = identity.identityId;
+
+      // Guest riders can book without email/login; keep a local token for RLS.
+      if (riderToken == null || riderToken.isEmpty) {
+        riderToken = _generateGuestRiderToken();
+        await ref.read(riderIdentityProvider.notifier).saveGuestToken(riderToken);
+      }
+      if (verifiedIdentityId != null && verifiedIdentityId.isNotEmpty) {
+        try {
+          dynamic query = supabase
+              .from('rider_identities')
+              .select('id')
+              .eq('id', verifiedIdentityId);
+          if (authUserId != null && authUserId.isNotEmpty) {
+            query = query.eq('user_id', authUserId);
+          }
+          final row = await query.maybeSingle();
+          if (row == null) {
+            verifiedIdentityId = null;
+          }
+        } catch (_) {
+          // If identity lookup fails, do not block booking creation.
+          verifiedIdentityId = null;
+        }
+      } else {
+        verifiedIdentityId = null;
+      }
+
+      // Fallback: resolve the rider identity that belongs to the current auth user.
+      if ((verifiedIdentityId == null || verifiedIdentityId.isEmpty) &&
+          authUserId != null &&
+          authUserId.isNotEmpty) {
+        try {
+          final owned = await supabase
+              .from('rider_identities')
+              .select('id')
+              .eq('user_id', authUserId)
+              .order('created_at', ascending: false)
+              .limit(1)
+              .maybeSingle();
+          final ownedId = owned?['id'] as String?;
+          if (ownedId != null && ownedId.isNotEmpty) {
+            verifiedIdentityId = ownedId;
+          }
+        } catch (_) {
+          // Keep null; insert may still work if policy allows rider_token-only path.
+        }
+      }
+
+      // Final fallback: re-issue rider session from backend (email-based) so
+      // session_token + rider_identity_id are aligned for current auth context.
+      final email = (identity.email ?? '').trim().toLowerCase();
+      if ((verifiedIdentityId == null || verifiedIdentityId.isEmpty) &&
+          email.isNotEmpty) {
+        try {
+          final refreshed = await supabase.rpc(
+            'fn_create_rider_session',
+            params: {'p_email': email, 'p_display_name': null},
+          );
+          if (refreshed is Map && refreshed['success'] == true) {
+            final refreshedMap = Map<String, dynamic>.from(refreshed);
+            final refreshedIdentityId = refreshedMap['identity_id'] as String?;
+            final refreshedToken = refreshedMap['session_token'] as String?;
+            if (refreshedIdentityId != null && refreshedIdentityId.isNotEmpty) {
+              verifiedIdentityId = refreshedIdentityId;
+            }
+            if (refreshedToken != null && refreshedToken.isNotEmpty) {
+              riderToken = refreshedToken;
+            }
+            if (refreshedToken != null &&
+                refreshedToken.isNotEmpty &&
+                refreshedIdentityId != null &&
+                refreshedIdentityId.isNotEmpty) {
+              await ref.read(riderIdentityProvider.notifier).saveSession(
+                    token: refreshedToken,
+                    identityId: refreshedIdentityId,
+                    email: email,
+                  );
+            }
+          }
+        } catch (_) {
+          // Keep existing values; createRide insert will still attempt best effort.
+        }
+      }
 
       // Format coordinates for PostGIS geography type (longitude FIRST)
       final pickupLng = booking.pickup!.lng;
@@ -270,20 +387,17 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
         'estimated_duration_min': durationMin,
 
         // Optional fields
-        if (booking.pickupContactName != null &&
-            booking.pickupContactName!.isNotEmpty)
-          'pickup_contact_name': booking.pickupContactName,
+        'pickup_contact_name': pickupContactName,
         if (booking.scheduledAt != null)
           'scheduled_pickup_at': booking.scheduledAt!.toIso8601String(),
-        if (identity.riderToken != null) 'rider_token': identity.riderToken,
-        if (identity.identityId != null)
-          'rider_identity_id': identity.identityId,
+        if (riderToken != null && riderToken.isNotEmpty) 'rider_token': riderToken,
+        if (verifiedIdentityId != null) 'rider_identity_id': verifiedIdentityId,
         // Marketplace: DB chk_marketplace_requires_fare → marketplace_offered_fare NOT NULL
-        if (booking.effectiveRideMode == BookingMode.marketplace)
-          ...<String, dynamic>{
-            'marketplace_offered_fare': booking.marketplaceBidEuro!,
-            'offered_fare': booking.marketplaceBidEuro,
-          },
+        if (booking.effectiveRideMode ==
+            BookingMode.marketplace) ...<String, dynamic>{
+          'marketplace_offered_fare': booking.marketplaceBidEuro!,
+          'offered_fare': booking.marketplaceBidEuro,
+        },
         if (booking.effectiveRideMode != BookingMode.marketplace &&
             booking.estimatedFareEuro != null)
           'offered_fare': booking.estimatedFareEuro,
@@ -297,12 +411,10 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
       };
 
       // Save booking name progressively if newly entered
-      if (booking.pickupContactName != null &&
-          booking.pickupContactName!.isNotEmpty &&
-          identity.bookingName == null) {
+      if (identity.bookingName == null) {
         await ref
             .read(riderIdentityProvider.notifier)
-            .saveBookingName(booking.pickupContactName!);
+            .saveBookingName(pickupContactName);
       }
 
       final response = await supabase
@@ -315,7 +427,8 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
         isLoading: false,
         rideRequestId: response['id'] as String?,
         status: response['status'] as String?,
-        rideCreatedAt: _parseCreatedAt(response['created_at']) ?? DateTime.now(),
+        rideCreatedAt:
+            _parseCreatedAt(response['created_at']) ?? DateTime.now(),
         bookingMode: response['booking_mode'] as String? ??
             bookingModeStorageString(booking.effectiveRideMode),
       );
@@ -323,6 +436,32 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
       // Confirm booking with sound + haptic
       SoundService().playBookingCreated();
       HapticService.success();
+      unawaited(
+        RiderNotificationLifecycleService.trackEvent(
+          'booking_created',
+          riderIdentityId: identity.identityId,
+          payload: <String, dynamic>{
+            'booking_mode': bookingModeStorageString(booking.effectiveRideMode),
+            if (state.rideRequestId != null)
+              'ride_request_id': state.rideRequestId,
+          },
+        ),
+      );
+      if (booking.effectiveRideMode == BookingMode.scheduled &&
+          booking.scheduledAt != null) {
+        unawaited(
+          RiderNotificationLifecycleService.trackEvent(
+            'scheduled_ride_created',
+            riderIdentityId: identity.identityId,
+            payload: <String, dynamic>{
+              'scheduled_pickup_at':
+                  booking.scheduledAt!.toUtc().toIso8601String(),
+              if (state.rideRequestId != null)
+                'ride_request_id': state.rideRequestId,
+            },
+          ),
+        );
+      }
       await BookingDraftStorage.clear();
 
       return true;
@@ -452,14 +591,33 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
     // Play sounds based on status transitions
     final soundService = SoundService();
     if (previousStatus != status) {
-      if (status == 'assigned' || status == 'accepted' || status == 'driver_found') {
+      if (status == 'assigned' ||
+          status == 'accepted' ||
+          status == 'driver_found') {
         soundService.playDriverFound();
       } else if (status == 'arrived' || status == 'driver_arrived') {
         soundService.playDriverArrived();
+      } else if (status == 'cancelled' ||
+          status == 'canceled' ||
+          status == 'rejected') {
+        soundService.playDriverCancelled();
       } else if (status == 'completed' || status == 'finished') {
-        soundService.playTripComplete();
+        soundService.playPaymentSuccess();
+        unawaited(_trackRideCompletedLifecycleEvent());
       }
     }
+  }
+
+  Future<void> _trackRideCompletedLifecycleEvent() async {
+    final identity = await ref.read(riderIdentityProvider.future);
+    if (!identity.hasSession || identity.identityId == null) return;
+    await RiderNotificationLifecycleService.trackEvent(
+      'ride_completed',
+      riderIdentityId: identity.identityId,
+      payload: <String, dynamic>{
+        if (state.rideRequestId != null) 'ride_request_id': state.rideRequestId,
+      },
+    );
   }
 
   void reset() {

@@ -1,9 +1,12 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
+
+import '../services/driver_notification_router.dart';
+import '../utils/driver_rider_cancelled_flow.dart';
 
 /// Polls backend driver notifications and surfaces new unread items in-app.
 /// This is needed for Flutter drivers (no PWA notification UI).
@@ -20,6 +23,7 @@ class _DriverNotificationsListenerState
     with WidgetsBindingObserver {
   Timer? _timer;
   bool _busy = false;
+  bool _notificationsDisabled = false;
   final Set<String> _handledIds = <String>{};
 
   @override
@@ -46,7 +50,7 @@ class _DriverNotificationsListenerState
   }
 
   Future<void> _poll() async {
-    if (_busy || !mounted) return;
+    if (_busy || !mounted || _notificationsDisabled) return;
     _busy = true;
     try {
       final api = ref.read(driverApiProvider);
@@ -58,38 +62,47 @@ class _DriverNotificationsListenerState
       for (final n in ordered) {
         if (_handledIds.contains(n.id)) continue;
         _handledIds.add(n.id);
-        _showNotificationSnack(n);
+
+        final category = (n.category ?? '').toLowerCase();
+        if (category == 'ride_phase') {
+          final rideId = n.data?['ride_request_id']?.toString();
+          if (rideId != null && rideId.isNotEmpty && mounted) {
+            await handleDriverRiderCancelled(
+              ref: ref,
+              context: context,
+              rideId: rideId,
+            );
+          }
+          await api.markNotificationRead(n.id);
+          continue;
+        }
+        if (category == 'incoming_ride') {
+          await api.markNotificationRead(n.id);
+          continue;
+        }
+
+        if (!mounted) return;
+        await dispatchDriverNotification(
+          context: context,
+          category: n.category,
+          title: n.title,
+          body: n.body,
+          data: n.data,
+          fromTap: false,
+          foreground: true,
+        );
         await api.markNotificationRead(n.id);
+      }
+    } on DioException catch (e) {
+      // If this host/session is unauthorized for notifications, stop polling for this app session.
+      if (e.response?.statusCode == 401) {
+        _notificationsDisabled = true;
       }
     } catch (_) {
       // Silent: notification polling should never break core UX.
     } finally {
       _busy = false;
     }
-  }
-
-  void _showNotificationSnack(DriverNotificationItem n) {
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    if (messenger == null) return;
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          n.title.isNotEmpty ? '${n.title}\n${n.body}' : n.body,
-          maxLines: 3,
-          overflow: TextOverflow.ellipsis,
-        ),
-        duration: const Duration(seconds: 6),
-        action: n.category == 'verification'
-            ? SnackBarAction(
-                label: 'Open',
-                onPressed: () {
-                  if (!mounted) return;
-                  context.push('/driver/documents');
-                },
-              )
-            : null,
-      ),
-    );
   }
 
   @override

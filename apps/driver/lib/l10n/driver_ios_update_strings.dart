@@ -91,6 +91,6 @@ final Map<String, DriverIosUpdateStrings> _byLang = {
 };
 
 DriverIosUpdateStrings driverIosUpdateStringsFor(Locale? locale) {
-  final code = locale?.languageCode ?? 'en';
-  return _byLang[code] ?? _en;
+  final code = locale?.languageCode ?? 'nl';
+  return _byLang[code] ?? _nl;
 }

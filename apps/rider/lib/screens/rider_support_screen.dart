@@ -177,7 +177,8 @@ class _TicketRow extends StatelessWidget {
       return map['sender_type'] == 'rider';
     });
 
-    final isClosed = status == 'closed' || status == 'resolved';
+    final s = status.toLowerCase();
+    final isClosed = s == 'closed' || s == 'resolved' || s == 'auto_resolved';
     final String statusLabel;
     final Color statusColor;
     if (isClosed) {
@@ -322,6 +323,12 @@ class _ContactSection extends StatelessWidget {
             onTap: () => context.push('/support/new'),
           ),
           Divider(color: colors.border, height: 1),
+          _ChatWithYazRow(
+            colors: colors,
+            typo: typo,
+            onTap: () => context.push('/support/yaz'),
+          ),
+          Divider(color: colors.border, height: 1),
           _ContactRow(
             icon: Icons.chat_outlined,
             label: l10n.supportAllThreads,
@@ -343,9 +350,95 @@ class _ContactSection extends StatelessWidget {
   }
 }
 
+class _ChatWithYazRow extends StatelessWidget {
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final VoidCallback onTap;
+
+  const _ChatWithYazRow({
+    required this.colors,
+    required this.typo,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: colors.accent.withValues(alpha: 0.09),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colors.accent.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: colors.accent.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.smart_toy_outlined, color: colors.accent, size: 20),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Chat with Yaz',
+                        style: typo.bodyMedium.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: colors.accent,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          'AI',
+                          style: typo.labelSmall.copyWith(
+                            color: colors.card,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Urgent AI support assistant',
+                    style: typo.bodySmall.copyWith(
+                      color: colors.textMid,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: colors.accent),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ContactRow extends StatelessWidget {
   final IconData icon;
   final String label;
+  final String? subtitle;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
   final VoidCallback onTap;
@@ -353,6 +446,7 @@ class _ContactRow extends StatelessWidget {
   const _ContactRow({
     required this.icon,
     required this.label,
+    this.subtitle,
     required this.colors,
     required this.typo,
     required this.onTap,
@@ -363,10 +457,14 @@ class _ContactRow extends StatelessWidget {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Icon(icon, color: colors.accent),
-      title: Text(
-        label,
-        style: typo.bodyMedium.copyWith(color: colors.text),
-      ),
+      title: Text(label, style: typo.bodyMedium.copyWith(color: colors.text)),
+      subtitle: subtitle == null
+          ? null
+          : Text(
+              subtitle!,
+              style: typo.bodySmall.copyWith(color: colors.textSoft),
+            ),
+      minVerticalPadding: subtitle == null ? 10 : 8,
       trailing: Icon(Icons.chevron_right, color: colors.textSoft),
       onTap: onTap,
     );

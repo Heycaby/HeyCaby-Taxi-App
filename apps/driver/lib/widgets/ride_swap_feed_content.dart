@@ -10,6 +10,160 @@ import '../providers/driver_data_providers.dart';
 import '../providers/driver_location_provider.dart';
 import '../services/ride_swap_service.dart';
 
+/// Localized “Hoe Ritwissel werkt” block: swap screen header, empty-info sheet, home help.
+class RideSwapHowIntroSection extends StatelessWidget {
+  const RideSwapHowIntroSection({
+    super.key,
+    required this.colors,
+    required this.typo,
+    this.includePullHint = false,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final bool includePullHint;
+
+  static const List<String> _bulletKeys = [
+    DriverStrings.rideSwapBulletViewSwaps,
+    DriverStrings.rideSwapBulletCheckDetails,
+    DriverStrings.rideSwapBulletTakeRide,
+    DriverStrings.rideSwapBulletSupportColleague,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          DriverStrings.rideSwapHowTitle,
+          style: typo.titleSmall.copyWith(
+            color: colors.text,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          DriverStrings.rideSwapHowParagraph1,
+          style: typo.bodySmall.copyWith(color: colors.text, height: 1.4),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          DriverStrings.rideSwapHowParagraph2,
+          style: typo.bodySmall.copyWith(color: colors.text, height: 1.4),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          DriverStrings.rideSwapWhatYouCanDoHeading,
+          style: typo.bodyMedium.copyWith(
+            color: colors.text,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        for (final line in _bulletKeys) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '• ',
+                  style: typo.bodySmall.copyWith(color: colors.text),
+                ),
+                Expanded(
+                  child: Text(
+                    line,
+                    style: typo.bodySmall.copyWith(
+                      color: colors.text,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        if (includePullHint) ...[
+          const SizedBox(height: 8),
+          Text(
+            DriverStrings.rideSwapPullToRefreshHint,
+            style: typo.bodySmall.copyWith(color: colors.textSoft, height: 1.35),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Shared “Hoe Ritwissel werkt” bottom sheet (empty-feed auto prompt, in-screen info button, etc.).
+Future<void> showRideSwapHowBottomSheet({
+  required BuildContext context,
+  required WidgetRef ref,
+  required HeyCabyColorTokens colors,
+  required HeyCabyTypography typo,
+}) async {
+  final initialHide =
+      await ref.read(driverDataServiceProvider).isRideSwapIntroDismissed();
+  if (!context.mounted) return;
+  var dontShowAgain = initialHide;
+
+  await showModalBottomSheet<void>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setSheetState) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              RideSwapHowIntroSection(
+                colors: colors,
+                typo: typo,
+                includePullHint: false,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                DriverStrings.rideSwapInfoModalFooter,
+                style: typo.bodySmall.copyWith(color: colors.textSoft, height: 1.35),
+              ),
+              const SizedBox(height: 10),
+              CheckboxListTile(
+                value: dontShowAgain,
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                title: Text(
+                  DriverStrings.rideSwapDontShowAgain,
+                  style: typo.bodySmall.copyWith(color: colors.text),
+                ),
+                onChanged: (v) => setSheetState(() => dontShowAgain = v ?? false),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () async {
+                    if (dontShowAgain != initialHide) {
+                      await ref
+                          .read(driverDataServiceProvider)
+                          .setRideSwapIntroDismissed(dontShowAgain);
+                      ref.invalidate(rideSwapIntroDismissedProvider);
+                    }
+                    if (ctx.mounted) Navigator.of(ctx).pop();
+                  },
+                  child: Text(DriverStrings.rideSwapGotIt),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 /// Full-width list for Community → Ride Swap tab (open `ride_swaps` feed).
 class RideSwapFeedContent extends ConsumerStatefulWidget {
   const RideSwapFeedContent({super.key});
@@ -44,6 +198,7 @@ String _claimErrorMessage(Map<String, dynamic>? res) {
 
 class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
   RealtimeChannel? _channel;
+  bool _hasShownEmptyInfoModal = false;
 
   @override
   void initState() {
@@ -130,7 +285,6 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
       return;
     }
 
-    final colors = ref.read(colorsProvider);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -172,18 +326,53 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
   Widget build(BuildContext context) {
     final colors = ref.watch(colorsProvider);
     final typo = ref.watch(typographyProvider);
+    final themeId = HeyCabyAppChrome.themeIdOf(context);
     final async = ref.watch(rideSwapFeedProvider);
     final pos = ref.watch(driverLocationProvider).valueOrNull;
+    final introPref = ref.watch(rideSwapIntroDismissedProvider);
+    final hideEmptyInfoModal = introPref.valueOrNull ?? false;
+    final prefLoaded = introPref.hasValue;
 
     return async.when(
       data: (list) {
         if (list.isEmpty) {
+          if (prefLoaded && !hideEmptyInfoModal && !_hasShownEmptyInfoModal) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted || _hasShownEmptyInfoModal || hideEmptyInfoModal) return;
+              _hasShownEmptyInfoModal = true;
+              showRideSwapHowBottomSheet(
+                context: context,
+                ref: ref,
+                colors: colors,
+                typo: typo,
+              );
+            });
+          }
           return SliverFillRemaining(
             hasScrollBody: false,
-            child: Center(
-              child: Text(
-                DriverStrings.swapFeedEmpty,
-                style: typo.bodyMedium.copyWith(color: colors.textSoft),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.swap_horiz_rounded, size: 42, color: colors.textSoft),
+                  const SizedBox(height: 12),
+                  Text(
+                    DriverStrings.swapFeedEmpty,
+                    style: typo.bodyMedium.copyWith(color: colors.textSoft),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => showRideSwapHowBottomSheet(
+                      context: context,
+                      ref: ref,
+                      colors: colors,
+                      typo: typo,
+                    ),
+                    icon: const Icon(Icons.info_outline_rounded),
+                    label: Text(DriverStrings.rideSwapHowButton),
+                  ),
+                ],
               ),
             ),
           );
@@ -207,13 +396,15 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
                   ? DateFormat('HH:mm').format(swap.pickupAt!)
                   : '—';
               final pay = (swap.paymentMethods ?? []).join(' / ');
+              final swapRadius =
+                  themeId.isHeyCabyDriverWarmTheme ? 16.0 : 14.0;
               return Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: colors.card,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(swapRadius),
                     border: Border.all(color: colors.border),
                   ),
                   child: Column(
@@ -276,7 +467,7 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
                                           Text('${swap.pickupAddress ?? ''}\n→ ${swap.destinationAddress ?? ''}'),
                                           const SizedBox(height: 8),
                                           Text(
-                                            'Pickup: ${swap.pickupAt != null ? DateFormat('yyyy-MM-dd HH:mm').format(swap.pickupAt!) : '—'}',
+                                            '${DriverStrings.swapDetailPickupPrefix} ${swap.pickupAt != null ? DateFormat('yyyy-MM-dd HH:mm').format(swap.pickupAt!) : '—'}',
                                             style: typo.bodySmall,
                                           ),
                                         ],
@@ -312,11 +503,167 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
           ),
         );
       },
-      loading: () => const SliverFillRemaining(
-        child: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () => _RideSwapSkeleton(colors: colors, themeId: themeId),
       error: (_, __) => SliverFillRemaining(
-        child: Center(child: Text('Kon wisselritten niet laden', style: typo.bodyMedium)),
+        child: Center(
+            child: Text(DriverStrings.swapFeedLoadFailed, style: typo.bodyMedium)),
+      ),
+    );
+  }
+}
+
+class _RideSwapSkeleton extends StatelessWidget {
+  const _RideSwapSkeleton({
+    required this.colors,
+    required this.themeId,
+  });
+
+  final HeyCabyColorTokens colors;
+  final String themeId;
+
+  @override
+  Widget build(BuildContext context) {
+    final warm = themeId.isHeyCabyDriverWarmTheme;
+    final outerR = warm ? 16.0 : 14.0;
+    Widget bar({
+      required double width,
+      required double height,
+    }) {
+      if (warm) {
+        return _WarmShimmerBar(colors: colors, width: width, height: height);
+      }
+      return _Bar(colors: colors, width: width, height: height);
+    }
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (_, index) => Padding(
+          padding: EdgeInsets.fromLTRB(16, index == 0 ? 0 : 4, 16, 12),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: colors.card,
+              borderRadius: BorderRadius.circular(outerR),
+              border: Border.all(color: colors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                bar(width: 150, height: 20),
+                const SizedBox(height: 12),
+                bar(width: double.infinity, height: 16),
+                const SizedBox(height: 8),
+                bar(width: 220, height: 14),
+                const SizedBox(height: 10),
+                bar(width: 240, height: 12),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                        child: bar(width: double.infinity, height: 40)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                        child: bar(width: double.infinity, height: 40)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        childCount: 3,
+      ),
+    );
+  }
+}
+
+class _WarmShimmerBar extends StatefulWidget {
+  const _WarmShimmerBar({
+    required this.colors,
+    required this.width,
+    required this.height,
+  });
+
+  final HeyCabyColorTokens colors;
+  final double width;
+  final double height;
+
+  @override
+  State<_WarmShimmerBar> createState() => _WarmShimmerBarState();
+}
+
+class _WarmShimmerBarState extends State<_WarmShimmerBar>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final t = _controller.value;
+        return ShaderMask(
+          blendMode: BlendMode.srcATop,
+          shaderCallback: (rect) {
+            return LinearGradient(
+              begin: Alignment(-1.4 + 2.8 * t, 0),
+              end: Alignment(-0.4 + 2.8 * t, 0),
+              colors: [
+                widget.colors.surface,
+                Colors.white.withValues(alpha: 0.4),
+                widget.colors.surface,
+              ],
+              stops: const [0.38, 0.5, 0.62],
+            ).createShader(rect);
+          },
+          child: child,
+        );
+      },
+      child: Container(
+        width: widget.width,
+        height: widget.height,
+        decoration: BoxDecoration(
+          color: widget.colors.surface,
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    );
+  }
+}
+
+class _Bar extends StatelessWidget {
+  const _Bar({
+    required this.colors,
+    required this.width,
+    required this.height,
+  });
+
+  final HeyCabyColorTokens colors;
+  final double width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(8),
       ),
     );
   }

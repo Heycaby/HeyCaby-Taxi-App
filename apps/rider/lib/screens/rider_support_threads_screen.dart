@@ -17,7 +17,7 @@ String _supportMessagePreview(dynamic raw) {
 bool _ticketClosed(String? status) {
   if (status == null) return false;
   final s = status.toLowerCase();
-  return s == 'closed' || s == 'resolved';
+  return s == 'closed' || s == 'resolved' || s == 'auto_resolved';
 }
 
 class RiderSupportThreadsScreen extends ConsumerStatefulWidget {
@@ -32,6 +32,7 @@ class _RiderSupportThreadsScreenState
     extends ConsumerState<RiderSupportThreadsScreen> {
   List<Map<String, dynamic>> _tickets = [];
   bool _loading = true;
+  String? _loadError;
 
   @override
   void initState() {
@@ -40,10 +41,33 @@ class _RiderSupportThreadsScreenState
   }
 
   Future<void> _load() async {
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _loadError = null;
+      });
+    }
     try {
       final client = HeyCabySupabase.client;
-      final userId = client.auth.currentUser?.id;
-      if (userId == null) return;
+      String? userId = client.auth.currentUser?.id;
+      if (userId == null || userId.isEmpty) {
+        try {
+          final authRes = await client.auth.signInAnonymously();
+          userId = authRes.user?.id;
+        } catch (_) {
+          userId = null;
+        }
+      }
+      if (userId == null) {
+        if (mounted) {
+          setState(() {
+            _tickets = const [];
+            _loading = false;
+            _loadError = 'not_signed_in';
+          });
+        }
+        return;
+      }
 
       dynamic res;
       try {
@@ -54,7 +78,8 @@ class _RiderSupportThreadsScreenState
             )
             .eq('user_type', 'rider')
             .eq('user_id', userId)
-            .order('updated_at', ascending: false);
+            .order('updated_at', ascending: false)
+            .timeout(const Duration(seconds: 12));
       } catch (_) {
         res = await client
             .from('tickets')
@@ -63,17 +88,26 @@ class _RiderSupportThreadsScreenState
             )
             .eq('user_type', 'rider')
             .eq('user_id', userId)
-            .order('updated_at', ascending: false);
+            .order('updated_at', ascending: false)
+            .timeout(const Duration(seconds: 12));
       }
 
       if (mounted) {
         setState(() {
           _tickets = List<Map<String, dynamic>>.from(res as List);
           _loading = false;
+          _loadError = null;
         });
       }
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _loadError = e.toString().toLowerCase().contains('timeout')
+              ? 'timeout'
+              : 'load_failed';
+        });
+      }
     }
   }
 
@@ -105,6 +139,29 @@ class _RiderSupportThreadsScreenState
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
+          : _loadError != null
+              ? ListView(
+                  padding: const EdgeInsets.all(24),
+                  children: [
+                    const SizedBox(height: 120),
+                    Center(
+                      child: Text(
+                        _loadError == 'timeout'
+                            ? 'Support messages are taking too long to load. Please try again.'
+                            : 'Could not load support messages. Please try again.',
+                        textAlign: TextAlign.center,
+                        style: typo.bodyMedium.copyWith(color: colors.textSoft),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Center(
+                      child: FilledButton(
+                        onPressed: _load,
+                        child: Text(l10n.tryAgain),
+                      ),
+                    ),
+                  ],
+                )
           : RefreshIndicator(
               onRefresh: _load,
               child: _tickets.isEmpty

@@ -1,88 +1,71 @@
-//
-//  HeyCabyWidgets.swift
-//  HeyCabyWidgets
-//
-//  Created by Ai Guy on 05/04/2026.
-//
-
 import WidgetKit
 import SwiftUI
 
-struct Provider: AppIntentTimelineProvider {
+struct HeyCabyStatusProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), configuration: ConfigurationAppIntent())
+        SimpleEntry(date: Date(), configuration: RideStatusConfigurationAppIntent())
     }
 
-    func snapshot(for configuration: ConfigurationAppIntent, in context: Context) async -> SimpleEntry {
+    func snapshot(for configuration: RideStatusConfigurationAppIntent, in context: Context) async -> SimpleEntry {
         SimpleEntry(date: Date(), configuration: configuration)
     }
     
-    func timeline(for configuration: ConfigurationAppIntent, in context: Context) async -> Timeline<SimpleEntry> {
-        var entries: [SimpleEntry] = []
-
-        // Generate a timeline consisting of five entries an hour apart, starting from the current date.
-        let currentDate = Date()
-        for hourOffset in 0 ..< 5 {
-            let entryDate = Calendar.current.date(byAdding: .hour, value: hourOffset, to: currentDate)!
-            let entry = SimpleEntry(date: entryDate, configuration: configuration)
-            entries.append(entry)
-        }
-
-        return Timeline(entries: entries, policy: .atEnd)
+    func timeline(for configuration: RideStatusConfigurationAppIntent, in context: Context) async -> Timeline<SimpleEntry> {
+        let entry = SimpleEntry(date: Date(), configuration: configuration)
+        return Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(60 * 15)))
     }
-
-//    func relevances() async -> WidgetRelevances<ConfigurationAppIntent> {
-//        // Generate a list containing the contexts this widget is relevant in.
-//    }
 }
 
 struct SimpleEntry: TimelineEntry {
     let date: Date
-    let configuration: ConfigurationAppIntent
+    let configuration: RideStatusConfigurationAppIntent
 }
 
-struct HeyCabyWidgetsEntryView : View {
-    var entry: Provider.Entry
+struct HeyCabyStatusEntryView: View {
+    var entry: HeyCabyStatusProvider.Entry
 
     var body: some View {
-        VStack {
-            Text("Time:")
-            Text(entry.date, style: .time)
-
-            Text("Favorite Emoji:")
-            Text(entry.configuration.favoriteEmoji)
+        HStack(spacing: 10) {
+            Image(systemName: "car.fill")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(.yellow)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("HeyCaby Rider")
+                    .font(.subheadline.weight(.semibold))
+                Text("Open app for live ride status")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
         }
+        .padding(12)
+        .widgetURL(URL(string: "heycabyrider://ride-status"))
     }
 }
 
-struct HeyCabyWidgets: Widget {
-    let kind: String = "HeyCabyWidgets"
+struct HeyCabyStatusWidget: Widget {
+    let kind: String = "HeyCabyStatusWidget"
 
     var body: some WidgetConfiguration {
-        AppIntentConfiguration(kind: kind, intent: ConfigurationAppIntent.self, provider: Provider()) { entry in
-            HeyCabyWidgetsEntryView(entry: entry)
+        AppIntentConfiguration(kind: kind, intent: RideStatusConfigurationAppIntent.self, provider: HeyCabyStatusProvider()) { entry in
+            HeyCabyStatusEntryView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
+        .configurationDisplayName("Ride status")
+        .description("Quick access to your current HeyCaby ride.")
     }
 }
 
-extension ConfigurationAppIntent {
-    fileprivate static var smiley: ConfigurationAppIntent {
-        let intent = ConfigurationAppIntent()
-        intent.favoriteEmoji = "😀"
-        return intent
-    }
-    
-    fileprivate static var starEyes: ConfigurationAppIntent {
-        let intent = ConfigurationAppIntent()
-        intent.favoriteEmoji = "🤩"
+extension RideStatusConfigurationAppIntent {
+    fileprivate static var previewValue: RideStatusConfigurationAppIntent {
+        let intent = RideStatusConfigurationAppIntent()
+        intent.showCurrentRide = true
         return intent
     }
 }
 
 #Preview(as: .systemSmall) {
-    HeyCabyWidgets()
+    HeyCabyStatusWidget()
 } timeline: {
-    SimpleEntry(date: .now, configuration: .smiley)
-    SimpleEntry(date: .now, configuration: .starEyes)
+    SimpleEntry(date: .now, configuration: .previewValue)
 }

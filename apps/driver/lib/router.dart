@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'screens/splash_screen.dart';
@@ -16,7 +17,10 @@ import 'screens/driver_chat_screen.dart';
 import 'screens/scheduled_rides_screen.dart';
 import 'screens/driver_score_screen.dart';
 import 'screens/work_screen.dart';
-import 'screens/me_screen.dart';
+import 'screens/driver_tariff_editor_screen.dart';
+import 'screens/driver_hotspots_screen.dart';
+import 'screens/driver_community_hub_screen.dart';
+import 'screens/driver_community_channel_feed_screen.dart';
 import 'screens/driver_tell_friend_screen.dart';
 import 'screens/driver_preferences_screen.dart';
 import 'screens/driver_profile_screen.dart';
@@ -26,40 +30,77 @@ import 'screens/driver_support_screen.dart';
 import 'screens/driver_faq_screen.dart';
 import 'screens/driver_terms_screen.dart';
 import 'screens/driver_privacy_screen.dart';
+import 'screens/driver_indemnification_screen.dart';
+import 'screens/driver_app_suggestion_screen.dart';
 import 'screens/today_rides_screen.dart';
-import 'screens/driver_power_mode_screen.dart';
-import 'screens/driver_union_mode_screen.dart';
 import 'screens/driver_return_trips_screen.dart';
 import 'screens/ride_swap_screen.dart';
 import 'screens/support_threads_screen.dart';
 import 'screens/support_new_ticket_screen.dart';
 import 'screens/support_chat_screen.dart';
+import 'screens/support_lee_screen.dart';
 import 'screens/vehicle_edit_screen.dart';
+import 'screens/driver_billing_screen.dart';
+import 'screens/driver_billing_history_screen.dart';
+import 'screens/driver_finance_screen.dart';
+import 'screens/driver_runtime_gate_screen.dart';
+import 'screens/driver_my_rides_screen.dart';
+import 'screens/driver_plate_onboarding_screen.dart';
+import 'screens/driver_ride_detail_screen.dart';
+import 'l10n/driver_strings.dart';
 import 'utils/validation_utils.dart';
 import 'widgets/driver_shell.dart';
 
-/// Shared slide-up-and-fade transition for all full-screen route pushes.
+/// Shell stack: zero-duration page — tab/detail swaps feel instant (no MaterialPage fade).
+Page<void> _shellPage(GoRouterState state, Widget child) =>
+    NoTransitionPage<void>(key: state.pageKey, child: child);
+
+/// Full-screen modal-style routes: very short fade-only transition.
 Page<void> _page(GoRouterState state, Widget child) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
     child: child,
-    transitionDuration: const Duration(milliseconds: 280),
-    reverseTransitionDuration: const Duration(milliseconds: 220),
+    transitionDuration: const Duration(milliseconds: 48),
+    reverseTransitionDuration: const Duration(milliseconds: 36),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
       final fade = CurvedAnimation(
         parent: animation,
         curve: Curves.easeOutCubic,
       );
-      final slide = Tween<Offset>(
-        begin: const Offset(0, 0.04),
-        end: Offset.zero,
-      ).animate(fade);
-      return FadeTransition(
-        opacity: fade,
-        child: SlideTransition(position: slide, child: child),
-      );
+      return FadeTransition(opacity: fade, child: child);
     },
   );
+}
+
+/// One crisp haptic per navigation change. **Two instances required:** Flutter asserts if the
+/// same [NavigatorObserver] is attached to more than one [Navigator] (root + shell).
+final _rootNavigationHaptics = _DriverNavigationHapticsObserver();
+final _shellNavigationHaptics = _DriverNavigationHapticsObserver();
+
+class _DriverNavigationHapticsObserver extends NavigatorObserver {
+  bool _skipFirstRouteEvent = true;
+  DateTime _lastAt = DateTime.fromMillisecondsSinceEpoch(0);
+
+  void _tick() {
+    if (_skipFirstRouteEvent) {
+      _skipFirstRouteEvent = false;
+      return;
+    }
+    final now = DateTime.now();
+    if (now.difference(_lastAt).inMilliseconds < 42) return;
+    _lastAt = now;
+    HapticService.selectionClick();
+  }
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) => _tick();
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) => _tick();
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) =>
+      _tick();
 }
 
 class _AuthNotifier extends ChangeNotifier {
@@ -77,6 +118,7 @@ const _publicRoutes = ['/splash', '/login'];
 final appRouter = GoRouter(
   initialLocation: '/splash',
   refreshListenable: _authNotifier,
+  observers: <NavigatorObserver>[_rootNavigationHaptics],
   errorBuilder: (context, state) => Scaffold(
     body: SafeArea(
       child: Padding(
@@ -99,11 +141,15 @@ final appRouter = GoRouter(
   redirect: (context, state) {
     final user = Supabase.instance.client.auth.currentUser;
     final isLoggedIn = user != null;
-    final isPublicRoute =
-        _publicRoutes.any((r) => state.matchedLocation.startsWith(r));
+    final loc = state.matchedLocation;
+    final isPublicRoute = _publicRoutes.any((r) => loc.startsWith(r));
+
+    // Cold start uses [initialLocation] `/splash`. Skip marketing splash when a
+    // session already exists (Supabase restores it during init — no backend change).
+    if (isLoggedIn && loc.startsWith('/splash')) return '/driver';
 
     if (!isLoggedIn && !isPublicRoute) return '/login';
-    if (isLoggedIn && state.matchedLocation == '/login') return '/driver';
+    if (isLoggedIn && loc == '/login') return '/driver';
 
     return null;
   },
@@ -117,39 +163,121 @@ final appRouter = GoRouter(
       pageBuilder: (_, state) => _page(state, const LoginScreen()),
     ),
     GoRoute(
+      path: '/driver/onboarding/plate',
+      pageBuilder: (_, state) =>
+          _page(state, const DriverPlateOnboardingScreen()),
+    ),
+    GoRoute(
       path: '/driver/go-online',
       pageBuilder: (_, state) => _page(state, const GoOnlineScreen()),
     ),
+    GoRoute(
+      path: '/driver/runtime-gate',
+      pageBuilder: (_, state) {
+        final args = state.extra;
+        if (args is! DriverRuntimeGateArgs) {
+          return _page(
+            state,
+            const DriverRuntimeGateScreen(
+              args: DriverRuntimeGateArgs(
+                title: DriverStrings.runtimeUnknownBlockedTitle,
+                body: DriverStrings.runtimeUnknownBlockedBody,
+              ),
+            ),
+          );
+        }
+        return _page(state, DriverRuntimeGateScreen(args: args));
+      },
+    ),
     ShellRoute(
+      observers: <NavigatorObserver>[_shellNavigationHaptics],
       builder: (context, state, child) => DriverShell(child: child),
       routes: [
         GoRoute(
           path: '/driver',
-          builder: (_, __) => const DriverHomeScreen(),
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverHomeScreen()),
         ),
         GoRoute(
           path: '/driver/work',
-          builder: (_, __) => const WorkScreen(),
+          pageBuilder: (_, state) => _shellPage(state, const WorkScreen()),
+        ),
+        GoRoute(
+          path: '/driver/tariffs',
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverTariffEditorScreen()),
+        ),
+        GoRoute(
+          path: '/driver/hotspots',
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverHotspotsScreen()),
         ),
         GoRoute(
           path: '/driver/me',
-          builder: (_, __) => const DriverProfileScreen(),
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverProfileScreen()),
         ),
         GoRoute(
           path: '/driver/community',
-          builder: (_, __) => const MeScreen(),
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverCommunityHubScreen()),
+        ),
+        GoRoute(
+          path: '/driver/community/feed',
+          pageBuilder: (_, state) {
+            final raw = state.uri.queryParameters['channel'] ?? 'general';
+            final channel = raw == 'announcements' ? 'announcements' : 'general';
+            return _shellPage(
+              state,
+              DriverCommunityChannelFeedScreen(channel: channel),
+            );
+          },
         ),
         GoRoute(
           path: '/driver/tell-friend',
-          builder: (_, __) => const DriverTellFriendScreen(),
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverTellFriendScreen()),
+        ),
+        GoRoute(
+          path: '/driver/my-rides',
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverMyRidesScreen()),
+        ),
+        GoRoute(
+          path: '/driver/my-rides/:rideId',
+          redirect: (_, state) {
+            if (!isValidUuid(state.pathParameters['rideId'])) return '/driver/my-rides';
+            return null;
+          },
+          pageBuilder: (_, state) => _shellPage(
+            state,
+            DriverRideDetailScreen(rideId: state.pathParameters['rideId']!),
+          ),
         ),
         GoRoute(
           path: '/driver/preferences',
-          builder: (_, __) => const DriverPreferencesScreen(),
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverPreferencesScreen()),
+        ),
+        GoRoute(
+          path: '/driver/billing',
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverBillingScreen()),
+        ),
+        GoRoute(
+          path: '/driver/billing/history',
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverBillingHistoryScreen()),
+        ),
+        GoRoute(
+          path: '/driver/finance',
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverFinanceScreen()),
         ),
         GoRoute(
           path: '/driver/vehicle',
-          builder: (_, __) => const VehicleEditScreen(),
+          pageBuilder: (_, state) =>
+              _shellPage(state, const VehicleEditScreen()),
         ),
         GoRoute(
           path: '/driver/profile',
@@ -157,23 +285,33 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: '/driver/documents',
-          builder: (_, __) => const DriverDocumentsScreen(),
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverDocumentsScreen()),
         ),
         GoRoute(
           path: '/driver/veriff',
-          builder: (_, __) => const DriverVeriffScreen(),
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverVeriffScreen()),
         ),
         GoRoute(
           path: '/driver/support',
-          builder: (_, __) => const DriverSupportScreen(),
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverSupportScreen()),
         ),
         GoRoute(
           path: '/driver/support/threads',
-          builder: (_, __) => const SupportThreadsScreen(),
+          pageBuilder: (_, state) =>
+              _shellPage(state, const SupportThreadsScreen()),
         ),
         GoRoute(
           path: '/driver/support/new',
-          builder: (_, __) => const SupportNewTicketScreen(),
+          pageBuilder: (_, state) =>
+              _shellPage(state, const SupportNewTicketScreen()),
+        ),
+        GoRoute(
+          path: '/driver/support/lee',
+          pageBuilder: (_, state) =>
+              _shellPage(state, const SupportLeeScreen()),
         ),
         GoRoute(
           path: '/driver/support/chat/:ticketId',
@@ -183,42 +321,48 @@ final appRouter = GoRouter(
             }
             return null;
           },
-          builder: (_, state) {
+          pageBuilder: (_, state) {
             final ticketId = state.pathParameters['ticketId']!;
-            return SupportChatScreen(ticketId: ticketId);
+            return _shellPage(state, SupportChatScreen(ticketId: ticketId));
           },
         ),
         GoRoute(
           path: '/driver/faq',
-          builder: (_, __) => const DriverFaqScreen(),
+          pageBuilder: (_, state) => _shellPage(state, const DriverFaqScreen()),
         ),
         GoRoute(
           path: '/driver/terms',
-          builder: (_, __) => const DriverTermsScreen(),
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverTermsScreen()),
         ),
         GoRoute(
           path: '/driver/privacy',
-          builder: (_, __) => const DriverPrivacyScreen(),
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverPrivacyScreen()),
+        ),
+        GoRoute(
+          path: '/driver/indemnification',
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverIndemnificationScreen()),
         ),
         GoRoute(
           path: '/driver/rides/today',
-          builder: (_, __) => const TodayRidesScreen(),
+          pageBuilder: (_, state) =>
+              _shellPage(state, const TodayRidesScreen()),
         ),
         GoRoute(
           path: '/driver/help-articles',
-          builder: (_, __) => const DriverFaqScreen(),
+          pageBuilder: (_, state) => _shellPage(state, const DriverFaqScreen()),
         ),
         GoRoute(
-          path: '/driver/power-mode',
-          builder: (_, __) => const DriverPowerModeScreen(),
-        ),
-        GoRoute(
-          path: '/driver/union-mode',
-          builder: (_, __) => const DriverUnionModeScreen(),
+          path: '/driver/app-suggestion',
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverAppSuggestionScreen()),
         ),
         GoRoute(
           path: '/driver/return-trips',
-          builder: (_, __) => const DriverReturnTripsScreen(),
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverReturnTripsScreen()),
         ),
         GoRoute(
           path: '/driver/ride/new/:rideId',
@@ -299,15 +443,18 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: '/driver/scheduled-rides',
-          builder: (_, __) => const ScheduledRidesScreen(),
+          pageBuilder: (_, state) =>
+              _shellPage(state, const ScheduledRidesScreen()),
         ),
         GoRoute(
           path: '/driver/ride-swap',
-          builder: (_, __) => const RideSwapScreen(),
+          pageBuilder: (_, state) =>
+              _shellPage(state, const RideSwapScreen()),
         ),
         GoRoute(
           path: '/driver/score',
-          builder: (_, __) => const DriverScoreScreen(),
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverScoreScreen()),
         ),
       ],
     ),

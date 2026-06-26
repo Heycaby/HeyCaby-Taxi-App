@@ -7,7 +7,11 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../l10n/driver_strings.dart';
+import '../providers/driver_state_provider.dart';
 import '../services/sound_service.dart';
+import '../theme/driver_colors.dart';
+import '../theme/driver_typography.dart';
+import '../widgets/driver_rider_conversation_body.dart';
 
 String? _peerRiderSenderId(List<ChatMessage> messages) {
   for (final m in messages) {
@@ -237,6 +241,18 @@ class _DriverChatScreenState extends ConsumerState<DriverChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
+  bool _chatAllowedForCurrentState(DriverData driver) {
+    final activeRideMatches = driver.activeRideId == widget.rideId;
+    if (!activeRideMatches) return false;
+    return switch (driver.appState) {
+      DriverAppState.assigned ||
+      DriverAppState.arrived ||
+      DriverAppState.inProgress ||
+      DriverAppState.completingRide => true,
+      _ => false,
+    };
+  }
+
   @override
   void initState() {
     super.initState();
@@ -278,338 +294,217 @@ class _DriverChatScreenState extends ConsumerState<DriverChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.extension<HeyCabyColorTokens>()!;
-    final typo = theme.extension<HeyCabyTypography>()!;
+    final themeColors = Theme.of(context).extension<HeyCabyColorTokens>()!;
+    final themeTypo = Theme.of(context).extension<HeyCabyTypography>()!;
+    final colors = DriverColors.fromTheme(themeColors);
+    final typography = DriverTypography.fromTheme(themeTypo);
     final chatState = ref.watch(driverChatProvider);
+    final driver = ref.watch(driverStateProvider);
+    final canUseChat = _chatAllowedForCurrentState(driver);
 
-    return Scaffold(
-      backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.card,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colors.text),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          DriverStrings.chatWithRiderTitle,
-          style: typo.headingLarge.copyWith(color: colors.text),
-        ),
-        actions: [
-          Builder(
-            builder: (ctx) {
-              return chatState.maybeWhen(
-                data: (s) {
-                  final peer = _peerRiderSenderId(s.messages);
-                  if (peer == null) return const SizedBox.shrink();
-                  return PopupMenuButton<String>(
-                    icon: Icon(Icons.more_vert, color: colors.text),
-                    onSelected: (v) async {
-                      if (v == 'report') {
-                        final reason = TextEditingController();
-                        final submit = await showDialog<bool>(
-                          context: ctx,
-                          builder: (dCtx) => AlertDialog(
-                            backgroundColor: colors.card,
-                            title: Text(
-                              DriverStrings.reportRiderTitle,
-                              style: typo.bodyLarge.copyWith(color: colors.text),
-                            ),
-                            content: SingleChildScrollView(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Text(
-                                    DriverStrings.reportRiderBody,
-                                    style: typo.bodyMedium
-                                        .copyWith(color: colors.textMid),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  TextField(
-                                    controller: reason,
-                                    maxLines: 3,
-                                    style: typo.bodyMedium
-                                        .copyWith(color: colors.text),
-                                    decoration: InputDecoration(
-                                      hintText: DriverStrings.reportReasonHint,
-                                      hintStyle: typo.bodySmall
-                                          .copyWith(color: colors.textSoft),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(dCtx, false),
-                                child: Text(
-                                  DriverStrings.cancel,
-                                  style: TextStyle(color: colors.accent),
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(dCtx, true),
-                                child: Text(
-                                  DriverStrings.reportRider,
-                                  style: TextStyle(color: colors.error),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (submit != true || !ctx.mounted) return;
-                        final sent = await ref
-                            .read(driverChatProvider.notifier)
-                            .reportRider(
-                              rideId: widget.rideId,
-                              riderSenderId: peer,
-                              reason: reason.text.trim().isEmpty
-                                  ? null
-                                  : reason.text.trim(),
-                            );
-                        if (!ctx.mounted) return;
-                        ScaffoldMessenger.of(ctx).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              sent
-                                  ? DriverStrings.reportSubmitted
-                                  : DriverStrings.chatReportFailed,
-                            ),
-                          ),
-                        );
-                        return;
-                      }
-                      if (v != 'block') return;
-                      final ok = await showDialog<bool>(
-                        context: ctx,
-                        builder: (dCtx) => AlertDialog(
-                          title: Text(DriverStrings.blockRider,
-                              style: typo.bodyLarge.copyWith(color: colors.text)),
-                          content: Text(
-                            DriverStrings.blockRiderConfirm,
-                            style: typo.bodyMedium.copyWith(color: colors.textMid),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(dCtx, false),
-                              child: Text(DriverStrings.cancel,
-                                  style: TextStyle(color: colors.accent)),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(dCtx, true),
-                              child: Text(DriverStrings.blockRider,
-                                  style: TextStyle(color: colors.error)),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (ok != true || !ctx.mounted) return;
-                      final blocked = await ref
-                          .read(driverChatProvider.notifier)
-                          .blockRider(
-                              rideId: widget.rideId, riderSenderId: peer);
-                      if (!ctx.mounted) return;
-                      ScaffoldMessenger.of(ctx).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            blocked
-                                ? DriverStrings.blockRider
-                                : DriverStrings.chatBlockFailed,
-                          ),
-                        ),
-                      );
-                    },
-                    itemBuilder: (_) => [
-                      PopupMenuItem(
-                        value: 'report',
-                        child: Text(DriverStrings.reportRider),
-                      ),
-                      PopupMenuItem(
-                        value: 'block',
-                        child: Text(DriverStrings.blockRider),
-                      ),
-                    ],
-                  );
-                },
-                orElse: () => const SizedBox.shrink(),
-              );
-            },
-          ),
-        ],
-      ),
-      body: chatState.when(
-        data: (state) {
-          if (state.isLoading) {
-            return Center(
-              child: CircularProgressIndicator(color: colors.accent),
-            );
-          }
-
-          return Column(
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
-                  itemCount: state.messages.length,
-                  itemBuilder: (context, index) {
-                    final msg = state.messages[index];
-                    final isDriver = msg.senderType == 'driver';
-                    return _MessageBubble(
-                      message: msg.message,
-                      isDriver: isDriver,
-                      timestamp: msg.createdAt,
-                      colors: colors,
-                      typo: typo,
-                    );
-                  },
-                ),
-              ),
-              _MessageInput(
-                controller: _messageController,
-                onSend: _sendMessage,
-                colors: colors,
-                typo: typo,
-              ),
-            ],
-          );
-        },
-        loading: () => Center(
-          child: CircularProgressIndicator(color: colors.accent),
-        ),
-        error: (error, _) => Center(
-          child: Text(
-            'Error: $error',
-            style: typo.bodyMedium.copyWith(color: colors.error),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MessageBubble extends StatelessWidget {
-  final String message;
-  final bool isDriver;
-  final DateTime timestamp;
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-
-  const _MessageBubble({
-    required this.message,
-    required this.isDriver,
-    required this.timestamp,
-    required this.colors,
-    required this.typo,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: isDriver ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.7,
-        ),
-        decoration: BoxDecoration(
-          color: isDriver ? colors.accent : colors.card,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              message,
-              style: typo.bodyMedium.copyWith(
-                color: colors.text,
-              ),
+    final menu = chatState.maybeWhen(
+      data: (s) {
+        final peer = _peerRiderSenderId(s.messages);
+        if (peer == null) return null;
+        return PopupMenuButton<String>(
+          icon: Icon(Icons.more_vert, color: colors.text),
+          onSelected: (v) => _onChatMenuSelected(v, peer),
+          itemBuilder: (_) => [
+            PopupMenuItem(
+              value: 'report',
+              child: Text(DriverStrings.reportRider),
             ),
-            const SizedBox(height: 4),
-            Text(
-              _formatTime(timestamp),
-              style: typo.labelSmall.copyWith(
-                color: isDriver
-                    ? colors.text.withValues(alpha: 0.72)
-                    : colors.textSoft,
-              ),
+            PopupMenuItem(
+              value: 'block',
+              child: Text(DriverStrings.blockRider),
             ),
           ],
+        );
+      },
+      orElse: () => null,
+    );
+
+    return chatState.when(
+      data: (state) {
+        final messages = state.messages
+            .map(
+              (m) => DriverRiderChatMessage(
+                content: m.message,
+                isDriver: m.senderType == 'driver',
+                timeLabel: driverRiderChatTimeLabel(m.createdAt),
+              ),
+            )
+            .toList();
+
+        return DriverRiderConversationBody(
+          colors: colors,
+          typography: typography,
+          loading: state.isLoading,
+          error: state.error,
+          canUseChat: canUseChat,
+          messages: messages,
+          messageController: _messageController,
+          scrollController: _scrollController,
+          onBack: () => context.pop(),
+          onSend: _sendMessage,
+          onBackWhenBlocked: () => context.pop(),
+          menu: menu != null
+              ? Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: menu,
+                )
+              : null,
+        );
+      },
+      loading: () => DriverRiderConversationBody(
+        colors: colors,
+        typography: typography,
+        loading: true,
+        error: null,
+        canUseChat: canUseChat,
+        messages: const [],
+        messageController: _messageController,
+        scrollController: _scrollController,
+        onBack: () => context.pop(),
+        onSend: _sendMessage,
+        onBackWhenBlocked: () => context.pop(),
+      ),
+      error: (error, _) => DriverRiderConversationBody(
+        colors: colors,
+        typography: typography,
+        loading: false,
+        error: 'Error: $error',
+        canUseChat: canUseChat,
+        messages: const [],
+        messageController: _messageController,
+        scrollController: _scrollController,
+        onBack: () => context.pop(),
+        onSend: _sendMessage,
+        onBackWhenBlocked: () => context.pop(),
+      ),
+    );
+  }
+
+  Future<void> _onChatMenuSelected(String action, String peer) async {
+    if (action == 'report') {
+      await _reportRider(peer);
+      return;
+    }
+    if (action == 'block') {
+      await _blockRider(peer);
+    }
+  }
+
+  Future<void> _reportRider(String peer) async {
+    final reason = TextEditingController();
+    final themeColors = Theme.of(context).extension<HeyCabyColorTokens>()!;
+    final typo = Theme.of(context).extension<HeyCabyTypography>()!;
+    final submit = await showDialog<bool>(
+      context: context,
+      builder: (dCtx) => AlertDialog(
+        title: Text(
+          DriverStrings.reportRiderTitle,
+          style: typo.bodyLarge.copyWith(color: themeColors.text),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                DriverStrings.reportRiderBody,
+                style: typo.bodyMedium.copyWith(color: themeColors.textMid),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: reason,
+                maxLines: 3,
+                style: typo.bodyMedium.copyWith(color: themeColors.text),
+                decoration: InputDecoration(
+                  hintText: DriverStrings.reportReasonHint,
+                  hintStyle: typo.bodySmall.copyWith(color: themeColors.textSoft),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dCtx, false),
+            child: Text(
+              DriverStrings.cancel,
+              style: TextStyle(color: themeColors.accent),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dCtx, true),
+            child: Text(
+              DriverStrings.reportRider,
+              style: TextStyle(color: themeColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (submit != true || !mounted) return;
+    final sent = await ref.read(driverChatProvider.notifier).reportRider(
+          rideId: widget.rideId,
+          riderSenderId: peer,
+          reason: reason.text.trim().isEmpty ? null : reason.text.trim(),
+        );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          sent ? DriverStrings.reportSubmitted : DriverStrings.chatReportFailed,
         ),
       ),
     );
   }
 
-  String _formatTime(DateTime time) {
-    final now = DateTime.now();
-    final diff = now.difference(time);
-
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-    if (diff.inDays < 1) return '${diff.inHours}h ago';
-    return '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
-  }
-}
-
-class _MessageInput extends StatelessWidget {
-  final TextEditingController controller;
-  final VoidCallback onSend;
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-
-  _MessageInput({
-    required this.controller,
-    required this.onSend,
-    required this.colors,
-    required this.typo,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.card,
-        border: Border(top: BorderSide(color: colors.border)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: controller,
-              maxLength: 2000,
-              style: typo.bodyMedium.copyWith(color: colors.text),
-              decoration: InputDecoration(
-                counterText: '',
-                hintText: DriverStrings.chatTypeMessageHint,
-                hintStyle: typo.bodyMedium.copyWith(color: colors.textSoft),
-                filled: true,
-                fillColor: colors.bg,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-              ),
-              onSubmitted: (_) => onSend(),
+  Future<void> _blockRider(String peer) async {
+    final themeColors = Theme.of(context).extension<HeyCabyColorTokens>()!;
+    final typo = Theme.of(context).extension<HeyCabyTypography>()!;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dCtx) => AlertDialog(
+        title: Text(
+          DriverStrings.blockRider,
+          style: typo.bodyLarge.copyWith(color: themeColors.text),
+        ),
+        content: Text(
+          DriverStrings.blockRiderConfirm,
+          style: typo.bodyMedium.copyWith(color: themeColors.textMid),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dCtx, false),
+            child: Text(
+              DriverStrings.cancel,
+              style: TextStyle(color: themeColors.accent),
             ),
           ),
-          const SizedBox(width: 8),
-          IconButton(
-            onPressed: onSend,
-            icon: Icon(Icons.send, color: colors.accent),
-            style: IconButton.styleFrom(
-              backgroundColor: colors.accentL,
-              padding: const EdgeInsets.all(12),
+          TextButton(
+            onPressed: () => Navigator.pop(dCtx, true),
+            child: Text(
+              DriverStrings.blockRider,
+              style: TextStyle(color: themeColors.error),
             ),
           ),
         ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final blocked = await ref.read(driverChatProvider.notifier).blockRider(
+          rideId: widget.rideId,
+          riderSenderId: peer,
+        );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          blocked ? DriverStrings.blockRider : DriverStrings.chatBlockFailed,
+        ),
       ),
     );
   }

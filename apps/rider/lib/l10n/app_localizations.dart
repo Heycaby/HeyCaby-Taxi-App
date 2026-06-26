@@ -226,6 +226,12 @@ abstract class AppLocalizations {
   /// **'Driver on the way'**
   String get driverAssigned;
 
+  /// No description provided for @driverReturnTripDiscount.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}% return ride discount'**
+  String driverReturnTripDiscount(int pct);
+
   /// No description provided for @driverArrived.
   ///
   /// In en, this message translates to:
@@ -439,7 +445,7 @@ abstract class AppLocalizations {
   /// No description provided for @rideBookingFailed.
   ///
   /// In en, this message translates to:
-  /// **'Couldn’t start your ride — the server rejected the request. On a local build, check SUPABASE_URL and SUPABASE_ANON_KEY in your .env (Supabase Dashboard → Settings → API), then try Find driver again.'**
+  /// **'Couldn’t start your ride — authorization was rejected by the server. Please refresh your session (log out and log in), then try Find driver again.'**
   String get rideBookingFailed;
 
   /// No description provided for @locationPermissionRequired.
@@ -457,7 +463,7 @@ abstract class AppLocalizations {
   /// No description provided for @locationRequiredMessage.
   ///
   /// In en, this message translates to:
-  /// **'HeyCaby needs your location to set your pickup point and find nearby drivers. Without it you cannot book a ride.'**
+  /// **'HeyCaby needs your location to set accurate pickup points, find nearby drivers, and give reliable arrival times. Without location access we cannot serve you well and you cannot book rides.'**
   String get locationRequiredMessage;
 
   /// No description provided for @enableLocation.
@@ -1765,7 +1771,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountLocationNeededBody.
   ///
   /// In en, this message translates to:
-  /// **'Location access needed'**
+  /// **'Location access is required for accurate pickup, nearby driver matching, and reliable trip updates.'**
   String get accountLocationNeededBody;
 
   /// No description provided for @accountManageLocation.
@@ -2242,6 +2248,156 @@ abstract class AppLocalizations {
   /// **'Your message was saved. The assistant is offline — support can still read it.'**
   String get supportChatOfflineSaved;
 
+  /// No description provided for @supportAiConsentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Meet Yaz, your AI support assistant'**
+  String get supportAiConsentTitle;
+
+  /// No description provided for @supportAiConsentIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Yaz is HeyCaby\'s AI customer service assistant. Her job is to listen to your complaint and help solve simple support issues quickly.'**
+  String get supportAiConsentIntro;
+
+  /// No description provided for @supportAiConsentDataSent.
+  ///
+  /// In en, this message translates to:
+  /// **'To help you, we send: the message you type, your support ticket category, and limited account context needed to answer your request.'**
+  String get supportAiConsentDataSent;
+
+  /// No description provided for @supportAiConsentThirdParty.
+  ///
+  /// In en, this message translates to:
+  /// **'AI processing: Yaz uses OpenAI (ChatGPT) models to generate responses.'**
+  String get supportAiConsentThirdParty;
+
+  /// No description provided for @supportAiConsentPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'For serious or sensitive issues, do not share private details in AI chat. Please email support at hello@heycaby.nl.'**
+  String get supportAiConsentPolicy;
+
+  /// No description provided for @supportAiConsentEmailOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not include passwords, full payment card numbers, government IDs, or other highly sensitive data in AI chat.'**
+  String get supportAiConsentEmailOption;
+
+  /// No description provided for @supportAiConsentCheckbox.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand what data is sent, who processes it, and I allow HeyCaby to share this support chat data with Yaz AI support.'**
+  String get supportAiConsentCheckbox;
+
+  /// No description provided for @supportAiConsentContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'I agree and continue'**
+  String get supportAiConsentContinue;
+
+  /// No description provided for @supportAiConsentSendEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Send email instead'**
+  String get supportAiConsentSendEmail;
+
+  /// No description provided for @supportCategoryRideIssue.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride issue'**
+  String get supportCategoryRideIssue;
+
+  /// No description provided for @supportCategoryPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get supportCategoryPayment;
+
+  /// No description provided for @supportCategoryAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get supportCategoryAccount;
+
+  /// No description provided for @supportMessageSentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Message sent'**
+  String get supportMessageSentTitle;
+
+  /// No description provided for @supportMessageSentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you for your message. Our customer support team will review it and get back to you as soon as possible.\n\nIf your issue is urgent, you can chat with Yaz (AI support assistant). Please avoid sharing sensitive personal information in AI chat.'**
+  String get supportMessageSentBody;
+
+  /// No description provided for @supportMessageSendFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not send message'**
+  String get supportMessageSendFailedTitle;
+
+  /// No description provided for @supportMessageSendFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not send your support message right now. Please try again shortly, or use Chat with Yaz for urgent help.'**
+  String get supportMessageSendFailedBody;
+
+  /// No description provided for @supportChatWithYaz.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat with Yaz'**
+  String get supportChatWithYaz;
+
+  /// No description provided for @supportSendMessageButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Send message'**
+  String get supportSendMessageButton;
+
+  /// No description provided for @supportYazUnavailableGuestAuthDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Yaz chat is temporarily unavailable because guest chat auth is disabled on the server.'**
+  String get supportYazUnavailableGuestAuthDisabled;
+
+  /// No description provided for @supportYazUnavailableTemporary.
+  ///
+  /// In en, this message translates to:
+  /// **'Yaz chat is temporarily unavailable. Please try again shortly.'**
+  String get supportYazUnavailableTemporary;
+
+  /// No description provided for @supportYazFallbackReply.
+  ///
+  /// In en, this message translates to:
+  /// **'I could not answer right now. Please try again or send email support.'**
+  String get supportYazFallbackReply;
+
+  /// No description provided for @supportEmailSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Email support'**
+  String get supportEmailSupport;
+
+  /// No description provided for @supportYazAssistantTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Yaz AI support assistant'**
+  String get supportYazAssistantTitle;
+
+  /// No description provided for @supportYazAssistantSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask anything about your ride, account, or payment.'**
+  String get supportYazAssistantSubtitle;
+
+  /// No description provided for @supportYazMessageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Message Yaz...'**
+  String get supportYazMessageHint;
+
   /// No description provided for @favouriteDriversAccountSubtitle.
   ///
   /// In en, this message translates to:
@@ -2391,6 +2547,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Prices and availability are estimates and may change when you book.'**
   String get vehicleSupplyEstimatesNote;
+
+  /// No description provided for @returnTripFareEstimatesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Return-trip offers'**
+  String get returnTripFareEstimatesTitle;
+
+  /// No description provided for @returnTripFareEstimatesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show driver prices with their active return-trip discount applied. Turn off for standard tariff estimates.'**
+  String get returnTripFareEstimatesSubtitle;
+
+  /// No description provided for @returnTripFareEstimatesRequiresRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Add pickup and drop-off to preview return-trip prices.'**
+  String get returnTripFareEstimatesRequiresRoute;
 
   /// No description provided for @vehicleSupplyNoPickup.
   ///
@@ -2649,6 +2823,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ride details'**
   String get rideDetails;
+
+  /// No description provided for @rideDetailViewReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'View receipt'**
+  String get rideDetailViewReceipt;
+
+  /// No description provided for @rideDetailReceiptLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load receipt right now.'**
+  String get rideDetailReceiptLoadFailed;
 
   /// No description provided for @rebookRide.
   ///
@@ -3007,97 +3193,97 @@ abstract class AppLocalizations {
   /// No description provided for @termsWhatIsHeyCaby.
   ///
   /// In en, this message translates to:
-  /// **'What is HeyCaby'**
+  /// **'1. About HeyCaby'**
   String get termsWhatIsHeyCaby;
 
   /// No description provided for @termsWhatIsHeyCabyBody.
   ///
   /// In en, this message translates to:
-  /// **'HeyCaby is a zero-commission platform that connects riders with professional, licensed Dutch taxi drivers. HeyCaby does not employ drivers and does not set fares. The platform facilitates matching only.'**
+  /// **'HeyCaby is a platform that connects riders with independent, licensed taxi drivers. We do not employ drivers and do not provide transportation services ourselves. We act solely as a matching and facilitation platform.\n\nUser roles:\n• Riders: individuals requesting transportation\n• Drivers: independent professionals providing transportation\n\nEach user is responsible for their own actions on the platform.'**
   String get termsWhatIsHeyCabyBody;
 
   /// No description provided for @termsRiderResponsibilities.
   ///
   /// In en, this message translates to:
-  /// **'Rider responsibilities'**
+  /// **'2. Rider Responsibilities'**
   String get termsRiderResponsibilities;
 
   /// No description provided for @termsRiderResponsibilitiesBody.
   ///
   /// In en, this message translates to:
-  /// **'Riders must provide accurate booking information including correct pickup location and destination. Respectful conduct toward drivers is required at all times. Riders must be present at the pickup location when the driver arrives.'**
+  /// **'As a rider, you agree to:\n• Provide accurate pickup and destination information\n• Be present at the pickup location on time\n• Treat drivers with respect and professionalism\n• Pay for completed rides using agreed methods\n• Not engage in illegal, abusive, or unsafe behavior\n\nFailure to meet these responsibilities may result in account suspension.'**
   String get termsRiderResponsibilitiesBody;
 
   /// No description provided for @termsPayment.
   ///
   /// In en, this message translates to:
-  /// **'Payment'**
+  /// **'3. Driver Responsibilities and 4. Payments'**
   String get termsPayment;
 
   /// No description provided for @termsPaymentBody.
   ///
   /// In en, this message translates to:
-  /// **'All payments are made directly from rider to driver. HeyCaby does not process, hold, or take a percentage of any payment. Available methods are cash, PIN (debit card), and Tikkie.'**
+  /// **'Drivers using HeyCaby must hold valid licenses and permits required by law, provide safe and lawful transport, communicate clearly, set fair pricing, and handle payments directly with riders.\n\nPayments are made directly between rider and driver. HeyCaby does not process, hold, or guarantee payments. Available methods may include cash, card (PIN), or third-party apps (e.g. Tikkie). Payment disputes must be resolved between rider and driver.'**
   String get termsPaymentBody;
 
   /// No description provided for @termsCancellation.
   ///
   /// In en, this message translates to:
-  /// **'Cancellation'**
+  /// **'5. Cancellations'**
   String get termsCancellation;
 
   /// No description provided for @termsCancellationBody.
   ///
   /// In en, this message translates to:
-  /// **'Rides can be cancelled free of charge before a driver accepts the request. Once a driver has accepted, the driver may charge a cancellation fee at their discretion.'**
+  /// **'Riders may cancel before driver acceptance at no cost. After acceptance, cancellation fees may apply at the driver’s discretion. Repeated cancellations or no-shows may result in account restrictions.'**
   String get termsCancellationBody;
 
   /// No description provided for @termsSuspension.
   ///
   /// In en, this message translates to:
-  /// **'Account suspension'**
+  /// **'6. Platform Usage and 8. Account Suspension'**
   String get termsSuspension;
 
   /// No description provided for @termsSuspensionBody.
   ///
   /// In en, this message translates to:
-  /// **'HeyCaby reserves the right to suspend accounts in cases of fraud, abuse, repeated no-shows, or false reports against drivers.'**
+  /// **'You agree not to misuse the platform, provide false information, attempt fraud or payment abuse, or harass/harm other users.\n\nHeyCaby may suspend or terminate accounts in cases of fraudulent activity, abuse, harassment, repeated no-shows/cancellations, or other violations of these terms.'**
   String get termsSuspensionBody;
 
   /// No description provided for @termsDisputes.
   ///
   /// In en, this message translates to:
-  /// **'Dispute resolution'**
+  /// **'9. Disputes and 10. Liability'**
   String get termsDisputes;
 
   /// No description provided for @termsDisputesBody.
   ///
   /// In en, this message translates to:
-  /// **'Any disputes between riders and drivers should first be reported through the in-app report feature. HeyCaby will review reports and mediate where possible.'**
+  /// **'Users should first resolve disputes directly. If needed, disputes can be reported through the app. HeyCaby may assist but is not liable for outcomes between users.\n\nHeyCaby is not liable for actions of drivers or riders, ride quality/safety, or damages/losses/disputes arising from trips. Users accept that HeyCaby is a facilitator, not a transport provider.'**
   String get termsDisputesBody;
 
   /// No description provided for @termsGoverningLaw.
   ///
   /// In en, this message translates to:
-  /// **'Governing law'**
+  /// **'11. Changes to Terms'**
   String get termsGoverningLaw;
 
   /// No description provided for @termsGoverningLawBody.
   ///
   /// In en, this message translates to:
-  /// **'These terms are governed by the laws of the Netherlands. Any legal proceedings shall be brought before the competent courts in the Netherlands.'**
+  /// **'We may update these terms at any time. Continued use of the platform means you accept the updated terms.'**
   String get termsGoverningLawBody;
 
   /// No description provided for @termsContact.
   ///
   /// In en, this message translates to:
-  /// **'Contact'**
+  /// **'12. Contact'**
   String get termsContact;
 
   /// No description provided for @termsContactBody.
   ///
   /// In en, this message translates to:
-  /// **'For questions about these terms, contact support through the Account screen in the app.'**
+  /// **'For support or disputes, use the in-app support feature.'**
   String get termsContactBody;
 
   /// No description provided for @privacyTitle.
@@ -3109,73 +3295,73 @@ abstract class AppLocalizations {
   /// No description provided for @privacyDataCollected.
   ///
   /// In en, this message translates to:
-  /// **'Data collected'**
+  /// **'1. Information We Collect'**
   String get privacyDataCollected;
 
   /// No description provided for @privacyDataCollectedBody.
   ///
   /// In en, this message translates to:
-  /// **'HeyCaby collects your email address (for identity verification), location data (during active bookings only), and trip history (for receipts and ride history).'**
+  /// **'We collect only the data necessary to provide our services:\n• Account information: email and basic profile details for account creation and identity verification\n• Location data: used during active bookings to match riders with nearby drivers and facilitate trips\n• Trip data: pickup/drop-off locations, timestamps, and ride history for receipts and service improvement\n• Device data: app version, device type, and push notification tokens for functionality and performance\n• Support data: support ticket messages and category, which may be processed by our AI support provider when you consent in chat'**
   String get privacyDataCollectedBody;
 
   /// No description provided for @privacyLocationData.
   ///
   /// In en, this message translates to:
-  /// **'Location data'**
+  /// **'3. Location Data Usage'**
   String get privacyLocationData;
 
   /// No description provided for @privacyLocationDataBody.
   ///
   /// In en, this message translates to:
-  /// **'Location data is used only during active booking and ride sessions. Your location is never stored beyond the duration of the trip and is not used for tracking outside of rides.'**
+  /// **'Location is accessed only during active ride sessions. We do not track users in the background outside of bookings. Location data is not stored longer than necessary for trip completion.'**
   String get privacyLocationDataBody;
 
   /// No description provided for @privacyDataSharing.
   ///
   /// In en, this message translates to:
-  /// **'Data sharing'**
+  /// **'4. Data Sharing'**
   String get privacyDataSharing;
 
   /// No description provided for @privacyDataSharingBody.
   ///
   /// In en, this message translates to:
-  /// **'When you book a ride, the driver receives only your booking name and pickup location. Your email address, phone number, and other personal data are never shared with drivers.'**
+  /// **'We share limited data only when required to provide the service.\n\nDrivers receive: rider name (or alias) and pickup location.\nRiders receive: driver details necessary for the trip.\n\nSupport AI (with your consent before first message): support chat message content, ticket category, and minimal context needed to answer your support request are processed by OpenAI (ChatGPT) models.\n\nWe do not share email addresses, phone numbers (unless explicitly required by future features), or sensitive personal data for AI chat.'**
   String get privacyDataSharingBody;
 
   /// No description provided for @privacyRetention.
   ///
   /// In en, this message translates to:
-  /// **'Data retention'**
+  /// **'5. Data Retention'**
   String get privacyRetention;
 
   /// No description provided for @privacyRetentionBody.
   ///
   /// In en, this message translates to:
-  /// **'Trip history is kept for receipt and history purposes. Account data is retained until you request deletion. Recent destinations expire automatically after 120 hours.'**
+  /// **'Trip data is stored for receipts and history. Account data is stored until account deletion is requested. Temporary data (like recent searches) may expire automatically.'**
   String get privacyRetentionBody;
 
   /// No description provided for @privacyGdpr.
   ///
   /// In en, this message translates to:
-  /// **'Your rights (GDPR)'**
+  /// **'6. Your Rights (GDPR)'**
   String get privacyGdpr;
 
   /// No description provided for @privacyGdprBody.
   ///
   /// In en, this message translates to:
-  /// **'Under GDPR, you have the right to access, rectify, and delete your personal data. You can delete your rider account in-app from Account → Delete my account. For other requests, contact support through the Account screen.'**
+  /// **'As a user in the EU, you have the right to access your personal data, correct inaccurate data, request deletion of your account, and restrict or object to processing.\n\nYou can delete your account directly in the app: Account → Delete Account.'**
   String get privacyGdprBody;
 
   /// No description provided for @privacyNoAds.
   ///
   /// In en, this message translates to:
-  /// **'No advertising'**
+  /// **'2/7/8/9/10/11/12. Use, AI Support (Yaz), Security, Notifications, Third Parties, Changes, Contact'**
   String get privacyNoAds;
 
   /// No description provided for @privacyNoAdsBody.
   ///
   /// In en, this message translates to:
-  /// **'HeyCaby does not display advertising and does not sell your data to third parties. Your data is used exclusively for providing the ride-matching service.'**
+  /// **'Your data is used strictly to operate HeyCaby: matching riders and drivers, facilitating bookings and communication, providing trip history and receipts, improving performance, and sending important notifications.\n\nAI Support (Yaz): when you choose \"Chat with Yaz\" and explicitly consent in-app, your support message content, ticket category, and limited account context are processed by OpenAI (ChatGPT) to generate support responses. AI chat is optional. You can use non-AI support instead via \"New message\".\n\nWe instruct users not to include highly sensitive data in AI chat (such as passwords, full payment card numbers, or government ID numbers). For sensitive or complex issues, users are directed to contact human support.\n\nWe do not use your data for advertising and we do not sell your data to third parties.\n\nWe apply technical and organizational security measures, though no system is 100% secure.\n\nPush notifications may include ride updates, important service messages, and occasional product updates. You can disable notifications in device settings.\n\nWe may use trusted providers (e.g., payment providers, Firebase, Supabase) only as needed to deliver services.\n\nWe may update this policy from time to time; continued use means acceptance of updates.\n\nFor privacy-related requests, contact us via the in-app support section.'**
   String get privacyNoAdsBody;
 
   /// No description provided for @distanceRemaining.
@@ -3711,6 +3897,252 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Scheduled for'**
   String get scheduledRideLabel;
+
+  /// No description provided for @activeRideShareError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to share ride right now'**
+  String get activeRideShareError;
+
+  /// No description provided for @activeRideCancelConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you really want to cancel the ride? Rebooking may not get you to your destination more quickly.'**
+  String get activeRideCancelConfirmBody;
+
+  /// No description provided for @activeRideWaitForDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Wait for driver'**
+  String get activeRideWaitForDriver;
+
+  /// No description provided for @activeRidePickupNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Any pickup notes?'**
+  String get activeRidePickupNotes;
+
+  /// No description provided for @activeRideChatSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Message your driver fast'**
+  String get activeRideChatSubtitle;
+
+  /// No description provided for @activeRideFoundingShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Founding'**
+  String get activeRideFoundingShort;
+
+  /// No description provided for @activeRideShareSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share live trip link'**
+  String get activeRideShareSubtitle;
+
+  /// No description provided for @activeRideReportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit ride report'**
+  String get activeRideReportSubtitle;
+
+  /// No description provided for @activeRideSupportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety and help'**
+  String get activeRideSupportSubtitle;
+
+  /// No description provided for @activeRidePickupNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup not set'**
+  String get activeRidePickupNotSet;
+
+  /// No description provided for @activeRideDestinationNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Destination not set'**
+  String get activeRideDestinationNotSet;
+
+  /// No description provided for @activeRideShareDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Share ride details'**
+  String get activeRideShareDetails;
+
+  /// No description provided for @activeRideContactDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact driver'**
+  String get activeRideContactDriver;
+
+  /// No description provided for @activeRideCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category: {category}'**
+  String activeRideCategoryLabel(String category);
+
+  /// No description provided for @activeRideCancelReasonLongPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Long pickup time'**
+  String get activeRideCancelReasonLongPickup;
+
+  /// No description provided for @activeRideCancelReasonBetterAlternative.
+  ///
+  /// In en, this message translates to:
+  /// **'Found better alternative'**
+  String get activeRideCancelReasonBetterAlternative;
+
+  /// No description provided for @activeRideCancelReasonDriverNotCloser.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver not getting closer'**
+  String get activeRideCancelReasonDriverNotCloser;
+
+  /// No description provided for @activeRideCancelReasonDriverAskedCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver asked to cancel'**
+  String get activeRideCancelReasonDriverAskedCancel;
+
+  /// No description provided for @activeRideCancelReasonPriceDispute.
+  ///
+  /// In en, this message translates to:
+  /// **'Price dispute with driver'**
+  String get activeRideCancelReasonPriceDispute;
+
+  /// No description provided for @activeRideCancelReasonOutsideAppPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver asked to pay outside app'**
+  String get activeRideCancelReasonOutsideAppPayment;
+
+  /// No description provided for @activeRidePlateNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Plate number'**
+  String get activeRidePlateNumber;
+
+  /// No description provided for @activeRideUnknownPlate.
+  ///
+  /// In en, this message translates to:
+  /// **'UNKNOWN'**
+  String get activeRideUnknownPlate;
+
+  /// No description provided for @activeRideFoundingMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Founding Member'**
+  String get activeRideFoundingMember;
+
+  /// No description provided for @activeRideVerifyPlate.
+  ///
+  /// In en, this message translates to:
+  /// **'Please verify this plate before entering the vehicle.'**
+  String get activeRideVerifyPlate;
+
+  /// No description provided for @openAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get openAction;
+
+  /// No description provided for @rideReceiptTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride receipt'**
+  String get rideReceiptTitle;
+
+  /// No description provided for @rideReceiptUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt not available yet.'**
+  String get rideReceiptUnavailable;
+
+  /// No description provided for @rideReceiptSettlement.
+  ///
+  /// In en, this message translates to:
+  /// **'Settlement'**
+  String get rideReceiptSettlement;
+
+  /// No description provided for @rideReceiptRideId.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride ID'**
+  String get rideReceiptRideId;
+
+  /// No description provided for @rideReceiptExpected.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected'**
+  String get rideReceiptExpected;
+
+  /// No description provided for @rideReceiptPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get rideReceiptPaid;
+
+  /// No description provided for @rideReceiptMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Method'**
+  String get rideReceiptMethod;
+
+  /// No description provided for @rideReceiptNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get rideReceiptNote;
+
+  /// No description provided for @rideReceiptOutstanding.
+  ///
+  /// In en, this message translates to:
+  /// **'Outstanding'**
+  String get rideReceiptOutstanding;
+
+  /// No description provided for @rideReceiptOverpaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Overpaid'**
+  String get rideReceiptOverpaid;
+
+  /// No description provided for @rideReceiptStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get rideReceiptStatus;
+
+  /// No description provided for @rideReceiptSettlementComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Settlement complete'**
+  String get rideReceiptSettlementComplete;
+
+  /// No description provided for @smartBundleRideTypeOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride type options'**
+  String get smartBundleRideTypeOptions;
+
+  /// No description provided for @smartBundleEstimatedPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated price: {min} - {max}'**
+  String smartBundleEstimatedPrice(String min, String max);
+
+  /// No description provided for @smartBundleDriverPricingNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Drivers set their own prices. We\'ll match you with the best options nearby.'**
+  String get smartBundleDriverPricingNote;
+
+  /// No description provided for @smartBundleTapToHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to hide ride classes'**
+  String get smartBundleTapToHide;
 }
 
 class _AppLocalizationsDelegate

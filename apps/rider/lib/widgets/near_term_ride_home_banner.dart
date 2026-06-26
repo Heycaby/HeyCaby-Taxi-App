@@ -2,11 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../providers/active_search_provider.dart';
 import '../providers/near_term_ride_request_provider.dart';
+import '../services/sound_service.dart';
+import '../services/stale_ride_cleanup.dart';
 import '../utils/ride_matching_labels.dart';
+import 'active_search_stop_dialog.dart';
 
 /// Home sheet banner for an open ride_request within the near-term window (matching or pickup soon).
 /// Tapping expands trip details in place — does not navigate to the searching screen.
@@ -21,6 +26,44 @@ class NearTermRideHomeBanner extends ConsumerStatefulWidget {
 class _NearTermRideHomeBannerState extends ConsumerState<NearTermRideHomeBanner> {
   Timer? _ticker;
   bool _expanded = false;
+
+  Future<void> _cancelOpenRide({
+    required NearTermRideSnapshot snap,
+    required HeyCabyColorTokens colors,
+    required HeyCabyTypography typo,
+    required AppLocalizations l10n,
+  }) async {
+    final stop = await showActiveSearchStopDialog(
+      context: context,
+      colors: colors,
+      typo: typo,
+      l10n: l10n,
+    );
+    if (!mounted || !stop) return;
+
+    try {
+      final identity = await ref.read(riderIdentityProvider.future);
+      final token = identity.riderToken;
+      if (token != null) {
+        await cancelExpiredRiderOpenRide(
+          rideId: snap.id,
+          riderToken: token,
+          cancellationReason: 'rider_stopped_home_banner_search',
+        );
+      }
+    } catch (_) {
+      // Keep UI responsive even if backend cancel fails.
+    }
+
+    ref.invalidate(nearTermRideRequestProvider);
+    ref.invalidate(ridesTabUpcomingRequestsProvider);
+
+    final active = ref.read(activeSearchProvider).valueOrNull;
+    if (active?.rideRequestId == snap.id) {
+      await ref.read(activeSearchProvider.notifier).clear();
+    }
+    unawaited(SoundService().playRideCancelled());
+  }
 
   @override
   void initState() {
@@ -252,6 +295,27 @@ class _NearTermRideHomeBannerState extends ConsumerState<NearTermRideHomeBanner>
                               Icons.expand_more_rounded,
                               color: colors.textSoft,
                               size: 26,
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: l10n.activeSearchStopConfirm,
+                            onPressed: () async {
+                              await _cancelOpenRide(
+                                snap: snap,
+                                colors: colors,
+                                typo: typo,
+                                l10n: l10n,
+                              );
+                            },
+                            icon: Icon(
+                              Icons.close_rounded,
+                              color: colors.textSoft,
+                              size: 22,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 36,
+                              minHeight: 36,
                             ),
                           ),
                         ],

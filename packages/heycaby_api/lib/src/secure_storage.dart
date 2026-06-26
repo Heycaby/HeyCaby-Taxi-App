@@ -51,6 +51,10 @@ class SecureStorage {
     await _storage.write(key: 'rider_email', value: email);
   }
 
+  static Future<void> updateRiderToken(String token) async {
+    await _storage.write(key: 'rider_token', value: token);
+  }
+
   /// Persists default payment / vehicle choices for the booking flow (device cache).
   static Future<void> updateRiderBookingPrefs({
     List<String>? paymentMethods,

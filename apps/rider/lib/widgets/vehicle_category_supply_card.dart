@@ -48,8 +48,6 @@ class VehicleCategorySupplyCard extends StatelessWidget {
     required this.onToggleExpand,
     required this.colors,
     required this.typography,
-    required this.petFriendly,
-    required this.onPetFriendlyChanged,
     this.selectedDriverId,
     this.postToAllSelected = false,
     this.onSelectDriver,
@@ -67,10 +65,6 @@ class VehicleCategorySupplyCard extends StatelessWidget {
   final VoidCallback onToggleExpand;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typography;
-
-  /// Shared ride flag — toggles on any category card stay in sync.
-  final bool petFriendly;
-  final ValueChanged<bool> onPetFriendlyChanged;
 
   /// Which specific driver is selected (null = none / post-to-all).
   final String? selectedDriverId;
@@ -206,52 +200,6 @@ class VehicleCategorySupplyCard extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 10),
-                            Container(
-                              padding: const EdgeInsetsDirectional.fromSTEB(
-                                8, 6, 4, 6,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: petFriendly
-                                      ? accent.withValues(alpha: 0.42)
-                                      : accent.withValues(alpha: 0.14),
-                                ),
-                                color: petFriendly
-                                    ? accent.withValues(
-                                        alpha: isDark ? 0.16 : 0.09,
-                                      )
-                                    : colors.text.withValues(alpha: 0.03),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.pets_rounded,
-                                    size: 20,
-                                    color: petFriendly
-                                        ? accent
-                                        : colors.textMid,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      l10n.petFriendly,
-                                      style: typography.labelLarge.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                        color: colors.text,
-                                      ),
-                                    ),
-                                  ),
-                                  Switch.adaptive(
-                                    value: petFriendly,
-                                    onChanged: onPetFriendlyChanged,
-                                    activeTrackColor: accent,
-                                    materialTapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                ],
-                              ),
-                            ),
                             const SizedBox(height: 12),
                             // Driver count: same font family as caption (Plus Jakarta), not display Syne.
                             Container(
@@ -554,6 +502,30 @@ class _DriverOfferCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (driver.returnDiscountPct > 0) ...[
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: colors.success.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: colors.success.withValues(alpha: 0.35)),
+                      ),
+                      child: Text(
+                        AppLocalizations.of(context).driverReturnTripDiscount(
+                          driver.returnDiscountPct.round(),
+                        ),
+                        style: typo.labelSmall.copyWith(
+                          color: colors.success,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

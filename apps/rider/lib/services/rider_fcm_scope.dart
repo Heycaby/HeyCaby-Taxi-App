@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Binds FCM registration to [riderIdentityProvider] (session + identity required).
 class RiderFcmScope extends ConsumerStatefulWidget {
@@ -13,6 +16,8 @@ class RiderFcmScope extends ConsumerStatefulWidget {
 }
 
 class _RiderFcmScopeState extends ConsumerState<RiderFcmScope> {
+  StreamSubscription<AuthState>? _authSub;
+
   @override
   void initState() {
     super.initState();
@@ -20,6 +25,24 @@ class _RiderFcmScopeState extends ConsumerState<RiderFcmScope> {
       () => ref.read(riderIdentityProvider).valueOrNull?.identityId,
     );
     HeyCabyFcmRegistration.wireTokenRefresh(appRole: 'rider');
+    _authSub = HeyCabySupabase.client.auth.onAuthStateChange.listen((_) async {
+      final s = ref.read(riderIdentityProvider).valueOrNull;
+      if (s != null && s.identityId != null && s.identityId!.isNotEmpty) {
+        await HeyCabyFcmRegistration.sync(appRole: 'rider');
+      }
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final s = ref.read(riderIdentityProvider).valueOrNull;
+      if (s != null && s.identityId != null && s.identityId!.isNotEmpty) {
+        await HeyCabyFcmRegistration.sync(appRole: 'rider');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
   }
 
   @override

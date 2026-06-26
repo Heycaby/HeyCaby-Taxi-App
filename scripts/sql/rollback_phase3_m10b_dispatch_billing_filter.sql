@@ -1,0 +1,2 @@
+-- Rollback Phase 3 M10B — restore matching without billing filter or metrics.
+-- Re-apply fn_seed from: supabase/migrations/20260403140000_favorites_first_matching.sql

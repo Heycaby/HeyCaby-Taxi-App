@@ -21,14 +21,23 @@ class HeyCabyAccountDeletion {
 
   /// Removes the `drivers` row for `auth.uid()` before deleting the Auth user.
   static Future<Map<String, dynamic>> deleteDriverOwnedData() async {
-    final res = await HeyCabySupabase.client.rpc('fn_delete_driver_owned_data');
-    if (res is Map<String, dynamic>) return res;
-    if (res is Map) return Map<String, dynamic>.from(res);
-    return {'success': false, 'error': 'unexpected_response'};
+    try {
+      final res = await HeyCabySupabase.client.rpc('fn_delete_driver_owned_data');
+      if (res is Map<String, dynamic>) return res;
+      if (res is Map) return Map<String, dynamic>.from(res);
+      return {'success': false, 'error': 'unexpected_response'};
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
   }
 
-  /// DELETE /auth/v1/user with the current access token, then local sign-out.
-  static Future<void> deleteCurrentSupabaseAuthUser() async {
+  /// DELETE /auth/v1/user with the current access token.
+  ///
+  /// Set [signOutLocally] to `false` when the caller needs to show a final
+  /// confirmation modal before logout/navigation.
+  static Future<void> deleteCurrentSupabaseAuthUser({
+    bool signOutLocally = true,
+  }) async {
     final session = HeyCabySupabase.client.auth.currentSession;
     if (session == null) {
       throw HeyCabyAccountDeletionException('not_signed_in');
@@ -49,7 +58,14 @@ class HeyCabyAccountDeletion {
         ),
       );
       final code = res.statusCode ?? 0;
-      if (code != 200 && code != 204) {
+      if (code == 405) {
+        final fallbackOk = await _deleteCurrentAuthUserViaRpc();
+        if (!fallbackOk) {
+          throw HeyCabyAccountDeletionException(
+            'auth_delete_status_405:${res.data}',
+          );
+        }
+      } else if (code != 200 && code != 204) {
         throw HeyCabyAccountDeletionException(
           'auth_delete_status_$code:${res.data}',
         );
@@ -58,7 +74,25 @@ class HeyCabyAccountDeletion {
       throw HeyCabyAccountDeletionException(e.message ?? 'network_error');
     }
 
-    await HeyCabySupabase.client.auth.signOut();
+    if (signOutLocally) {
+      await HeyCabySupabase.client.auth.signOut();
+    }
+  }
+
+  static Future<bool> _deleteCurrentAuthUserViaRpc() async {
+    try {
+      final res = await HeyCabySupabase.client.rpc('fn_delete_current_auth_user');
+      if (res is Map<String, dynamic>) {
+        return res['success'] == true;
+      }
+      if (res is Map) {
+        final map = Map<String, dynamic>.from(res);
+        return map['success'] == true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
   }
 }
 

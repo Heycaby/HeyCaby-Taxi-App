@@ -5,6 +5,7 @@ import 'package:heycaby_models/heycaby_models.dart';
 import 'package:heycaby_map/heycaby_map.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:heycaby_api/heycaby_api.dart';
+import 'package:heycaby_rider/l10n/app_localizations.dart';
 
 import '../providers/location_provider.dart';
 
@@ -82,6 +83,7 @@ class _HomeAddressModalState extends ConsumerState<_HomeAddressModal> {
   }
 
   Future<void> _onSuggestionTap(AddressResult suggestion) async {
+    final l10n = AppLocalizations.of(context);
     AddressResult resolved = suggestion;
 
     if (suggestion.lat == 0.0 && suggestion.mapboxId != null) {
@@ -113,7 +115,7 @@ class _HomeAddressModalState extends ConsumerState<_HomeAddressModal> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to save home address'),
+            content: Text(l10n.failedToSaveHome),
             backgroundColor: ref.watch(colorsProvider).error,
           ),
         );
@@ -125,6 +127,7 @@ class _HomeAddressModalState extends ConsumerState<_HomeAddressModal> {
   Widget build(BuildContext context) {
     final colors = ref.watch(colorsProvider);
     final typo = ref.watch(typographyProvider);
+    final l10n = AppLocalizations.of(context);
     final mediaQuery = MediaQuery.of(context);
     final keyboardHeight = mediaQuery.viewInsets.bottom;
 
@@ -164,7 +167,7 @@ class _HomeAddressModalState extends ConsumerState<_HomeAddressModal> {
                         children: [
                           Expanded(
                             child: Text(
-                              'Add your home',
+                              l10n.addYourHome,
                               style: typo.headingLarge.copyWith(
                                 color: colors.text,
                                 fontWeight: FontWeight.w900,
@@ -179,7 +182,7 @@ class _HomeAddressModalState extends ConsumerState<_HomeAddressModal> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Save your home address for quick access.',
+                        l10n.homeAddressDesc,
                         style: typo.bodyMedium.copyWith(color: colors.textMid),
                       ),
                       const SizedBox(height: 24),
@@ -208,7 +211,7 @@ class _HomeAddressModalState extends ConsumerState<_HomeAddressModal> {
                                 focusNode: _focusNode,
                                 onChanged: _onQueryChanged,
                                 decoration: InputDecoration(
-                                  hintText: 'Enter your home address',
+                                  hintText: l10n.enterHomeAddress,
                                   hintStyle: typo.bodyMedium.copyWith(
                                     color: colors.textSoft,
                                   ),
@@ -241,7 +244,7 @@ class _HomeAddressModalState extends ConsumerState<_HomeAddressModal> {
                               ),
                               const SizedBox(height: 12),
                               Text(
-                                'Saving...',
+                                l10n.saving,
                                 style: typo.bodySmall.copyWith(
                                   color: colors.textMid,
                                 ),

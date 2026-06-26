@@ -1,3 +1,4 @@
+import 'dart:async' show unawaited;
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -11,6 +12,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../config/driver_veriff_config.dart';
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
+import '../utils/driver_runtime_refresh.dart';
+import '../theme/driver_colors.dart';
+import '../theme/driver_typography.dart';
+import '../widgets/driver_veriff_trust_body.dart';
 import '../widgets/veriff_terms_consent_sheet.dart';
 
 /// Full-screen flow: terms → create Veriff session → open hosted verification in the system browser.
@@ -42,6 +47,7 @@ class _DriverVeriffScreenState extends ConsumerState<DriverVeriffScreen>
     if (state == AppLifecycleState.resumed && _veriffWatchActive && mounted) {
       ref.invalidate(driverComplianceProvider);
       ref.invalidate(driverProfileProvider);
+      unawaited(refreshDriverRuntime(ref));
     }
   }
 
@@ -62,6 +68,7 @@ class _DriverVeriffScreenState extends ConsumerState<DriverVeriffScreen>
             if (!mounted) return;
             ref.invalidate(driverComplianceProvider);
             ref.invalidate(driverProfileProvider);
+            unawaited(refreshDriverRuntime(ref));
           },
         )
         .subscribe();
@@ -73,6 +80,72 @@ class _DriverVeriffScreenState extends ConsumerState<DriverVeriffScreen>
     WidgetsBinding.instance.removeObserver(this);
     _veriffChannel?.unsubscribe();
     super.dispose();
+  }
+
+  /// Optional Supabase `app_config` override (e.g. new Veriff HVP URL without shipping a build).
+  Future<String?> _fetchAppConfigNonEmpty(String key) async {
+    try {
+      final res = await HeyCabySupabase.client
+          .from('app_config')
+          .select('value')
+          .eq('key', key)
+          .maybeSingle();
+      final v = res?['value'] as String?;
+      final t = v?.trim();
+      if (t != null && t.isNotEmpty) return t;
+    } catch (_) {}
+    return null;
+  }
+
+  /// Second consent step: user explicitly agrees to leave the app for Veriff’s website (Apple / AVG).
+  Future<bool> _confirmLeaveAppForExternalVeriff() async {
+    final colors = ref.read(colorsProvider);
+    final typo = ref.read(typographyProvider);
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          DriverStrings.veriffExternalBrowserTitle,
+          style: typo.titleMedium.copyWith(
+            color: colors.text,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        content: Text(
+          DriverStrings.veriffExternalBrowserBody,
+          style: typo.bodyMedium.copyWith(color: colors.textMid, height: 1.45),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(
+              DriverStrings.veriffExternalBrowserCancel,
+              style: typo.labelLarge.copyWith(
+                color: colors.textMid,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: colors.accent,
+              foregroundColor: colors.onAccent,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              DriverStrings.veriffExternalBrowserContinue,
+              style: typo.labelLarge.copyWith(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      ),
+    );
+    return result == true;
   }
 
   /// Records when the driver started Veriff + creates an admin support ticket.
@@ -111,50 +184,21 @@ class _DriverVeriffScreenState extends ConsumerState<DriverVeriffScreen>
     final agreed = await showVeriffTermsConsentSheet(context);
     if (!agreed || !mounted) return;
 
+    final leaveForBrowser = await _confirmLeaveAppForExternalVeriff();
+    if (!leaveForBrowser || !mounted) return;
+
     setState(() {
       _loading = true;
       _message = null;
     });
     final driverId = await ref.read(driverIdProvider.future);
 
-    // Hosted Verification Page (static URL) — no Edge Function session creation.
-    final hvp = kDriverVeriffHvpUrl.trim();
-    if (hvp.isNotEmpty) {
-      final uri = Uri.parse(hvp);
-      if (!mounted) return;
-      setState(() => _loading = false);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-        if (driverId != null) {
-          _subscribeVeriffRealtime(driverId);
-          await _recordVeriffStarted(driverId);
-        }
-        setState(() {
-          _message = DriverStrings.veriffProcessingHint;
-          _messageOk = true;
-        });
-      } else {
-        setState(() {
-          _message = DriverStrings.veriffOpenFailed;
-          _messageOk = false;
-        });
-      }
-      ref.invalidate(driverComplianceProvider);
-      return;
-    }
-
-    final session =
-        await ref.read(driverDataServiceProvider).startVeriffVerificationAndPersist();
+    // HVP URL: app_config → dart-define → [kDriverVeriffHvpFallbackUrl] (never rely on Edge Function here).
+    final remoteHvp = await _fetchAppConfigNonEmpty('driver_veriff_hvp_url');
+    final hvp = resolveDriverVeriffHvpUrl(remoteHvp);
+    final uri = Uri.parse(hvp);
     if (!mounted) return;
     setState(() => _loading = false);
-    if (session == null) {
-      setState(() {
-        _message = DriverStrings.veriffOpenFailed;
-        _messageOk = false;
-      });
-      return;
-    }
-    final uri = Uri.parse(session.url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (driverId != null) {
@@ -165,137 +209,29 @@ class _DriverVeriffScreenState extends ConsumerState<DriverVeriffScreen>
         _message = DriverStrings.veriffProcessingHint;
         _messageOk = true;
       });
+    } else {
+      setState(() {
+        _message = DriverStrings.veriffOpenFailed;
+        _messageOk = false;
+      });
     }
     ref.invalidate(driverComplianceProvider);
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = ref.watch(colorsProvider);
-    final typo = ref.watch(typographyProvider);
-    final bottomPad = MediaQuery.paddingOf(context).bottom;
+    final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
 
-    return Scaffold(
-      backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.card,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colors.text),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          DriverStrings.veriffScreenTitle,
-          style: typo.titleMedium.copyWith(
-            color: colors.text,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(20, 8, 20, 24 + bottomPad),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Icon(
-                Icons.verified_user_outlined,
-                size: 56,
-                color: colors.accent,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                DriverStrings.veriffScreenIntro,
-                style: typo.bodyMedium.copyWith(
-                  color: colors.textSoft,
-                  height: 1.45,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
-                decoration: BoxDecoration(
-                  color: colors.accentL,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: colors.accent.withValues(alpha: 0.45)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      DriverStrings.veriffScreenComeBackTitle,
-                      textAlign: TextAlign.center,
-                      style: typo.titleMedium.copyWith(
-                        color: colors.text,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 24,
-                        height: 1.2,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      DriverStrings.veriffScreenComeBackBody,
-                      textAlign: TextAlign.center,
-                      style: typo.bodyMedium.copyWith(
-                        color: colors.text,
-                        fontWeight: FontWeight.w600,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (_message != null) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: (_messageOk == true)
-                        ? colors.success.withValues(alpha: 0.12)
-                        : colors.error.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    _message!,
-                    style: typo.bodySmall.copyWith(
-                      color: (_messageOk == true) ? colors.success : colors.error,
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 28),
-              FilledButton(
-                onPressed: _loading ? null : _startVeriff,
-                style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                child: _loading
-                    ? SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: colors.onAccent,
-                        ),
-                      )
-                    : Text(
-                        DriverStrings.veriffScreenContinue,
-                        style: typo.labelLarge.copyWith(
-                          color: colors.onAccent,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return DriverVeriffTrustBody(
+      colors: colors,
+      typography: typography,
+      loading: _loading,
+      message: _message,
+      messageOk: _messageOk,
+      onBack: () => context.pop(),
+      onContinue: _startVeriff,
     );
   }
 }

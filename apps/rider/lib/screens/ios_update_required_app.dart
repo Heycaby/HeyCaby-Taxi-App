@@ -19,7 +19,7 @@ class RiderIosUpdateRequiredApp extends StatelessWidget {
         return l;
       }
     }
-    return const Locale('en');
+    return const Locale('nl', 'NL');
   }
 
   @override
@@ -44,6 +44,7 @@ class RiderIosUpdateRequiredApp extends StatelessWidget {
       theme: buildHeyCabyMaterialTheme(
         colors: colors,
         textTheme: buildHeyCabyBrandMaterialTextTheme(),
+        themeId: themeEntry.id,
       ),
       home: Scaffold(
         backgroundColor: colors.bg,

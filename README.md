@@ -26,8 +26,9 @@
 11. [Design system & localization](#design-system--localization)
 12. [CI & automation](#ci--automation)
 13. [Documentation](#documentation)
-14. [Contributing & code rules](#contributing--code-rules)
-15. [Security](#security)
+14. [Monorepo Boundaries](#monorepo-boundaries)
+15. [Contributing & code rules](#contributing--code-rules)
+16. [Security](#security)
 
 ---
 
@@ -154,42 +155,39 @@ See **`scripts/ipa_build_env.template`** for Mapbox style URLs per theme, API ba
 
 ## Running the apps
 
-Use **`--dart-define`** for secrets (example values—replace `YOUR_*`):
+Use **`--dart-define-from-file`** (secrets merged from `.env` by the IPA script — do **not** paste `YOUR_ANON_KEY` placeholders):
 
 ### Rider (`apps/rider/`)
 
 ```bash
-cd apps/rider
-flutter run \
-  --dart-define=SUPABASE_URL=https://fvrprxguoternoxnyhoj.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=YOUR_ANON_KEY \
-  --dart-define=MAPBOX_ACCESS_TOKEN=YOUR_MAPBOX_PK_TOKEN
+./scripts/run_rider_ios_debug.sh
 ```
 
-Or from root (Melos):
+Or manually after merging env (see `scripts/build_ios_ipas.py`):
 
 ```bash
-melos run rider:dev -- \
-  --dart-define=SUPABASE_URL=https://fvrprxguoternoxnyhoj.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=YOUR_ANON_KEY \
-  --dart-define=MAPBOX_ACCESS_TOKEN=YOUR_MAPBOX_PK_TOKEN
+cd apps/rider
+flutter run --dart-define-from-file=ios/.ipa_dart_defines.json
 ```
 
 ### Driver (`apps/driver/`)
 
-Same pattern; driver also needs a valid **Supabase session** after login (OTP/email flow).
+```bash
+./scripts/run_driver_ios_debug.sh
+```
+
+Or:
 
 ```bash
 cd apps/driver
-flutter run \
-  --dart-define=SUPABASE_URL=https://fvrprxguoternoxnyhoj.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=YOUR_ANON_KEY \
-  --dart-define=MAPBOX_ACCESS_TOKEN=YOUR_MAPBOX_PK_TOKEN
+flutter run --dart-define-from-file=ios/.ipa_dart_defines.json
 ```
+
+Requires valid **`apps/rider/.env`** and/or **`apps/driver/.env`** (see `.env.example`).
 
 ### VS Code / Cursor
 
-Add a **`launch.json`** under **`apps/rider/`** or **`apps/driver/`** with the same `--dart-define` entries in `args` (see historical examples in git or duplicate from the commands above).
+Use **`.vscode/launch.json`** → **Driver (device + .env)** or **Rider (device + .env)**.
 
 ---
 
@@ -252,6 +250,22 @@ From repo root, maintain **`.env`** (and optionally **`apps/rider/.env`**, **`ap
 
 - **GitLab CI:** [`.gitlab-ci.yml`](.gitlab-ci.yml) — analyze, tests, debug APKs; optional macOS IPA jobs when runners and secrets are configured (`ENABLE_MACOS_IOS_JOBS`, Supabase/Mapbox variables).
 - **Safe directory:** CI uses **`${CI_PROJECT_DIR}`** for `git` safe.directory.
+- **Boundary guard:** `boundaries_check` runs `./scripts/enforce_monorepo_boundaries.sh`.
+
+---
+
+## Monorepo Boundaries
+
+- Keep one repo, but enforce strict layering:
+  - `apps/*` = rendering + device APIs
+  - `backend/` = business rules and decisions
+  - `packages/heycaby_api` + `packages/heycaby_models` = typed contracts
+- Boundary policy: [docs/MONOREPO_BOUNDARIES.md](docs/MONOREPO_BOUNDARIES.md)
+- Local guard command:
+
+```bash
+melos run guard:boundaries
+```
 
 ---
 
@@ -261,6 +275,7 @@ From repo root, maintain **`.env`** (and optionally **`apps/rider/.env`**, **`ap
 |-----|----------|
 | [docs/TECHNICAL_DOCUMENTATION.md](docs/TECHNICAL_DOCUMENTATION.md) | Architecture, features, setup, testing, governance, appendices |
 | [docs/Rebranding.MD](docs/Rebranding.MD) | Brand, store IDs, voice, rebrand checklist |
+| [docs/MONOREPO_BOUNDARIES.md](docs/MONOREPO_BOUNDARIES.md) | Enforced app/backend separation policy and checks |
 | [heycaby-flutter-doc/](heycaby-flutter-doc/) | Deep specs: API, rider/driver screens, Mapbox, themes, agent prompt |
 | [AGENTS.md](AGENTS.md) | Automation/agents: Melos version, cloud constraints, gotchas |
 

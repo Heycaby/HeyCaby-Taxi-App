@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
@@ -73,7 +72,7 @@ class _DriverBreakReminderBannerState extends ConsumerState<DriverBreakReminderB
           );
       if (!mounted) return;
       ref.read(driverStateProvider.notifier).setStatus(DriverAppState.onBreak);
-      SoundService().playNotification();
+      SoundService().playStatusOnBreak();
       ref.invalidate(driverShiftStatsProvider);
     } catch (_) {
       if (mounted) {
@@ -208,7 +207,7 @@ class _DriverBreakReminderBannerState extends ConsumerState<DriverBreakReminderB
                 ),
               ),
               onPressed: () {
-                HapticFeedback.mediumImpact();
+                HapticService.mediumTap();
                 _onPauze();
               },
               child: Text(DriverStrings.pauze, style: typo.labelLarge),

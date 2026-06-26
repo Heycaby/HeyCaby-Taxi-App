@@ -1,0 +1,39 @@
+{
+  "family": "heycaby-backend-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::852922980007:role/heycabyEcsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::852922980007:role/heycabyEcsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "heycaby-backend",
+      "image": "852922980007.dkr.ecr.eu-north-1.amazonaws.com/heycaby-backend:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "PORT", "value": "8080" },
+        { "name": "SUPABASE_URL", "value": "https://fvrprxguoternoxnyhoj.supabase.co" },
+        { "name": "SUPABASE_SERVICE_KEY", "value": "REPLACE_IN_ECS_ENV" },
+        { "name": "SUPABASE_JWT_SECRET", "value": "REPLACE_IN_ECS_ENV" },
+        { "name": "REDIS_URL", "value": "redis://REPLACE_IN_ECS_ENV:6379" },
+        { "name": "DRIVER_REQUIRE_DOCUMENTS_FOR_ONLINE", "value": "true" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/heycaby-backend",
+          "awslogs-region": "eu-north-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

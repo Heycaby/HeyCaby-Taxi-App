@@ -1,0 +1,31 @@
+IQBSOUND - Final 8 Sound Files
+
+Drop your final ElevenLabs files in these subfolders with EXACT names.
+
+1) Driver only (put in IQBSOUND/driver/)
+- ride_request_incoming.mp3
+
+2) Rider only (put in IQBSOUND/rider/)
+- payment_success.mp3
+
+3) Shared (put in IQBSOUND/shared/)
+- driver_found.mp3
+- driver_arrived.mp3
+- rider_cancelled.mp3
+- driver_cancelled.mp3
+- trip_complete.mp3
+- general_notification.mp3
+
+Destination mapping after you drop files:
+
+Rider app destination:
+- apps/rider/assets/sounds/rider/payment_success.mp3
+- apps/rider/assets/sounds/shared/*.mp3
+
+Driver app destination:
+- apps/driver/assets/sounds/driver/*.mp3
+- apps/driver/assets/sounds/shared/*.mp3
+
+Note:
+- You do not need to rename anything later if you keep these exact filenames.
+- After you finish dropping files in IQBSOUND, tell me "copy sounds now" and I will place them into the correct app folders.

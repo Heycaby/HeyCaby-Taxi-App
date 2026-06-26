@@ -1,25 +1,30 @@
-/// Veriff Hosted Verification Page (HVP) — optional static URL from Veriff Station → HVP → Availability.
+/// Veriff hosted verification — opens Veriff’s **static HVP** in the system browser.
 ///
-/// ## Non-empty value (default below)
-/// [DriverVeriffScreen] **skips** `create-driver-veriff-session` and opens this URL in the
-/// **system browser** (`url_launcher`). No per-session `POST /v1/sessions` from the app;
-/// rate limits and webhook ↔ driver linking are your responsibility on the Veriff side.
+/// ## Resolution order ([resolveDriverVeriffHvpUrl])
+/// 1. Supabase **`app_config.driver_veriff_hvp_url`** when present (change URL without rebuilding).
+/// 2. **`DRIVER_VERIFF_HVP_URL`** dart-define when non-empty (local / CI).
+/// 3. **[kDriverVeriffHvpFallbackUrl]** — same URL as the seeded migration; used when DB is
+///    unreachable, RLS blocks `app_config`, or the row is missing so drivers still reach Veriff
+///    without deploying Edge Functions.
 ///
-/// ## Empty value — standard API session flow
-/// Build with:
-/// `flutter run --dart-define=DRIVER_VERIFF_HVP_URL=`
-/// (nothing after `=`). Then [DriverVeriffScreen] calls Edge Function `create-driver-veriff-session`,
-/// which performs Veriff `POST /sessions` and returns `verification.url`. The app opens that
-/// URL in the browser — same hosted flow, but **sessions are created via API** with
-/// `endUserId` = `drivers.id` (see `VERIFF_FLUTTER.md`).
-///
-/// **Note:** This project does **not** embed Veriff’s mobile SDK; hosted verification always
-/// opens the session URL in an external browser.
-///
-/// **Trade-offs**
-/// - **HVP static link**: Simple; no JWT to Edge Function for session creation.
-/// - **API session** (empty define): Preferred for production; requires deployed function + valid Supabase JWT.
+/// **Note:** The driver screen uses the hosted URL path only (no hard dependency on
+/// `create-driver-veriff-session`). See `VERIFF_FLUTTER.md` for optional Edge session APIs.
+library driver_veriff_config;
+
+/// Packaged fallback — matches `supabase/migrations/*_app_config_driver_veriff_hvp_url.sql`.
+const String kDriverVeriffHvpFallbackUrl =
+    'https://hvp.saas-3.veriff.com/7aca3362-d582-4d4f-b270-67dd3aed3571';
+
 const String kDriverVeriffHvpUrl = String.fromEnvironment(
   'DRIVER_VERIFF_HVP_URL',
-  defaultValue: 'https://hvp.saas-3.veriff.com/d022312c-dc4b-4adc-8f17-6dcf62b628f5',
+  defaultValue: '',
 );
+
+/// Non-empty hosted Veriff URL for [DriverVeriffScreen].
+String resolveDriverVeriffHvpUrl(String? appConfigValue) {
+  final a = appConfigValue?.trim();
+  if (a != null && a.isNotEmpty) return a;
+  final d = kDriverVeriffHvpUrl.trim();
+  if (d.isNotEmpty) return d;
+  return kDriverVeriffHvpFallbackUrl;
+}

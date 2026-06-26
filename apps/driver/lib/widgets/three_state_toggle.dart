@@ -1,5 +1,6 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
@@ -7,10 +8,13 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 import '../providers/driver_data_providers.dart';
 import '../providers/driver_state_provider.dart';
 import '../services/location_service.dart';
-import '../services/driver_platform_fee_gate.dart';
 import '../services/sound_service.dart';
 import '../l10n/driver_strings.dart';
-import '../utils/driver_go_online_policy.dart';
+import '../utils/driver_go_online_runtime_action.dart';
+import '../utils/driver_network_guard.dart';
+import '../utils/driver_runtime_refresh.dart';
+import '../widgets/driver_go_online_guidance_sheet.dart';
+import 'driver_shift_timer_widget.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 
 enum DriverAvailabilityStatus {
@@ -38,6 +42,36 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
   late AnimationController _controller;
   late Animation<double> _snapAnimation;
   DriverAvailabilityStatus? _lastDragHapticStatus;
+  bool _didStartDragHaptic = false;
+
+  Future<void> _showBreakWidgetPopout() async {
+    final colors = ref.read(colorsProvider);
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            12,
+            0,
+            12,
+            MediaQuery.of(ctx).padding.bottom + 12,
+          ),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+            decoration: BoxDecoration(
+              color: colors.card,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: colors.border),
+            ),
+            child: const DriverShiftTimerWidget(),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -90,37 +124,17 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
   }
 
   Future<void> _onStatusSnapped(DriverAvailabilityStatus newStatus) async {
+    if (!await ensureDriverNetworkForAction(context, ref)) {
+      setState(() {
+        _thumbPosition = _statusToPosition(widget.currentStatus);
+      });
+      return;
+    }
+
     final driverData = ref.read(driverStateProvider);
     final isGoingOffline = newStatus == DriverAvailabilityStatus.offline &&
         (driverData.appState == DriverAppState.onlineAvailable ||
             driverData.appState == DriverAppState.onBreak);
-
-    if (newStatus == DriverAvailabilityStatus.available) {
-      final messenger = ScaffoldMessenger.of(context);
-      final compliant = await ref.read(driverComplianceProvider.future);
-      final isReviewAccount =
-          HeyCabySupabase.client.auth.currentUser?.userMetadata?['review_account'] ==
-              true;
-      if (!driverMayGoOnline(compliant, isReviewAccount: isReviewAccount)) {
-        if (!mounted) return;
-        final msg = driverLicenceAwaitingManualReview(compliant)
-            ? DriverStrings.onlineBlockedLicenseReview
-            : DriverStrings.onlineBlockedCompliance;
-        messenger.showSnackBar(SnackBar(content: Text(msg)));
-        setState(() {
-          _thumbPosition = _statusToPosition(widget.currentStatus);
-        });
-        return;
-      }
-      final feeOk = await ensureDriverPlatformFeeAllowsOnline(context, ref);
-      if (!feeOk) {
-        if (!mounted) return;
-        setState(() {
-          _thumbPosition = _statusToPosition(widget.currentStatus);
-        });
-        return;
-      }
-    }
 
     if (isGoingOffline) {
       final stats = ref.read(driverShiftStatsProvider).valueOrNull;
@@ -148,66 +162,105 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
     try {
       final position = await requestAndGetLocation();
       if (!mounted) return;
+
+      if (newStatus == DriverAvailabilityStatus.available) {
+        if (position == null) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(DriverStrings.locationRequiredMessage)),
+          );
+          HapticService.mediumTap();
+          SoundService().playActionBlocked();
+          setState(() {
+            _thumbPosition = _statusToPosition(widget.currentStatus);
+          });
+          return;
+        }
+        final attempt = await attemptDriverGoOnline(
+          context: context,
+          ref: ref,
+          latitude: position.latitude,
+          longitude: position.longitude,
+        );
+        if (!mounted) return;
+        if (attempt.isBlocked) {
+          HapticService.mediumTap();
+          SoundService().playActionBlocked();
+          await showDriverGoOnlineGuidanceSheet(context, ref, args: attempt.gateArgs!);
+          setState(() {
+            _thumbPosition = _statusToPosition(widget.currentStatus);
+          });
+          return;
+        }
+        if (!attempt.succeeded) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(DriverStrings.goOnlineFailed)),
+            );
+          }
+          setState(() {
+            _thumbPosition = _statusToPosition(widget.currentStatus);
+          });
+          return;
+        }
+        if (!mounted) return;
+        HapticService.heavyTap();
+        SoundService().playStatusOnline();
+        final notifier = ref.read(driverStateProvider.notifier);
+        notifier.setStatus(DriverAppState.onlineAvailable);
+        final id = await ref.read(driverIdProvider.future);
+        if (id != null) {
+          await ref
+              .read(driverShiftSessionServiceProvider)
+              .ensureShiftSessionStarted(id);
+        }
+        ref.invalidate(driverShiftStatsProvider);
+        unawaited(refreshDriverRuntime(ref));
+        return;
+      }
+
+      final statusStr = newStatus == DriverAvailabilityStatus.onBreak
+          ? 'on_break'
+          : 'offline';
       await api.setStatus(
-        status: switch (newStatus) {
-          DriverAvailabilityStatus.available => 'available',
-          DriverAvailabilityStatus.onBreak => 'on_break',
-          DriverAvailabilityStatus.offline => 'offline',
-        },
+        status: statusStr,
         lat: position?.latitude,
         lng: position?.longitude,
       );
 
       if (!mounted) return;
-      switch (newStatus) {
-        case DriverAvailabilityStatus.available:
-          HapticFeedback.heavyImpact();
-          SoundService().playNotification();
-          break;
-        case DriverAvailabilityStatus.onBreak:
-          HapticFeedback.mediumImpact();
-          break;
-        case DriverAvailabilityStatus.offline:
-          HapticFeedback.lightImpact();
-          break;
-      }
       final notifier = ref.read(driverStateProvider.notifier);
-      switch (newStatus) {
-        case DriverAvailabilityStatus.available:
-          notifier.setStatus(DriverAppState.onlineAvailable);
-          final id = await ref.read(driverIdProvider.future);
-          if (id != null) {
-            await ref
-                .read(driverShiftSessionServiceProvider)
-                .ensureShiftSessionStarted(id);
-          }
-          ref.invalidate(driverShiftStatsProvider);
-          break;
-        case DriverAvailabilityStatus.onBreak:
-          notifier.setStatus(DriverAppState.onBreak);
-          ref.invalidate(driverShiftStatsProvider);
-          break;
-        case DriverAvailabilityStatus.offline:
-          notifier.setStatus(DriverAppState.offline);
-          final id = await ref.read(driverIdProvider.future);
-          if (id != null) {
-            await ref
-                .read(driverShiftSessionServiceProvider)
-                .endShiftSession(id);
-          }
-          ref.invalidate(driverShiftStatsProvider);
-          break;
+      if (newStatus == DriverAvailabilityStatus.onBreak) {
+        HapticService.mediumTap();
+        SoundService().playStatusOnBreak();
+        notifier.setStatus(DriverAppState.onBreak);
+        ref.invalidate(driverShiftStatsProvider);
+        unawaited(refreshDriverRuntime(ref));
+        if (mounted) {
+          unawaited(_showBreakWidgetPopout());
+        }
+      } else {
+        HapticService.lightTap();
+        SoundService().playStatusOffline();
+        notifier.setStatus(DriverAppState.offline);
+        final id = await ref.read(driverIdProvider.future);
+        if (id != null) {
+          await ref
+              .read(driverShiftSessionServiceProvider)
+              .endShiftSession(id);
+        }
+        ref.invalidate(driverShiftStatsProvider);
+        unawaited(refreshDriverRuntime(ref));
       }
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
-      // Snap back to previous status on failure
       setState(() {
         _thumbPosition = _statusToPosition(widget.currentStatus);
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(DriverStrings.endShiftDetail),
-          duration: Duration(seconds: 4),
+        SnackBar(
+          content: Text('${DriverStrings.goOnlineFailed} ($e)'),
+          duration: const Duration(seconds: 4),
         ),
       );
     }
@@ -281,8 +334,8 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        const thumbDiameter = 38.0;
-        const trackPadding = 4.0;
+        const thumbDiameter = 44.0;
+        const trackPadding = 5.0;
         final trackWidth = width - trackPadding * 2 - thumbDiameter;
 
         double positionToDx(double position) {
@@ -292,16 +345,19 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
         final thumbDx = positionToDx(_thumbPosition);
 
         final labelStyle =
-            typo.bodySmall.copyWith(fontSize: 13, letterSpacing: -0.1);
+            typo.bodySmall.copyWith(fontSize: 13, letterSpacing: 0.2);
         final dragStatus = _positionToStatus(_thumbPosition);
         final activeColor = _colorForPosition(colors, _thumbPosition);
-        final trackFill = colors.surface;
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             GestureDetector(
               onHorizontalDragStart: (_) {
                 _isDragging = true;
+                if (!_didStartDragHaptic) {
+                  HapticService.mediumTap();
+                  _didStartDragHaptic = true;
+                }
                 _lastDragHapticStatus = _positionToStatus(_thumbPosition);
               },
               onHorizontalDragUpdate: (details) {
@@ -312,29 +368,42 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                 final newStatus = _positionToStatus(_thumbPosition);
                 if (newStatus != _lastDragHapticStatus) {
                   _lastDragHapticStatus = newStatus;
-                  HapticFeedback.selectionClick();
+                  HapticService.mediumTap();
                 }
               },
               onHorizontalDragEnd: (_) async {
                 _isDragging = false;
+                _didStartDragHaptic = false;
                 final snappedStatus = _positionToStatus(_thumbPosition);
                 final targetPos = _statusToPosition(snappedStatus);
                 _animateToPosition(targetPos);
                 await _onStatusSnapped(snappedStatus);
               },
               child: Container(
-                height: 52,
+                height: 58,
                 decoration: BoxDecoration(
-                  color: trackFill,
-                  borderRadius: BorderRadius.circular(26),
+                  borderRadius: BorderRadius.circular(29),
+                  gradient: LinearGradient(
+                    colors: [
+                      colors.error.withValues(alpha: 0.08),
+                      colors.warning.withValues(alpha: 0.06),
+                      colors.success.withValues(alpha: 0.10),
+                    ],
+                  ),
                   border: Border.all(
                     color: colors.text.withValues(alpha: 0.06),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: colors.text.withValues(alpha: 0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      color: activeColor.withValues(alpha: 0.18),
+                      blurRadius: 20,
+                      offset: const Offset(0, 6),
+                      spreadRadius: -8,
+                    ),
+                    BoxShadow(
+                      color: colors.text.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
@@ -355,18 +424,18 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                                     : Alignment.centerRight,
                         child: Container(
                           width: width / 3,
-                          margin: const EdgeInsets.all(5),
+                          margin: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: colors.card.withValues(alpha: 0.92),
+                            color: colors.card.withValues(alpha: 0.88),
                             borderRadius: BorderRadius.circular(999),
                             border: Border.all(
-                              color: colors.text.withValues(alpha: 0.04),
+                              color: activeColor.withValues(alpha: 0.22),
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: colors.text.withValues(alpha: 0.06),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
+                                color: activeColor.withValues(alpha: 0.12),
+                                blurRadius: 12,
+                                offset: const Offset(0, 3),
                               ),
                             ],
                           ),
@@ -387,24 +456,37 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                           color: colors.card,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: colors.text.withValues(alpha: 0.08),
+                            color: activeColor.withValues(alpha: 0.35),
+                            width: 1.5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: colors.text.withValues(alpha: 0.18),
-                              blurRadius: 14,
-                              offset: const Offset(0, 5),
+                              color: activeColor.withValues(alpha: 0.35),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
                               spreadRadius: -2,
+                            ),
+                            BoxShadow(
+                              color: colors.text.withValues(alpha: 0.12),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
                             ),
                           ],
                         ),
                         child: Center(
                           child: Container(
-                            width: 10,
-                            height: 10,
+                            width: 12,
+                            height: 12,
                             decoration: BoxDecoration(
                               color: activeColor,
                               shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: activeColor.withValues(alpha: 0.55),
+                                  blurRadius: 8,
+                                  spreadRadius: 0.5,
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -414,48 +496,31 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  DriverStrings.offline,
-                  style: labelStyle.copyWith(
-                    color:
-                        widget.currentStatus == DriverAvailabilityStatus.offline
-                            ? colors.error
-                            : colors.textSoft.withValues(alpha: 0.75),
-                    fontWeight:
-                        widget.currentStatus == DriverAvailabilityStatus.offline
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                  ),
+                _ToggleLabel(
+                  label: DriverStrings.offline,
+                  active: widget.currentStatus == DriverAvailabilityStatus.offline,
+                  activeColor: colors.error,
+                  inactiveColor: colors.textSoft.withValues(alpha: 0.75),
+                  style: labelStyle,
                 ),
-                Text(
-                  DriverStrings.onBreak,
-                  style: labelStyle.copyWith(
-                    color:
-                        widget.currentStatus == DriverAvailabilityStatus.onBreak
-                            ? colors.warning
-                            : colors.textSoft.withValues(alpha: 0.75),
-                    fontWeight:
-                        widget.currentStatus == DriverAvailabilityStatus.onBreak
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                  ),
+                _ToggleLabel(
+                  label: DriverStrings.onBreak,
+                  active: widget.currentStatus == DriverAvailabilityStatus.onBreak,
+                  activeColor: colors.warning,
+                  inactiveColor: colors.textSoft.withValues(alpha: 0.75),
+                  style: labelStyle,
                 ),
-                Text(
-                  DriverStrings.online,
-                  style: labelStyle.copyWith(
-                    color: widget.currentStatus ==
-                            DriverAvailabilityStatus.available
-                        ? colors.success
-                        : colors.textSoft.withValues(alpha: 0.75),
-                    fontWeight: widget.currentStatus ==
-                            DriverAvailabilityStatus.available
-                        ? FontWeight.w600
-                        : FontWeight.w400,
-                  ),
+                _ToggleLabel(
+                  label: DriverStrings.online,
+                  active: widget.currentStatus ==
+                      DriverAvailabilityStatus.available,
+                  activeColor: colors.success,
+                  inactiveColor: colors.textSoft.withValues(alpha: 0.75),
+                  style: labelStyle,
                 ),
               ],
             ),
@@ -463,5 +528,34 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
         );
       },
     ).animate().fadeIn(duration: 250.ms);
+  }
+}
+
+class _ToggleLabel extends StatelessWidget {
+  const _ToggleLabel({
+    required this.label,
+    required this.active,
+    required this.activeColor,
+    required this.inactiveColor,
+    required this.style,
+  });
+
+  final String label;
+  final bool active;
+  final Color activeColor;
+  final Color inactiveColor;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedDefaultTextStyle(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      style: style.copyWith(
+        color: active ? activeColor : inactiveColor,
+        fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+      ),
+      child: Text(label),
+    );
   }
 }

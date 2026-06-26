@@ -4,14 +4,20 @@ import 'package:go_router/go_router.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
-import '../l10n/driver_tell_friend_strings.dart';
 import '../providers/driver_data_providers.dart';
-import '../providers/driver_locale_provider.dart';
 import '../theme/app_icons.dart';
-import '../utils/driver_logout.dart';
 import 'driver_profile_realtime_listener.dart';
 import 'ride_invite_realtime_listener.dart';
 import 'driver_notifications_listener.dart';
+import 'driver_location_tracking_listener.dart';
+import 'driver_fcm_listener.dart';
+import 'driver_active_ride_realtime_listener.dart';
+import 'driver_resilience_banner.dart';
+import 'driver_resilience_listener.dart';
+import 'driver_ride_proximity_listener.dart';
+import 'driver_automatic_ping_listener.dart';
+import 'driver_onboarding_redirect_listener.dart';
+import '../utils/driver_immersive_shell.dart';
 
 class DriverShell extends ConsumerStatefulWidget {
   const DriverShell({super.key, required this.child});
@@ -22,7 +28,8 @@ class DriverShell extends ConsumerStatefulWidget {
   ConsumerState<DriverShell> createState() => _DriverShellState();
 }
 
-class _DriverShellState extends ConsumerState<DriverShell> with WidgetsBindingObserver {
+class _DriverShellState extends ConsumerState<DriverShell>
+    with WidgetsBindingObserver {
   bool _scheduledDriverBootstrap = false;
 
   @override
@@ -62,98 +69,47 @@ class _DriverShellState extends ConsumerState<DriverShell> with WidgetsBindingOb
 
     final colors = ref.watch(colorsProvider);
     final typo = ref.watch(typographyProvider);
+    final themeId = HeyCabyAppChrome.themeIdOf(context);
+    final warm = themeId.isHeyCabyDriverTheme;
     final location = GoRouterState.of(context).uri.toString();
-    final locale = ref.watch(localeProvider) ?? Localizations.localeOf(context);
-    final tellFriendStrings = driverTellFriendStringsFor(locale);
-
-    // Home | Work | Community | Tell a friend | Me
+    // Home | Community | My rides | Me
     int currentIndex = 0;
-    if (location.startsWith('/driver/work')) {
+    if (location.startsWith('/driver/community')) {
       currentIndex = 1;
-    } else if (location.startsWith('/driver/community')) {
+    } else if (location.startsWith('/driver/my-rides')) {
       currentIndex = 2;
-    } else if (location.startsWith('/driver/tell-friend')) {
-      currentIndex = 3;
     } else if (location.startsWith('/driver/me')) {
-      currentIndex = 4;
+      currentIndex = 3;
     }
 
+    final immersive = isDriverImmersiveRoute(location);
+
     return Scaffold(
-      backgroundColor: colors.bg,
-      drawer: Drawer(
-        child: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            children: [
-              ListTile(
-                leading: Icon(AppIcons.menuProfile, color: colors.text),
-                title: Text(DriverStrings.profile, style: typo.bodyMedium.copyWith(color: colors.text)),
-                onTap: () {
-                  Navigator.pop(context);
-                  context.go('/driver/me');
-                },
-              ),
-              ListTile(
-                leading: Icon(AppIcons.navTellFriend, color: colors.text),
-                title: Text(
-                  tellFriendStrings.navLabel,
-                  style: typo.bodyMedium.copyWith(color: colors.text),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  context.go('/driver/tell-friend');
-                },
-              ),
-              ListTile(
-                leading: Icon(AppIcons.menuDocuments, color: colors.text),
-                title: Text(DriverStrings.documents, style: typo.bodyMedium.copyWith(color: colors.text)),
-                onTap: () {
-                  Navigator.pop(context);
-                  context.push('/driver/documents');
-                },
-              ),
-              ListTile(
-                leading: Icon(AppIcons.menuSupport, color: colors.text),
-                title: Text(DriverStrings.support, style: typo.bodyMedium.copyWith(color: colors.text)),
-                onTap: () {
-                  Navigator.pop(context);
-                  context.push('/driver/support');
-                },
-              ),
-              ListTile(
-                leading: Icon(AppIcons.menuSettings, color: colors.text),
-                title: Text(DriverStrings.settings, style: typo.bodyMedium.copyWith(color: colors.text)),
-                onTap: () {
-                  Navigator.pop(context);
-                  context.push('/driver/preferences');
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: Icon(AppIcons.menuLogout, color: colors.error),
-                title: Text(DriverStrings.logout, style: typo.bodyMedium.copyWith(color: colors.error)),
-                onTap: () async {
-                  Navigator.pop(context);
-                  await performDriverLogout(context, ref);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
       body: Stack(
         fit: StackFit.expand,
         children: [
           widget.child,
           const DriverProfileRealtimeListener(),
           const RideInviteRealtimeListener(),
+          const DriverFcmListener(),
+          const DriverActiveRideRealtimeListener(),
           const DriverNotificationsListener(),
+          const DriverLocationTrackingListener(),
+          const DriverRideProximityListener(),
+          const DriverAutomaticPingListener(),
+          const DriverOnboardingRedirectListener(),
+          const DriverResilienceListener(),
+          const DriverResilienceBanner(),
         ],
       ),
-      bottomNavigationBar: Container(
+      bottomNavigationBar: immersive
+          ? null
+          : Container(
         decoration: BoxDecoration(
-          color: colors.card,
-          border: Border(top: BorderSide(color: colors.border)),
+          color: warm ? colors.bg : colors.card,
+          border: Border(
+            top: BorderSide(color: colors.border, width: warm ? 0.5 : 1),
+          ),
         ),
         child: SafeArea(
           top: false,
@@ -166,46 +122,40 @@ class _DriverShellState extends ConsumerState<DriverShell> with WidgetsBindingOb
                   isActive: currentIndex == 0,
                   colors: colors,
                   typo: typo,
+                  warmChrome: warm,
                   onTap: () => context.go('/driver'),
-                ),
-              ),
-              Expanded(
-                child: _NavItem(
-                  icon: AppIcons.navWork,
-                  label: DriverStrings.work,
-                  isActive: currentIndex == 1,
-                  colors: colors,
-                  typo: typo,
-                  onTap: () => context.go('/driver/work'),
                 ),
               ),
               Expanded(
                 child: _NavItem(
                   icon: AppIcons.navCommunity,
                   label: DriverStrings.community,
-                  isActive: currentIndex == 2,
+                  isActive: currentIndex == 1,
                   colors: colors,
                   typo: typo,
+                  warmChrome: warm,
                   onTap: () => context.go('/driver/community'),
                 ),
               ),
               Expanded(
                 child: _NavItem(
-                  icon: AppIcons.navTellFriend,
-                  label: tellFriendStrings.navLabel,
-                  isActive: currentIndex == 3,
+                  icon: AppIcons.navMyRides,
+                  label: DriverStrings.myRides,
+                  isActive: currentIndex == 2,
                   colors: colors,
                   typo: typo,
-                  onTap: () => context.go('/driver/tell-friend'),
+                  warmChrome: warm,
+                  onTap: () => context.go('/driver/my-rides'),
                 ),
               ),
               Expanded(
                 child: _NavItem(
                   icon: AppIcons.navProfile,
                   label: DriverStrings.me,
-                  isActive: currentIndex == 4,
+                  isActive: currentIndex == 3,
                   colors: colors,
                   typo: typo,
+                  warmChrome: warm,
                   onTap: () => context.go('/driver/me'),
                 ),
               ),
@@ -223,6 +173,9 @@ class _NavItem extends StatelessWidget {
   final bool isActive;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
+
+  /// Soft Warm White tab spec: amber icon + ink label when active.
+  final bool warmChrome;
   final VoidCallback onTap;
 
   const _NavItem({
@@ -231,34 +184,86 @@ class _NavItem extends StatelessWidget {
     required this.isActive,
     required this.colors,
     required this.typo,
+    this.warmChrome = false,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? colors.accent : colors.textSoft;
+    final Color iconColor;
+    final Color labelColor;
+    if (warmChrome) {
+      iconColor = isActive ? colors.accent : colors.textSoft;
+      labelColor = isActive ? colors.text : colors.textMid;
+    } else {
+      iconColor = isActive ? colors.accent : colors.textSoft;
+      labelColor = isActive ? colors.accent : colors.textSoft;
+    }
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: typo.labelSmall.copyWith(
-                color: color,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: () {
+            if (isActive) {
+              HapticService.selectionClick();
+            }
+            onTap();
+          },
+          splashColor: colors.accent.withValues(alpha: 0.14),
+          highlightColor: colors.accent.withValues(alpha: 0.06),
+          child: Semantics(
+            selected: isActive,
+            label: label,
+            button: true,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              decoration: BoxDecoration(
+                color: isActive
+                    ? colors.accent.withValues(alpha: warmChrome ? 0.15 : 0.11)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                  color: isActive
+                      ? colors.accent.withValues(alpha: 0.42)
+                      : Colors.transparent,
+                  width: 1,
+                ),
+                boxShadow: isActive
+                    ? [
+                        BoxShadow(
+                          color: colors.accent.withValues(alpha: 0.2),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                          spreadRadius: -2,
+                        ),
+                      ]
+                    : null,
               ),
-              maxLines: 2,
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, color: iconColor, size: 24),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    style: typo.labelSmall.copyWith(
+                      color: labelColor,
+                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                      letterSpacing: isActive ? -0.15 : 0,
+                    ),
+                    maxLines: 2,
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
       ),
     );

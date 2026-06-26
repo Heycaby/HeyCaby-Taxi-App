@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'rider_notifications_listener.dart';
+import 'rider_fcm_listener.dart';
 
 class RiderShell extends ConsumerWidget {
   final Widget child;
@@ -33,6 +34,7 @@ class RiderShell extends ConsumerWidget {
         children: [
           child,
           const RiderNotificationsListener(),
+          const RiderFcmListener(),
         ],
       ),
       bottomNavigationBar: Container(
@@ -129,7 +131,10 @@ class _NavItem extends StatelessWidget {
       label: semanticsLabel ?? label,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: onTap,
+        onTap: () {
+          HapticService.heavyTap();
+          onTap();
+        },
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
           child: Column(

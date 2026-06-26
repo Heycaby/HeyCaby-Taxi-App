@@ -11,6 +11,7 @@ import '../models/ride_matching_variant.dart';
 import '../providers/active_search_provider.dart';
 import '../providers/near_term_ride_request_provider.dart';
 import '../providers/ride_request_provider.dart';
+import '../services/sound_service.dart';
 import '../services/stale_ride_cleanup.dart';
 
 /// Full-screen details for an open `ride_requests` row from the Rides → Upcoming tab.
@@ -164,6 +165,7 @@ class _UpcomingRideRequestDetailScreenState
     ref.invalidate(ridesTabUpcomingRequestsProvider);
     ref.invalidate(nearTermRideRequestProvider);
     ref.invalidate(activeSearchProvider);
+    unawaited(SoundService().playRideCancelled());
     if (mounted) context.pop();
   }
 
@@ -208,6 +210,7 @@ class _UpcomingRideRequestDetailScreenState
       riderToken: token,
       cancellationReason: 'rider_editing_addresses',
     );
+    unawaited(SoundService().playRideCancelled());
     ref.read(rideRequestProvider.notifier).reset();
     ref.invalidate(ridesTabUpcomingRequestsProvider);
     ref.invalidate(nearTermRideRequestProvider);

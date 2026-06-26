@@ -28,6 +28,9 @@ class BookingState {
   final double? tripPriceBandMaxEuro;
   /// Marketplace rider offer in whole euros (maps to `ride_requests.marketplace_offered_fare`).
   final int? marketplaceBidEuro;
+  /// When true, nearby driver supply uses each driver's [active_return_discount_pct] on the
+  /// heuristic tariff estimate (return-trip offers only). When false, estimates use full tariff.
+  final bool returnTripFareEstimatesEnabled;
 
   const BookingState({
     this.mode = BookingMode.instant,
@@ -46,6 +49,7 @@ class BookingState {
     this.tripPriceBandMinEuro,
     this.tripPriceBandMaxEuro,
     this.marketplaceBidEuro,
+    this.returnTripFareEstimatesEnabled = false,
   });
 
   BookingState copyWith({
@@ -65,6 +69,7 @@ class BookingState {
     Object? tripPriceBandMinEuro = _sentinel,
     Object? tripPriceBandMaxEuro = _sentinel,
     Object? marketplaceBidEuro = _sentinel,
+    Object? returnTripFareEstimatesEnabled = _sentinel,
   }) =>
       BookingState(
         mode: mode ?? this.mode,
@@ -95,6 +100,9 @@ class BookingState {
         marketplaceBidEuro: marketplaceBidEuro == _sentinel
             ? this.marketplaceBidEuro
             : marketplaceBidEuro as int?,
+        returnTripFareEstimatesEnabled: returnTripFareEstimatesEnabled == _sentinel
+            ? this.returnTripFareEstimatesEnabled
+            : returnTripFareEstimatesEnabled as bool,
       );
 
   /// Used for `booking_mode` in Supabase and matching-route selection.
@@ -184,6 +192,10 @@ class BookingNotifier extends Notifier<BookingState> {
         selectedDriverId: null,
         estimatedFareEuro: null,
       );
+
+  /// Rider-only: use return-trip discount on heuristic supply fares (see [BookingState.returnTripFareEstimatesEnabled]).
+  void setReturnTripFareEstimatesEnabled(bool enabled) =>
+      state = state.copyWith(returnTripFareEstimatesEnabled: enabled);
 
   void reset() => state = const BookingState();
 

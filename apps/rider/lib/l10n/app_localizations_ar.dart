@@ -75,6 +75,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get driverAssigned => 'السائق في الطريق';
 
   @override
+  String driverReturnTripDiscount(int pct) {
+    return 'خصم $pct% على رحلة العودة';
+  }
+
+  @override
   String get driverArrived => 'وصل سائقك';
 
   @override
@@ -188,7 +193,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get rideBookingFailed =>
-      'تعذّر بدء الرحلة — رفض الخادم الطلب. في التطوير المحلي، تحقّق من SUPABASE_URL وSUPABASE_ANON_KEY في ملف ‎.env (لوحة Supabase ← الإعدادات ← API) ثم أعد المحاولة.';
+      'تعذّر بدء الرحلة — تم رفض التفويض من الخادم. يُرجى تحديث الجلسة (تسجيل الخروج ثم تسجيل الدخول) ثم المحاولة مرة أخرى.';
 
   @override
   String get locationPermissionRequired =>
@@ -199,7 +204,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get locationRequiredMessage =>
-      'تحتاج HeyCaby إلى موقعك لتحديد نقطة الانطلاق وإيجاد السائقين القريبين. بدون الموقع لا يمكنك حجز رحلة.';
+      'تحتاج HeyCaby إلى موقعك لتحديد نقطة انطلاق دقيقة، والعثور على السائقين القريبين، وتقديم أوقات وصول موثوقة. بدون الوصول إلى الموقع لا يمكننا خدمتك بشكل جيد ولا يمكنك حجز رحلة.';
 
   @override
   String get enableLocation => 'تفعيل الموقع';
@@ -915,7 +920,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get accountSettingsHeading => 'الإعدادات';
 
   @override
-  String get accountLocationNeededBody => 'الوصول إلى الموقع مطلوب';
+  String get accountLocationNeededBody =>
+      'الوصول إلى الموقع مطلوب لتحديد نقطة انطلاق دقيقة، ومطابقتك مع السائقين القريبين، وتحديثات رحلة موثوقة.';
 
   @override
   String get accountManageLocation => 'إدارة الوصول إلى الموقع';
@@ -1185,6 +1191,93 @@ class AppLocalizationsAr extends AppLocalizations {
       'تم حفظ رسالتك. المساعد غير متصل — يمكن للدعم قراءتها.';
 
   @override
+  String get supportAiConsentTitle => 'تعرّف على ياز، مساعدتك الذكية للدعم';
+
+  @override
+  String get supportAiConsentIntro =>
+      'ياز هي مساعدة خدمة العملاء بالذكاء الاصطناعي في HeyCaby. مهمتها الاستماع لشكواك والمساعدة في حل المشكلات البسيطة بسرعة.';
+
+  @override
+  String get supportAiConsentDataSent =>
+      'لمساعدتك، نرسل: نص الرسالة التي تكتبها، وفئة تذكرة الدعم، وسياق حساب محدود لازم للرد على طلبك.';
+
+  @override
+  String get supportAiConsentThirdParty =>
+      'معالجة الذكاء الاصطناعي: تستخدم ياز نماذج OpenAI (ChatGPT) لتوليد الردود.';
+
+  @override
+  String get supportAiConsentPolicy =>
+      'للاستفسارات الجادة أو الحساسة، لا تشارك بيانات خاصة في دردشة الذكاء الاصطناعي. يُرجى مراسلة الدعم عبر hello@heycaby.nl.';
+
+  @override
+  String get supportAiConsentEmailOption =>
+      'لا تشارك كلمات المرور أو أرقام البطاقات الكاملة أو أرقام الهويات الرسمية أو أي بيانات شديدة الحساسية في دردشة الذكاء الاصطناعي.';
+
+  @override
+  String get supportAiConsentCheckbox =>
+      'أفهم ما هي البيانات التي سيتم إرسالها ومن سيعالجها، وأسمح لـ HeyCaby بمشاركة بيانات محادثة الدعم هذه مع ياز للدعم الذكي.';
+
+  @override
+  String get supportAiConsentContinue => 'أوافق وأتابع';
+
+  @override
+  String get supportAiConsentSendEmail => 'إرسال بريد إلكتروني بدلاً من ذلك';
+
+  @override
+  String get supportCategoryRideIssue => 'Ride issue';
+
+  @override
+  String get supportCategoryPayment => 'Payment';
+
+  @override
+  String get supportCategoryAccount => 'Account';
+
+  @override
+  String get supportMessageSentTitle => 'Message sent';
+
+  @override
+  String get supportMessageSentBody =>
+      'Thank you for your message. Our customer support team will review it and get back to you as soon as possible.\n\nIf your issue is urgent, you can chat with Yaz (AI support assistant). Please avoid sharing sensitive personal information in AI chat.';
+
+  @override
+  String get supportMessageSendFailedTitle => 'Could not send message';
+
+  @override
+  String get supportMessageSendFailedBody =>
+      'We could not send your support message right now. Please try again shortly, or use Chat with Yaz for urgent help.';
+
+  @override
+  String get supportChatWithYaz => 'Chat with Yaz';
+
+  @override
+  String get supportSendMessageButton => 'Send message';
+
+  @override
+  String get supportYazUnavailableGuestAuthDisabled =>
+      'Yaz chat is temporarily unavailable because guest chat auth is disabled on the server.';
+
+  @override
+  String get supportYazUnavailableTemporary =>
+      'Yaz chat is temporarily unavailable. Please try again shortly.';
+
+  @override
+  String get supportYazFallbackReply =>
+      'I could not answer right now. Please try again or send email support.';
+
+  @override
+  String get supportEmailSupport => 'Email support';
+
+  @override
+  String get supportYazAssistantTitle => 'Yaz AI support assistant';
+
+  @override
+  String get supportYazAssistantSubtitle =>
+      'Ask anything about your ride, account, or payment.';
+
+  @override
+  String get supportYazMessageHint => 'Message Yaz...';
+
+  @override
   String get favouriteDriversAccountSubtitle =>
       'احفظ السائقين الموثوقين وأرسل الرحلات إليهم مباشرة.';
 
@@ -1275,6 +1368,17 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get vehicleSupplyEstimatesNote =>
       'الأسعار والتوفر تقديرية وقد تتغير عند الحجز.';
+
+  @override
+  String get returnTripFareEstimatesTitle => 'عروض العودة';
+
+  @override
+  String get returnTripFareEstimatesSubtitle =>
+      'عرض أسعار السائقين مع خصم العودة النشط. عطّل لعرض التعرفة العادية.';
+
+  @override
+  String get returnTripFareEstimatesRequiresRoute =>
+      'أضف نقطة الالتقاط والوجهة لمعاينة أسعار العودة.';
 
   @override
   String get vehicleSupplyNoPickup =>
@@ -1413,6 +1517,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get rideDetails => 'تفاصيل الرحلة';
+
+  @override
+  String get rideDetailViewReceipt => 'View receipt';
+
+  @override
+  String get rideDetailReceiptLoadFailed => 'Could not load receipt right now.';
 
   @override
   String get rebookRide => 'احجز مرة أخرى';
@@ -1673,7 +1783,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get privacyDataCollectedBody =>
-      'تجمع HeyCaby بريدك الإلكتروني (للتحقق)، بيانات الموقع (أثناء الحجز فقط)، وسجل الرحلات.';
+      'نجمع فقط البيانات اللازمة لتقديم الخدمة:\n• بيانات الحساب: البريد الإلكتروني وبيانات الملف الأساسية لإنشاء الحساب والتحقق من الهوية\n• بيانات الموقع: أثناء الحجوزات النشطة لمطابقة الركاب مع السائقين القريبين\n• بيانات الرحلة: مواقع الالتقاط/الإنزال والطوابع الزمنية وسجل الرحلات للإيصالات وتحسين الخدمة\n• بيانات الجهاز: إصدار التطبيق ونوع الجهاز ورموز الإشعارات للتشغيل والأداء\n• بيانات الدعم: رسائل تذاكر الدعم وفئتها، وقد تُعالج عبر مزود دعم الذكاء الاصطناعي عند موافقتك داخل الدردشة';
 
   @override
   String get privacyLocationData => 'بيانات الموقع';
@@ -1687,7 +1797,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get privacyDataSharingBody =>
-      'عند الحجز، يتلقى السائق اسم الحجز وموقع الالتقاط فقط. لا تتم مشاركة بريدك الإلكتروني أبداً.';
+      'نشارك بيانات محدودة فقط عند الحاجة لتقديم الخدمة.\n\nيتلقى السائق: اسم الحجز (أو الاسم المستعار) وموقع الالتقاط.\nيتلقى الراكب: بيانات السائق اللازمة للرحلة.\n\nدعم الذكاء الاصطناعي (بعد موافقتك قبل أول رسالة): تتم معالجة محتوى رسائل الدعم وفئة التذكرة وسياق محدود لازم للرد عبر نماذج OpenAI (ChatGPT).\n\nلا نشارك البريد الإلكتروني أو رقم الهاتف (إلا إذا لزم مستقبلاً لميزة محددة) أو البيانات الشخصية الحساسة في دردشة الذكاء الاصطناعي.';
 
   @override
   String get privacyRetention => 'الاحتفاظ بالبيانات';
@@ -1704,11 +1814,12 @@ class AppLocalizationsAr extends AppLocalizations {
       'بموجب اللائحة العامة لحماية البيانات، لديك حق الوصول والتصحيح والحذف. يمكنك حذف حساب الراكب من التطبيق عبر الحساب ← حذف حسابي. لطلبات أخرى، تواصل مع الدعم من شاشة الحساب.';
 
   @override
-  String get privacyNoAds => 'بدون إعلانات';
+  String get privacyNoAds =>
+      '2/7/8/9/10/11/12. الاستخدام، دعم الذكاء الاصطناعي (ياز)، الأمان، الإشعارات، الأطراف الثالثة، التحديثات، التواصل';
 
   @override
   String get privacyNoAdsBody =>
-      'لا تعرض HeyCaby إعلانات ولا تبيع بياناتك لأطراف ثالثة.';
+      'تُستخدم بياناتك فقط لتشغيل HeyCaby: مطابقة الركاب مع السائقين، إدارة الحجوزات والتواصل، عرض سجل الرحلات والإيصالات، تحسين الأداء، وإرسال الإشعارات المهمة.\n\nدعم الذكاء الاصطناعي (ياز): عند اختيارك \"الدردشة مع ياز\" وموافقتك الصريحة داخل التطبيق، تتم معالجة محتوى رسالة الدعم، وفئة التذكرة، وسياق حساب محدود عبر OpenAI (ChatGPT) لتوليد ردود الدعم. الدردشة مع الذكاء الاصطناعي اختيارية، ويمكنك استخدام دعم غير معتمد على الذكاء الاصطناعي عبر \"رسالة جديدة\".\n\nنطلب من المستخدمين عدم إرسال بيانات شديدة الحساسية في دردشة الذكاء الاصطناعي (مثل كلمات المرور، أرقام البطاقات الكاملة، أو أرقام الهويات الرسمية). وللمشكلات الحساسة أو المعقدة، نوجّه المستخدمين إلى الدعم البشري.\n\nلا نستخدم بياناتك للإعلانات ولا نبيع بياناتك لأطراف ثالثة.\n\nنطبق إجراءات تقنية وتنظيمية للحماية، لكن لا يوجد نظام آمن بنسبة 100%.\n\nقد تتضمن الإشعارات تحديثات الرحلات ورسائل خدمة مهمة وتحديثات منتج من حين لآخر. يمكنك تعطيل الإشعارات من إعدادات الجهاز.\n\nقد نستخدم مزودي خدمة موثوقين (مثل مزودي الدفع وFirebase وSupabase) فقط بالقدر اللازم لتقديم الخدمة.\n\nقد نحدّث هذه السياسة من وقت لآخر، واستمرارك في استخدام التطبيق يعني موافقتك على التحديثات.\n\nلطلبات الخصوصية، تواصل معنا عبر قسم الدعم داخل التطبيق.';
 
   @override
   String distanceRemaining(String km) {
@@ -2009,4 +2120,135 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get scheduledRideLabel => 'مجدول لـ';
+
+  @override
+  String get activeRideShareError => 'Unable to share ride right now';
+
+  @override
+  String get activeRideCancelConfirmBody =>
+      'Do you really want to cancel the ride? Rebooking may not get you to your destination more quickly.';
+
+  @override
+  String get activeRideWaitForDriver => 'Wait for driver';
+
+  @override
+  String get activeRidePickupNotes => 'Any pickup notes?';
+
+  @override
+  String get activeRideChatSubtitle => 'Message your driver fast';
+
+  @override
+  String get activeRideFoundingShort => 'Founding';
+
+  @override
+  String get activeRideShareSubtitle => 'Share live trip link';
+
+  @override
+  String get activeRideReportSubtitle => 'Submit ride report';
+
+  @override
+  String get activeRideSupportSubtitle => 'Safety and help';
+
+  @override
+  String get activeRidePickupNotSet => 'Pickup not set';
+
+  @override
+  String get activeRideDestinationNotSet => 'Destination not set';
+
+  @override
+  String get activeRideShareDetails => 'Share ride details';
+
+  @override
+  String get activeRideContactDriver => 'اتصل بالسائق';
+
+  @override
+  String activeRideCategoryLabel(String category) {
+    return 'Category: $category';
+  }
+
+  @override
+  String get activeRideCancelReasonLongPickup => 'طول وقت الوصول';
+
+  @override
+  String get activeRideCancelReasonBetterAlternative => 'وجدت بديلاً أفضل';
+
+  @override
+  String get activeRideCancelReasonDriverNotCloser => 'السائق لا يقترب';
+
+  @override
+  String get activeRideCancelReasonDriverAskedCancel => 'طلب السائق الإلغاء';
+
+  @override
+  String get activeRideCancelReasonPriceDispute => 'خلاف على السعر مع السائق';
+
+  @override
+  String get activeRideCancelReasonOutsideAppPayment =>
+      'طلب السائق الدفع خارج التطبيق';
+
+  @override
+  String get activeRidePlateNumber => 'رقم اللوحة';
+
+  @override
+  String get activeRideUnknownPlate => 'غير معروف';
+
+  @override
+  String get activeRideFoundingMember => 'عضو مؤسس';
+
+  @override
+  String get activeRideVerifyPlate =>
+      'يرجى التحقق من هذه اللوحة قبل دخول المركبة.';
+
+  @override
+  String get openAction => 'فتح';
+
+  @override
+  String get rideReceiptTitle => 'إيصال الرحلة';
+
+  @override
+  String get rideReceiptUnavailable => 'الإيصال غير متاح بعد.';
+
+  @override
+  String get rideReceiptSettlement => 'التسوية';
+
+  @override
+  String get rideReceiptRideId => 'معرّف الرحلة';
+
+  @override
+  String get rideReceiptExpected => 'المتوقع';
+
+  @override
+  String get rideReceiptPaid => 'المدفوع';
+
+  @override
+  String get rideReceiptMethod => 'طريقة الدفع';
+
+  @override
+  String get rideReceiptNote => 'ملاحظة';
+
+  @override
+  String get rideReceiptOutstanding => 'المتبقي';
+
+  @override
+  String get rideReceiptOverpaid => 'مدفوع بزيادة';
+
+  @override
+  String get rideReceiptStatus => 'الحالة';
+
+  @override
+  String get rideReceiptSettlementComplete => 'اكتملت التسوية';
+
+  @override
+  String get smartBundleRideTypeOptions => 'خيارات نوع الرحلة';
+
+  @override
+  String smartBundleEstimatedPrice(String min, String max) {
+    return 'السعر التقديري: $min - $max';
+  }
+
+  @override
+  String get smartBundleDriverPricingNote =>
+      'السائقون يحددون أسعارهم الخاصة. سنطابقك مع أفضل الخيارات القريبة.';
+
+  @override
+  String get smartBundleTapToHide => 'اضغط لإخفاء فئات الرحلات';
 }

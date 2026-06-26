@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/rider_search_window.dart';
 import '../services/heycaby_widget_sync.dart';
+import '../services/sound_service.dart';
 import '../services/stale_ride_cleanup.dart';
 import 'near_term_ride_request_provider.dart';
 
@@ -123,6 +124,7 @@ class ActiveSearchNotifier extends AsyncNotifier<ActiveNotifySearch?> {
     } catch (_) {
       // Still clear chip and refresh lists so UI recovers.
     }
+    await SoundService().playRideCancelled();
     ref.invalidate(nearTermRideRequestProvider);
     try {
       await ref.read(nearTermRideRequestProvider.future);

@@ -29,7 +29,6 @@ class RiderSupportChatService {
   static const _noLocalFallbackErrors = {
     'forbidden',
     'ticket_not_found',
-    'ticket_closed',
     'not_signed_in',
     'empty_message',
     'session_expired',
@@ -113,7 +112,9 @@ class RiderSupportChatService {
           .maybeSingle();
       if (row == null) return null;
       final status = row['status'] as String? ?? 'open';
-      if (status == 'closed' || status == 'resolved') return null;
+      if (status == 'closed' || status == 'resolved' || status == 'auto_resolved') {
+        return null;
+      }
 
       final existing = row['messages'];
       final list = existing is List ? List<dynamic>.from(existing) : <dynamic>[];

@@ -235,8 +235,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
     final booking = ref.watch(bookingProvider);
     final estAsync = ref.watch(tripCategoryEstimatesProvider);
     final estimates = estAsync.valueOrNull ?? [];
-    final hasRoute =
-        booking.pickup != null && booking.destination != null;
+    final hasRoute = booking.pickup != null && booking.destination != null;
     final hasEstimateRows = estimates.isNotEmpty;
     final showSmartExperience = hasRoute;
     final showDegradedPicker = showSmartExperience &&
@@ -298,11 +297,6 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
         onToggleExpand: () => _toggleExpand(cat),
         colors: colors,
         typography: typo,
-        petFriendly: booking.petFriendly,
-        onPetFriendlyChanged: (v) {
-          HapticService.lightTap();
-          ref.read(bookingProvider.notifier).setPetFriendly(v);
-        },
         selectedDriverId: _selectedCategory == cat ? _selectedDriverId : null,
         postToAllSelected: _selectedCategory == cat && _postToAll,
         onSelectDriver: _selectDriver,
@@ -328,7 +322,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
           onPressed: () => context.pop(),
         ),
         title: Text(
-          l10n.chooseYourRide,
+          'What kind of ride do you want?',
           style: typo.headingSmall.copyWith(
             color: colors.text,
             fontWeight: FontWeight.w700,
@@ -439,82 +433,6 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                   HeyCabySpacing.sectionMedium + footerReserve,
                 ),
                 children: [
-                  Container(
-                    padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 12, 14),
-                    decoration: BoxDecoration(
-                      color: colors.card,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: booking.favoritesFirst
-                            ? colors.accent.withValues(alpha: 0.35)
-                            : colors.border.withValues(alpha: 0.85),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colors.text.withValues(alpha: 0.035),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                          spreadRadius: -4,
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: booking.favoritesFirst
-                                ? colors.accent.withValues(alpha: 0.12)
-                                : colors.bgAlt.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Icon(
-                            Icons.favorite_rounded,
-                            color: booking.favoritesFirst
-                                ? colors.accent
-                                : colors.textMid,
-                            size: 22,
-                          ),
-                        ),
-                        SizedBox(width: HeyCabySpacing.component),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                l10n.favouritesOnly,
-                                style: typo.titleSmall.copyWith(
-                                  color: colors.text,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                l10n.searchFactFavorites,
-                                style: typo.bodySmall.copyWith(
-                                  color: colors.textSoft,
-                                  height: 1.3,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Switch.adaptive(
-                          value: booking.favoritesFirst,
-                          onChanged: (v) {
-                            HapticService.lightTap();
-                            ref
-                                .read(bookingProvider.notifier)
-                                .setFavoritesFirst(v);
-                          },
-                          activeTrackColor: colors.accent,
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: HeyCabySpacing.sectionMedium),
                   if (showSmartExperience) ...[
                     if (hasEstimateRows && _smartSelection != null)
                       SmartVehicleBundleCard(
@@ -522,11 +440,6 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                         selectedKeys: _smartSelection!,
                         onSelectionChanged: (s) =>
                             setState(() => _smartSelection = s),
-                        petFriendly: booking.petFriendly,
-                        onPetFriendlyChanged: (v) {
-                          HapticService.lightTap();
-                          ref.read(bookingProvider.notifier).setPetFriendly(v);
-                        },
                         colors: colors,
                         typography: typo,
                         l10n: l10n,
@@ -586,6 +499,272 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                       ),
                     SizedBox(height: HeyCabySpacing.sectionMedium),
                   ],
+                  if (!showSmartExperience || showDegradedPicker) ...[
+                    buildCategoryCard(
+                      RiderVehicleCategory.standard,
+                      l10n.vehicleStandard,
+                      'Everyday rides - Up to 4 passengers',
+                      Icons.directions_car_outlined,
+                    ),
+                    SizedBox(height: HeyCabySpacing.componentSmall),
+                    buildCategoryCard(
+                      RiderVehicleCategory.comfort,
+                      l10n.vehicleComfort,
+                      'More comfort and space - Up to 4 passengers',
+                      Icons.airline_seat_recline_extra,
+                    ),
+                    SizedBox(height: HeyCabySpacing.componentSmall),
+                    buildCategoryCard(
+                      RiderVehicleCategory.taxibus,
+                      'Taxi Bus',
+                      'Larger vehicle - Up to 8-9 passengers',
+                      Icons.airport_shuttle_outlined,
+                    ),
+                    SizedBox(height: HeyCabySpacing.componentSmall),
+                    buildCategoryCard(
+                      RiderVehicleCategory.wheelchair,
+                      l10n.vehicleWheelchair,
+                      'Accessible vehicle',
+                      Icons.accessible,
+                    ),
+                    SizedBox(height: HeyCabySpacing.sectionMedium),
+                  ],
+                  Container(
+                    padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 12, 14),
+                    decoration: BoxDecoration(
+                      color: colors.card,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: booking.favoritesFirst
+                            ? colors.accent.withValues(alpha: 0.35)
+                            : colors.border.withValues(alpha: 0.85),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.text.withValues(alpha: 0.035),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                          spreadRadius: -4,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: booking.favoritesFirst
+                                ? colors.accent.withValues(alpha: 0.12)
+                                : colors.bgAlt.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(
+                            Icons.favorite_rounded,
+                            color: booking.favoritesFirst
+                                ? colors.accent
+                                : colors.textMid,
+                            size: 22,
+                          ),
+                        ),
+                        SizedBox(width: HeyCabySpacing.component),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Preferences (optional)',
+                                style: typo.titleSmall.copyWith(
+                                  color: colors.text,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Favorite drivers first',
+                                style: typo.bodySmall.copyWith(
+                                  color: colors.textSoft,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch.adaptive(
+                          value: booking.favoritesFirst,
+                          onChanged: (v) {
+                            HapticService.lightTap();
+                            ref
+                                .read(bookingProvider.notifier)
+                                .setFavoritesFirst(v);
+                          },
+                          activeTrackColor: colors.accent,
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: HeyCabySpacing.componentSmall),
+                  Container(
+                    padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 12, 14),
+                    decoration: BoxDecoration(
+                      color: colors.card,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: booking.petFriendly
+                            ? colors.accent.withValues(alpha: 0.35)
+                            : colors.border.withValues(alpha: 0.85),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.text.withValues(alpha: 0.035),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                          spreadRadius: -4,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: booking.petFriendly
+                                ? colors.accent.withValues(alpha: 0.12)
+                                : colors.bgAlt.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(
+                            Icons.pets_rounded,
+                            color: booking.petFriendly
+                                ? colors.accent
+                                : colors.textMid,
+                            size: 22,
+                          ),
+                        ),
+                        SizedBox(width: HeyCabySpacing.component),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Pet-friendly ride',
+                                style: typo.titleSmall.copyWith(
+                                  color: colors.text,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                l10n.petFriendlyDesc,
+                                style: typo.bodySmall.copyWith(
+                                  color: colors.textSoft,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch.adaptive(
+                          value: booking.petFriendly,
+                          onChanged: (v) {
+                            HapticService.lightTap();
+                            ref.read(bookingProvider.notifier).setPetFriendly(v);
+                          },
+                          activeTrackColor: colors.accent,
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: HeyCabySpacing.componentSmall),
+                  Container(
+                    padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 12, 14),
+                    decoration: BoxDecoration(
+                      color: colors.card,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: booking.returnTripFareEstimatesEnabled && hasRoute
+                            ? colors.accent.withValues(alpha: 0.35)
+                            : colors.border.withValues(alpha: 0.85),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.text.withValues(alpha: 0.035),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                          spreadRadius: -4,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: booking.returnTripFareEstimatesEnabled && hasRoute
+                                ? colors.accent.withValues(alpha: 0.12)
+                                : colors.bgAlt.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(
+                            Icons.u_turn_left_rounded,
+                            color: booking.returnTripFareEstimatesEnabled && hasRoute
+                                ? colors.accent
+                                : colors.textMid,
+                            size: 22,
+                          ),
+                        ),
+                        SizedBox(width: HeyCabySpacing.component),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l10n.returnTripFareEstimatesTitle,
+                                style: typo.titleSmall.copyWith(
+                                  color: colors.text,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                hasRoute
+                                    ? l10n.returnTripFareEstimatesSubtitle
+                                    : l10n.returnTripFareEstimatesRequiresRoute,
+                                style: typo.bodySmall.copyWith(
+                                  color: colors.textSoft,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch.adaptive(
+                          value: hasRoute && booking.returnTripFareEstimatesEnabled,
+                          onChanged: hasRoute
+                              ? (v) {
+                                  HapticService.lightTap();
+                                  ref
+                                      .read(bookingProvider.notifier)
+                                      .setReturnTripFareEstimatesEnabled(v);
+                                  setState(() {
+                                    _selectedDriverId = null;
+                                    _selectedDriverFare = null;
+                                    _postToAll = false;
+                                  });
+                                }
+                              : null,
+                          activeTrackColor: colors.accent,
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: HeyCabySpacing.sectionMedium),
                   if (_selectedFromIdentityPreferred &&
                       _selectedCategory != null &&
                       !_showInvalidPreferredBanner &&
@@ -618,20 +797,6 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                         ),
                       ),
                     ),
-                  if (!showSmartExperience || showDegradedPicker) ...[
-                    buildCategoryCard(RiderVehicleCategory.standard, l10n.vehicleStandard,
-                        l10n.vehicleStandardDesc, Icons.directions_car_outlined),
-                    SizedBox(height: HeyCabySpacing.componentSmall),
-                    buildCategoryCard(RiderVehicleCategory.comfort, l10n.vehicleComfort,
-                        l10n.vehicleComfortDesc, Icons.airline_seat_recline_extra),
-                    SizedBox(height: HeyCabySpacing.componentSmall),
-                    buildCategoryCard(RiderVehicleCategory.taxibus, l10n.vehicleTaxibus,
-                        l10n.vehicleTaxibusDesc, Icons.airport_shuttle_outlined),
-                    SizedBox(height: HeyCabySpacing.componentSmall),
-                    buildCategoryCard(RiderVehicleCategory.wheelchair, l10n.vehicleWheelchair,
-                        l10n.vehicleWheelchairDesc, Icons.accessible),
-                    SizedBox(height: HeyCabySpacing.sectionMedium),
-                  ],
                   Text(
                     l10n.vehicleSupplyEstimatesNote,
                     style: typo.bodySmall.copyWith(color: colors.textSoft),

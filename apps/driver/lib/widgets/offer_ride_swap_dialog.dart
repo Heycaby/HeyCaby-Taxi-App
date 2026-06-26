@@ -106,7 +106,6 @@ class _OfferRideSwapDialogBodyState extends ConsumerState<_OfferRideSwapDialogBo
     ].join(' · ');
 
     return AlertDialog(
-      backgroundColor: colors.card,
       title: Row(
         children: [
           Icon(Icons.swap_horiz_rounded, color: colors.accent),

@@ -11,6 +11,7 @@ import '../providers/booking_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/rider_device_permission_snapshot.dart';
 import '../services/rider_permission_backend_sync.dart';
+import '../services/sound_service.dart';
 import '../utils/rider_account_deletion.dart';
 import '../widgets/email_modal.dart';
 
@@ -27,8 +28,6 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
   final _nameFocus = FocusNode();
   final _scrollController = ScrollController();
   final GlobalKey _profileSectionKey = GlobalKey();
-  bool _notificationsEnabled = false;
-  bool _locationEnabled = false;
 
   @override
   void initState() {
@@ -73,15 +72,6 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
 
   Future<void> _syncPermissionsFromDevice() async {
     final snap = await RiderDevicePermissionSnapshot.read();
-    if (!mounted) return;
-    setState(() {
-      _locationEnabled = snap.locationGranted;
-      _notificationsEnabled = snap.notificationsGranted;
-    });
-    await ref.read(settingsProvider.notifier).syncDevicePermissions(
-          locationGranted: snap.locationGranted,
-          notificationsGranted: snap.notificationsGranted,
-        );
     await RiderPermissionBackendSync.push(
       locationGranted: snap.locationGranted,
       notificationsGranted: snap.notificationsGranted,
@@ -89,21 +79,160 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
   }
 
   Future<void> _toggleNotifications(bool value) async {
+    await ref.read(settingsProvider.notifier).setNotificationsEnabled(value);
+    await _playToggleFeedback();
+    bool osEnabled = false;
     if (value) {
-      await Permission.notification.request();
-    } else {
-      await openAppSettings();
+      final status = await Permission.notification.request();
+      if (!status.isGranted && !status.isProvisional) {
+        await openAppSettings();
+      } else {
+        osEnabled = true;
+        try {
+          await HeyCabyFcmRegistration.sync(appRole: 'rider');
+        } catch (_) {
+          // Keep toggle UX responsive even if token sync fails.
+        }
+      }
     }
     await _syncPermissionsFromDevice();
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
+    await _showToggleResultModal(
+      title: l10n.accountNotificationsNeededBody,
+      message: value
+          ? (osEnabled
+              ? 'Notifications are enabled. You can receive ride updates and alerts.'
+              : 'Notifications are turned on in-app, but iOS permission is still off. Enable it in Settings to receive alerts.')
+          : 'Notifications are turned off for this app preference.',
+    );
   }
 
   Future<void> _toggleLocation(bool value) async {
+    await ref.read(settingsProvider.notifier).setLocationEnabled(value);
+    await _playToggleFeedback();
+    bool osEnabled = false;
     if (value) {
-      await Permission.locationWhenInUse.request();
-    } else {
-      await openAppSettings();
+      final status = await Permission.locationWhenInUse.request();
+      if (!status.isGranted && status != PermissionStatus.limited) {
+        await openAppSettings();
+      } else {
+        osEnabled = true;
+      }
     }
     await _syncPermissionsFromDevice();
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
+    await _showToggleResultModal(
+      title: l10n.accountLocationNeededBody,
+      message: value
+          ? (osEnabled
+              ? 'Location is enabled. HeyCaby can use your location for pickup and nearby driver matching.'
+              : 'Location is turned on in-app, but iOS permission is still off. Enable it in Settings to use booking features.')
+          : 'Location is turned off for this app preference.',
+    );
+  }
+
+  Future<void> _showToggleResultModal({
+    required String title,
+    required String message,
+  }) async {
+    final colors = ref.read(colorsProvider);
+    final typo = ref.read(typographyProvider);
+    final l10n = AppLocalizations.of(context);
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Container(
+          decoration: BoxDecoration(
+            color: colors.card,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: colors.border.withValues(alpha: 0.75)),
+            boxShadow: [
+              BoxShadow(
+                color: colors.text.withValues(alpha: 0.18),
+                blurRadius: 22,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: colors.accent.withValues(alpha: 0.14),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.check_circle_rounded,
+                      color: colors.accent,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: typo.titleMedium.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w800,
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(
+                message,
+                style: typo.bodyMedium.copyWith(
+                  color: colors.textMid,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                height: 48,
+                child: FilledButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colors.accent,
+                    foregroundColor: colors.onAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    l10n.dialogOk,
+                    style: typo.labelLarge.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _playToggleFeedback() async {
+    HapticService.lightTap();
+    try {
+      await SystemSound.play(SystemSoundType.click);
+    } catch (_) {}
+    try {
+      await SoundService().playNotification();
+    } catch (_) {}
   }
 
   @override
@@ -196,6 +325,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
     if (result == true && mounted) {
       await HeyCabyFcmRegistration.unregisterAll(appRole: 'rider');
       await ref.read(riderIdentityProvider.notifier).clearSession();
+      await ref.read(settingsProvider.notifier).clearUserName();
       ref.read(bookingProvider.notifier).reset();
       if (mounted) context.go('/home');
     }
@@ -806,6 +936,9 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
   }
 
   Widget _buildSettingsSection(HeyCabyColorTokens colors, HeyCabyTypography typo, AppLocalizations l10n) {
+    final settings = ref.watch(settingsProvider).valueOrNull;
+    final locationEnabled = settings?.locationEnabled ?? true;
+    final notificationsEnabled = settings?.notificationsEnabled ?? false;
     return Container(
       padding: const EdgeInsetsDirectional.all(20),
       decoration: BoxDecoration(
@@ -816,11 +949,11 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(l10n.accountSettingsHeading, style: typo.bodySmall.copyWith(color: colors.textSoft)),
         const SizedBox(height: 16),
-        _buildToggleRow(l10n.accountLocationNeededBody, _locationEnabled, colors, typo, _toggleLocation),
+        _buildToggleRow(l10n.accountLocationNeededBody, locationEnabled, colors, typo, _toggleLocation),
         const SizedBox(height: 8),
         _buildLinkRow(l10n.openLocationSettings, colors, typo, () => openAppSettings()),
         const SizedBox(height: 20),
-        _buildToggleRow(l10n.accountNotificationsNeededBody, _notificationsEnabled, colors, typo, _toggleNotifications),
+        _buildToggleRow(l10n.accountNotificationsNeededBody, notificationsEnabled, colors, typo, _toggleNotifications),
         const SizedBox(height: 8),
         _buildLinkRow(l10n.openNotificationSettings, colors, typo, () => openAppSettings()),
       ]),

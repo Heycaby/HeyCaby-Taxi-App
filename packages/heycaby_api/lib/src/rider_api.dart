@@ -37,47 +37,108 @@ class RiderApi {
 
   late final Dio _dio;
 
+  bool _isUnauthorizedIdentity(DioException e) {
+    final status = e.response?.statusCode;
+    if (status != 401) return false;
+    final data = e.response?.data;
+    if (data is Map) {
+      final err = data['error']?.toString().toLowerCase() ?? '';
+      return err.contains('invalid or unauthorized');
+    }
+    if (data is String) {
+      return data.toLowerCase().contains('invalid or unauthorized');
+    }
+    return false;
+  }
+
   Future<List<RiderNotificationItem>> getNotifications({
     required String riderIdentityId,
     bool unreadOnly = false,
     int limit = 30,
   }) async {
-    final res = await _dio.get<Map<String, dynamic>>(
-      '/api/rider/notifications',
-      queryParameters: {
-        'rider_identity_id': riderIdentityId,
-        'limit': limit,
-        if (unreadOnly) 'unread': 1,
-      },
-      options: Options(headers: {
-        'x-rider-identity-id': riderIdentityId,
-      }),
-    );
-    final raw = res.data?['notifications'];
-    if (raw is! List) return const [];
-    return raw
-        .whereType<Map>()
-        .map((e) => RiderNotificationItem.fromJson(Map<String, dynamic>.from(e)))
-        .toList();
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/rider/notifications',
+        queryParameters: {
+          'rider_identity_id': riderIdentityId,
+          'limit': limit,
+          if (unreadOnly) 'unread': 1,
+        },
+        options: Options(headers: {
+          'x-rider-identity-id': riderIdentityId,
+        }),
+      );
+      final raw = res.data?['notifications'];
+      if (raw is! List) return const [];
+      return raw
+          .whereType<Map>()
+          .map((e) => RiderNotificationItem.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    } on DioException catch (e) {
+      if (_isUnauthorizedIdentity(e)) {
+        // Stale/mismatched rider identity should not break the app UX.
+        return const [];
+      }
+      rethrow;
+    }
   }
 
   Future<void> markNotificationRead({
     required String riderIdentityId,
     required String notificationId,
   }) async {
-    await _dio.patch(
-      '/api/rider/notifications',
-      data: {'notification_id': notificationId},
-      options: Options(headers: {'x-rider-identity-id': riderIdentityId}),
-    );
+    try {
+      await _dio.patch(
+        '/api/rider/notifications',
+        data: {'notification_id': notificationId},
+        options: Options(headers: {'x-rider-identity-id': riderIdentityId}),
+      );
+    } on DioException catch (e) {
+      if (_isUnauthorizedIdentity(e)) return;
+      rethrow;
+    }
   }
 
   Future<void> markAllNotificationsRead({required String riderIdentityId}) async {
-    await _dio.patch(
-      '/api/rider/notifications',
-      data: {'all': true},
-      options: Options(headers: {'x-rider-identity-id': riderIdentityId}),
-    );
+    try {
+      await _dio.patch(
+        '/api/rider/notifications',
+        data: {'all': true},
+        options: Options(headers: {'x-rider-identity-id': riderIdentityId}),
+      );
+    } on DioException catch (e) {
+      if (_isUnauthorizedIdentity(e)) return;
+      rethrow;
+    }
+  }
+
+  /// Fetches a completed-ride receipt payload for rider view.
+  /// Returns null when route is unavailable or receipt is missing.
+  Future<Map<String, dynamic>?> fetchRideReceipt({
+    required String rideRequestId,
+  }) async {
+    DioException? lastError;
+    for (final path in const [
+      '/api/rider/receipt',
+      '/api/rider/ride/receipt',
+      '/api/receipt/rider',
+    ]) {
+      try {
+        final res = await _dio.get<Map<String, dynamic>>(
+          path,
+          queryParameters: {'ride_request_id': rideRequestId},
+        );
+        final data = res.data;
+        if (data == null || data.isEmpty) return null;
+        return Map<String, dynamic>.from(data);
+      } on DioException catch (e) {
+        lastError = e;
+        if (e.response?.statusCode == 404) continue;
+      }
+    }
+    if (lastError?.response?.statusCode == 404) return null;
+    if (lastError != null) throw lastError!;
+    return null;
   }
 }
 

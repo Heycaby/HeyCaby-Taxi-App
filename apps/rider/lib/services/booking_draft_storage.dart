@@ -57,6 +57,7 @@ class BookingDraftStorage {
       'estimated_fare_euro': s.estimatedFareEuro,
       'marketplace_bid_euro': s.marketplaceBidEuro,
       'favorites_first': s.favoritesFirst,
+      'return_trip_fare_estimates': s.returnTripFareEstimatesEnabled,
     };
   }
 
@@ -119,6 +120,8 @@ class BookingDraftStorage {
           : bid is num
               ? bid.round()
               : null,
+      returnTripFareEstimatesEnabled:
+          m['return_trip_fare_estimates'] as bool? ?? false,
     );
   }
 }

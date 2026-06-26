@@ -56,6 +56,7 @@ export type FcmSendInput = {
   body: string | null
   data?: Record<string, unknown>
   priority?: string
+  androidChannelId?: string
 }
 
 function stringifyData(data: Record<string, unknown> | undefined): Record<string, string> | undefined {
@@ -79,15 +80,27 @@ export async function sendFcmV1ToToken(
   const high = nudge.priority === "critical" || nudge.priority === "high"
   const dataPayload = stringifyData(nudge.data)
 
+  const androidBlock: Record<string, unknown> = {
+    priority: high ? "HIGH" : "NORMAL",
+  }
+  if (nudge.androidChannelId) {
+    androidBlock.notification = {
+      channel_id: nudge.androidChannelId,
+      sound: "default",
+      default_vibrate_timings: false,
+      vibrate_timings: high
+        ? ["0s", "0.4s", "0.2s", "0.4s"]
+        : ["0s", "0.25s", "0.15s", "0.25s"],
+    }
+  }
+
   const message: Record<string, unknown> = {
     token: deviceToken,
     notification: {
       title: nudge.title,
       body: nudge.body ?? "",
     },
-    android: {
-      priority: high ? "HIGH" : "NORMAL",
-    },
+    android: androidBlock,
     apns: {
       headers: {
         "apns-priority": high ? "10" : "5",

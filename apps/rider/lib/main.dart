@@ -11,6 +11,7 @@ import 'firebase_options.dart';
 import 'screens/ios_update_required_app.dart';
 import 'services/heycaby_widget_sync.dart';
 import 'services/rider_notify_live_activity.dart';
+import 'services/rider_notification_channels.dart';
 import 'services/rider_notify_search_notifications.dart';
 import 'services/rider_permission_bootstrap.dart';
 
@@ -31,6 +32,7 @@ void main() async {
   await HeycabyWidgetSync.init();
   await RiderNotifyLiveActivity.init();
   await RiderNotifySearchNotifications.pluginInitialize();
+  await RiderNotificationChannels.ensureInitialized();
 
   const mapboxToken = String.fromEnvironment('MAPBOX_ACCESS_TOKEN');
   if (mapboxToken.isNotEmpty) {

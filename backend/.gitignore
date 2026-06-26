@@ -1,0 +1,5 @@
+.env
+*.env.local
+heycaby-backend
+dist/
+tmp/

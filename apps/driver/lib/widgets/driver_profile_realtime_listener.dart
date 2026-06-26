@@ -4,6 +4,7 @@ import 'package:heycaby_api/heycaby_api.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../providers/driver_data_providers.dart';
+import '../providers/driver_resync_generation_provider.dart';
 
 /// Listens for `drivers` row updates for the signed-in driver and refreshes profile/compliance.
 /// Used when admin approves documents in Supabase (no app restart).
@@ -18,6 +19,15 @@ class DriverProfileRealtimeListener extends ConsumerStatefulWidget {
 class _DriverProfileRealtimeListenerState extends ConsumerState<DriverProfileRealtimeListener> {
   RealtimeChannel? _channel;
   String? _boundDriverId;
+  int? _resyncGen;
+
+  void _applyResync(int gen) {
+    if (_resyncGen == gen) return;
+    _resyncGen = gen;
+    _channel?.unsubscribe();
+    _channel = null;
+    _boundDriverId = null;
+  }
 
   void _bind(String? id) {
     if (id == null || id.isEmpty) {
@@ -44,6 +54,9 @@ class _DriverProfileRealtimeListenerState extends ConsumerState<DriverProfileRea
           callback: (_) {
             ref.invalidate(driverProfileProvider);
             ref.invalidate(driverComplianceProvider);
+            // Pickup radius + mirrored return discount sync on drivers; rate rows still from profiles.
+            ref.invalidate(driverRateProfilesProvider);
+            ref.invalidate(activeRateProfileProvider);
           },
         )
         .subscribe();
@@ -57,6 +70,7 @@ class _DriverProfileRealtimeListenerState extends ConsumerState<DriverProfileRea
 
   @override
   Widget build(BuildContext context) {
+    _applyResync(ref.watch(driverResyncGenerationProvider));
     ref.listen(driverIdProvider, (prev, next) {
       next.whenData(_bind);
     });

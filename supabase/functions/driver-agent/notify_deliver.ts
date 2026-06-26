@@ -7,6 +7,7 @@ import {
   recentPrerideNotification,
   sendFcmNotification,
 } from './notify_push.ts'
+import { appendPingAudit } from './ping_helpers.ts'
 import { json, ok, safeCompare } from './util.ts'
 
 export async function deliverNotification(
@@ -62,7 +63,7 @@ export async function deliverNotification(
         await sendFcmNotification(token, {
           title: n.title,
           body: n.body,
-          data: { ...n.data, notification_id: inserted?.id },
+          data: { ...n.data, notification_id: inserted?.id, category: n.category },
           priority: n.priority,
         })
       }
@@ -78,13 +79,27 @@ export async function deliverNotification(
         await sendFcmNotification(token, {
           title: n.title,
           body: n.body,
-          data: { ...n.data, notification_id: inserted?.id },
+          data: { ...n.data, notification_id: inserted?.id, category: n.category },
           priority: n.priority,
         })
       }
     }
     if (inserted?.id) {
       await supabase.from('notifications').update({ push_sent_at: new Date().toISOString() }).eq('id', inserted.id)
+      const category = n.category ?? ''
+      if (category.startsWith('driver_ping_') && n.data?.ride_request_id && n.data?.audit_event) {
+        await appendPingAudit(
+          supabase,
+          n.data.ride_request_id as string,
+          `${n.data.audit_event as string}.delivered`,
+          null,
+          {
+            notification_id: inserted.id,
+            delivery_state: 'delivered',
+            ping_kind: n.data.ping_kind ?? null,
+          },
+        )
+      }
     }
   }
 

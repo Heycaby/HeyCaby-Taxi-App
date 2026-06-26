@@ -12,7 +12,6 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/rider_support_chat_service.dart';
-import '../utils/validation_utils.dart';
 
 class RiderSupportChatScreen extends ConsumerStatefulWidget {
   final String ticketId;
@@ -32,7 +31,13 @@ class _RiderSupportChatScreenState extends ConsumerState<RiderSupportChatScreen>
   bool _loading = true;
   bool _sending = false;
   bool _assistantThinking = false;
+  bool _aiDisclosureAccepted = false;
   StreamSubscription? _subscription;
+
+  bool _isClosedStatus(String status) {
+    final s = status.toLowerCase();
+    return s == 'closed' || s == 'resolved' || s == 'auto_resolved';
+  }
 
   @override
   void initState() {
@@ -41,12 +46,23 @@ class _RiderSupportChatScreenState extends ConsumerState<RiderSupportChatScreen>
   }
 
   Future<void> _verifyOwnershipAndLoad() async {
-    if (!isValidUuid(widget.ticketId)) {
+    if (widget.ticketId.trim().isEmpty) {
       if (mounted) context.go('/support');
       return;
     }
 
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final client = Supabase.instance.client;
+    String? userId = client.auth.currentUser?.id;
+    if (userId == null || userId.isEmpty) {
+      try {
+        final authRes = await client.auth.signInAnonymously();
+        userId = authRes.user?.id;
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Rider support chat anonymous sign-in failed: $e');
+        }
+      }
+    }
     if (userId == null) {
       if (mounted) context.go('/home');
       return;
@@ -122,6 +138,80 @@ class _RiderSupportChatScreenState extends ConsumerState<RiderSupportChatScreen>
         });
   }
 
+  Future<bool> _ensureAiDisclosureAccepted() async {
+    if (_aiDisclosureAccepted) return true;
+    final colors = ref.read(colorsProvider);
+    final typo = ref.read(typographyProvider);
+    final l10n = AppLocalizations.of(context);
+    bool consentChecked = false;
+    final approved = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: colors.card,
+          title: Text(
+            l10n.supportAiConsentTitle,
+            style: typo.titleMedium.copyWith(color: colors.text),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.supportAiConsentIntro,
+                  style: typo.bodyMedium.copyWith(color: colors.textMid, height: 1.4),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  l10n.supportAiConsentDataSent,
+                  style: typo.bodySmall.copyWith(color: colors.textMid, height: 1.5),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.supportAiConsentThirdParty,
+                  style: typo.bodySmall.copyWith(color: colors.textMid, height: 1.5),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.supportAiConsentPolicy,
+                  style: typo.bodySmall.copyWith(color: colors.textMid, height: 1.5),
+                ),
+                const SizedBox(height: 10),
+                CheckboxListTile(
+                  value: consentChecked,
+                  onChanged: (v) => setDialogState(() => consentChecked = v ?? false),
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: Text(
+                    l10n.supportAiConsentCheckbox,
+                    style: typo.bodySmall.copyWith(color: colors.text),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(l10n.cancel, style: TextStyle(color: colors.textMid)),
+            ),
+            FilledButton(
+              onPressed: consentChecked ? () => Navigator.of(ctx).pop(true) : null,
+              child: Text(l10n.supportAiConsentContinue),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (approved != true) return false;
+    if (!mounted) return false;
+    setState(() => _aiDisclosureAccepted = true);
+    return true;
+  }
+
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -137,6 +227,8 @@ class _RiderSupportChatScreenState extends ConsumerState<RiderSupportChatScreen>
   Future<void> _send() async {
     final text = _controller.text.trim();
     if (text.isEmpty || _sending) return;
+    final allowed = await _ensureAiDisclosureAccepted();
+    if (!allowed || !mounted) return;
     final optimisticTs = DateTime.now().toUtc().toIso8601String();
     final optimisticMessage = <String, dynamic>{
       'role': 'user',
@@ -208,13 +300,38 @@ class _RiderSupportChatScreenState extends ConsumerState<RiderSupportChatScreen>
     }
   }
 
+  Future<void> _markResolved() async {
+    if (_sending || _loading) return;
+    try {
+      await HeyCabySupabase.client.from('tickets').update({
+        'status': 'resolved',
+        'resolution_summary': 'Resolved by rider.',
+        'resolution_outcome': 'user_confirmed_resolved',
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', widget.ticketId);
+      if (!mounted) return;
+      await _load();
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.supportTicketResolved)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.supportChatSendFailed)),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
     final colors = ref.watch(colorsProvider);
     final typo = ref.watch(typographyProvider);
     final l10n = AppLocalizations.of(context);
-    final isClosed = _status == 'closed' || _status == 'resolved';
-
+    final isClosed = _isClosedStatus(_status);
     return Scaffold(
       backgroundColor: colors.bg,
       appBar: AppBar(
@@ -279,55 +396,85 @@ class _RiderSupportChatScreenState extends ConsumerState<RiderSupportChatScreen>
                     },
                   ),
           ),
-          if (!isClosed)
-            Container(
-              padding: EdgeInsets.fromLTRB(
-                  16, 8, 16, MediaQuery.of(context).padding.bottom + 8),
-              decoration: BoxDecoration(
-                color: colors.card,
-                border: Border(
-                  top: BorderSide(color: colors.border, width: 0.5),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      maxLength: 2000,
-                      style: typo.bodyMedium.copyWith(color: colors.text),
-                      decoration: InputDecoration(
-                        counterText: '',
-                        hintText: l10n.supportTypeMessage,
-                        hintStyle: typo.bodySmall.copyWith(
-                            color: colors.textSoft),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide(color: colors.border),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide(color: colors.border),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide(color: colors.accent),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 10),
-                        isDense: true,
-                      ),
-                      onSubmitted: (_) => _send(),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: _sending ? null : _send,
-                    icon: Icon(Icons.send, color: colors.accent),
-                  ),
-                ],
+          Container(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, mq.padding.bottom + 8),
+            decoration: BoxDecoration(
+              color: colors.card,
+              border: Border(
+                top: BorderSide(color: colors.border, width: 0.5),
               ),
             ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!isClosed) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _sending ? null : _markResolved,
+                      icon: const Icon(Icons.check_circle_outline_rounded),
+                      label: Text(
+                        'MARK AS RESOLVED',
+                        style: typo.labelLarge.copyWith(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: colors.success,
+                        foregroundColor: colors.card,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        maxLength: 2000,
+                        style: typo.bodyMedium.copyWith(color: colors.text),
+                        decoration: InputDecoration(
+                          counterText: '',
+                          hintText: isClosed
+                              ? 'Send a message to reopen this ticket'
+                              : l10n.supportTypeMessage,
+                          hintStyle:
+                              typo.bodySmall.copyWith(color: colors.textSoft),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: BorderSide(color: colors.border),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: BorderSide(color: colors.border),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: BorderSide(color: colors.accent),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
+                          isDense: true,
+                        ),
+                        onSubmitted: (_) => _send(),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: _sending ? null : _send,
+                      icon: Icon(Icons.send, color: colors.accent),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

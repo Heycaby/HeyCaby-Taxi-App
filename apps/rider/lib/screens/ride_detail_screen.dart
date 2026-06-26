@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../providers/ride_history_provider.dart';
 import 'report_screen.dart';
+
+final riderReceiptProvider =
+    FutureProvider.family<Map<String, dynamic>?, String>((ref, rideId) async {
+  final api = ref.read(riderApiProvider);
+  return api.fetchRideReceipt(rideRequestId: rideId);
+});
 
 class RideDetailScreen extends ConsumerWidget {
   const RideDetailScreen({super.key, required this.ride});
@@ -17,6 +24,7 @@ class RideDetailScreen extends ConsumerWidget {
     final colors = ref.watch(colorsProvider);
     final typo = ref.watch(typographyProvider);
     final l10n = AppLocalizations.of(context);
+    final receiptAsync = ref.watch(riderReceiptProvider(ride.id));
 
     Color statusColor;
     switch (ride.status) {
@@ -63,7 +71,8 @@ class RideDetailScreen extends ConsumerWidget {
         statusLabel = ride.status;
     }
 
-    final isActive = ['pending', 'assigned', 'arrived', 'in_progress'].contains(ride.status);
+    final isActive =
+        ['pending', 'assigned', 'arrived', 'in_progress'].contains(ride.status);
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -216,10 +225,10 @@ class RideDetailScreen extends ConsumerWidget {
                   child: ElevatedButton(
                     onPressed: () => context.go('/active'),
                     style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                    ),
                     child: Text(
                       l10n.tripInProgress,
                       style: typo.labelLarge.copyWith(color: colors.onAccent),
@@ -229,6 +238,139 @@ class RideDetailScreen extends ConsumerWidget {
               ],
               if (ride.status == 'completed') ...[
                 const SizedBox(height: 20),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: colors.card,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: colors.border),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Settlement reminder',
+                        style: typo.bodyMedium.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'You pay the driver directly. Keep this ride for your accounting records.',
+                        style: typo.bodySmall.copyWith(color: colors.textMid),
+                      ),
+                      if (ride.fare != null) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          'Estimated amount: €${ride.fare!.toStringAsFixed(2)}',
+                          style: typo.bodySmall.copyWith(
+                            color: colors.text,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 10),
+                      receiptAsync.when(
+                        data: (receipt) {
+                          if (receipt == null) {
+                            return Text(
+                              'Receipt not available yet.',
+                              style: typo.bodySmall
+                                  .copyWith(color: colors.textSoft),
+                            );
+                          }
+                          final expected =
+                              _tryParseAmount(receipt['expected_amount']);
+                          final paid = _tryParseAmount(receipt['paid_amount']);
+                          final method = receipt['payment_method']?.toString();
+                          final diff = (expected != null && paid != null)
+                              ? (paid - expected)
+                              : null;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Receipt',
+                                style: typo.bodySmall.copyWith(
+                                  color: colors.text,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              if (expected != null)
+                                Text(
+                                  'Expected: €${expected.toStringAsFixed(2)}',
+                                  style: typo.bodySmall
+                                      .copyWith(color: colors.textMid),
+                                ),
+                              if (paid != null)
+                                Text(
+                                  'Paid: €${paid.toStringAsFixed(2)}',
+                                  style: typo.bodySmall
+                                      .copyWith(color: colors.textMid),
+                                ),
+                              if (method != null && method.isNotEmpty)
+                                Text(
+                                  'Method: $method',
+                                  style: typo.bodySmall
+                                      .copyWith(color: colors.textMid),
+                                ),
+                              if (diff != null && diff < 0)
+                                Text(
+                                  'Outstanding: €${diff.abs().toStringAsFixed(2)}',
+                                  style: typo.bodySmall.copyWith(
+                                    color: colors.error,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              if (diff != null && diff > 0)
+                                Text(
+                                  'Overpaid: €${diff.toStringAsFixed(2)}',
+                                  style: typo.bodySmall.copyWith(
+                                    color: colors.success,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              if (diff != null && diff == 0)
+                                Text(
+                                  'Settlement complete',
+                                  style: typo.bodySmall.copyWith(
+                                    color: colors.success,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                        loading: () => SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: colors.accent,
+                          ),
+                        ),
+                        error: (_, __) => Text(
+                          l10n.rideDetailReceiptLoadFailed,
+                          style:
+                              typo.bodySmall.copyWith(color: colors.textSoft),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: FilledButton.icon(
+                    onPressed: () => context.push('/receipt/${ride.id}'),
+                    icon: const Icon(Icons.receipt_long_outlined),
+                    label: Text(l10n.rideDetailViewReceipt),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -239,12 +381,14 @@ class RideDetailScreen extends ConsumerWidget {
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: colors.error,
-                      side: BorderSide(color: colors.error.withValues(alpha: 0.5)),
+                      side: BorderSide(
+                          color: colors.error.withValues(alpha: 0.5)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    icon: Icon(Icons.flag_outlined, color: colors.error, size: 22),
+                    icon: Icon(Icons.flag_outlined,
+                        color: colors.error, size: 22),
                     label: Text(
                       l10n.ridesCardReportRide,
                       style: typo.labelLarge.copyWith(
@@ -261,6 +405,12 @@ class RideDetailScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+double? _tryParseAmount(dynamic raw) {
+  if (raw == null) return null;
+  if (raw is num) return raw.toDouble();
+  return double.tryParse(raw.toString());
 }
 
 class _DetailRow extends StatelessWidget {

@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
+import 'dart:ui';
 
 class SettingsState {
+  static const supportedLanguageCodes = <String>{'nl', 'en', 'ar'};
   final String language;
   final String theme;
   final bool locationEnabled;
@@ -10,7 +12,7 @@ class SettingsState {
   final String? userName;
 
   const SettingsState({
-    this.language = 'en',
+    this.language = 'nl',
     this.theme = kRiderDefaultTheme,
     this.locationEnabled = true,
     this.notificationsEnabled = false,
@@ -42,7 +44,14 @@ class SettingsNotifier extends AsyncNotifier<SettingsState> {
   }
 
   Future<SettingsState> _loadSettings() async {
-    final language = await _storage.read(key: 'language') ?? 'en';
+    final savedLanguage = await _storage.read(key: 'language');
+    final deviceLanguage = PlatformDispatcher.instance.locale.languageCode.toLowerCase();
+    final normalizedSaved = (savedLanguage ?? '').trim().toLowerCase();
+    final language = SettingsState.supportedLanguageCodes.contains(normalizedSaved)
+        ? normalizedSaved
+        : (SettingsState.supportedLanguageCodes.contains(deviceLanguage)
+            ? deviceLanguage
+            : 'nl');
     var theme = await _storage.read(key: 'theme') ?? kRiderDefaultTheme;
     theme = migrateThemeId(theme);
     if (!kThemes.containsKey(theme)) theme = kRiderDefaultTheme;
@@ -103,6 +112,12 @@ class SettingsNotifier extends AsyncNotifier<SettingsState> {
   Future<void> setUserName(String name) async {
     await _storage.write(key: 'user_name', value: name);
     state = AsyncData(state.value!.copyWith(userName: name));
+  }
+
+  Future<void> clearUserName() async {
+    await _storage.delete(key: 'user_name');
+    final base = state.value ?? await _loadSettings();
+    state = AsyncData(base.copyWith(userName: ''));
   }
 }
 

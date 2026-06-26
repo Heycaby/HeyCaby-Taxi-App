@@ -1,80 +1,102 @@
-//
-//  HeyCabyWidgetsLiveActivity.swift
-//  HeyCabyWidgets
-//
-//  Created by Ai Guy on 05/04/2026.
-//
-
 import ActivityKit
 import WidgetKit
 import SwiftUI
 
 struct HeyCabyWidgetsAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
-        // Dynamic stateful properties about your activity go here!
-        var emoji: String
+        var title: String
+        var subtitle: String
+        var status: String
+        var eta: String?
     }
 
-    // Fixed non-changing properties about your activity go here!
-    var name: String
+    var rideId: String
 }
 
 struct HeyCabyWidgetsLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: HeyCabyWidgetsAttributes.self) { context in
-            // Lock screen/banner UI goes here
-            VStack {
-                Text("Hello \(context.state.emoji)")
+            VStack(alignment: .leading, spacing: 8) {
+                Text(context.state.title)
+                    .font(.headline)
+                Text(context.state.subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                HStack {
+                    Image(systemName: "car.fill")
+                    Text(context.state.status)
+                        .font(.footnote.weight(.semibold))
+                    Spacer()
+                    if let eta = context.state.eta, !eta.isEmpty {
+                        Text(eta)
+                            .font(.footnote.weight(.semibold))
+                    }
+                }
             }
-            .activityBackgroundTint(Color.cyan)
-            .activitySystemActionForegroundColor(Color.black)
-
+            .padding(.vertical, 4)
+            .activityBackgroundTint(Color.black.opacity(0.85))
+            .activitySystemActionForegroundColor(Color.white)
+            .widgetURL(URL(string: "heycabyrider://ride-status"))
         } dynamicIsland: { context in
             DynamicIsland {
-                // Expanded UI goes here.  Compose the expanded UI through
-                // various regions, like leading/trailing/center/bottom
                 DynamicIslandExpandedRegion(.leading) {
-                    Text("Leading")
+                    Image(systemName: "car.fill")
+                        .foregroundStyle(.yellow)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text("Trailing")
+                    if let eta = context.state.eta, !eta.isEmpty {
+                        Text(eta)
+                            .font(.caption.weight(.semibold))
+                    } else {
+                        Text("Live")
+                            .font(.caption.weight(.semibold))
+                    }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    Text("Bottom \(context.state.emoji)")
-                    // more content
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(context.state.title)
+                            .font(.subheadline.weight(.semibold))
+                        Text(context.state.subtitle)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             } compactLeading: {
-                Text("L")
+                Image(systemName: "car.fill")
             } compactTrailing: {
-                Text("T \(context.state.emoji)")
+                if let eta = context.state.eta, !eta.isEmpty {
+                    Text(eta)
+                } else {
+                    Text("Hey")
+                }
             } minimal: {
-                Text(context.state.emoji)
+                Image(systemName: "car.fill")
             }
-            .widgetURL(URL(string: "http://www.apple.com"))
-            .keylineTint(Color.red)
+            .widgetURL(URL(string: "heycabyrider://ride-status"))
+            .keylineTint(Color.yellow)
         }
     }
 }
 
 extension HeyCabyWidgetsAttributes {
     fileprivate static var preview: HeyCabyWidgetsAttributes {
-        HeyCabyWidgetsAttributes(name: "World")
+        HeyCabyWidgetsAttributes(rideId: "preview")
     }
 }
 
 extension HeyCabyWidgetsAttributes.ContentState {
-    fileprivate static var smiley: HeyCabyWidgetsAttributes.ContentState {
-        HeyCabyWidgetsAttributes.ContentState(emoji: "😀")
-     }
-     
-     fileprivate static var starEyes: HeyCabyWidgetsAttributes.ContentState {
-         HeyCabyWidgetsAttributes.ContentState(emoji: "🤩")
-     }
+    fileprivate static var searching: HeyCabyWidgetsAttributes.ContentState {
+        HeyCabyWidgetsAttributes.ContentState(
+            title: "Finding your Caby",
+            subtitle: "Still matching nearby drivers",
+            status: "Searching",
+            eta: "10m"
+        )
+    }
 }
 
 #Preview("Notification", as: .content, using: HeyCabyWidgetsAttributes.preview) {
-   HeyCabyWidgetsLiveActivity()
+    HeyCabyWidgetsLiveActivity()
 } contentStates: {
-    HeyCabyWidgetsAttributes.ContentState.smiley
-    HeyCabyWidgetsAttributes.ContentState.starEyes
+    HeyCabyWidgetsAttributes.ContentState.searching
 }

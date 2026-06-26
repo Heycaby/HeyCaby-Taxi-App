@@ -5,18 +5,40 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
 import '../theme/app_icons.dart';
+import '../theme/driver_colors.dart';
+import '../theme/driver_spacing.dart';
+import '../theme/driver_typography.dart';
+import '../theme/driver_motion_presets.dart';
 import '../providers/driver_data_providers.dart';
+import '../providers/driver_resilience_inset_provider.dart';
 import '../providers/driver_state_provider.dart';
+import '../services/driver_data_service.dart' show ZoneDemand;
+import '../ui/driver_map_controls_column.dart';
+import '../ui/driver_map_demand_chip.dart';
 import 'driver_break_reminder_banner.dart';
 import 'driver_verification_status_banner.dart';
 import 'driver_earnings_modal.dart';
+import 'driver_earnings_modal_parts.dart';
 import 'driver_shift_timer_widget.dart';
 import '../services/sound_service.dart';
-import '../services/driver_platform_fee_gate.dart';
+import '../utils/driver_go_online_runtime_action.dart';
+import 'driver_go_online_guidance_sheet.dart';
 import 'driver_online_panel.dart';
 import 'driver_online_status_widget.dart';
 
-const _hubButtonSize = 48.0; // +~10% for better visibility on the map
+ZoneDemand? _currentZoneDemand(List<ZoneDemand> zones, String? zoneId) {
+  if (zoneId == null || zones.isEmpty) return null;
+  for (final z in zones) {
+    if (z.zoneId == zoneId) return z;
+  }
+  return null;
+}
+
+bool _isHighMapDemand(ZoneDemand zone) {
+  final level = (zone.demandLevel ?? '').toLowerCase();
+  if (level == 'high' || level == 'very_high') return true;
+  return zone.waitingPassengers >= 12;
+}
 
 /// Floating elements on top of the driver home map.
 class DriverMapFloating extends ConsumerWidget {
@@ -40,16 +62,16 @@ class DriverMapFloating extends ConsumerWidget {
     final driver = ref.watch(driverStateProvider);
     final earningsAsync = ref.watch(driverEarningsProvider);
     final zoneAsync = ref.watch(currentZoneNameProvider);
-    final topPadding = MediaQuery.of(context).padding.top;
+    final resilienceInset = ref.watch(driverResilienceBannerInsetProvider);
+    final topPadding = MediaQuery.of(context).padding.top + resilienceInset;
 
     final isOnline = driver.appState == DriverAppState.onlineAvailable ||
         driver.appState == DriverAppState.onBreak;
     final summary = earningsAsync.valueOrNull;
     final todayEuros =
         summary != null ? summary.formatEuros(summary.todayEuros) : '€0.00';
-    final zoneName = isOnline
-        ? (zoneAsync.valueOrNull ?? '—')
-        : DriverStrings.offline;
+    final zoneName =
+        isOnline ? (zoneAsync.valueOrNull ?? '—') : DriverStrings.offline;
     final statusKind = driver.appState == DriverAppState.onlineAvailable
         ? DriverStatusKind.online
         : driver.appState == DriverAppState.onBreak
@@ -61,38 +83,45 @@ class DriverMapFloating extends ConsumerWidget {
             ? stats.shiftStartAt
             : stats.lastBreakStartAt)
         : null;
-    final screenHeight = MediaQuery.of(context).size.height;
-    final mapVisibleHeight = screenHeight - sheetHeight;
-    final hubButtonTop = topPadding + mapVisibleHeight * 0.42 - (_hubButtonSize / 2);
     final badgeCount = ref.watch(driverHubBadgeCountProvider).valueOrNull ?? 0;
+    final driverColors = DriverColors.fromTheme(colors);
+    final driverTypography = DriverTypography.fromTheme(typo);
+    final zones = ref.watch(zoneDemandProvider).valueOrNull ?? const <ZoneDemand>[];
+    final currentZoneId = ref.watch(currentZoneIdProvider).valueOrNull;
+    final currentZone = _currentZoneDemand(zones, currentZoneId);
+    final waitingCount = currentZone?.waitingPassengers ?? 0;
+    final showDemandChip = isOnline && waitingCount >= 4;
+    final demandZoneName = currentZone?.zoneName ?? zoneAsync.valueOrNull ?? '';
 
     return Stack(
       children: [
         Positioned(
-          top: topPadding + 8,
-          left: 16,
-          right: 16,
+          top: topPadding + DriverSpacing.sm,
+          left: DriverSpacing.screenEdge,
+          right: DriverSpacing.screenEdge,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const DriverBreakReminderBanner(),
-              const SizedBox(height: 8),
+              const SizedBox(height: DriverSpacing.sm),
               const DriverVerificationStatusBanner(),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 54),
-                child: DriverEarningsPill(
-                  todayEarnings: todayEuros,
-                  zoneName: zoneName,
-                  statusKind: statusKind,
-                  colors: colors,
-                  typo: typo,
-                  statusTime: statusTime,
-                  onTap: () => _showEarningsModal(context, ref),
+              const SizedBox(height: DriverSpacing.sm),
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 340),
+                  child: DriverEarningsPill(
+                    todayEarnings: todayEuros,
+                    zoneName: zoneName,
+                    statusKind: statusKind,
+                    colors: colors,
+                    typo: typo,
+                    statusTime: statusTime,
+                    onTap: () => _showEarningsModal(context, ref),
+                  ).driverMapChromeEnter(staggerIndex: 0),
                 ),
               ),
               if (isOnline) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: DriverSpacing.sm),
                 DriverOnlineStatusWidget(
                   zoneName: zoneAsync.valueOrNull ?? '—',
                   isOnBreak: driver.appState == DriverAppState.onBreak,
@@ -100,36 +129,44 @@ class DriverMapFloating extends ConsumerWidget {
                   typo: typo,
                   onTap: () => _showOnlinePanel(context, ref),
                 ),
+                if (showDemandChip) ...[
+                  const SizedBox(height: DriverSpacing.sm),
+                  Center(
+                    child: DriverMapDemandChip(
+                      zoneName: demandZoneName,
+                      waitingCount: waitingCount,
+                      highDemand:
+                          currentZone != null && _isHighMapDemand(currentZone),
+                      colors: driverColors,
+                      typography: driverTypography,
+                    ).driverMapChromeEnter(staggerIndex: 2),
+                  ),
+                ],
               ],
             ],
           ),
         ),
         Positioned(
-          top: topPadding + 12,
-          right: 16,
-          child: _MapFloatingButton(
-            icon: AppIcons.mapRecenter,
-            colors: colors,
-            onTap: onRecenter,
-          ),
+          top: topPadding + DriverSpacing.md,
+          right: DriverSpacing.screenEdge,
+          child: DriverMapControlsColumn(
+            colors: driverColors,
+            recenterIcon: AppIcons.mapRecenter,
+            recenterTooltip: DriverStrings.recenterMap,
+            onRecenter: onRecenter,
+            hubIcon: onDriverHub != null ? AppIcons.hubGrid : null,
+            hubTooltip: DriverStrings.driverHub,
+            hubBadge: badgeCount,
+            onHub: onDriverHub,
+          ).driverMapChromeEnter(staggerIndex: 3),
         ),
-        if (onDriverHub != null)
-          Positioned(
-            top: hubButtonTop,
-            right: 16,
-            child: _DriverHubButton(
-              badgeCount: badgeCount,
-              colors: colors,
-              typo: typo,
-              onTap: onDriverHub!,
-            ),
-          ),
         if (isOnline)
           Positioned(
-            left: 16,
-            right: 16,
-            bottom: sheetHeight + 12,
-            child: const DriverShiftTimerWidget(),
+            left: DriverSpacing.screenEdge,
+            right: DriverSpacing.screenEdge,
+            bottom: sheetHeight + DriverSpacing.md,
+            child: DriverShiftTimerWidget()
+                .driverFadeSlideIn(staggerIndex: 0, slideY: 0.12),
           ),
       ],
     );
@@ -140,6 +177,10 @@ class DriverMapFloating extends ConsumerWidget {
     final todayStr = earnings?.formatEuros(earnings.todayEuros) ?? '€0.00';
     final zoneAsync = ref.read(currentZoneNameProvider);
     final zoneName = zoneAsync.valueOrNull ?? '—';
+    final themeColors = ref.read(colorsProvider);
+    final typography = ref.read(typographyProvider);
+    final api = ref.read(driverApiProvider);
+    final stateNotifier = ref.read(driverStateProvider.notifier);
     final driver = ref.read(driverStateProvider);
     final statusKind = driver.appState == DriverAppState.onlineAvailable
         ? DriverStatusKind.online
@@ -153,13 +194,14 @@ class DriverMapFloating extends ConsumerWidget {
         todayEarnings: todayStr,
         zoneName: zoneName,
         statusKind: statusKind,
-        colors: ref.read(colorsProvider),
-        typo: ref.read(typographyProvider),
+        colors: themeColors,
+        typo: typography,
         onDismiss: () => Navigator.of(dialogContext).pop(),
         onTakeBreak: () async {
           try {
-            await ref.read(driverApiProvider).setStatus(status: 'on_break');
-            ref.read(driverStateProvider.notifier).setStatus(DriverAppState.onBreak);
+            await api.setStatus(status: 'on_break');
+            stateNotifier.setStatus(DriverAppState.onBreak);
+            SoundService().playStatusOnBreak();
             if (context.mounted) Navigator.of(dialogContext).pop();
           } catch (_) {}
         },
@@ -172,28 +214,34 @@ class DriverMapFloating extends ConsumerWidget {
             builder: (_) => _EndShiftConfirmDialog(
               hours: '${onlineMins ~/ 60}',
               rides: '$rides',
-              colors: ref.read(colorsProvider),
-              typo: ref.read(typographyProvider),
+              colors: themeColors,
+              typo: typography,
             ),
           );
           if (confirmed == true) {
             try {
-              await ref.read(driverApiProvider).setStatus(status: 'offline');
-              ref.read(driverStateProvider.notifier).setStatus(DriverAppState.offline);
-              SoundService().playNotification();
+              await api.setStatus(status: 'offline');
+              stateNotifier.setStatus(DriverAppState.offline);
+              SoundService().playStatusOffline();
               if (context.mounted) Navigator.of(dialogContext).pop();
             } catch (_) {}
           }
         },
         onResume: () async {
-          final ok = await ensureDriverPlatformFeeAllowsOnline(context, ref);
-          if (!ok) return;
-          try {
-            await ref.read(driverApiProvider).setStatus(status: 'available');
-            ref.read(driverStateProvider.notifier).setStatus(DriverAppState.onlineAvailable);
-            SoundService().playNotification();
-            if (context.mounted) Navigator.of(dialogContext).pop();
-          } catch (_) {}
+          final attempt =
+              await attemptDriverGoOnlineWithLocationGuard(context, ref);
+          if (!context.mounted) return;
+          if (attempt.isBlocked) {
+            HapticService.mediumTap();
+            SoundService().playActionBlocked();
+            await showDriverGoOnlineGuidanceSheet(context, ref,
+                args: attempt.gateArgs!);
+            return;
+          }
+          if (!attempt.succeeded) return;
+          stateNotifier.setStatus(DriverAppState.onlineAvailable);
+          SoundService().playStatusOnline();
+          if (context.mounted) Navigator.of(dialogContext).pop();
         },
       ),
     );
@@ -202,11 +250,15 @@ class DriverMapFloating extends ConsumerWidget {
   void _showOnlinePanel(BuildContext context, WidgetRef ref) {
     ref.invalidate(driverShiftStatsProvider);
     final themeColors = ref.read(colorsProvider);
+    final typography = ref.read(typographyProvider);
+    final api = ref.read(driverApiProvider);
+    final stateNotifier = ref.read(driverStateProvider.notifier);
     final stats = ref.read(driverShiftStatsProvider).valueOrNull;
     final onlineMins = stats?.shiftTotalOnlineMinutes ?? 0;
     final rides = stats?.shiftRidesToday ?? 0;
-    final earned =
-        stats != null ? '€${stats.shiftEarningsToday.toStringAsFixed(2)}' : '€0.00';
+    final earned = stats != null
+        ? '€${stats.shiftEarningsToday.toStringAsFixed(2)}'
+        : '€0.00';
     String? breakNotice;
     Color? breakNoticeColor;
     if (stats != null && stats.continuousDrivingMinutes >= 180) {
@@ -239,9 +291,10 @@ class DriverMapFloating extends ConsumerWidget {
             ),
             child: DriverOnlinePanel(
               fromTop: true,
-              isOnBreak: ref.read(driverStateProvider).appState == DriverAppState.onBreak,
-              colors: ref.read(colorsProvider),
-              typo: ref.read(typographyProvider),
+              isOnBreak: ref.read(driverStateProvider).appState ==
+                  DriverAppState.onBreak,
+              colors: themeColors,
+              typo: typography,
               scrollController: controller,
               onlineMinutes: onlineMins,
               ridesToday: rides,
@@ -250,8 +303,9 @@ class DriverMapFloating extends ConsumerWidget {
               breakNoticeColor: breakNoticeColor,
               onTakeBreak: () async {
                 try {
-                  await ref.read(driverApiProvider).setStatus(status: 'on_break');
-                  ref.read(driverStateProvider.notifier).setStatus(DriverAppState.onBreak);
+                  await api.setStatus(status: 'on_break');
+                  stateNotifier.setStatus(DriverAppState.onBreak);
+                  SoundService().playStatusOnBreak();
                   if (context.mounted) Navigator.of(context).pop();
                 } catch (_) {}
               },
@@ -261,28 +315,37 @@ class DriverMapFloating extends ConsumerWidget {
                   builder: (_) => _EndShiftConfirmDialog(
                     hours: '${onlineMins ~/ 60}',
                     rides: '$rides',
-                    colors: ref.read(colorsProvider),
-                    typo: ref.read(typographyProvider),
+                    colors: themeColors,
+                    typo: typography,
                   ),
                 );
                 if (confirmed == true) {
                   try {
-                    await ref.read(driverApiProvider).setStatus(status: 'offline');
-                    ref.read(driverStateProvider.notifier).setStatus(DriverAppState.offline);
-                    SoundService().playNotification();
+                    await api.setStatus(status: 'offline');
+                    stateNotifier.setStatus(DriverAppState.offline);
+                    SoundService().playStatusOffline();
                     if (context.mounted) Navigator.of(context).pop();
                   } catch (_) {}
                 }
               },
               onResume: () async {
-                final ok = await ensureDriverPlatformFeeAllowsOnline(context, ref);
-                if (!ok) return;
-                try {
-                  await ref.read(driverApiProvider).setStatus(status: 'available');
-                  ref.read(driverStateProvider.notifier).setStatus(DriverAppState.onlineAvailable);
-                  SoundService().playNotification();
-                  if (context.mounted) Navigator.of(context).pop();
-                } catch (_) {}
+                final attempt =
+                    await attemptDriverGoOnlineWithLocationGuard(context, ref);
+                if (!context.mounted) return;
+                if (attempt.isBlocked) {
+                  HapticService.mediumTap();
+                  SoundService().playActionBlocked();
+                  await showDriverGoOnlineGuidanceSheet(
+                    context,
+                    ref,
+                    args: attempt.gateArgs!,
+                  );
+                  return;
+                }
+                if (!attempt.succeeded) return;
+                stateNotifier.setStatus(DriverAppState.onlineAvailable);
+                SoundService().playStatusOnline();
+                if (context.mounted) Navigator.of(context).pop();
               },
             ),
           ),
@@ -300,133 +363,6 @@ class DriverMapFloating extends ConsumerWidget {
           child: child,
         );
       },
-    );
-  }
-}
-
-class _MapFloatingButton extends StatelessWidget {
-  final IconData icon;
-  final HeyCabyColorTokens colors;
-  final VoidCallback onTap;
-
-  const _MapFloatingButton({
-    required this.icon,
-    required this.colors,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: colors.card,
-      shape: const CircleBorder(),
-      elevation: 4,
-      shadowColor: colors.text.withValues(alpha: 0.26),
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: SizedBox(
-          width: 44,
-          height: 44,
-          child: Icon(icon, color: colors.text, size: 22),
-        ),
-      ),
-    );
-  }
-}
-
-class _DriverHubButton extends StatelessWidget {
-  final int badgeCount;
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final VoidCallback onTap;
-
-  const _DriverHubButton({
-    required this.badgeCount,
-    required this.colors,
-    required this.typo,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        // High-contrast, premium "hub" button: accent fill + white ring + soft glow.
-        Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: colors.accent.withValues(alpha: 0.35),
-                blurRadius: 18,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Material(
-            color: colors.accent,
-            shape: const CircleBorder(),
-            elevation: 6,
-            shadowColor: colors.text.withValues(alpha: 0.10),
-            child: InkWell(
-              onTap: onTap,
-              customBorder: const CircleBorder(),
-              child: SizedBox(
-                width: _hubButtonSize,
-                height: _hubButtonSize,
-                child: Icon(
-                  AppIcons.hubGrid,
-                  // Lucide stroke on map: force luminance-based fg so we never get dark-on-dark
-                  // when [onAccent] tracks [text] on light-gold accents over a busy basemap.
-                  color: colors.accent.computeLuminance() < 0.45
-                      ? colors.card
-                      : colors.text,
-                  size: 24,
-                ),
-              ),
-            ),
-          ),
-        ),
-        Positioned.fill(
-          child: IgnorePointer(
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: colors.card.withValues(alpha: 0.85),
-                  width: 2,
-                ),
-              ),
-            ),
-          ),
-        ),
-        if (badgeCount > 0)
-          Positioned(
-            top: -2,
-            right: -2,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-              decoration: BoxDecoration(
-                color: colors.error,
-                shape: BoxShape.circle,
-                border: Border.all(color: colors.card, width: 1.5),
-              ),
-              child: Center(
-                child: Text(
-                  badgeCount >= 10 ? '9+' : '$badgeCount',
-                  style: typo.labelSmall.copyWith(
-                    color: colors.card,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-      ],
     );
   }
 }

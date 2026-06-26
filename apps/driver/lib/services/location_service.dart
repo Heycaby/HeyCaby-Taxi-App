@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 
+import '../providers/driver_state_provider.dart';
+
 /// Request location permission and get current position.
 /// Returns null if permission denied or location unavailable.
 /// Use on app open — driver cannot use the app without location.
@@ -33,6 +35,28 @@ Future<Position?> requestAndGetLocation() async {
   }
 }
 
+/// Whether the driver app should upload GPS on an interval (Program 3A).
+bool shouldTrackDriverLocation(DriverAppState appState) {
+  switch (appState) {
+    case DriverAppState.onlineAvailable:
+    case DriverAppState.reviewingRequest:
+    case DriverAppState.acceptingRide:
+    case DriverAppState.assigned:
+    case DriverAppState.arrived:
+    case DriverAppState.inProgress:
+    case DriverAppState.completingRide:
+    case DriverAppState.completed:
+      return true;
+    case DriverAppState.offline:
+    case DriverAppState.onBreak:
+    case DriverAppState.loggedOut:
+    case DriverAppState.onboardingIncomplete:
+    case DriverAppState.goingOnline:
+    case DriverAppState.errorRecovery:
+      return false;
+  }
+}
+
 /// Driver location tracking service
 /// Updates driver GPS position to backend every 5 seconds when online
 class DriverLocationService {
@@ -42,9 +66,25 @@ class DriverLocationService {
 
   Timer? _locationTimer;
   bool _isTracking = false;
+  bool _uploadInFlight = false;
   String? _cachedDriverId; // drivers.id FK, resolved once and cached
+  bool _gpsHealthy = true;
+  int _consecutiveGpsFailures = 0;
 
+  /// Notified when GPS health flips (Program 3E).
+  void Function(bool healthy)? onGpsHealthChanged;
+
+  bool get isGpsHealthy => _gpsHealthy;
   bool get isTracking => _isTracking;
+
+  /// Align periodic uploads with [DriverAppState] (start / stop).
+  Future<void> syncWithAppState(DriverAppState appState) async {
+    if (shouldTrackDriverLocation(appState)) {
+      await startTracking();
+    } else {
+      stopTracking();
+    }
+  }
 
   /// Start tracking and uploading driver location every 5 seconds
   Future<void> startTracking() async {
@@ -60,8 +100,9 @@ class DriverLocationService {
     }
 
     _isTracking = true;
-    _locationTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
-      await _uploadLocation();
+    _locationTimer?.cancel();
+    _locationTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      unawaited(_uploadLocation());
     });
 
     // Upload immediately on start
@@ -73,6 +114,21 @@ class DriverLocationService {
     _locationTimer?.cancel();
     _locationTimer = null;
     _isTracking = false;
+    _uploadInFlight = false;
+    _consecutiveGpsFailures = 0;
+    _setGpsHealthy(true);
+  }
+
+  /// Call on logout so the next user does not reuse the prior drivers.id cache.
+  void resetSession() {
+    stopTracking();
+    _cachedDriverId = null;
+  }
+
+  /// Force one upload when the app returns to foreground (if tracking is active).
+  Future<void> uploadNowIfTracking() async {
+    if (!_isTracking) return;
+    await _uploadLocation();
   }
 
   /// Resolve drivers.id from auth uid (cached after first call)
@@ -91,11 +147,27 @@ class DriverLocationService {
     return _cachedDriverId;
   }
 
-  Future<void> _uploadLocation() async {
+  Future<Position?> _readPosition() async {
     try {
-      final position = await Geolocator.getCurrentPosition(
+      return await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 8),
       );
+    } catch (_) {
+      return Geolocator.getLastKnownPosition();
+    }
+  }
+
+  Future<void> _uploadLocation() async {
+    if (_uploadInFlight) return;
+    _uploadInFlight = true;
+    try {
+      final position = await _readPosition();
+      if (position == null) {
+        _markGpsFailure();
+        return;
+      }
+      _markGpsSuccess();
 
       final authUid = HeyCabySupabase.client.auth.currentUser?.id;
       if (authUid == null) return;
@@ -109,7 +181,7 @@ class DriverLocationService {
           'latitude': position.latitude,
           'longitude': position.longitude,
           'heading': position.heading,
-          'updated_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
         },
         onConflict: 'user_id',
       );
@@ -122,10 +194,30 @@ class DriverLocationService {
       if (kDebugMode) {
         debugPrint('DriverLocationService: Failed to upload location - $e');
       }
+    } finally {
+      _uploadInFlight = false;
     }
   }
 
   void dispose() {
     stopTracking();
+  }
+
+  void _markGpsSuccess() {
+    _consecutiveGpsFailures = 0;
+    _setGpsHealthy(true);
+  }
+
+  void _markGpsFailure() {
+    _consecutiveGpsFailures++;
+    if (_consecutiveGpsFailures >= 3) {
+      _setGpsHealthy(false);
+    }
+  }
+
+  void _setGpsHealthy(bool value) {
+    if (_gpsHealthy == value) return;
+    _gpsHealthy = value;
+    onGpsHealthChanged?.call(value);
   }
 }

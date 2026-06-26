@@ -28,7 +28,7 @@ class RiderIdentityState {
     this.isLoaded = false,
   });
 
-  bool get hasSession => riderToken != null && identityId != null;
+  bool get hasSession => riderToken != null && riderToken!.isNotEmpty;
 
   RiderIdentityState copyWith({
     String? riderToken,
@@ -237,6 +237,17 @@ class RiderIdentityNotifier extends AsyncNotifier<RiderIdentityState> {
         if (kDebugMode) debugPrint('Sync email error: $e');
       }
     }
+  }
+
+  Future<void> saveGuestToken(String token) async {
+    await SecureStorage.updateRiderToken(token);
+    final current = state.valueOrNull;
+    if (current != null) {
+      state = AsyncData(current.copyWith(riderToken: token, isLoaded: true));
+      return;
+    }
+    final stored = await SecureStorage.getRiderIdentity();
+    state = AsyncData(_stateFromStored(stored));
   }
 
   Future<void> clearSession() async {

@@ -125,6 +125,13 @@ analyze:
     - flutter analyze --no-fatal-infos --no-fatal-warnings apps/rider/lib apps/driver/lib packages/
   allow_failure: true
 
+boundaries_check:
+  stage: analyze
+  extends: .rules_analyze
+  script:
+    - ./scripts/enforce_monorepo_boundaries.sh
+  allow_failure: false
+
 test_driver:
   stage: test
   extends: .rules_driver

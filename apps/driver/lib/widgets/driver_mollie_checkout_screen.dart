@@ -4,18 +4,26 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import '../l10n/driver_strings.dart';
 
-/// Full-screen Mollie hosted checkout; pops with `true` when user hits return URL.
+/// Full-screen Mollie hosted checkout or customer portal; pops with `true` when user hits return URL.
 class DriverMollieCheckoutScreen extends StatefulWidget {
   const DriverMollieCheckoutScreen({
     super.key,
     required this.checkoutUrl,
     required this.colors,
     required this.typo,
+    this.appBarTitle,
+    /// When non-null and [autoPopOnSuccessUrlMatch] is true, navigation to a URL containing this substring pops `true`.
+    this.successUrlContains = 'driver/payment/return',
+    /// If false, only the close button dismisses (e.g. mandate portal where return URL is unpredictable).
+    this.autoPopOnSuccessUrlMatch = true,
   });
 
   final String checkoutUrl;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
+  final String? appBarTitle;
+  final String? successUrlContains;
+  final bool autoPopOnSuccessUrlMatch;
 
   @override
   State<DriverMollieCheckoutScreen> createState() =>
@@ -39,7 +47,11 @@ class _DriverMollieCheckoutScreenState extends State<DriverMollieCheckoutScreen>
           },
           onNavigationRequest: (request) {
             final u = request.url;
-            if (u.contains('driver/payment/return')) {
+            final needle = widget.successUrlContains;
+            if (widget.autoPopOnSuccessUrlMatch &&
+                needle != null &&
+                needle.isNotEmpty &&
+                u.contains(needle)) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted) Navigator.of(context).pop(true);
               });
@@ -61,11 +73,12 @@ class _DriverMollieCheckoutScreenState extends State<DriverMollieCheckoutScreen>
     final colors = widget.colors;
     final typo = widget.typo;
     return Scaffold(
-      backgroundColor: colors.bg,
       appBar: AppBar(
-        backgroundColor: colors.card,
         foregroundColor: colors.text,
-        title: Text(DriverStrings.platformFeeCheckoutTitle, style: typo.titleMedium),
+        title: Text(
+          widget.appBarTitle ?? DriverStrings.platformFeeCheckoutTitle,
+          style: typo.titleMedium,
+        ),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(false),

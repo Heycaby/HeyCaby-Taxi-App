@@ -1,16 +1,9 @@
-//
-//  HeyCabyWidgetsControl.swift
-//  HeyCabyWidgets
-//
-//  Created by Ai Guy on 05/04/2026.
-//
-
 import AppIntents
 import SwiftUI
 import WidgetKit
 
 struct HeyCabyWidgetsControl: ControlWidget {
-    static let kind: String = "nl.heycaby.rider.HeyCabyWidgets"
+    static let kind: String = "nl.heycaby.rider.app.HeyCabyWidgetsExtension"
 
     var body: some ControlWidgetConfiguration {
         AppIntentControlConfiguration(
@@ -18,15 +11,15 @@ struct HeyCabyWidgetsControl: ControlWidget {
             provider: Provider()
         ) { value in
             ControlWidgetToggle(
-                "Start Timer",
+                "Ride updates",
                 isOn: value.isRunning,
-                action: StartTimerIntent(value.name)
+                action: SetRideUpdatesIntent(value.name)
             ) { isRunning in
-                Label(isRunning ? "On" : "Off", systemImage: "timer")
+                Label(isRunning ? "Enabled" : "Disabled", systemImage: "car.fill")
             }
         }
-        .displayName("Timer")
-        .description("A an example control that runs a timer.")
+        .displayName("HeyCaby ride updates")
+        .description("Enable or disable quick ride status controls.")
     }
 }
 
@@ -37,31 +30,31 @@ extension HeyCabyWidgetsControl {
     }
 
     struct Provider: AppIntentControlValueProvider {
-        func previewValue(configuration: TimerConfiguration) -> Value {
+        func previewValue(configuration: RideUpdatesConfiguration) -> Value {
             HeyCabyWidgetsControl.Value(isRunning: false, name: configuration.timerName)
         }
 
-        func currentValue(configuration: TimerConfiguration) async throws -> Value {
-            let isRunning = true // Check if the timer is running
+        func currentValue(configuration: RideUpdatesConfiguration) async throws -> Value {
+            let isRunning = false
             return HeyCabyWidgetsControl.Value(isRunning: isRunning, name: configuration.timerName)
         }
     }
 }
 
-struct TimerConfiguration: ControlConfigurationIntent {
-    static let title: LocalizedStringResource = "Timer Name Configuration"
+struct RideUpdatesConfiguration: ControlConfigurationIntent {
+    static let title: LocalizedStringResource = "Ride updates configuration"
 
-    @Parameter(title: "Timer Name", default: "Timer")
+    @Parameter(title: "Label", default: "Ride updates")
     var timerName: String
 }
 
-struct StartTimerIntent: SetValueIntent {
-    static let title: LocalizedStringResource = "Start a timer"
+struct SetRideUpdatesIntent: SetValueIntent {
+    static let title: LocalizedStringResource = "Set ride updates"
 
-    @Parameter(title: "Timer Name")
+    @Parameter(title: "Label")
     var name: String
 
-    @Parameter(title: "Timer is running")
+    @Parameter(title: "Enabled")
     var value: Bool
 
     init() {}
@@ -71,7 +64,6 @@ struct StartTimerIntent: SetValueIntent {
     }
 
     func perform() async throws -> some IntentResult {
-        // Start the timer…
         return .result()
     }
 }

@@ -6,6 +6,8 @@ These files mirror `heycaby-tos/chauffeur/` and `heycaby-tos/support/` in this r
 | Public URL | Copy to in web `public/` |
 |------------|--------------------------|
 | `https://www.heycaby.nl/chauffeur/voorwaarden` | `public/chauffeur/voorwaarden/index.html` |
+| `https://www.heycaby.nl/chauffeur/vrijwaring` | `public/chauffeur/vrijwaring/index.html` |
+| `https://www.heycaby.nl/chauffeur/founding-member-contract` | `public/chauffeur/founding-member-contract/index.html` |
 | `https://www.heycaby.nl/support` | `public/support/index.html` |
 
 ## One-time setup (from your machine)
@@ -26,6 +28,8 @@ git push
 After deploy, open:
 
 - https://www.heycaby.nl/chauffeur/voorwaarden  
+- https://www.heycaby.nl/chauffeur/vrijwaring  
+- https://www.heycaby.nl/chauffeur/founding-member-contract  
 - https://www.heycaby.nl/support  
 
 ## Keeping in sync

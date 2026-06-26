@@ -3,17 +3,18 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
 import '../theme/app_icons.dart';
+import '../theme/driver_motion.dart';
+import '../theme/driver_motion_presets.dart';
 import '../providers/driver_data_providers.dart';
 import '../providers/driver_state_provider.dart';
 import '../services/location_service.dart';
-import '../services/driver_platform_fee_gate.dart';
 import '../services/sound_service.dart';
-import '../utils/driver_go_online_policy.dart';
+import '../utils/driver_go_online_runtime_action.dart';
+import 'driver_go_online_guidance_sheet.dart';
 
 /// Slide-to-activate control for going online. Prevents accidental taps.
 class DriverSwipeToGoOnline extends ConsumerStatefulWidget {
@@ -37,6 +38,8 @@ class _DriverSwipeToGoOnlineState extends ConsumerState<DriverSwipeToGoOnline> {
   double _dragOffset = 0;
   bool _isLoading = false;
   bool _completed = false;
+  bool _didStartDragHaptic = false;
+  bool _didReachTriggerHaptic = false;
 
   Future<void> _onSlideComplete() async {
     if (_isLoading || _completed) return;
@@ -46,37 +49,36 @@ class _DriverSwipeToGoOnlineState extends ConsumerState<DriverSwipeToGoOnline> {
       if (!mounted) return;
       if (position == null) {
         _showLocationRequiredDialog();
+        HapticService.mediumTap();
+        SoundService().playActionBlocked();
         setState(() => _dragOffset = 0);
         return;
       }
 
-      final compliant = await ref.read(driverComplianceProvider.future);
-      final isReviewAccount =
-          HeyCabySupabase.client.auth.currentUser?.userMetadata?['review_account'] ==
-              true;
-      if (!driverMayGoOnline(compliant, isReviewAccount: isReviewAccount)) {
-        if (!mounted) return;
-        final msg = driverLicenceAwaitingManualReview(compliant)
-            ? DriverStrings.onlineBlockedLicenseReview
-            : DriverStrings.onlineBlockedCompliance;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
-        );
-        setState(() => _dragOffset = 0);
-        return;
-      }
-
-      final feeOk = await ensureDriverPlatformFeeAllowsOnline(context, ref);
-      if (!feeOk) {
+      if (!mounted) return;
+      final attempt = await attemptDriverGoOnline(
+        context: context,
+        ref: ref,
+        latitude: position.latitude,
+        longitude: position.longitude,
+      );
+      if (!mounted) return;
+      if (attempt.isBlocked) {
+        HapticService.mediumTap();
+        SoundService().playActionBlocked();
+        await showDriverGoOnlineGuidanceSheet(context, ref, args: attempt.gateArgs!);
         if (mounted) setState(() => _dragOffset = 0);
         return;
       }
-
-      await ref.read(driverApiProvider).setStatus(
-            status: 'available',
-            lat: position.latitude,
-            lng: position.longitude,
+      if (!attempt.succeeded) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(DriverStrings.goOnlineFailed)),
           );
+        }
+        setState(() => _dragOffset = 0);
+        return;
+      }
       if (!mounted) return;
       ref.read(driverStateProvider.notifier).setStatus(DriverAppState.onlineAvailable);
       final driverId = await ref.read(driverIdProvider.future);
@@ -84,7 +86,8 @@ class _DriverSwipeToGoOnlineState extends ConsumerState<DriverSwipeToGoOnline> {
         await ref.read(driverShiftSessionServiceProvider).ensureShiftSessionStarted(driverId);
       }
       ref.invalidate(driverShiftStatsProvider);
-      SoundService().playNotification();
+      HapticService.heavyTap();
+      SoundService().playStatusOnline();
       setState(() => _completed = true);
       widget.onComplete?.call();
     } catch (e, _) {
@@ -115,7 +118,7 @@ class _DriverSwipeToGoOnlineState extends ConsumerState<DriverSwipeToGoOnline> {
         return 'Server rejected request. Check that your driver profile is complete.';
       }
     }
-    return 'Failed to go online. Please try again.';
+    return DriverStrings.failedToGoOnline;
   }
 
   void _showLocationRequiredDialog() {
@@ -164,7 +167,33 @@ class _DriverSwipeToGoOnlineState extends ConsumerState<DriverSwipeToGoOnline> {
   Widget build(BuildContext context) {
     final colors = widget.colors;
     final typo = widget.typo;
-    final thumbSize = 56.0;
+    const thumbSize = 56.0;
+
+    if (_completed) {
+      return Container(
+        height: 64,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: colors.success.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(color: colors.success.withValues(alpha: 0.45)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(AppIcons.check, color: colors.success, size: 22),
+            const SizedBox(width: 10),
+            Text(
+              DriverStrings.youAreOnline,
+              style: typo.bodyLarge.copyWith(
+                color: colors.success,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ).driverSuccessPop();
+    }
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -181,7 +210,13 @@ class _DriverSwipeToGoOnlineState extends ConsumerState<DriverSwipeToGoOnline> {
                   setState(() {
                     _dragOffset =
                         (_dragOffset + d.delta.dx).clamp(0.0, maxSlide);
-                    if (maxSlide > 0 && _dragOffset >= maxSlide * 0.85) {
+                    if (!_didStartDragHaptic) {
+                      HapticService.mediumTap();
+                      _didStartDragHaptic = true;
+                    }
+                    if (maxSlide > 0 && _dragOffset >= maxSlide * 0.85 && !_didReachTriggerHaptic) {
+                      _didReachTriggerHaptic = true;
+                      HapticService.heavyTap();
                       _onSlideComplete();
                     }
                   });
@@ -189,6 +224,8 @@ class _DriverSwipeToGoOnlineState extends ConsumerState<DriverSwipeToGoOnline> {
           onHorizontalDragEnd: _isLoading
               ? null
               : (_) {
+                  _didStartDragHaptic = false;
+                  _didReachTriggerHaptic = false;
                   if (!triggered) setState(() => _dragOffset = 0);
                 },
           child: Container(
@@ -201,6 +238,21 @@ class _DriverSwipeToGoOnlineState extends ConsumerState<DriverSwipeToGoOnline> {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: AnimatedContainer(
+                    duration: DriverMotion.fast,
+                    curve: DriverMotion.standardCurve,
+                    width: trackWidth * progress,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: colors.accent.withValues(
+                        alpha: 0.12 + progress * 0.18,
+                      ),
+                      borderRadius: BorderRadius.circular(32),
+                    ),
+                  ),
+                ),
                 Center(
                   child: Text(
                     DriverStrings.slideToGoOnline,
@@ -213,7 +265,9 @@ class _DriverSwipeToGoOnlineState extends ConsumerState<DriverSwipeToGoOnline> {
                 Positioned(
                   left: 4 + _dragOffset,
                   top: 4,
-                  child: Container(
+                  child: AnimatedContainer(
+                    duration: DriverMotion.fast,
+                    curve: DriverMotion.standardCurve,
                     width: thumbSize - 8,
                     height: thumbSize - 8,
                     decoration: BoxDecoration(

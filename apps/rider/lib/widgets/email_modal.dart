@@ -8,6 +8,7 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../providers/favorites_provider.dart';
+import '../services/rider_notification_lifecycle_service.dart';
 
 Future<bool> showEmailModal(BuildContext context, WidgetRef ref) async {
   final result = await showModalBottomSheet<bool>(
@@ -122,7 +123,8 @@ class _EmailModalState extends ConsumerState<_EmailModal> {
                         readOnly: _awaitingOtp,
                         decoration: InputDecoration(
                           hintText: l10n.enterYourEmail,
-                          hintStyle: typo.bodyLarge.copyWith(color: colors.textSoft),
+                          hintStyle:
+                              typo.bodyLarge.copyWith(color: colors.textSoft),
                           filled: true,
                           fillColor: colors.bgAlt,
                           contentPadding: const EdgeInsetsDirectional.all(16),
@@ -136,7 +138,8 @@ class _EmailModalState extends ConsumerState<_EmailModal> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: colors.accent, width: 2),
+                            borderSide:
+                                BorderSide(color: colors.accent, width: 2),
                           ),
                         ),
                       ),
@@ -155,7 +158,8 @@ class _EmailModalState extends ConsumerState<_EmailModal> {
                         ],
                         decoration: InputDecoration(
                           hintText: l10n.riderEmailReviewCodeFieldHint,
-                          hintStyle: typo.bodyLarge.copyWith(color: colors.textSoft),
+                          hintStyle:
+                              typo.bodyLarge.copyWith(color: colors.textSoft),
                           filled: true,
                           fillColor: colors.bgAlt,
                           contentPadding: const EdgeInsetsDirectional.all(16),
@@ -170,7 +174,8 @@ class _EmailModalState extends ConsumerState<_EmailModal> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: colors.accent, width: 2),
+                            borderSide:
+                                BorderSide(color: colors.accent, width: 2),
                           ),
                         ),
                       ),
@@ -181,12 +186,12 @@ class _EmailModalState extends ConsumerState<_EmailModal> {
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _handleSubmit,
                           style: ElevatedButton.styleFrom(
-                              disabledBackgroundColor: colors.border,
-                              disabledForegroundColor: colors.textMid,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
+                            disabledBackgroundColor: colors.border,
+                            disabledForegroundColor: colors.textMid,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
                             ),
+                          ),
                           child: _isLoading
                               ? SizedBox(
                                   width: 22,
@@ -199,7 +204,8 @@ class _EmailModalState extends ConsumerState<_EmailModal> {
                               : Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.check_circle_outline, color: colors.onAccent, size: 20),
+                                    Icon(Icons.check_circle_outline,
+                                        color: colors.onAccent, size: 20),
                                     const SizedBox(width: 10),
                                     Text(
                                       l10n.continueButton,
@@ -226,11 +232,24 @@ class _EmailModalState extends ConsumerState<_EmailModal> {
   }
 
   Future<void> _finishSession(Map<String, dynamic> map, String email) async {
+    final identityId = map['identity_id'] as String;
     await ref.read(riderIdentityProvider.notifier).saveSession(
           token: map['session_token'] as String,
-          identityId: map['identity_id'] as String,
+          identityId: identityId,
           email: email,
         );
+    // Force immediate push registration after email login completes.
+    await HeyCabyFcmRegistration.sync(appRole: 'rider');
+    await RiderNotificationLifecycleService.trackEvent(
+      'signup_completed',
+      riderIdentityId: identityId,
+      payload: <String, dynamic>{'source': 'email_modal'},
+    );
+    await RiderNotificationLifecycleService.trackEvent(
+      'app_open',
+      riderIdentityId: identityId,
+      payload: <String, dynamic>{'source': 'email_modal'},
+    );
     ref.invalidate(favoritesProvider);
     if (mounted) Navigator.of(context).pop(true);
   }
@@ -269,7 +288,7 @@ class _EmailModalState extends ConsumerState<_EmailModal> {
           _showError(l10n.failedToSaveEmail);
           return;
         }
-        final map = Map<String, dynamic>.from(result as Map);
+        final map = Map<String, dynamic>.from(result);
         setState(() => _isLoading = false);
         await _finishSession(map, email);
         return;
@@ -280,10 +299,8 @@ class _EmailModalState extends ConsumerState<_EmailModal> {
           'fn_create_rider_session_review',
           params: {'p_email': email, 'p_otp': otp},
         );
-        if (review != null &&
-            review is Map &&
-            review['success'] == true) {
-          final map = Map<String, dynamic>.from(review as Map);
+        if (review != null && review is Map && review['success'] == true) {
+          final map = Map<String, dynamic>.from(review);
           setState(() => _isLoading = false);
           await _finishSession(map, email);
           return;
@@ -300,7 +317,7 @@ class _EmailModalState extends ConsumerState<_EmailModal> {
               params: {'p_email': email, 'p_display_name': null},
             );
             if (result != null && result is Map && result['success'] == true) {
-              final map = Map<String, dynamic>.from(result as Map);
+              final map = Map<String, dynamic>.from(result);
               setState(() => _isLoading = false);
               await _finishSession(map, email);
               return;
@@ -337,7 +354,7 @@ class _EmailModalState extends ConsumerState<_EmailModal> {
           _showError(l10n.failedToSaveEmail);
           return;
         }
-        final map = Map<String, dynamic>.from(result as Map);
+        final map = Map<String, dynamic>.from(result);
         setState(() => _isLoading = false);
         await _finishSession(map, email);
         return;

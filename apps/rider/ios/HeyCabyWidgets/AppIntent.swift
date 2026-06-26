@@ -1,18 +1,10 @@
-//
-//  AppIntent.swift
-//  HeyCabyWidgets
-//
-//  Created by Ai Guy on 05/04/2026.
-//
-
 import WidgetKit
 import AppIntents
 
-struct ConfigurationAppIntent: WidgetConfigurationIntent {
-    static var title: LocalizedStringResource { "Configuration" }
-    static var description: IntentDescription { "This is an example widget." }
+struct RideStatusConfigurationAppIntent: WidgetConfigurationIntent {
+    static var title: LocalizedStringResource { "Ride Status" }
+    static var description: IntentDescription { "Shows quick access to your HeyCaby ride status." }
 
-    // An example configurable parameter.
-    @Parameter(title: "Favorite Emoji", default: "😃")
-    var favoriteEmoji: String
+    @Parameter(title: "Show current ride", default: true)
+    var showCurrentRide: Bool
 }

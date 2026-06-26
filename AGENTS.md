@@ -18,6 +18,7 @@ This is a Flutter monorepo (Melos) with two mobile apps (`apps/rider/`, `apps/dr
 
 ### iOS physical device (full app — no “minimal” shortcuts)
 
+- **iPhone only (no iPad):** `TARGETED_DEVICE_FAMILY = 1` in all iOS targets (Runner + widget extension), and `UIDeviceFamily` in the host `Info.plist` files lists iPhone (`1`) only. The App Store then lists the app for iPhone, not as a native iPad app.
 - **Secrets + Mapbox:** `./scripts/run_rider_ios_debug.sh` merges repo / `apps/rider/.env` into `ios/.ipa_dart_defines.json` and `Flutter/Secrets.xcconfig`, then `flutter run`. This is the **full** rider app (Supabase, Mapbox, widgets, live activities); nothing is intentionally stripped for device.
 - **Store-parity on device (AOT, optimizations):** same script with **`--release`** (e.g. `./scripts/run_rider_ios_debug.sh --release -d <device_id>`). Still the full binary; you lose hot reload only.
 - **Xcode targets:** `HeyCabyWidgetsExtension` must match the Podfile minimum iOS (**18.0**) and use **`ENABLE_USER_SCRIPT_SANDBOXING = NO`** like Runner so Flutter/CocoaPods script phases and embed steps stay reliable. Minimum is **OS version** (iOS **18+**), not phone generation — any compatible device on iOS 18 or newer is supported. On iOS **below** that, rider/driver **`main`** shows a full-screen “update iOS” message (see `kHeyCabyMinimumIosMajorVersion` in `heycaby_utils`) and does not initialize Supabase/Mapbox.
@@ -36,6 +37,7 @@ All commands assume `PATH` includes `$HOME/flutter/bin` and `$HOME/.pub-cache/bi
 |------|---------|
 | Bootstrap | `cd /workspace && melos bootstrap` |
 | Analyze both apps | `flutter analyze --no-fatal-infos --no-fatal-warnings apps/rider/lib apps/driver/lib` |
+| Enforce app/backend boundaries | `melos run guard:boundaries` |
 | Rider tests | `cd /workspace/apps/rider && flutter test test/ --no-pub` |
 | Driver tests | `cd /workspace/apps/driver && flutter test test/ --no-pub` |
 | Generate rider l10n | `cd /workspace/apps/rider && flutter gen-l10n` |

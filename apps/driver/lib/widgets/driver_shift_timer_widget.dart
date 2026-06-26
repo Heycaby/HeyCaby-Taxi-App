@@ -1,18 +1,22 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../theme/driver_colors.dart';
+import '../theme/driver_radius.dart';
+import '../theme/driver_shadows.dart';
+import '../theme/driver_spacing.dart';
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
 import '../providers/driver_state_provider.dart';
 import '../services/driver_data_service.dart';
 import '../services/location_service.dart';
-import '../services/driver_platform_fee_gate.dart';
 import '../services/sound_service.dart';
+import '../utils/driver_go_online_runtime_action.dart';
+import 'driver_go_online_guidance_sheet.dart';
 import 'driver_shift_arc_painter.dart';
 
 const _shiftArcMinutes = 8 * 60;
@@ -60,7 +64,15 @@ class _DriverShiftTimerWidgetState extends ConsumerState<DriverShiftTimerWidget>
             lng: pos?.longitude,
           );
       ref.read(driverStateProvider.notifier).setStatus(next);
-      SoundService().playNotification();
+      if (status == 'available') {
+        SoundService().playStatusOnline();
+      } else if (status == 'on_break') {
+        SoundService().playStatusOnBreak();
+      } else if (status == 'offline') {
+        SoundService().playStatusOffline();
+      } else {
+        SoundService().playNotification();
+      }
       ref.invalidate(driverShiftStatsProvider);
       ref.invalidate(driverEarningsProvider);
     } catch (_) {
@@ -118,9 +130,22 @@ class _DriverShiftTimerWidgetState extends ConsumerState<DriverShiftTimerWidget>
 
   Future<void> _resumeFromBreakOnline() async {
     if (_busy) return;
-    final ok = await ensureDriverPlatformFeeAllowsOnline(context, ref);
-    if (!ok) return;
-    await _setStatus('available', DriverAppState.onlineAvailable);
+    setState(() => _busy = true);
+    try {
+      final attempt = await attemptDriverGoOnlineWithLocationGuard(context, ref);
+      if (!mounted) return;
+      if (attempt.isBlocked) {
+        await showDriverGoOnlineGuidanceSheet(context, ref, args: attempt.gateArgs!);
+        return;
+      }
+      if (!attempt.succeeded) return;
+      ref.read(driverStateProvider.notifier).setStatus(DriverAppState.onlineAvailable);
+      SoundService().playStatusOnline();
+      ref.invalidate(driverShiftStatsProvider);
+      ref.invalidate(driverEarningsProvider);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   @override
@@ -155,18 +180,17 @@ class _DriverShiftTimerWidgetState extends ConsumerState<DriverShiftTimerWidget>
       child: Container(
         decoration: BoxDecoration(
           color: colors.card,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: DriverRadius.lgAll,
           border: Border.all(color: colors.border.withValues(alpha: 0.55)),
-          boxShadow: [
-            BoxShadow(
-              color: colors.text.withValues(alpha: 0.08),
-              blurRadius: 28,
-              offset: const Offset(0, 14),
-            ),
-          ],
+          boxShadow: DriverShadows.floating(DriverColors.fromTheme(colors)),
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+          padding: const EdgeInsets.fromLTRB(
+            DriverSpacing.md,
+            DriverSpacing.md,
+            DriverSpacing.md,
+            DriverSpacing.sm + 4,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -270,7 +294,7 @@ class _DriverShiftTimerWidgetState extends ConsumerState<DriverShiftTimerWidget>
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
                   color: colors.bgAlt.withValues(alpha: 0.65),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: DriverRadius.mdAll,
                 ),
                 child: Row(
                   children: [
@@ -415,7 +439,7 @@ class _OutlineBtn extends StatelessWidget {
   Widget build(BuildContext context) {
     return OutlinedButton(
       onPressed: busy ? null : () {
-        HapticFeedback.lightImpact();
+        HapticService.lightTap();
         onTap();
       },
       style: OutlinedButton.styleFrom(

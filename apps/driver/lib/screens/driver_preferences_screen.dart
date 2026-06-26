@@ -7,7 +7,13 @@ import '../l10n/driver_strings.dart';
 import '../theme/app_icons.dart';
 import '../providers/driver_data_providers.dart';
 import '../providers/driver_locale_provider.dart';
+import '../providers/driver_nav_app_pref_provider.dart';
 import '../services/driver_data_service.dart';
+import '../services/driver_nav_app_pref.dart';
+import '../services/sound_service.dart';
+import '../theme/driver_colors.dart';
+import '../theme/driver_typography.dart';
+import '../widgets/driver_preferences_body.dart';
 import '../widgets/premium_settings_cards.dart';
 
 class DriverPreferencesScreen extends ConsumerWidget {
@@ -15,214 +21,70 @@ class DriverPreferencesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = ref.watch(colorsProvider);
-    final typo = ref.watch(typographyProvider);
+    final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
     final profileAsync = ref.watch(driverProfileProvider);
     final themeData = ref.watch(themeProvider);
-    final bottomPad = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
-      backgroundColor: colors.bg,
       body: profileAsync.when(
         data: (profile) {
-          return CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsetsDirectional.fromSTEB(8, 4, 20, 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            AppIcons.backIos,
-                            color: colors.text,
-                            size: 20,
-                          ),
-                          onPressed: () => context.pop(),
-                        ),
-                        Padding(
-                          padding: const EdgeInsetsDirectional.only(start: 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                DriverStrings.preferences,
-                                style: typo.titleMedium.copyWith(
-                                  color: colors.text,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -0.35,
-                                  fontSize: 22,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                DriverStrings.preferencesSubtitle,
-                                style: typo.bodySmall.copyWith(
-                                  color: colors.textSoft,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsetsDirectional.fromSTEB(20, 0, 20, 0),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    PremiumSettingsSectionLabel(
-                      text: DriverStrings.preferencesSectionVehicle,
-                      colors: colors,
-                      typo: typo,
-                    ),
-                    PremiumSettingsCard(
-                      colors: colors,
-                      child: Column(
-                        children: [
-                          PremiumSettingsNavRow(
-                            icon: AppIcons.carFront,
-                            title: DriverStrings.vehicle,
-                            subtitle: profile?.vehicleDisplay ?? '—',
-                            colors: colors,
-                            typo: typo,
-                            onTap: () => context.push('/driver/vehicle'),
-                          ),
-                          PremiumSettingsNavRow(
-                            icon: AppIcons.radar,
-                            title: DriverStrings.pickupDistance,
-                            subtitle:
-                                '${(profile?.pickupDistanceMaxKm ?? 20).round()} km',
-                            colors: colors,
-                            typo: typo,
-                            onTap: () => _showPickupDistanceModal(context, ref),
-                            showDivider: false,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-                    PremiumSettingsSectionLabel(
-                      text: DriverStrings.preferencesSectionPayments,
-                      colors: colors,
-                      typo: typo,
-                    ),
-                    PremiumSettingsCard(
-                      colors: colors,
-                      child: Column(
-                        children: [
-                          PremiumSettingsToggleRow(
-                            icon: AppIcons.payments,
-                            title: DriverStrings.acceptsCash,
-                            value: profile?.acceptsCash ?? false,
-                            colors: colors,
-                            typo: typo,
-                            onChanged: (v) =>
-                                _updatePaymentMethod(context, ref, profile, 'cash', v),
-                          ),
-                          PremiumSettingsToggleRow(
-                            icon: Icons.credit_card_rounded,
-                            title: DriverStrings.acceptsCard,
-                            value: profile?.acceptsCard ?? false,
-                            colors: colors,
-                            typo: typo,
-                            onChanged: (v) =>
-                                _updatePaymentMethod(context, ref, profile, 'card', v),
-                          ),
-                          PremiumSettingsToggleRow(
-                            icon: AppIcons.wallet,
-                            title: DriverStrings.acceptsTikkie,
-                            value: profile?.acceptsTikkie ?? false,
-                            colors: colors,
-                            typo: typo,
-                            onChanged: (v) =>
-                                _updatePaymentMethod(context, ref, profile, 'tikkie', v),
-                          ),
-                          PremiumSettingsToggleRow(
-                            icon: Icons.receipt_long_rounded,
-                            title: DriverStrings.acceptsInvoice,
-                            value: profile?.acceptsInvoice ?? false,
-                            colors: colors,
-                            typo: typo,
-                            onChanged: (v) =>
-                                _updatePaymentMethod(context, ref, profile, 'invoice', v),
-                          ),
-                          PremiumSettingsToggleRow(
-                            icon: AppIcons.dog,
-                            title: DriverStrings.petFriendly,
-                            value: profile?.isPetFriendly ?? false,
-                            colors: colors,
-                            typo: typo,
-                            onChanged: (v) => _updatePref(ref, isPetFriendly: v),
-                          ),
-                          PremiumSettingsToggleRow(
-                            icon: AppIcons.accessibility,
-                            title: DriverStrings.wheelchairAccessible,
-                            value: profile?.isWheelchairAccessible ?? false,
-                            colors: colors,
-                            typo: typo,
-                            onChanged: (v) =>
-                                _updatePref(ref, isWheelchairAccessible: v),
-                            showDivider: false,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-                    PremiumSettingsSectionLabel(
-                      text: DriverStrings.preferencesSectionAppearance,
-                      colors: colors,
-                      typo: typo,
-                    ),
-                    PremiumSettingsCard(
-                      colors: colors,
-                      child: Column(
-                        children: [
-                          PremiumSettingsNavRow(
-                            icon: AppIcons.globe,
-                            title: DriverStrings.language,
-                            subtitle: languageDisplayName[
-                                    ref.watch(localeProvider)?.languageCode ??
-                                        'en'] ??
-                                'English',
-                            colors: colors,
-                            typo: typo,
-                            onTap: () => _showLanguagePicker(context, ref),
-                          ),
-                          PremiumSettingsNavRow(
-                            icon: AppIcons.palette,
-                            title: DriverStrings.theme,
-                            subtitle: themeData.name,
-                            colors: colors,
-                            typo: typo,
-                            onTap: () => _showThemePicker(context, ref),
-                            showDivider: false,
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: bottomPad + 88),
-                  ]),
-                ),
-              ),
-            ],
+          return DriverPreferencesBody(
+            colors: colors,
+            typography: typography,
+            vehicleSubtitle: profile?.vehicleDisplay ?? '—',
+            languageSubtitle: languageDisplayName[
+                    ref.watch(localeProvider)?.languageCode ?? 'nl'] ??
+                languageDisplayName['nl']!,
+            themeSubtitle: themeData.name,
+            acceptsCash: profile?.acceptsCash ?? false,
+            acceptsCard: profile?.acceptsCard ?? false,
+            acceptsTikkie: profile?.acceptsTikkie ?? false,
+            acceptsInvoice: profile?.acceptsInvoice ?? false,
+            petFriendly: profile?.isPetFriendly ?? false,
+            wheelchairAccessible: profile?.isWheelchairAccessible ?? false,
+            onBack: () => context.pop(),
+            onVehicle: () => context.push('/driver/vehicle'),
+            onLanguage: () => _showLanguagePicker(context, ref),
+            onTheme: () => _showThemePicker(context, ref),
+            onCashChanged: (v) {
+              SoundService().playTariffSwitch();
+              _updatePaymentMethod(context, ref, profile, 'cash', v);
+            },
+            onCardChanged: (v) {
+              SoundService().playTariffSwitch();
+              _updatePaymentMethod(context, ref, profile, 'card', v);
+            },
+            onTikkieChanged: (v) {
+              SoundService().playTariffSwitch();
+              _updatePaymentMethod(context, ref, profile, 'tikkie', v);
+            },
+            onInvoiceChanged: (v) {
+              SoundService().playTariffSwitch();
+              _updatePaymentMethod(context, ref, profile, 'invoice', v);
+            },
+            onPetFriendlyChanged: (v) {
+              SoundService().playTariffSwitch();
+              _updatePref(ref, isPetFriendly: v);
+            },
+            onWheelchairChanged: (v) {
+              SoundService().playTariffSwitch();
+              _updatePref(ref, isWheelchairAccessible: v);
+            },
+            navigationContent: const _NavAppPreferenceSection(),
+            soundsContent: const _RideRingtonePreferenceRow(),
           );
         },
         loading: () => Center(
-          child: CircularProgressIndicator(color: colors.accent),
+          child: CircularProgressIndicator(color: colors.primary),
         ),
         error: (_, __) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'Could not load preferences',
-              style: typo.bodyMedium.copyWith(color: colors.textSoft),
+              DriverStrings.preferencesLoadFailed,
+              style: typography.bodyMedium.copyWith(color: colors.textMuted),
               textAlign: TextAlign.center,
             ),
           ),
@@ -246,7 +108,7 @@ class DriverPreferencesScreen extends ConsumerWidget {
     if (current.isEmpty) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(DriverStrings.paymentMethodRequired)),
+          const SnackBar(content: Text(DriverStrings.paymentMethodRequired)),
         );
       }
       return;
@@ -275,7 +137,7 @@ class DriverPreferencesScreen extends ConsumerWidget {
   void _showLanguagePicker(BuildContext context, WidgetRef ref) {
     final colors = ref.read(colorsProvider);
     final typo = ref.read(typographyProvider);
-    final current = ref.read(localeProvider)?.languageCode ?? 'en';
+    final current = ref.read(localeProvider)?.languageCode ?? 'nl';
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -418,143 +280,198 @@ class DriverPreferencesScreen extends ConsumerWidget {
     );
   }
 
-  void _showPickupDistanceModal(BuildContext context, WidgetRef ref) {
-    final initial =
-        ref.read(driverProfileProvider).valueOrNull?.pickupDistanceMaxKm ?? 20.0;
-    final typo = ref.read(typographyProvider);
-    final colors = ref.read(colorsProvider);
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(ctx).bottom),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.card,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            border: Border.all(color: colors.border.withValues(alpha: 0.5)),
-            boxShadow: [
-              BoxShadow(
-                color: colors.text.withValues(alpha: 0.12),
-                blurRadius: 32,
-                offset: const Offset(0, -8),
-              ),
-            ],
-          ),
-          child: _PickupDistanceSheet(
-            initialValue: initial,
-            typo: typo,
-            colors: colors,
-            onSave: (value) async {
-              final id = await ref.read(driverIdProvider.future);
-              if (id == null) return;
-              final ok = await ref.read(driverDataServiceProvider).updateDriverPrefs(
-                    id,
-                    pickupDistanceMaxKm: value,
-                  );
-              if (ok && ctx.mounted) {
-                ref.invalidate(driverProfileProvider);
-                Navigator.pop(ctx);
-              }
-            },
-          ),
+}
+
+class _NavAppPreferenceSection extends ConsumerWidget {
+  const _NavAppPreferenceSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = ref.watch(colorsProvider);
+    final typo = ref.watch(typographyProvider);
+    final prefAsync = ref.watch(driverNavAppPrefProvider);
+
+    return prefAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 18),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (_, __) => Padding(
+        padding: const EdgeInsets.all(14),
+        child: Text(
+          DriverStrings.preferencesLoadFailed,
+          style: typo.bodyMedium.copyWith(color: colors.textSoft),
         ),
       ),
+      data: (selected) {
+        Widget row(DriverNavApp app, String label, IconData icon) {
+          final isSelected = selected == app;
+          return InkWell(
+            onTap: () => ref.read(driverNavAppPrefProvider.notifier).setApp(app),
+            child: Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 14, 12),
+              child: Row(
+                children: [
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: colors.accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Icon(icon, color: colors.accent, size: 22),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: typo.bodyLarge.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  if (isSelected)
+                    Icon(AppIcons.checkCircle, color: colors.accent),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return Column(
+          children: [
+            row(
+              DriverNavApp.waze,
+              DriverStrings.hotspotsWaze,
+              Icons.navigation_outlined,
+            ),
+            Divider(height: 1, color: colors.border.withValues(alpha: 0.35)),
+            row(
+              DriverNavApp.google,
+              DriverStrings.hotspotsGoogleMaps,
+              Icons.map_outlined,
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
-class _PickupDistanceSheet extends StatefulWidget {
-  final double initialValue;
-  final HeyCabyTypography typo;
-  final HeyCabyColorTokens colors;
-  final Future<void> Function(double) onSave;
-
-  const _PickupDistanceSheet({
-    required this.initialValue,
-    required this.typo,
-    required this.colors,
-    required this.onSave,
-  });
+class _RideRingtonePreferenceRow extends ConsumerStatefulWidget {
+  const _RideRingtonePreferenceRow();
 
   @override
-  State<_PickupDistanceSheet> createState() => _PickupDistanceSheetState();
+  ConsumerState<_RideRingtonePreferenceRow> createState() =>
+      _RideRingtonePreferenceRowState();
 }
 
-class _PickupDistanceSheetState extends State<_PickupDistanceSheet> {
-  late double _value;
+class _RideRingtonePreferenceRowState
+    extends ConsumerState<_RideRingtonePreferenceRow> {
+  String _selectedKey = 'classic';
+  bool _loading = true;
+
+  static const Map<String, String> _labels = {
+    'classic': 'Classic (current)',
+    'option_1': 'Pulse Sweep',
+    'option_2': 'Soft Marimba',
+    'option_3': 'Tri Chime',
+    'option_4': 'Taxi Beep',
+  };
 
   @override
   void initState() {
     super.initState();
-    _value = widget.initialValue;
+    _load();
+  }
+
+  Future<void> _load() async {
+    final key = await SoundService().getSelectedRideRequestRingtoneKey();
+    if (!mounted) return;
+    setState(() {
+      _selectedKey = key;
+      _loading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final c = widget.colors;
-    final t = widget.typo;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          premiumSheetHandle(c),
-          Text(
-            DriverStrings.pickupDistance,
-            style: t.titleMedium.copyWith(
-              color: c.text,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${_value.round()} km',
-            style: t.titleMedium.copyWith(
-              color: c.accent,
-              fontWeight: FontWeight.w800,
-              fontSize: 28,
-            ),
-          ),
-          const SizedBox(height: 8),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: c.accent.withValues(alpha: 0.55),
-              inactiveTrackColor: c.border.withValues(alpha: 0.6),
-              thumbColor: c.accent,
-              overlayColor: c.accent.withValues(alpha: 0.15),
-            ),
-            child: Slider(
-              value: _value,
-              min: 5,
-              max: 50,
-              divisions: 9,
-              label: '${_value.round()} km',
-              onChanged: (v) => setState(() => _value = v),
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-              onPressed: () => widget.onSave(_value),
-              child: Text(
-                DriverStrings.saveAction,
-                style: t.labelLarge.copyWith(
-                  color: c.onAccent,
-                  fontWeight: FontWeight.w800,
+    final colors = ref.watch(colorsProvider);
+    final typo = ref.watch(typographyProvider);
+    if (_loading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 18),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return Column(
+      children: _labels.entries.map((entry) {
+        final isSelected = entry.key == _selectedKey;
+        return Column(
+          children: [
+            InkWell(
+              onTap: () async {
+                await SoundService().setRideRequestRingtoneByKey(entry.key);
+                await SoundService().playRideRequestPreviewByKey(entry.key);
+                if (!mounted) return;
+                setState(() => _selectedKey = entry.key);
+              },
+              child: Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 14, 12),
+                child: Row(
+                  children: [
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: colors.accent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Icon(
+                          isSelected
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_off,
+                          size: 22,
+                          color: colors.accent,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        entry.value,
+                        style: typo.bodyLarge.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.play_arrow_rounded, color: colors.accent),
+                      tooltip: 'Play 10s preview',
+                      onPressed: () async {
+                        await SoundService().playRideRequestPreviewByKey(entry.key);
+                      },
+                    ),
+                  ],
                 ),
               ),
             ),
-          ),
-        ],
-      ),
+            if (entry.key != _labels.keys.last)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(start: 72),
+                child: Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: colors.border.withValues(alpha: 0.5),
+                ),
+              ),
+          ],
+        );
+      }).toList(),
     );
   }
 }

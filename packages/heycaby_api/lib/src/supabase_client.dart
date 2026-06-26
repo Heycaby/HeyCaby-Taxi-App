@@ -21,9 +21,23 @@ class HeyCabySupabase {
         'See .env.example.',
       );
     }
+    if (anonKey.contains('YOUR_ANON') ||
+        anonKey == 'your-anon-key-here' ||
+        url.contains('your-project.supabase.co')) {
+      throw StateError(
+        'Supabase credentials are still placeholders (YOUR_ANON_KEY). '
+        'Stop the app, then run: ./scripts/run_driver_ios_debug.sh '
+        'or flutter run --dart-define-from-file=ios/.ipa_dart_defines.json. '
+        'Hot reload cannot fix compile-time defines — you need a full rebuild.',
+      );
+    }
     await Supabase.initialize(
       url: url,
       anonKey: anonKey,
+      authOptions: const FlutterAuthClientOptions(
+        autoRefreshToken: true,
+        authFlowType: AuthFlowType.pkce,
+      ),
     );
   }
 

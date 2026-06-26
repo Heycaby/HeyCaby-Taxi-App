@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 
 import '../constants/rider_near_term_window.dart';
+import '../constants/rider_search_window.dart';
+import '../services/stale_ride_cleanup.dart';
 
 /// Open `ride_requests` row worth highlighting on Home (matching soon or scheduled soon).
 class NearTermRideSnapshot {
@@ -61,6 +63,13 @@ final nearTermRideRequestProvider =
             (m['created_at'] ?? '').toString(),
           ) ??
           now;
+      if (now.difference(createdAt) > kRiderDriverSearchWindow) {
+        await cancelExpiredRiderOpenRide(
+          rideId: id,
+          riderToken: identity.riderToken!,
+        );
+        continue;
+      }
 
       if (scheduled == null) {
         return NearTermRideSnapshot(
@@ -117,13 +126,21 @@ final farFutureScheduledRideRequestsProvider =
     final out = <NearTermRideSnapshot>[];
     for (final raw in list) {
       final m = Map<String, dynamic>.from(raw as Map);
+      final id = m['id'] as String?;
+      if (id == null) continue;
+      final createdAt = DateTime.tryParse((m['created_at'] ?? '').toString()) ?? now;
+      if (now.difference(createdAt) > kRiderDriverSearchWindow) {
+        await cancelExpiredRiderOpenRide(
+          rideId: id,
+          riderToken: identity.riderToken!,
+        );
+        continue;
+      }
       final scheduled = DateTime.tryParse(
         (m['scheduled_pickup_at'] ?? '').toString(),
       )?.toLocal();
       if (scheduled == null || !scheduled.isAfter(now)) continue;
       if (scheduled.difference(now) <= kRiderNearTermScheduledWindow) continue;
-      final id = m['id'] as String?;
-      if (id == null) continue;
       out.add(
         NearTermRideSnapshot(
           id: id,
@@ -167,6 +184,15 @@ final ridesTabUpcomingRequestsProvider =
       final m = Map<String, dynamic>.from(raw as Map);
       final id = m['id'] as String?;
       if (id == null) continue;
+      final createdAt =
+          DateTime.tryParse((m['created_at'] ?? '').toString()) ?? now;
+      if (now.difference(createdAt) > kRiderDriverSearchWindow) {
+        await cancelExpiredRiderOpenRide(
+          rideId: id,
+          riderToken: identity.riderToken!,
+        );
+        continue;
+      }
       final schedRaw = m['scheduled_pickup_at'];
       final scheduled = schedRaw == null
           ? null
@@ -179,8 +205,7 @@ final ridesTabUpcomingRequestsProvider =
           destinationAddress: (m['destination_address'] as String?) ?? '',
           scheduledPickupAt: scheduled,
           bookingMode: m['booking_mode'] as String?,
-          createdAt:
-              DateTime.tryParse((m['created_at'] ?? '').toString()) ?? now,
+          createdAt: createdAt,
         ),
       );
     }

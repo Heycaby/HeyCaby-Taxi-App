@@ -117,7 +117,6 @@ class _AccountDeletionSuccessDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: colors.card,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -220,7 +219,9 @@ Future<void> performDriverAccountDeletion(
     try {
       await HeyCabyFcmRegistration.unregisterAll(appRole: 'driver');
     } catch (_) {}
-    await HeyCabyAccountDeletion.deleteCurrentSupabaseAuthUser();
+    await HeyCabyAccountDeletion.deleteCurrentSupabaseAuthUser(
+      signOutLocally: false,
+    );
   } on HeyCabyAccountDeletionException catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -231,14 +232,12 @@ Future<void> performDriverAccountDeletion(
   } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.deleteAccountFailed)),
+        SnackBar(content: Text('${DriverStrings.deleteAccountFailed} (${e.toString()})')),
       );
     }
     return;
   }
 
-  ref.read(driverStateProvider.notifier).logout();
-  ref.read(foundingDriverPostClaimProvider.notifier).state = null;
   if (context.mounted) {
     await showDialog<void>(
       context: context,
@@ -250,6 +249,10 @@ Future<void> performDriverAccountDeletion(
     );
   }
   if (context.mounted) {
+    await HeyCabySupabase.client.auth.signOut();
+    if (!context.mounted) return;
+    ref.read(driverStateProvider.notifier).logout();
+    ref.read(foundingDriverPostClaimProvider.notifier).state = null;
     context.go('/login');
   }
 }

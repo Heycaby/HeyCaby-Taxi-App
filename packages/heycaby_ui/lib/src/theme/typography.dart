@@ -1,9 +1,124 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+/// Set `true` in driver golden tests before importing [theme_registry] so
+/// [kThemes] typography uses Roboto (no Google Fonts network I/O).
+bool kHeyCabyUseRobotoTypographyForTests = false;
+
+bool get _useRobotoTypography =>
+    kHeyCabyUseRobotoTypographyForTests ||
+    !GoogleFonts.config.allowRuntimeFetching;
+
+/// Deterministic Roboto scale — used when [GoogleFonts.config.allowRuntimeFetching]
+/// is false (widget/golden tests; no network or bundled font files required).
+TextTheme buildHeyCabyRobotoMaterialTextTheme() {
+  const family = 'Roboto';
+  return const TextTheme(
+    displayLarge: TextStyle(
+      fontFamily: family,
+      fontSize: 40,
+      fontWeight: FontWeight.w800,
+      letterSpacing: -0.5,
+      height: 1.1,
+    ),
+    displayMedium: TextStyle(
+      fontFamily: family,
+      fontSize: 32,
+      fontWeight: FontWeight.w800,
+      letterSpacing: -0.3,
+      height: 1.2,
+    ),
+    displaySmall: TextStyle(
+      fontFamily: family,
+      fontSize: 26,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.2,
+      height: 1.2,
+    ),
+    headlineLarge: TextStyle(
+      fontFamily: family,
+      fontSize: 24,
+      fontWeight: FontWeight.w700,
+      height: 1.3,
+    ),
+    headlineMedium: TextStyle(
+      fontFamily: family,
+      fontSize: 20,
+      fontWeight: FontWeight.w700,
+      height: 1.3,
+    ),
+    headlineSmall: TextStyle(
+      fontFamily: family,
+      fontSize: 18,
+      fontWeight: FontWeight.w700,
+      height: 1.4,
+    ),
+    titleLarge: TextStyle(
+      fontFamily: family,
+      fontSize: 17,
+      fontWeight: FontWeight.w600,
+      height: 1.4,
+    ),
+    titleMedium: TextStyle(
+      fontFamily: family,
+      fontSize: 15,
+      fontWeight: FontWeight.w600,
+      height: 1.4,
+    ),
+    titleSmall: TextStyle(
+      fontFamily: family,
+      fontSize: 13,
+      fontWeight: FontWeight.w600,
+      height: 1.4,
+    ),
+    bodyLarge: TextStyle(
+      fontFamily: family,
+      fontSize: 16,
+      fontWeight: FontWeight.w400,
+      height: 1.6,
+    ),
+    bodyMedium: TextStyle(
+      fontFamily: family,
+      fontSize: 14,
+      fontWeight: FontWeight.w400,
+      height: 1.6,
+    ),
+    bodySmall: TextStyle(
+      fontFamily: family,
+      fontSize: 12,
+      fontWeight: FontWeight.w400,
+      height: 1.5,
+    ),
+    labelLarge: TextStyle(
+      fontFamily: family,
+      fontSize: 15,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.1,
+      height: 1.2,
+    ),
+    labelMedium: TextStyle(
+      fontFamily: family,
+      fontSize: 13,
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.1,
+      height: 1.2,
+    ),
+    labelSmall: TextStyle(
+      fontFamily: family,
+      fontSize: 11,
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.2,
+      height: 1.3,
+    ),
+  );
+}
+
 /// Full Material [TextTheme] for HeyCaby: **Syne** (display + headlines) +
 /// **Plus Jakarta Sans** (titles, body, labels). Use with [buildHeyCabyMaterialTheme].
 TextTheme buildHeyCabyBrandMaterialTextTheme() {
+  if (_useRobotoTypography) {
+    return buildHeyCabyRobotoMaterialTextTheme();
+  }
   return TextTheme(
     displayLarge: GoogleFonts.syne(
       fontSize: 40,
@@ -148,10 +263,12 @@ HeyCabyTypography buildTypographyForTheme(String themeId) {
     labelLarge: t.labelLarge!,
     labelMedium: t.labelMedium!,
     labelSmall: t.labelSmall!,
-    mono: GoogleFonts.plusJakartaSans(
-      fontSize: 16,
-      fontWeight: FontWeight.w600,
-      letterSpacing: -0.2,
-    ),
+    mono: _useRobotoTypography
+        ? buildHeyCabyRobotoMaterialTextTheme().titleMedium!
+        : GoogleFonts.plusJakartaSans(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.2,
+          ),
   );
 }

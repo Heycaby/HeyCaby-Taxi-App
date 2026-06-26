@@ -149,11 +149,31 @@ class _TripSummaryScreenState extends ConsumerState<TripSummaryScreen> {
               onConfirm: () {
                 HapticService.mediumTap();
                 if (!mounted) return;
+                final bookingNotifier = ref.read(bookingProvider.notifier);
+                var bookingNow = ref.read(bookingProvider);
+                final bookingName = bookingNow.pickupContactName?.trim() ?? '';
+                if (bookingName.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l10n.onboardingNameRequired)),
+                  );
+                  context.push(
+                    '/payment',
+                    extra: kBookingReturnToSummaryExtra,
+                  );
+                  return;
+                }
+                // Safety net: if rider reached normal summary while mode is still
+                // marketplace without an offer, treat this as an instant ride.
+                if (bookingNow.effectiveRideMode == BookingMode.marketplace &&
+                    (bookingNow.marketplaceBidEuro == null ||
+                        bookingNow.marketplaceBidEuro! <= 0)) {
+                  bookingNotifier.setInstant();
+                  bookingNow = ref.read(bookingProvider);
+                }
                 ref.read(rideRequestProvider.notifier).reset();
                 if (_saveTripForNextTime) {
-                  final b = ref.read(bookingProvider);
-                  final pu = b.pickup;
-                  final de = b.destination;
+                  final pu = bookingNow.pickup;
+                  final de = bookingNow.destination;
                   if (pu != null && de != null) {
                     unawaited(
                       ref
@@ -166,7 +186,7 @@ class _TripSummaryScreenState extends ConsumerState<TripSummaryScreen> {
                   }
                 }
                 final path = rideMatchingVariantForBookingMode(
-                  booking.effectiveRideMode,
+                  bookingNow.effectiveRideMode,
                 ).routePath;
                 context.go(path);
               },

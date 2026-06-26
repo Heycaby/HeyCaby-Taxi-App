@@ -69,6 +69,13 @@ String mapboxStyleUriForTheme(String themeId) {
     case 'midnight-carbon':
       styleFromEnv = env['MAPBOX_STYLE_MIDNIGHT_CARBON'];
       break;
+    case 'driver-warm':
+    case 'driver-pro':
+      styleFromEnv = pick(
+        env['MAPBOX_STYLE_WARM_GLOSS'],
+        env['MAPBOX_STYLE_ALPINE_CREAM'],
+      );
+      break;
     case 'taxi-1':
       styleFromEnv =
           pick(env['MAPBOX_STYLE_DAYLIGHT'], env['MAPBOX_STYLE_TAXI_SHADE_6']);

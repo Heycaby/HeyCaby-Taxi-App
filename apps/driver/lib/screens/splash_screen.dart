@@ -1,34 +1,27 @@
-import 'dart:math' show Random;
+import 'dart:async' show unawaited;
+import 'dart:math' show sin, pi;
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../providers/driver_state_provider.dart';
+import '../router.dart';
+import '../services/driver_operational_restore_service.dart';
 import '../services/driver_session_bootstrap.dart';
+import '../utils/driver_runtime_refresh.dart';
+import '../theme/driver_typography.dart';
+import '../widgets/driver_brand_moment_body.dart';
 
-const _kMessagesNl = [
-  'Jij bepaalt je prijs.\nJij houdt alles.',
-  'Geen commissie.\nNooit.',
-  'Chauffeurs verdienen €1.600+ meer per maand.',
-  'Jouw auto. Jouw uren. Jouw inkomen.',
-  'Jij rijdt — wij zorgen voor de rest.',
-];
+/// Total intro length — enough for staggered copy without feeling slow.
+const _kTotalMs = 5200;
 
-const _kMessagesEn = [
-  'You set your price.\nYou keep everything.',
-  'Zero commission.\nEver.',
-  'Drivers earn €1,600+ more every month.',
-  'Your car. Your hours. Your income.',
-  'You drive — we handle the rest.',
-];
-
-const _kTotalMs = 5000;
-
-/// 5-second HeyCaby driver splash — logo, localized message, fade to auth/home.
+/// Driver welcome — logo on black, value props below.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -40,17 +33,24 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
   late final Animation<double> _logoFade;
-  late final Animation<double> _msgFade;
+  late final Animation<double> _pill1;
+  late final Animation<double> _pill2;
+  late final Animation<double> _pill3;
+  late final Animation<double> _pill4;
   late final Animation<double> _exitFade;
-  late final int _messageIndex;
-  late final bool _useDutch;
+  late final String _languageCode;
+  bool _canContinue = false;
+  bool _navigating = false;
 
   @override
   void initState() {
     super.initState();
     final lang = ui.PlatformDispatcher.instance.locale.languageCode;
-    _useDutch = lang == 'nl';
-    _messageIndex = Random().nextInt(5);
+    if (lang == 'nl' || !kDriverBrandMomentCopyByLanguage.containsKey(lang)) {
+      _languageCode = 'nl';
+    } else {
+      _languageCode = lang;
+    }
 
     _ctrl = AnimationController(
       vsync: this,
@@ -59,20 +59,30 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     _logoFade = CurvedAnimation(
       parent: _ctrl,
-      curve: const Interval(0.0, 0.30, curve: Curves.easeOut),
+      curve: const Interval(0.0, 0.28, curve: Curves.easeOutCubic),
     );
-
-    _msgFade = CurvedAnimation(
+    _pill1 = CurvedAnimation(
       parent: _ctrl,
-      curve: const Interval(0.30, 0.50, curve: Curves.easeOut),
+      curve: const Interval(0.20, 0.46, curve: Curves.easeOutCubic),
     );
-
+    _pill2 = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.34, 0.58, curve: Curves.easeOutCubic),
+    );
+    _pill3 = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.48, 0.72, curve: Curves.easeOutCubic),
+    );
+    _pill4 = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.62, 0.88, curve: Curves.easeOutCubic),
+    );
     _exitFade = CurvedAnimation(
       parent: _ctrl,
-      curve: const Interval(0.70, 1.00, curve: Curves.easeIn),
+      curve: const Interval(0.84, 1.00, curve: Curves.easeIn),
     );
 
-    _ctrl.forward().then((_) => _navigate());
+    _ctrl.forward().then((_) => _onIntroFinished());
   }
 
   @override
@@ -81,121 +91,90 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     super.dispose();
   }
 
-  Future<void> _navigate() async {
+  Future<void> _onIntroFinished() async {
     if (!mounted) return;
     final session = HeyCabySupabase.client.auth.currentSession;
     if (session == null) {
       context.go('/login');
       return;
     }
-    final driverId = await bootstrapDriverSessionAfterAuth(ref);
-    ref.read(driverStateProvider.notifier).setUser(session.user.id, driverId);
-    if (!mounted) return;
-    context.go('/driver');
+    setState(() => _canContinue = true);
   }
 
-  String get _messageText =>
-      _useDutch ? _kMessagesNl[_messageIndex] : _kMessagesEn[_messageIndex];
+  Future<void> _continueToHome() async {
+    if (!mounted || _navigating) return;
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      unawaited(HapticFeedback.lightImpact());
+    }
+    _navigating = true;
+    final session = HeyCabySupabase.client.auth.currentSession;
+    if (session == null) {
+      if (mounted) context.go('/login');
+      if (mounted) setState(() => _navigating = false);
+      return;
+    }
+    ref.read(driverStateProvider.notifier).setUser(session.user.id, null);
+    String? driverId;
+    try {
+      driverId = await bootstrapDriverSessionAfterAuth(ref);
+    } catch (_) {
+      driverId = null;
+    }
+    if (!mounted) return;
+    ref.read(driverStateProvider.notifier).setUser(session.user.id, driverId);
+    unawaited(refreshDriverRuntime(ref));
+    await restoreDriverOperationalState(ref, appRouter);
+    if (!mounted) return;
+    if (ref.read(driverStateProvider).activeRideId == null) {
+      context.go('/driver');
+    }
+  }
+
+  DriverBrandMomentCopy get _copy =>
+      kDriverBrandMomentCopyByLanguage[_languageCode] ??
+      kDriverBrandMomentCopyByLanguage['nl']!;
+
+  bool get _isIOS => defaultTargetPlatform == TargetPlatform.iOS;
+
+  double _opacity(Animation<double> anim) => anim.value.clamp(0.0, 1.0);
+
+  double _slide(Animation<double> anim) =>
+      (1.0 - anim.value.clamp(0.0, 1.0)) * 14.0;
 
   @override
   Widget build(BuildContext context) {
-    final colors = ref.watch(colorsProvider);
-    final typo = ref.watch(typographyProvider);
+    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
 
-    return Scaffold(
-      backgroundColor: colors.bg,
-      body: AnimatedBuilder(
-        animation: _ctrl,
-        builder: (_, __) {
-          final exitOpacity = (1.0 - _exitFade.value).clamp(0.0, 1.0);
-          final logoScale = 0.8 + 0.2 * _logoFade.value.clamp(0.0, 1.0);
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, __) {
+        final exitOpacity =
+            _canContinue ? 1.0 : (1.0 - _exitFade.value).clamp(0.0, 1.0);
+        final logoScale = 0.88 + 0.12 * _logoFade.value.clamp(0.0, 1.0);
+        final pulse = (sin(_ctrl.value * 2 * pi * 1.2) + 1) * 0.5;
+        final glowOpacity = (0.08 + pulse * 0.12) * exitOpacity;
 
-          return Opacity(
-            opacity: exitOpacity,
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Spacer(flex: 2),
-                    Opacity(
-                      opacity: _logoFade.value,
-                      child: Transform.scale(
-                        scale: logoScale,
-                        child: Column(
-                          children: [
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: colors.accent,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'C',
-                                  style: typo.displayMedium.copyWith(
-                                    fontSize: 44,
-                                    fontWeight: FontWeight.w800,
-                                    color: colors.card,
-                                    height: 1.0,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            RichText(
-                              text: TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: 'hey',
-                                    style: typo.bodyLarge.copyWith(
-                                      fontSize: 36,
-                                      fontWeight: FontWeight.w300,
-                                      color: colors.text,
-                                      letterSpacing: -0.5,
-                                      height: 1.0,
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: 'caby',
-                                    style: typo.displayMedium.copyWith(
-                                      fontSize: 36,
-                                      fontWeight: FontWeight.w800,
-                                      color: colors.accent,
-                                      letterSpacing: -0.5,
-                                      height: 1.0,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const Spacer(flex: 1),
-                    Opacity(
-                      opacity: _msgFade.value,
-                      child: Text(
-                        _messageText,
-                        textAlign: TextAlign.center,
-                        style: typo.displaySmall.copyWith(
-                          color: colors.text,
-                          height: 1.25,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                    ),
-                    const Spacer(flex: 2),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
+        return DriverBrandMomentBody(
+          typography: typography,
+          copy: _copy,
+          isIOS: _isIOS,
+          exitOpacity: exitOpacity,
+          logoFade: _logoFade.value,
+          logoScale: logoScale,
+          glowOpacity: glowOpacity,
+          pillar1Opacity: _opacity(_pill1),
+          pillar1Slide: _slide(_pill1),
+          pillar2Opacity: _opacity(_pill2),
+          pillar2Slide: _slide(_pill2),
+          pillar3Opacity: _opacity(_pill3),
+          pillar3Slide: _slide(_pill3),
+          pillar4Opacity: _opacity(_pill4),
+          pillar4Slide: _slide(_pill4),
+          canContinue: _canContinue,
+          loadingProgress: _ctrl.value,
+          onContinue: _continueToHome,
+        );
+      },
     );
   }
 }

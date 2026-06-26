@@ -10,6 +10,23 @@ export interface ManualPreridePayload {
   ride_request_id: string
 }
 
+export interface ManualDriverPingPayload {
+  event: 'driver_ping'
+  ride_request_id: string
+  kind:
+    | 'on_my_way'
+    | 'outside'
+    | 'nearby'
+    | 'arrived'
+    | 'running_late'
+    | 'traffic_delay'
+    | 'cant_find_rider'
+    | 'thanks'
+  eta_minutes?: number
+  /** System-initiated ping (accept / GPS). One per ride+kind. */
+  automatic?: boolean
+}
+
 export type AgentNotificationRow = {
   target: 'driver' | 'rider'
   user_type: 'driver' | 'rider'

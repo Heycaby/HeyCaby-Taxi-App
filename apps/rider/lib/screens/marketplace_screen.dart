@@ -9,7 +9,7 @@ import '../providers/booking_provider.dart';
 import '../providers/marketplace_pricing_provider.dart';
 import '../services/booking_flow_navigation.dart';
 import '../widgets/address_search_modal.dart';
-import '../services/location_service.dart';
+import 'location_required_screen.dart';
 
 /// Premium Marketplace Screen — million-dollar Bolt/Uber-grade design.
 /// Zero hardcoded colours or fonts — all values come from design tokens.
@@ -43,11 +43,8 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen>
   }
 
   Future<void> _openAddressSearch(AddressType type) async {
-    final pos = await LocationService.requestAndGetLocation();
-    if (pos == null) {
-      if (mounted) context.go('/location-required');
-      return;
-    }
+    final ok = await ensureLocationForBooking(context: context, ref: ref);
+    if (!ok) return;
     if (!mounted) return;
     final result = await showAddressSearchModal(context, ref, type);
     if (result != null) {

@@ -23,8 +23,9 @@ MAPBOX_ACCESS_TOKEN=
 # compile-time define is non-empty, so the plist value is used if defines are ever missing.
 # In Mapbox Account → token restrictions, allow both bundle IDs: nl.heycaby.rider and nl.heycaby.driver.
 
-# Optional — REST API base (default: https://heycaby.nl)
-# API_BASE_URL=
+# Required for production unless Supabase app_config `driver_rest_api_base_url` is set:
+# either set API_BASE_URL here to your live AWS HTTPS origin, or rely on RPC resolution only.
+# API_BASE_URL=https://api.heycaby.nl
 
 # Optional — public web origin for share links / deep links (default: https://heycaby.nl)
 # APP_PUBLIC_WEB_ORIGIN=

@@ -3,7 +3,14 @@ import 'theme_data.dart';
 import 'typography.dart';
 
 const String kRiderDefaultTheme = 'taxi-1';
-const String kDriverDefaultTheme = 'fresh';
+
+/// Soft Warm White — Chacool neutrals, taxi amber, paper-warm surfaces (driver).
+const String kHeyCabyDriverWarmThemeId = 'driver-warm';
+
+/// Premium green driver palette (Phase 1 default).
+const String kHeyCabyDriverProThemeId = 'driver-pro';
+
+const String kDriverDefaultTheme = kHeyCabyDriverProThemeId;
 
 /// Maps legacy theme ids (secure storage / persisted prefs) → current HeyCaby theme ids.
 const Map<String, String> kMigratedThemeIds = {
@@ -18,6 +25,7 @@ const Map<String, String> kMigratedThemeIds = {
   'midnight-carbon': 'taxi-2',
   'amber-nights': 'taxi-2',
   'midnight-pro': 'taxi-4',
+  'driver-warm': 'driver-pro',
 };
 
 String migrateThemeId(String? id) {
@@ -75,7 +83,31 @@ final Map<String, HeyCabyThemeData> kThemes = {
     colors: kHeyCabyTaxi4,
     typography: buildTypographyForTheme('taxi-4'),
   ),
+  kHeyCabyDriverProThemeId: HeyCabyThemeData(
+    id: kHeyCabyDriverProThemeId,
+    name: 'Driver Pro',
+    tagline: 'Premium green — earn with confidence',
+    colors: kHeyCabyDriverPro,
+    typography: buildTypographyForTheme(kHeyCabyDriverProThemeId),
+  ),
+  kHeyCabyDriverWarmThemeId: HeyCabyThemeData(
+    id: kHeyCabyDriverWarmThemeId,
+    name: 'Soft Warm White',
+    tagline: 'Paper-warm light — Chacool neutrals & taxi amber',
+    colors: kHeyCabyDriverWarm,
+    typography: buildTypographyForTheme(kHeyCabyDriverWarmThemeId),
+  ),
 };
+
+/// Whether [themeId] is a driver app palette (warm legacy or pro green).
+extension HeyCabyThemeIdHelpers on String {
+  bool get isHeyCabyDriverWarmTheme => this == kHeyCabyDriverWarmThemeId;
+
+  bool get isHeyCabyDriverProTheme => this == kHeyCabyDriverProThemeId;
+
+  bool get isHeyCabyDriverTheme =>
+      isHeyCabyDriverWarmTheme || isHeyCabyDriverProTheme;
+}
 
 HeyCabyThemeData getTheme(String id) {
   final migrated = migrateThemeId(id);

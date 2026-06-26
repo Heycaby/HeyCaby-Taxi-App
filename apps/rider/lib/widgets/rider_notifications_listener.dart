@@ -2,8 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
+
+import '../services/rider_notification_router.dart';
 
 /// Polls backend rider notifications and surfaces unread admin/system messages.
 class RiderNotificationsListener extends ConsumerStatefulWidget {
@@ -78,27 +79,25 @@ class _RiderNotificationsListenerState
   }
 
   void _showNotificationSnack(RiderNotificationItem n) {
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    if (messenger == null) return;
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          n.title.isNotEmpty ? '${n.title}\n${n.body}' : n.body,
-          maxLines: 3,
-          overflow: TextOverflow.ellipsis,
-        ),
-        duration: const Duration(seconds: 6),
-        action: (n.category == 'account_action' || n.category == 'verification')
-            ? SnackBarAction(
-                label: 'Open',
-                onPressed: () {
-                  if (!mounted) return;
-                  context.go('/account');
-                },
-              )
-            : null,
-      ),
-    );
+    if (DriverPingType.isPingCategory(n.category)) {
+      unawaited(dispatchRiderNotification(
+        context: context,
+        category: n.category,
+        title: n.title,
+        body: n.body,
+        data: n.data,
+        usePingBanner: true,
+      ));
+      return;
+    }
+
+    unawaited(dispatchRiderNotification(
+      context: context,
+      category: n.category,
+      title: n.title,
+      body: n.body,
+      data: n.data,
+    ));
   }
 
   @override

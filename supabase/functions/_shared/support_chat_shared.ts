@@ -165,6 +165,26 @@ async function resolveTicketId(
   userType: SupportUserType,
   requestedId: string | undefined,
 ): Promise<{ ticketId: string } | { error: string; status: number }> {
+  const now = new Date();
+  const staleCutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+
+  // Auto-close inactive ongoing tickets so stale "open" threads do not stick forever.
+  const { error: staleErr } = await admin
+    .from("tickets")
+    .update({
+      status: "auto_resolved",
+      resolution_summary: "Auto-closed after 24h inactivity.",
+      resolution_outcome: "inactivity_timeout",
+      updated_at: now.toISOString(),
+    })
+    .eq("user_id", userId)
+    .eq("user_type", userType)
+    .in("status", ["open", "in_progress", "awaiting_user"])
+    .lt("updated_at", staleCutoff);
+  if (staleErr) {
+    console.error("resolveTicketId stale close:", staleErr);
+  }
+
   if (requestedId && requestedId.length > 0) {
     const { data: row, error } = await admin
       .from("tickets")
@@ -189,7 +209,7 @@ async function resolveTicketId(
     .select("id")
     .eq("user_id", userId)
     .eq("user_type", userType)
-    .eq("status", "open")
+    .in("status", ["open", "in_progress", "awaiting_user"])
     .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -294,9 +314,9 @@ export async function handleSupportChatRequest(
   }
 
   const status = (ticket.status as string) ?? "open";
-  if (status === "closed" || status === "resolved") {
-    return json({ error: "ticket_closed" }, 409);
-  }
+  const lowerStatus = status.toLowerCase();
+  const shouldReopen = lowerStatus === "closed" || lowerStatus === "resolved" ||
+    lowerStatus === "auto_resolved";
 
   const existing = Array.isArray(ticket.messages)
     ? [...ticket.messages as unknown[]]
@@ -335,6 +355,7 @@ export async function handleSupportChatRequest(
     .from("tickets")
     .update({
       messages: finalMessages,
+      status: shouldReopen ? "open" : status,
       updated_at: new Date().toISOString(),
     })
     .eq("id", ticketId);

@@ -29,6 +29,26 @@ abstract final class HapticService {
     await HapticFeedback.lightImpact();
   }
 
+  /// Two heavy pulses — urgent driver ping (outside / can't find you).
+  static Future<void> pingUrgent() async {
+    await HapticFeedback.heavyImpact();
+    await Future<void>.delayed(const Duration(milliseconds: 180));
+    await HapticFeedback.heavyImpact();
+  }
+
+  /// Medium + light — standard status ping (on my way).
+  static Future<void> pingStandard() async {
+    await HapticFeedback.mediumImpact();
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    await HapticFeedback.lightImpact();
+  }
+
+  /// Single light tap — soft ping (thanks).
+  static Future<void> pingSoft() async => HapticFeedback.lightImpact();
+
+  /// @deprecated Use [pingUrgent] for driver pings.
+  static Future<void> driverPing() => pingUrgent();
+
   /// Three-pulse "error" pattern — failed submission, connection error.
   static Future<void> error() async {
     await HapticFeedback.heavyImpact();

@@ -6,12 +6,12 @@ packages:
 
 scripts:
   rider:dev:
-    run: flutter run
+    run: flutter run --dart-define-from-file=ios/.ipa_dart_defines.json
     packageFilters:
       scope: heycaby_rider
 
   driver:dev:
-    run: flutter run
+    run: flutter run --dart-define-from-file=ios/.ipa_dart_defines.json
     packageFilters:
       scope: heycaby_driver
 
@@ -30,3 +30,7 @@ scripts:
   gen:l10n:
     run: melos exec --scope="heycaby_rider,heycaby_driver" -- flutter gen-l10n
     description: Generate localizations for both apps
+
+  guard:boundaries:
+    run: ./scripts/enforce_monorepo_boundaries.sh
+    description: Enforce app/backend boundary rules

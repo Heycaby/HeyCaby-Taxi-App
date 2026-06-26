@@ -11,8 +11,7 @@ import SwiftUI
 @main
 struct HeyCabyWidgetsBundle: WidgetBundle {
     var body: some Widget {
-        HeyCabyWidgets()
-        HeyCabyWidgetsControl()
+        HeyCabyStatusWidget()
         HeyCabyWidgetsLiveActivity()
     }
 }

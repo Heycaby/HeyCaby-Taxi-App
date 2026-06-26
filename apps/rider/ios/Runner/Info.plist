@@ -4,9 +4,9 @@
 <dict>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
-		<string>nl.heycaby.rider.background-processing</string>
-		<string>nl.heycaby.rider.location-updates</string>
-		<string>nl.heycaby.rider.data-sync</string>
+		<string>nl.heycaby.rider.app.background-processing</string>
+		<string>nl.heycaby.rider.app.location-updates</string>
+		<string>nl.heycaby.rider.app.data-sync</string>
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
@@ -34,7 +34,7 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>nl.heycaby.rider.widget</string>
+			<string>nl.heycaby.rider.app.widget</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>heycabyrider</string>
@@ -47,10 +47,14 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>UIDeviceFamily</key>
+	<array>
+		<integer>1</integer>
+	</array>
 	<key>MBXAccessToken</key>
 	<string>$(MAPBOX_ACCESS_TOKEN)</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>HeyCaby uses your location while you use the app to show the map, set pickup and destination, and match rides. Location may also be used in the background when you have an active ride or search so the app and maps can update your trip; you can change this in Settings.</string>
+	<string>HeyCaby needs your location to show nearby drivers, set your pickup point, and display your position on the map while you use the app.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>HeyCaby needs your location to show nearby drivers, set your pickup point, and display your position on the map while you use the app.</string>
 	<key>NSSupportsLiveActivities</key>

@@ -27,6 +27,7 @@ class _VeriffTermsSheet extends ConsumerStatefulWidget {
 
 class _VeriffTermsSheetState extends ConsumerState<_VeriffTermsSheet> {
   bool _agreed = false;
+  bool _agreedDataProcessing = false;
 
   Future<void> _open(String url) async {
     final u = Uri.parse(url);
@@ -97,9 +98,42 @@ class _VeriffTermsSheetState extends ConsumerState<_VeriffTermsSheet> {
               const SizedBox(height: 14),
               Text(
                 DriverStrings.veriffTermsGateBody,
-                style: typo.bodyMedium.copyWith(color: colors.textSoft, height: 1.45),
+                style: typo.bodyLarge.copyWith(
+                  color: colors.text,
+                  height: 1.5,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 18),
+              _InfoBlock(
+                title: DriverStrings.veriffTermsDataControllerTitle,
+                body: DriverStrings.veriffTermsDataControllerBody,
+                colors: colors,
+                typo: typo,
+              ),
+              const SizedBox(height: 14),
+              _InfoBlock(
+                title: 'GDPR and data minimisation',
+                body: DriverStrings.veriffTermsDataMinimizationBody,
+                colors: colors,
+                typo: typo,
+              ),
+              const SizedBox(height: 14),
+              _InfoBlock(
+                title: 'Security and third-party responsibility',
+                body: DriverStrings.veriffTermsSecurityLiabilityBody,
+                colors: colors,
+                typo: typo,
+              ),
+              const SizedBox(height: 14),
+              _InfoBlock(
+                title: 'Legal disclosure',
+                body: DriverStrings.veriffTermsLegalDisclosureBody,
+                colors: colors,
+                typo: typo,
+              ),
+              const SizedBox(height: 16),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -109,7 +143,11 @@ class _VeriffTermsSheetState extends ConsumerState<_VeriffTermsSheet> {
                     icon: Icon(Icons.open_in_new_rounded, size: 18, color: colors.accent),
                     label: Text(
                       DriverStrings.veriffTermsReadFull,
-                      style: typo.labelLarge.copyWith(color: colors.accent, fontWeight: FontWeight.w700),
+                      style: typo.titleSmall.copyWith(
+                        color: colors.accent,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                      ),
                     ),
                   ),
                   TextButton.icon(
@@ -117,12 +155,16 @@ class _VeriffTermsSheetState extends ConsumerState<_VeriffTermsSheet> {
                     icon: Icon(Icons.article_outlined, size: 18, color: colors.textMid),
                     label: Text(
                       DriverStrings.veriffTermsReadVeriffOnly,
-                      style: typo.labelLarge.copyWith(color: colors.textMid, fontWeight: FontWeight.w600),
+                      style: typo.titleSmall.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               CheckboxListTile(
                 value: _agreed,
                 onChanged: (v) => setState(() => _agreed = v ?? false),
@@ -131,11 +173,34 @@ class _VeriffTermsSheetState extends ConsumerState<_VeriffTermsSheet> {
                 checkColor: colors.onAccent,
                 title: Text(
                   DriverStrings.veriffTermsCheckbox,
-                  style: typo.bodySmall.copyWith(color: colors.text, height: 1.4),
+                  style: typo.bodyMedium.copyWith(
+                    color: colors.text,
+                    height: 1.45,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 controlAffinity: ListTileControlAffinity.leading,
               ),
               const SizedBox(height: 8),
+              CheckboxListTile(
+                value: _agreedDataProcessing,
+                onChanged: (v) => setState(() => _agreedDataProcessing = v ?? false),
+                contentPadding: EdgeInsets.zero,
+                activeColor: colors.accent,
+                checkColor: colors.onAccent,
+                title: Text(
+                  DriverStrings.veriffTermsCheckboxDataProcessing,
+                  style: typo.bodyMedium.copyWith(
+                    color: colors.text,
+                    height: 1.45,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                controlAffinity: ListTileControlAffinity.leading,
+              ),
+              const SizedBox(height: 14),
               Row(
                 children: [
                   Expanded(
@@ -153,7 +218,7 @@ class _VeriffTermsSheetState extends ConsumerState<_VeriffTermsSheet> {
                   Expanded(
                     flex: 2,
                     child: FilledButton(
-                      onPressed: !_agreed
+                      onPressed: !(_agreed && _agreedDataProcessing)
                           ? null
                           : () => Navigator.of(context).pop(true),
                       style: FilledButton.styleFrom(
@@ -172,6 +237,55 @@ class _VeriffTermsSheetState extends ConsumerState<_VeriffTermsSheet> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _InfoBlock extends StatelessWidget {
+  const _InfoBlock({
+    required this.title,
+    required this.body,
+    required this.colors,
+    required this.typo,
+  });
+
+  final String title;
+  final String body;
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+      decoration: BoxDecoration(
+        color: colors.bg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.border.withValues(alpha: 0.8)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: typo.titleMedium.copyWith(
+              color: colors.text,
+              fontWeight: FontWeight.w800,
+              fontSize: 24,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            body,
+            style: typo.bodyMedium.copyWith(
+              color: colors.text,
+              height: 1.5,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }

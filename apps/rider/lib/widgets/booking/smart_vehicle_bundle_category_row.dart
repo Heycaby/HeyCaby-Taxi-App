@@ -27,7 +27,7 @@ class SmartVehicleBundleCategoryRow extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOutCubic,
-      padding: const EdgeInsetsDirectional.fromSTEB(14, 10, 6, 10),
+      padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 6, 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
         color: selected
@@ -59,7 +59,7 @@ class SmartVehicleBundleCategoryRow extends StatelessWidget {
               children: [
                 Text(
                   estimate.label,
-                  style: typo.titleSmall.copyWith(
+                  style: typo.titleMedium.copyWith(
                     color: colors.text,
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.1,
@@ -79,9 +79,9 @@ class SmartVehicleBundleCategoryRow extends StatelessWidget {
                   ),
                   child: Text(
                     '€${_fmt(estimate.priceEuro)}',
-                    style: typo.labelMedium.copyWith(
+                    style: typo.labelLarge.copyWith(
                       color: colors.accent,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),

@@ -7,6 +7,7 @@ These files are the **canonical web copies** of the chauffeur **Terms** and **Su
 | Page | Clean URL | File (in repo) |
 |------|-------------|----------------|
 | Algemene Voorwaarden Chauffeurs | `https://www.heycaby.nl/chauffeur/voorwaarden` | `chauffeur/voorwaarden/index.html` |
+| Vrijwaring & aansprakelijkheid (EN/NL) | `https://www.heycaby.nl/chauffeur/vrijwaring` | `chauffeur/vrijwaring/index.html` |
 | Veriff section (anchor) | `…/chauffeur/voorwaarden#a3` | §3 in that file |
 | Support / FAQ | `https://www.heycaby.nl/support` | `support/index.html` |
 
@@ -17,6 +18,7 @@ These files are the **canonical web copies** of the chauffeur **Terms** and **Su
 This directory is a **static site**. Files live at the **same paths as the public URL**:
 
 - `chauffeur/voorwaarden/index.html` → `/chauffeur/voorwaarden`
+- `chauffeur/vrijwaring/index.html` → `/chauffeur/vrijwaring`
 - `support/index.html` → `/support`
 
 ### Steps
@@ -24,7 +26,7 @@ This directory is a **static site**. Files live at the **same paths as the publi
 1. In [Vercel](https://vercel.com) → **Add New** → **Project** → import this Git repo.
 2. Set **Root Directory** to `heycaby-tos` (important in a monorepo).
 3. Framework: **Other** (static). No build command needed.
-4. **Deploy**. You should get a URL like `heycaby-tos-….vercel.app` where `/chauffeur/voorwaarden` and `/support` work.
+4. **Deploy**. You should get a URL like `heycaby-tos-….vercel.app` where `/chauffeur/voorwaarden`, `/chauffeur/vrijwaring`, and `/support` work.
 5. **Domains** → add `www.heycaby.nl` (and optionally `heycaby.nl` redirecting to `www`).
 
 **Production deploy** (after `vercel login`; team scope required for CI/non-interactive):
@@ -39,6 +41,7 @@ cd heycaby-tos && npm run deploy
 |---|-----|
 | Production alias | https://heycaby-tos.vercel.app |
 | Chauffeur terms | https://heycaby-tos.vercel.app/chauffeur/voorwaarden |
+| Chauffeur vrijwaring | https://heycaby-tos.vercel.app/chauffeur/vrijwaring |
 | Support | https://heycaby-tos.vercel.app/support |
 
 Test these before pointing `www.heycaby.nl` at this project.
@@ -63,5 +66,6 @@ The **Veriff** flow uses a terms gate before opening Veriff; see `apps/driver/do
 ```bash
 cd heycaby-tos && python3 -m http.server 8765
 # http://localhost:8765/chauffeur/voorwaarden/
+# http://localhost:8765/chauffeur/vrijwaring/
 # http://localhost:8765/support/
 ```

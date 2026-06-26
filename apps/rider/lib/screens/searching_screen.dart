@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../constants/rider_matching_ui.dart';
@@ -14,10 +15,14 @@ import '../constants/rider_search_window.dart';
 import '../models/ride_matching_variant.dart';
 import '../providers/active_search_provider.dart';
 import '../providers/booking_provider.dart';
+import '../providers/near_term_ride_request_provider.dart';
 import '../providers/recent_destinations_provider.dart';
 import '../providers/ride_request_provider.dart';
 import '../services/heycaby_widget_sync.dart';
+import '../services/nearby_supply_service.dart';
 import '../services/rider_notify_search_notifications.dart';
+import '../services/sound_service.dart';
+import '../services/stale_ride_cleanup.dart';
 import '../widgets/driver_search_expired_dialog.dart';
 import '../widgets/matching_alternatives_card.dart';
 import '../widgets/matching_marketplace_banner.dart';
@@ -52,6 +57,7 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
   Timer? _searchWindowTimer;
   int _currentFactIndex = 0;
   bool _showNoDriverCard = false;
+  bool _growthNudgeShown = false;
 
   List<String> _facts = [];
   int _marketplaceBidCount = 0;
@@ -201,14 +207,55 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
     _factsTimer?.cancel();
     _factsTimer = Timer.periodic(const Duration(milliseconds: 4500), (_) {
       if (mounted && _facts.isNotEmpty) {
-        setState(() => _currentFactIndex = (_currentFactIndex + 1) % _facts.length);
+        setState(
+            () => _currentFactIndex = (_currentFactIndex + 1) % _facts.length);
       }
     });
 
     _noDriverTimer?.cancel();
     _noDriverTimer = Timer(kRiderNoDriverCardDelay, () {
-      if (mounted) setState(() => _showNoDriverCard = true);
+      unawaited(_runLiveNoSupplyCheck());
     });
+  }
+
+  Future<void> _runLiveNoSupplyCheck() async {
+    if (!mounted || widget.variant == RideMatchingVariant.scheduled) return;
+
+    final ride = ref.read(rideRequestProvider);
+    final st = ride.status;
+    if (st != 'pending' && st != 'bidding') return;
+
+    final booking = ref.read(bookingProvider);
+    final pickup = booking.pickup;
+    if (pickup == null) return;
+
+    int totalDrivers = 0;
+    try {
+      final fullRoute = booking.pickup != null && booking.destination != null;
+      final supply = await NearbySupplyService.loadForPickup(
+        pickup: pickup,
+        destination: booking.destination,
+        returnTripFareEstimatesEnabled:
+            fullRoute && booking.returnTripFareEstimatesEnabled,
+      );
+      totalDrivers =
+          supply.values.fold<int>(0, (sum, snap) => sum + snap.driverCount);
+    } catch (_) {
+      // If supply check fails, keep normal matching flow without showing false negatives.
+      return;
+    }
+
+    if (!mounted) return;
+    if (totalDrivers > 0) return;
+
+    setState(() => _showNoDriverCard = true);
+    if (_growthNudgeShown) return;
+    _growthNudgeShown = true;
+    await showDriverSearchExpiredDialog(
+      context,
+      ref,
+      markGrowthModalDismissedAfter: false,
+    );
   }
 
   @override
@@ -258,13 +305,32 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
                 );
               }
               if (mounted) context.go('/active');
+              return;
+            }
+            const terminalNoMatch = {
+              'cancelled',
+              'canceled',
+              'rejected',
+              'declined',
+              'missed',
+              'expired',
+            };
+            if (terminalNoMatch.contains(newStatus) && mounted) {
+              ref.read(rideRequestProvider.notifier).reset();
+              ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                SnackBar(
+                    content: Text(
+                        AppLocalizations.of(context).noDriverFoundMessage)),
+              );
+              context.go('/home');
             }
           },
         )
         .subscribe();
 
     _matchingExpandTimer?.cancel();
-    _matchingExpandTimer = Timer.periodic(const Duration(seconds: 22), (_) async {
+    _matchingExpandTimer =
+        Timer.periodic(const Duration(seconds: 22), (_) async {
       if (!mounted) return;
       final currentId = ref.read(rideRequestProvider).rideRequestId;
       if (currentId != rideId) return;
@@ -273,7 +339,11 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
       try {
         await HeyCabySupabase.client.rpc(
           'fn_seed_ride_matching_batch',
-          params: {'p_ride_request_id': rideId, 'p_batch_size': 4, 'p_window_seconds': 30},
+          params: {
+            'p_ride_request_id': rideId,
+            'p_batch_size': 4,
+            'p_window_seconds': 30
+          },
         );
       } catch (_) {}
     });
@@ -299,8 +369,7 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
     final rideId = ref.read(rideRequestProvider).rideRequestId;
     if (rideId == null) return;
     unawaited(HeycabyWidgetSync.refreshScheduledRideFromRideId(rideId));
-    _scheduledWidgetTimer =
-        Timer.periodic(const Duration(seconds: 60), (_) {
+    _scheduledWidgetTimer = Timer.periodic(const Duration(seconds: 60), (_) {
       final id = ref.read(rideRequestProvider).rideRequestId;
       if (id != null) {
         unawaited(HeycabyWidgetSync.refreshScheduledRideFromRideId(id));
@@ -343,8 +412,7 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
       if (!mounted) return;
       setState(() {
         _marketplaceBidCount = list.length;
-        _marketplaceBestPrice =
-            bestAmount != null ? bestAmount.toString() : '';
+        _marketplaceBestPrice = bestAmount != null ? bestAmount.toString() : '';
         _marketplaceBestRating = ratingStr;
       });
     } catch (_) {}
@@ -395,23 +463,20 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
       final pickup = booking.pickup?.displayName ?? '';
       final dest = booking.destination?.displayName ?? '';
       final created = ride.rideCreatedAt;
-      final elapsed = created == null
-          ? 0
-          : DateTime.now().difference(created).inSeconds;
+      final elapsed =
+          created == null ? 0 : DateTime.now().difference(created).inSeconds;
       if (widget.variant == RideMatchingVariant.marketplace) {
         final expiry = created == null
             ? DateTime.now().millisecondsSinceEpoch ~/ 1000
-            : created
-                    .add(kRiderDriverSearchWindow)
-                    .millisecondsSinceEpoch ~/
+            : created.add(kRiderDriverSearchWindow).millisecondsSinceEpoch ~/
                 1000;
-        final status =
-            _marketplaceBidCount > 0 ? 'bids_received' : 'waiting';
+        final status = _marketplaceBidCount > 0 ? 'bids_received' : 'waiting';
         await HeycabyWidgetSync.syncMarketplace(
           origin: pickup,
           destination: dest,
           bidCount: _marketplaceBidCount,
-          bestPrice: _marketplaceBestPrice.isEmpty ? '—' : _marketplaceBestPrice,
+          bestPrice:
+              _marketplaceBestPrice.isEmpty ? '—' : _marketplaceBestPrice,
           bestRating:
               _marketplaceBestRating.isEmpty ? '—' : _marketplaceBestRating,
           expiryEpochSec: expiry,
@@ -429,7 +494,25 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
   }
 
   Future<void> _onNotifyMe(BuildContext context) async {
-    await RiderNotifySearchNotifications.ensureNotifyPermission();
+    final granted =
+        await RiderNotifySearchNotifications.ensureNotifyPermission();
+    if (!granted) {
+      if (!context.mounted) return;
+      final l10n = AppLocalizations.of(context);
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      messenger?.hideCurrentSnackBar();
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text(l10n.accountNotificationsNeededBody),
+          action: SnackBarAction(
+            label: l10n.openNotificationSettings,
+            onPressed: () => openAppSettings(),
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     if (!context.mounted) return;
     final rideId = ref.read(rideRequestProvider).rideRequestId;
     final booking = ref.read(bookingProvider);
@@ -490,24 +573,57 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
       builder: (_) => AlertDialog(
         backgroundColor: colors.card,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(l10n.cancel, style: typo.headingMedium.copyWith(color: colors.text)),
-        content: Text(l10n.noShowWarning, style: typo.bodyMedium.copyWith(color: colors.textMid)),
+        title: Text(l10n.cancel,
+            style: typo.headingMedium.copyWith(color: colors.text)),
+        content: Text(l10n.noShowWarning,
+            style: typo.bodyMedium.copyWith(color: colors.textMid)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.back, style: typo.labelLarge.copyWith(color: colors.textMid)),
+            child: Text(l10n.back,
+                style: typo.labelLarge.copyWith(color: colors.textMid)),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context, true);
-              ref.read(rideRequestProvider.notifier).reset();
+              if (!mounted) return;
               context.go('/home');
+              unawaited(_cancelRideGloballyFromSearching());
             },
-            child: Text(l10n.cancel, style: typo.labelLarge.copyWith(color: colors.error)),
+            child: Text(l10n.cancel,
+                style: typo.labelLarge.copyWith(color: colors.error)),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _cancelRideGloballyFromSearching() async {
+    final rideId = ref.read(rideRequestProvider).rideRequestId;
+    if (rideId != null) {
+      try {
+        final identity = await ref.read(riderIdentityProvider.future);
+        final token = identity.riderToken;
+        if (token != null && token.isNotEmpty) {
+          await cancelExpiredRiderOpenRide(
+            rideId: rideId,
+            riderToken: token,
+            cancellationReason: 'rider_cancelled_from_searching_screen',
+          );
+        }
+      } catch (_) {
+        // Still clear local state so UI is never stuck on an active search banner.
+      }
+    }
+
+    await SoundService().playRideCancelled();
+    ref.read(rideRequestProvider.notifier).reset();
+    await ref.read(activeSearchProvider.notifier).clear();
+    ref.invalidate(nearTermRideRequestProvider);
+    try {
+      await ref.read(nearTermRideRequestProvider.future);
+    } catch (_) {}
+    ref.invalidate(ridesTabUpcomingRequestsProvider);
   }
 
   @override
@@ -560,8 +676,7 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
               child: Align(
                 alignment: AlignmentDirectional.centerStart,
                 child: GestureDetector(
-                  onTap: () =>
-                      _showCancelDialog(context, colors, typo, l10n),
+                  onTap: () => _showCancelDialog(context, colors, typo, l10n),
                   child: Container(
                     width: 40,
                     height: 40,
@@ -614,9 +729,7 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
                     },
                     child: _DidYouKnowCard(
                       key: ValueKey<int>(_currentFactIndex),
-                      fact: _facts.isNotEmpty
-                          ? _facts[_currentFactIndex]
-                          : '',
+                      fact: _facts.isNotEmpty ? _facts[_currentFactIndex] : '',
                       colors: colors,
                       typo: typo,
                     ),
@@ -812,4 +925,3 @@ class _RadarAnimation extends StatelessWidget {
     );
   }
 }
-

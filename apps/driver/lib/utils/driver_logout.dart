@@ -6,6 +6,7 @@ import 'package:heycaby_api/heycaby_api.dart';
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
 import '../providers/driver_state_provider.dart';
+import '../services/location_service.dart';
 
 /// Signs out of Supabase, clears driver session state, and navigates to [loginRoute].
 ///
@@ -39,6 +40,8 @@ Future<void> performDriverLogout(
 
   if (confirmed != true || !context.mounted) return;
 
+  DriverLocationService().resetSession();
+
   try {
     await HeyCabyFcmRegistration.unregisterAll(appRole: 'driver');
   } catch (_) {}
@@ -53,6 +56,30 @@ Future<void> performDriverLogout(
     }
     return;
   }
+
+  ref.read(driverStateProvider.notifier).logout();
+  ref.read(foundingDriverPostClaimProvider.notifier).state = null;
+
+  if (context.mounted) {
+    context.go(loginRoute);
+  }
+}
+
+/// Immediate logout without confirmation (session revoked, security).
+Future<void> forceDriverLogout(
+  BuildContext context,
+  WidgetRef ref, {
+  String loginRoute = '/login',
+}) async {
+  DriverLocationService().resetSession();
+
+  try {
+    await HeyCabyFcmRegistration.unregisterAll(appRole: 'driver');
+  } catch (_) {}
+
+  try {
+    await HeyCabySupabase.client.auth.signOut();
+  } catch (_) {}
 
   ref.read(driverStateProvider.notifier).logout();
   ref.read(foundingDriverPostClaimProvider.notifier).state = null;
