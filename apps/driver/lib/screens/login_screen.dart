@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -11,9 +10,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../l10n/driver_strings.dart';
 import '../providers/driver_state_provider.dart';
 import '../router.dart';
-import '../utils/driver_session_revoked_flow.dart';
-import '../services/driver_operational_restore_service.dart';
 import '../services/driver_session_bootstrap.dart';
+import '../utils/driver_entry_navigation.dart';
 import '../utils/driver_session_revoked_flow.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
@@ -219,12 +217,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             driverId,
           );
       if (!mounted) return;
-      await restoreDriverOperationalState(ref, appRouter);
-      if (!mounted) return;
       setState(() => _loading = false);
-      if (ref.read(driverStateProvider).activeRideId == null) {
-        context.go('/driver');
-      }
+      await navigateDriverAfterAuth(
+        ref: ref,
+        router: appRouter,
+        context: context,
+      );
     } on Exception catch (e) {
       if (!mounted) return;
       setState(() {
@@ -276,12 +274,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
 
       if (!mounted) return true;
-      await restoreDriverOperationalState(ref, appRouter);
-      if (!mounted) return true;
       setState(() => _loading = false);
-      if (ref.read(driverStateProvider).activeRideId == null) {
-        context.go('/driver');
-      }
+      await navigateDriverAfterAuth(
+        ref: ref,
+        router: appRouter,
+        context: context,
+      );
       return true;
     } on FunctionException catch (e) {
       if (e.status >= 500 && mounted) {

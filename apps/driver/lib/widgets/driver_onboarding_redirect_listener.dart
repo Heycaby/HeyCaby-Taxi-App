@@ -2,30 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../providers/driver_data_providers.dart';
+import '../models/driver_runtime_models.dart';
 import '../providers/driver_runtime_providers.dart';
+import '../utils/driver_entry_navigation.dart';
 
-const _onboardingExemptPrefixes = [
-  '/splash',
-  '/login',
-  '/driver/onboarding/plate',
-  '/driver/terms',
-  '/driver/indemnification',
-  '/driver/privacy',
-  '/driver/go-online',
-  '/driver/runtime-gate',
-];
-
-bool _isOnboardingExemptRoute(String location) {
-  for (final prefix in _onboardingExemptPrefixes) {
-    if (location.startsWith(prefix)) return true;
-  }
-  if (location.startsWith('/driver/ride/')) return true;
-  if (location.startsWith('/driver/chat/')) return true;
-  return false;
-}
-
-/// Sends drivers without a plate to plate-first onboarding when V2 is enabled.
+/// Safety net: if the user lands on the main shell before onboarding completes,
+/// redirect using `fn_driver_runtime()` (not local profile heuristics).
 class DriverOnboardingRedirectListener extends ConsumerStatefulWidget {
   const DriverOnboardingRedirectListener({super.key});
 
@@ -38,7 +20,8 @@ class _DriverOnboardingRedirectListenerState
     extends ConsumerState<DriverOnboardingRedirectListener> {
   bool _redirectScheduled = false;
 
-  void _maybeRedirect() {
+  void _maybeRedirect(DriverRuntimeSnapshot? runtime) {
+    if (runtime == null || !runtime.ok) return;
     if (_redirectScheduled) return;
     _redirectScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -46,28 +29,21 @@ class _DriverOnboardingRedirectListenerState
       if (!mounted) return;
 
       final location = GoRouterState.of(context).uri.toString();
-      if (_isOnboardingExemptRoute(location)) return;
+      if (!driverEntryRouteMismatch(location, runtime)) return;
 
-      final config = ref.read(driverRemoteConfigProvider).valueOrNull;
-      if (config != null && !config.driverOnboardingV2) return;
-
-      final profile = ref.read(driverProfileProvider).valueOrNull;
-      final compliance = ref.read(driverComplianceProvider).valueOrNull;
-      final plate = (compliance?.vehiclePlate ?? profile?.vehiclePlate ?? '')
-          .trim();
-      if (plate.isNotEmpty) return;
-
-      if (location.startsWith('/driver/onboarding/plate')) return;
-      context.go('/driver/onboarding/plate');
+      final target = resolveDriverEntryRoute(runtime);
+      if (location.startsWith(target)) return;
+      context.go(target);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(driverProfileProvider, (_, __) => _maybeRedirect());
-    ref.listen(driverComplianceProvider, (_, __) => _maybeRedirect());
-    ref.listen(driverRemoteConfigProvider, (_, __) => _maybeRedirect());
-    _maybeRedirect();
+    ref.listen<AsyncValue<DriverRuntimeSnapshot>>(
+      driverRuntimeSnapshotProvider,
+      (_, next) => _maybeRedirect(next.valueOrNull),
+    );
+    _maybeRedirect(ref.watch(driverRuntimeSnapshotProvider).valueOrNull);
     return const SizedBox.shrink();
   }
 }

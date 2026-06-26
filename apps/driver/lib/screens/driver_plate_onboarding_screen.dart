@@ -1,12 +1,13 @@
-import 'dart:async' show unawaited;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
+import '../providers/driver_runtime_providers.dart';
+import '../utils/driver_entry_navigation.dart';
 import '../utils/driver_runtime_refresh.dart';
 import '../services/rdw_open_data_service.dart';
 import '../theme/driver_colors.dart';
@@ -31,6 +32,25 @@ class _DriverPlateOnboardingScreenState
   _PlateStatus _status = _PlateStatus.idle;
   RdwVehicleRow? _rdwRow;
   bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      if (HeyCabySupabase.client.auth.currentSession == null) {
+        context.go('/login');
+        return;
+      }
+      try {
+        final runtime = await ref.read(driverRuntimeSnapshotProvider.future);
+        if (!mounted) return;
+        if (runtime.plateVerified) {
+          context.go(resolveDriverEntryRoute(runtime));
+        }
+      } catch (_) {}
+    });
+  }
 
   @override
   void dispose() {
@@ -135,9 +155,9 @@ class _DriverPlateOnboardingScreenState
     if (res?['success'] == true) {
       ref.invalidate(driverProfileProvider);
       ref.invalidate(driverComplianceProvider);
-      unawaited(refreshDriverRuntime(ref));
+      final runtime = await refreshDriverRuntime(ref);
       if (!mounted) return;
-      context.go('/driver/terms');
+      context.go(resolveDriverEntryRoute(runtime));
       return;
     }
 
@@ -202,7 +222,7 @@ class _DriverPlateOnboardingScreenState
       rdwMake: _rdwRow?.merk,
       rdwModel: _rdwRow?.handelsbenaming,
       rdwApk: _rdwRow?.vervaldatumApk,
-      onBack: _saving ? () {} : () => context.go('/login'),
+      onBack: _saving ? () {} : () => context.go('/splash'),
       onLookupPlate: _checkPlate,
       onSave: () => _claim(),
     );

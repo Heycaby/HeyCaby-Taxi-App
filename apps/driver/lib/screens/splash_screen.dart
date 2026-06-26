@@ -10,11 +10,9 @@ import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
-import '../providers/driver_state_provider.dart';
 import '../router.dart';
-import '../services/driver_operational_restore_service.dart';
-import '../services/driver_session_bootstrap.dart';
-import '../utils/driver_runtime_refresh.dart';
+import '../providers/driver_runtime_providers.dart';
+import '../utils/driver_entry_navigation.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_brand_moment_body.dart';
 
@@ -83,6 +81,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     );
 
     _ctrl.forward().then((_) => _onIntroFinished());
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (HeyCabySupabase.client.auth.currentSession != null) {
+        unawaited(ref.read(driverRuntimeServiceProvider).fetchRuntime());
+      }
+    });
   }
 
   @override
@@ -107,26 +111,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       unawaited(HapticFeedback.lightImpact());
     }
     _navigating = true;
-    final session = HeyCabySupabase.client.auth.currentSession;
-    if (session == null) {
-      if (mounted) context.go('/login');
-      if (mounted) setState(() => _navigating = false);
-      return;
-    }
-    ref.read(driverStateProvider.notifier).setUser(session.user.id, null);
-    String? driverId;
     try {
-      driverId = await bootstrapDriverSessionAfterAuth(ref);
-    } catch (_) {
-      driverId = null;
-    }
-    if (!mounted) return;
-    ref.read(driverStateProvider.notifier).setUser(session.user.id, driverId);
-    unawaited(refreshDriverRuntime(ref));
-    await restoreDriverOperationalState(ref, appRouter);
-    if (!mounted) return;
-    if (ref.read(driverStateProvider).activeRideId == null) {
-      context.go('/driver');
+      await navigateDriverAfterAuth(
+        ref: ref,
+        router: appRouter,
+        context: context,
+      );
+    } finally {
+      if (mounted) setState(() => _navigating = false);
     }
   }
 

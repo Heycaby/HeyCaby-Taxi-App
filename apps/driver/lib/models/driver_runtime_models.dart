@@ -185,7 +185,14 @@ class DriverRuntimeSnapshot {
         json;
     final configRaw =
         (json['config'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final onboardingRaw =
+        (json['onboarding'] as Map?)?.cast<String, dynamic>() ?? const {};
     final generatedRaw = json['generated_at'];
+
+    final plateVerified = json['plate_verified'] == true ||
+        onboardingRaw['plate_verified'] == true;
+    final termsAccepted = json['terms_accepted'] == true ||
+        onboardingRaw['terms_accepted'] == true;
 
     return DriverRuntimeSnapshot(
       ok: true,
@@ -197,8 +204,8 @@ class DriverRuntimeSnapshot {
       readiness: DriverReadinessState.fromJson(readinessRaw),
       config: DriverRemoteConfig.fromJson(configRaw),
       billingAllowed: json['billing_allowed'] == true,
-      plateVerified: json['plate_verified'] == true,
-      termsAccepted: json['terms_accepted'] == true,
+      plateVerified: plateVerified,
+      termsAccepted: termsAccepted,
       sessionActive: json['session_active'] == true,
       sharedVehicle: json['shared_vehicle'] == true,
       platformHealth: (json['platform_health'] ?? 'UNKNOWN').toString(),

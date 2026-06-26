@@ -144,12 +144,9 @@ final appRouter = GoRouter(
     final loc = state.matchedLocation;
     final isPublicRoute = _publicRoutes.any((r) => loc.startsWith(r));
 
-    // Cold start uses [initialLocation] `/splash`. Skip marketing splash when a
-    // session already exists (Supabase restores it during init — no backend change).
-    if (isLoggedIn && loc.startsWith('/splash')) return '/driver';
-
     if (!isLoggedIn && !isPublicRoute) return '/login';
-    if (isLoggedIn && loc == '/login') return '/driver';
+    // Logged-in users re-enter through splash (runtime decides next step).
+    if (isLoggedIn && loc.startsWith('/login')) return '/splash';
 
     return null;
   },
