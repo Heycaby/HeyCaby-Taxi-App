@@ -106,8 +106,7 @@ class _RecentTicketsSection extends ConsumerWidget {
                     colors: colors,
                     typo: typo,
                     l10n: l10n,
-                    onTap: () =>
-                        context.push('/support/chat/${t['id']}'),
+                    onTap: () => context.push('/support/chat/${t['id']}'),
                   )),
             ],
           ),
@@ -120,18 +119,16 @@ class _RecentTicketsSection extends ConsumerWidget {
     final client = HeyCabySupabase.client;
     final userId = client.auth.currentUser?.id;
     if (userId == null) return const Stream<List<Map<String, dynamic>>>.empty();
-    return client
-        .from('tickets')
-        .stream(primaryKey: ['id'])
-        .map(
-          (rows) => rows
-              .where((r) => r['user_type'] == 'rider' && r['user_id'] == userId)
-              .map((r) => Map<String, dynamic>.from(r))
-              .toList(),
-        );
+    return client.from('tickets').stream(primaryKey: ['id']).map(
+      (rows) => rows
+          .where((r) => r['user_type'] == 'rider' && r['user_id'] == userId)
+          .map((r) => Map<String, dynamic>.from(r))
+          .toList(),
+    );
   }
 
-  List<Map<String, dynamic>> _sortByLastUpdate(List<Map<String, dynamic>> rows) {
+  List<Map<String, dynamic>> _sortByLastUpdate(
+      List<Map<String, dynamic>> rows) {
     rows.sort((a, b) {
       final aAt = DateTime.tryParse(
             (a['updated_at'] as String?) ?? (a['created_at'] as String?) ?? '',
@@ -168,8 +165,8 @@ class _TicketRow extends StatelessWidget {
     final messages = ticket['messages'] as List? ?? [];
     final status = ticket['status'] as String? ?? 'open';
     final category = ticket['category'] as String? ?? '';
-    final updatedAtRaw = ticket['updated_at'] as String? ??
-        ticket['created_at'] as String?;
+    final updatedAtRaw =
+        ticket['updated_at'] as String? ?? ticket['created_at'] as String?;
     final hasUserMsg = messages.any((m) {
       if (m is! Map) return false;
       final map = Map<String, dynamic>.from(m);
@@ -192,8 +189,7 @@ class _TicketRow extends StatelessWidget {
       statusColor = colors.textSoft;
     }
 
-    final summary =
-        (ticket['resolution_summary'] as String?)?.trim() ?? '';
+    final summary = (ticket['resolution_summary'] as String?)?.trim() ?? '';
     final outcome = (ticket['resolution_outcome'] as String?)?.trim() ?? '';
     final preview = messages.isNotEmpty
         ? (() {
@@ -383,7 +379,8 @@ class _ChatWithYazRow extends StatelessWidget {
                 color: colors.accent.withValues(alpha: 0.16),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(Icons.smart_toy_outlined, color: colors.accent, size: 20),
+              child: Icon(Icons.smart_toy_outlined,
+                  color: colors.accent, size: 20),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -401,7 +398,8 @@ class _ChatWithYazRow extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
                           color: colors.accent,
                           borderRadius: BorderRadius.circular(999),

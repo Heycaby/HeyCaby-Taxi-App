@@ -5,7 +5,6 @@
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>nl.heycaby.rider.app.background-processing</string>
-		<string>nl.heycaby.rider.app.location-updates</string>
 		<string>nl.heycaby.rider.app.data-sync</string>
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
@@ -53,8 +52,6 @@
 	</array>
 	<key>MBXAccessToken</key>
 	<string>$(MAPBOX_ACCESS_TOKEN)</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>HeyCaby needs your location to show nearby drivers, set your pickup point, and display your position on the map while you use the app.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>HeyCaby needs your location to show nearby drivers, set your pickup point, and display your position on the map while you use the app.</string>
 	<key>NSSupportsLiveActivities</key>

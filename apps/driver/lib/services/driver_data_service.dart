@@ -1621,52 +1621,6 @@ class DriverDataService {
     }
   }
 
-  /// Supabase Edge Function `verify-chauffeurspas` (ILT). Invalidates profile after success.
-  Future<ChauffeurspasVerifyOutcome> verifyChauffeurspas(String rawInput) async {
-    final normalized = rawInput.replaceAll(RegExp(r'[\s\-]'), '').toUpperCase();
-    if (normalized.length < 8) {
-      return const ChauffeurspasVerifyOutcome(ok: false, message: 'Enter an 8-digit chauffeurspas number.');
-    }
-    try {
-      final baseUrl = await DriverApiBaseResolver.resolve();
-      final dio = Dio(
-        BaseOptions(
-          baseUrl: baseUrl,
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 15),
-          headers: {'Content-Type': 'application/json'},
-        ),
-      );
-      final token = _client.auth.currentSession?.accessToken;
-      if (token != null && token.isNotEmpty) {
-        dio.options.headers['Authorization'] = 'Bearer $token';
-      }
-      final res = await dio.post<Map<String, dynamic>>(
-        '/api/v1/driver/document/validate',
-        data: {'doc_type': 'chauffeurspas', 'value': normalized},
-      );
-      if (res.statusCode != 200) {
-        return ChauffeurspasVerifyOutcome(
-          ok: false,
-          message: res.data?.toString() ?? 'Service error (${res.statusCode})',
-        );
-      }
-      final map = Map<String, dynamic>.from(res.data ?? const {});
-      if (map['valid'] == true) {
-        return ChauffeurspasVerifyOutcome(
-          ok: true,
-          message: map['message']?.toString() ?? 'Verified',
-        );
-      }
-      return ChauffeurspasVerifyOutcome(
-        ok: false,
-        message: map['error']?.toString() ?? map['message']?.toString() ?? 'Not valid',
-      );
-    } catch (e) {
-      return ChauffeurspasVerifyOutcome(ok: false, message: e.toString());
-    }
-  }
-
   /// Return trips view (driver_return_trips). Filter for home zone/city happens in Dart.
   Future<List<DriverReturnTrip>> getReturnTrips({int limit = 100}) async {
     try {
@@ -4470,4 +4424,3 @@ class DriverTopAppSuggestion {
     );
   }
 }
-

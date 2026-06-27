@@ -5,9 +5,6 @@ import '../models/driver_runtime_models.dart';
 import '../utils/driver_runtime_refresh.dart';
 
 /// Supabase-first driver runtime — single RPC for config + readiness + health.
-///
-/// Go `/api/v1/driver/*` routes remain in the repository but are not used for
-/// launch-critical driver runtime decisions.
 class DriverRuntimeService {
   DriverRuntimeSnapshot? _cachedRuntime;
   DateTime? _cachedAt;

@@ -1,6 +1,6 @@
 import '../models/driver_runtime_models.dart';
 
-/// Maps Go `/api/v1/driver/readiness` checklist [action] / [key] to Flutter routes.
+/// Maps Supabase runtime checklist [action] / [key] to Flutter routes.
 /// Returns null when there is no dedicated navigation (e.g. review-account row).
 String? flutterRouteForReadinessItem(DriverReadinessItem item) {
   final key = item.key.trim();

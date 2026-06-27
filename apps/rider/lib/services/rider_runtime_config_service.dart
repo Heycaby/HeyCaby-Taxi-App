@@ -1,5 +1,3 @@
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 
 class RiderRuntimeTuning {
@@ -47,32 +45,6 @@ class RiderRuntimeTuning {
 }
 
 class RiderRuntimeConfigService {
-  RiderRuntimeConfigService() {
-    _dio = Dio(
-      BaseOptions(
-        baseUrl: 'https://heycaby.nl',
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 15),
-        headers: {'Content-Type': 'application/json'},
-      ),
-    );
-    _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) {
-          final token = HeyCabySupabase.client.auth.currentSession?.accessToken;
-          if (token != null && token.isNotEmpty) {
-            options.headers['Authorization'] = 'Bearer $token';
-          }
-          handler.next(options);
-        },
-      ),
-    );
-    if (kDebugMode) {
-      _dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: false));
-    }
-  }
-
-  late final Dio _dio;
   RiderRuntimeTuning _tuning = RiderRuntimeTuning.fallback;
   DateTime? _lastFetchAt;
 
@@ -83,8 +55,10 @@ class RiderRuntimeConfigService {
       final age = DateTime.now().difference(_lastFetchAt!);
       if (age < const Duration(minutes: 5)) return _tuning;
     }
-    final res = await _dio.get<Map<String, dynamic>>('/api/v1/config');
-    _tuning = RiderRuntimeTuning.fromJson(res.data ?? const {});
+    final raw = await HeyCabySupabase.client.rpc('fn_driver_runtime_configuration');
+    _tuning = RiderRuntimeTuning.fromJson(
+      raw is Map ? Map<String, dynamic>.from(raw) : const {},
+    );
     _lastFetchAt = DateTime.now();
     return _tuning;
   }

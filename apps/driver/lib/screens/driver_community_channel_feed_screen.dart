@@ -1,4 +1,3 @@
-import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
@@ -43,7 +42,8 @@ class _DriverCommunityChannelFeedScreenState
     ref.invalidate(communityPostsProvider(_channel));
   }
 
-  Future<void> _refreshReactions(List<CommunityPost> posts, String? driverId) async {
+  Future<void> _refreshReactions(
+      List<CommunityPost> posts, String? driverId) async {
     if (driverId == null || posts.isEmpty || !mounted) return;
     final ids = posts.map((e) => e.id).toList();
     final key = '${driverId}_${ids.join(',')}';
@@ -61,9 +61,8 @@ class _DriverCommunityChannelFeedScreenState
     final isLike = type == 'like';
     final toggledOn = isLike ? !current.likedByMe : !current.thankedByMe;
     final next = CommunityReactionSummary(
-      likeCount: isLike
-          ? current.likeCount + (toggledOn ? 1 : -1)
-          : current.likeCount,
+      likeCount:
+          isLike ? current.likeCount + (toggledOn ? 1 : -1) : current.likeCount,
       thanksCount: isLike
           ? current.thanksCount
           : current.thanksCount + (toggledOn ? 1 : -1),
@@ -82,11 +81,12 @@ class _DriverCommunityChannelFeedScreenState
     final driverId = await ref.read(driverIdProvider.future);
     if (driverId == null) return;
     _applyLocalReaction(postId, type);
-    final ok = await ref.read(driverDataServiceProvider).toggleCommunityReaction(
-          postId: postId,
-          driverId: driverId,
-          reactionType: type,
-        );
+    final ok =
+        await ref.read(driverDataServiceProvider).toggleCommunityReaction(
+              postId: postId,
+              driverId: driverId,
+              reactionType: type,
+            );
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -163,11 +163,12 @@ class _DriverCommunityChannelFeedScreenState
   Future<void> _voteOnPoll(String pollId, String optionId) async {
     final driverId = await ref.read(driverIdProvider.future);
     if (driverId == null || !mounted) return;
-    final ok = await ref.read(driverDataServiceProvider).upsertCommunityPollVote(
-          pollId: pollId,
-          optionId: optionId,
-          driverId: driverId,
-        );
+    final ok =
+        await ref.read(driverDataServiceProvider).upsertCommunityPollVote(
+              pollId: pollId,
+              optionId: optionId,
+              driverId: driverId,
+            );
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(DriverStrings.communityPollVoteFailed)),
@@ -180,7 +181,8 @@ class _DriverCommunityChannelFeedScreenState
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
     final themeColors = ref.watch(colorsProvider);
     final themeTypo = ref.watch(typographyProvider);
     final postsAsync = ref.watch(communityChannelFeedProvider(_channel));
@@ -192,7 +194,8 @@ class _DriverCommunityChannelFeedScreenState
       typography: typography,
       onBack: () => Navigator.of(context).maybePop(),
       showNewPostFab: _channel == 'general',
-      onNewPost: () => showCreatePostSheet(context, ref, themeColors, themeTypo),
+      onNewPost: () =>
+          showCreatePostSheet(context, ref, themeColors, themeTypo),
       onRefresh: () async {
         _invalidateChannel();
         await ref.read(communityChannelFeedProvider(_channel).future);
@@ -238,7 +241,8 @@ class _DriverCommunityChannelFeedScreenState
                 thankedByMe: _reactions[post.id]?.thankedByMe ?? false,
                 onLike: () => _toggleReaction(post.id, 'like'),
                 onThanks: () => _toggleReaction(post.id, 'thanks'),
-                canManage: myDriverId != null && myDriverId == post.authorDriverId,
+                canManage:
+                    myDriverId != null && myDriverId == post.authorDriverId,
                 onEdit: () => _editPost(post),
                 onDelete: () => _deletePost(post),
                 poll: post.poll,

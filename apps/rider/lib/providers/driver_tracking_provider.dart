@@ -1,6 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 class DriverLocation {
@@ -22,79 +23,50 @@ class DriverLocation {
 }
 
 class DriverTrackingNotifier extends AutoDisposeAsyncNotifier<DriverLocation?> {
-  RealtimeChannel? _subscription;
+  Timer? _pollTimer;
+  String? _rideId;
 
   @override
   Future<DriverLocation?> build() async {
     ref.onDispose(() {
-      _subscription?.unsubscribe();
+      _pollTimer?.cancel();
     });
     return null;
   }
 
   Future<void> startTracking(String rideId) async {
-    // Resolve the driver_id from the ride request
-    final rideRow = await HeyCabySupabase.client
-        .from('ride_requests')
-        .select('driver_id')
-        .eq('id', rideId)
-        .maybeSingle();
+    _rideId = rideId;
+    await _fetchDriverLocation();
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => unawaited(_fetchDriverLocation()),
+    );
+  }
 
-    final driverId = rideRow?['driver_id'] as String?;
-    if (driverId == null) {
+  Future<void> _fetchDriverLocation() async {
+    final rideId = _rideId;
+    if (rideId == null || rideId.isEmpty) {
       state = const AsyncData(null);
       return;
     }
-
-    // Fetch initial location
-    await _fetchDriverLocation(driverId);
-
-    // Subscribe to real-time updates filtered by driver_id
-    _subscription = HeyCabySupabase.client
-        .channel('driver_location:$rideId')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.update,
-          schema: 'public',
-          table: 'driver_locations',
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'driver_id',
-            value: driverId,
-          ),
-          callback: (payload) {
-            final record = payload.newRecord;
-            state = AsyncData(DriverLocation(
-              driverId: record['driver_id'] as String,
-              lat: (record['latitude'] as num).toDouble(),
-              lng: (record['longitude'] as num).toDouble(),
-              heading: (record['heading'] as num?)?.toDouble(),
-              updatedAt: DateTime.parse(record['updated_at'] as String),
-            ));
-          },
-        )
-        .subscribe();
-  }
-
-  Future<void> _fetchDriverLocation(String driverId) async {
     try {
-      final response = await HeyCabySupabase.client
-          .from('driver_locations')
-          .select()
-          .eq('driver_id', driverId)
-          .order('updated_at', ascending: false)
-          .limit(1)
-          .maybeSingle();
+      final response = await HeyCabySupabase.client.rpc(
+        'fn_rider_driver_location_for_ride',
+        params: {'p_ride_request_id': rideId},
+      );
 
-      if (response == null) {
+      if (response is! Map) {
         state = const AsyncData(null);
         return;
       }
+      final row = Map<String, dynamic>.from(response);
       state = AsyncData(DriverLocation(
-        driverId: response['driver_id'] as String,
-        lat: (response['latitude'] as num).toDouble(),
-        lng: (response['longitude'] as num).toDouble(),
-        heading: (response['heading'] as num?)?.toDouble(),
-        updatedAt: DateTime.parse(response['updated_at'] as String),
+        driverId: row['driver_id'] as String,
+        lat: (row['latitude'] as num).toDouble(),
+        lng: (row['longitude'] as num).toDouble(),
+        heading: (row['heading'] as num?)?.toDouble(),
+        updatedAt: DateTime.parse(row['updated_at'] as String),
       ));
     } catch (e) {
       state = const AsyncData(null);
@@ -102,8 +74,9 @@ class DriverTrackingNotifier extends AutoDisposeAsyncNotifier<DriverLocation?> {
   }
 
   void stopTracking() {
-    _subscription?.unsubscribe();
-    _subscription = null;
+    _pollTimer?.cancel();
+    _pollTimer = null;
+    _rideId = null;
   }
 }
 

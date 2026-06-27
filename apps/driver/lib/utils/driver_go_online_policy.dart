@@ -66,7 +66,7 @@ bool driverMayGoOnline(
   List<String> vehiclePhotoUrls = const [],
   bool isReviewAccount = false,
 }) {
-  // Backend `/api/v1/driver/readiness` is authoritative for online eligibility.
+  // Supabase runtime is authoritative for online eligibility.
   // Keep this client helper permissive so UI never blocks before server decision.
   return true;
 }

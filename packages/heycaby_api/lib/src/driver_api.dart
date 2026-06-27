@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:heycaby_api/src/app_notifications_service.dart';
-import 'package:heycaby_api/src/driver_api_base_resolver.dart';
 import 'package:heycaby_api/src/driver_billing_edge_service.dart';
 import 'package:heycaby_api/src/supabase_client.dart';
 
@@ -22,9 +21,9 @@ class DriverRideLifecycleException implements Exception {
   String toString() => code;
 }
 
-/// Supabase-first driver API (Phase E — Go REST disabled in production).
+/// Supabase-first driver API.
 class DriverApi {
-  DriverApi({String? baseUrl});
+  const DriverApi();
 
   static const _notifications = AppNotificationsService();
   static const _billingEdge = DriverBillingEdgeService();
@@ -55,7 +54,7 @@ class DriverApi {
   Future<Map<String, dynamic>> fetchDriverStatus() async {
     final status = await _billingEdge.fetchBillingStatusOrNull();
     if (status != null) return status;
-    throw GoApiDisabledException('Billing status unavailable from Supabase.');
+    throw UnsupportedError('Billing status unavailable from Supabase.');
   }
 
   /// Apple receipt validation via Supabase Edge (Phase C/E).
@@ -68,12 +67,13 @@ class DriverApi {
       planCode: planCode,
     );
     if (!ok) {
-      throw GoApiDisabledException('Apple receipt verification failed.');
+      throw UnsupportedError('Apple receipt verification failed.');
     }
   }
 
   /// Mollie checkout — Supabase Edge (settlement or legacy subscription).
-  Future<Map<String, dynamic>> createDriverPlatformPayment({String? plan}) async {
+  Future<Map<String, dynamic>> createDriverPlatformPayment(
+      {String? plan}) async {
     final ledgerStatus = await _billingEdge.fetchBillingStatusOrNull();
     final isLedger = DriverBillingEdgeService.isLedgerV1(ledgerStatus);
     final edge = await _billingEdge.createCheckoutOrNull(
@@ -83,7 +83,7 @@ class DriverApi {
     if (edge != null) {
       return edge;
     }
-    throw GoApiDisabledException('Billing checkout unavailable from Supabase Edge.');
+    throw UnsupportedError('Billing checkout unavailable from Supabase Edge.');
   }
 
   /// Confirm Mollie payment after checkout redirect (Edge webhook fallback).
@@ -92,15 +92,17 @@ class DriverApi {
 
   /// Legacy Mollie subscription controls — disabled after Phase E cutover.
   Future<Map<String, dynamic>> cancelDriverPlatformSubscription() async {
-    throw GoApiDisabledException('Legacy subscription cancel is no longer available.');
+    throw UnsupportedError(
+        'Legacy subscription cancel is no longer available.');
   }
 
   Future<Map<String, dynamic>> pauseDriverPlatformSubscription() async {
-    throw GoApiDisabledException('Legacy subscription pause is no longer available.');
+    throw UnsupportedError('Legacy subscription pause is no longer available.');
   }
 
   Future<Map<String, dynamic>> resumeDriverPlatformSubscription() async {
-    throw GoApiDisabledException('Legacy subscription resume is no longer available.');
+    throw UnsupportedError(
+        'Legacy subscription resume is no longer available.');
   }
 
   /// Ledger history from [fn_driver_billing_ledger_history].
@@ -242,7 +244,7 @@ class DriverApi {
     required String rideRequestId,
     required String kind,
   }) async {
-    throw GoApiDisabledException('Use driver-agent Edge for rider pings.');
+    throw UnsupportedError('Use driver-agent Edge for rider pings.');
   }
 
   /// Atomic Supabase RPC [fn_driver_accept_ride_invite] — no HTTP fallback.
@@ -319,19 +321,18 @@ class DriverApi {
     );
   }
 
-
   /// Legacy auction routes — removed after Phase E (marketplace uses Supabase).
   Future<void> placeBid({required Map<String, dynamic> payload}) async {
-    throw GoApiDisabledException('Auction bidding is not available.');
+    throw UnsupportedError('Auction bidding is not available.');
   }
 
   Future<void> acceptFirst({required String rideRequestId}) async {
-    throw GoApiDisabledException('Auction accept-first is not available.');
+    throw UnsupportedError('Auction accept-first is not available.');
   }
 
   Future<Map<String, dynamic>> getRadar(
       {required double lat, required double lng}) async {
-    throw GoApiDisabledException('Auction radar is not available.');
+    throw UnsupportedError('Auction radar is not available.');
   }
 
   /// Supabase RPC `fn_driver_ride_no_show` — no Go fallback (Phase B).
@@ -407,7 +408,6 @@ class DriverApi {
       {'p_ride_request_id': rideRequestId},
     );
   }
-
 }
 
 class DriverManualRideResult {
@@ -430,7 +430,7 @@ class DriverManualRideResult {
   }
 }
 
-final driverApiProvider = Provider<DriverApi>((_) => DriverApi());
+final driverApiProvider = Provider<DriverApi>((_) => const DriverApi());
 
 class DriverNotificationItem {
   const DriverNotificationItem({

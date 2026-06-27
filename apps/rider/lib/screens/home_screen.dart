@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
-import 'package:dio/dio.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:heycaby_api/heycaby_api.dart';
@@ -20,6 +19,7 @@ import '../services/booking_flow_navigation.dart';
 import '../services/heycaby_widget_sync.dart';
 import '../services/rider_notify_search_notifications.dart';
 import '../services/location_service.dart';
+import '../services/nearby_supply_service.dart';
 import '../services/rider_runtime_config_service.dart';
 import '../services/sound_service.dart';
 import '../services/stale_ride_cleanup.dart';
@@ -301,24 +301,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   Future<void> _fetchNearbyTaxiCount(double lat, double lng) async {
     try {
-      final dio = Dio(
-        BaseOptions(
-          baseUrl: 'https://heycaby.nl',
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 15),
-          headers: {'Content-Type': 'application/json'},
-        ),
+      final pickup = AddressResult(
+        displayName: '',
+        fullAddress: '',
+        lat: lat,
+        lng: lng,
       );
-      final token = HeyCabySupabase.client.auth.currentSession?.accessToken;
-      if (token != null && token.isNotEmpty) {
-        dio.options.headers['Authorization'] = 'Bearer $token';
-      }
-      final response = await dio.get<Map<String, dynamic>>(
-        '/api/v1/rider/nearby-supply',
-        queryParameters: {'lat': lat, 'lng': lng},
+      final snapshots = await NearbySupplyService.loadForPickup(pickup: pickup);
+      final count = snapshots.values.fold<int>(
+        0,
+        (sum, snapshot) => sum + snapshot.driverCount,
       );
-      final count = (response.data?['count'] as num?)?.toInt() ??
-          ((response.data?['drivers'] as List?)?.length ?? 0);
 
       if (mounted) {
         setState(() {

@@ -4,18 +4,17 @@ Use this when filling **App Review Information** / **Notes** in App Store Connec
 
 ## Terminology (for your team)
 
-- **“Serverless” (AWS sense)** — compute that scales to zero (Lambda, Cloud Functions). HeyCaby’s **Go API on AWS** and **Supabase** are server-side, but the product goal you describe is better named **server-driven** or **thin client**: **business rules and eligibility live on servers**; the iOS app is mainly UI, device APIs, and calling those servers.
+- **“Serverless” (AWS sense)** — compute that scales to zero (Lambda, Cloud Functions). HeyCaby’s launch architecture is **Supabase + Postgres + RPCs + Edge Functions**. The product goal is better named **server-driven** or **thin client**: **business rules and eligibility live on servers**; the iOS app is mainly UI, device APIs, and calling those servers.
 - **Fully “static app”** in the strict sense is **not** accurate: the shipped binary still contains Flutter UI code, navigation, maps, permissions, and offline-safe defaults. What you *can* avoid is **re-shipping the store** for every **policy/threshold/copy** change if those are served as **data** (JSON) and enforced on the backend.
 
 ## What is already server-driven (deep-dive summary)
 
 | Area | How it works | Primary code / contracts |
 |------|----------------|---------------------------|
-| **Go API base URL** | Can be resolved from Supabase `app_config` + RPC (and defines for overrides) so infra can move without always rebaking the same hostname. | `packages/heycaby_api/lib/src/driver_api_base_resolver.dart` |
-| **Remote tuning & flags** | Supabase RPC `fn_driver_runtime` → `config.feature_flags` + `config.search` (search windows, radii, TTL-style knobs). Go `/api/v1/config` is **not** required for launch. | `apps/driver/lib/services/driver_runtime_service.dart`, `apps/driver/lib/models/driver_runtime_models.dart` |
+| **Remote tuning & flags** | Supabase RPC `fn_driver_runtime` → `config.feature_flags` + `config.search` (search windows, radii, TTL-style knobs). | `apps/driver/lib/services/driver_runtime_service.dart`, `apps/driver/lib/models/driver_runtime_models.dart` |
 | **Go-online eligibility** | **Authoritative** checklist: Supabase `fn_driver_runtime` → `readiness` (`can_go_online`, checklist items, progressive milestones). Flutter is a dumb renderer. | `apps/driver/lib/utils/driver_go_online_runtime_action.dart` |
-| **Going online / status** | Supabase RPC `fn_driver_set_status` — blocked reasons, payment redirects, messages from JSON. Go `/api/v1/driver/status` remains in repo but is not the launch path. | `driver_runtime_service.dart`, `packages/heycaby_api/lib/src/driver_api.dart` |
-| **Ride accept / decline** | HTTP client (`DriverApi`) with JWT — not direct status writes from UI for those actions. | `packages/heycaby_api/lib/src/driver_api.dart` |
+| **Going online / status** | Supabase RPC `fn_driver_set_status` — blocked reasons, payment redirects, messages from JSON. | `driver_runtime_service.dart`, `packages/heycaby_api/lib/src/driver_api.dart` |
+| **Ride accept / decline** | Supabase RPCs through `DriverApi` with the signed-in session — not direct status writes from UI for those actions. | `packages/heycaby_api/lib/src/driver_api.dart` |
 | **Auth & profile data** | Supabase Auth + Postgres (RLS); large surface in `DriverDataService` — still **server** data, accessed via SDK rather than only Go. | `apps/driver/lib/services/driver_data_service.dart` |
 
 ## What still lives in the app (so you still need store builds sometimes)
@@ -24,7 +23,7 @@ Use this when filling **App Review Information** / **Notes** in App Store Connec
 - **Native / Flutter plugins** — Mapbox, push, Veriff browser flow, permissions — ship with the app.
 - **Strings & accessibility** — mostly `driver_strings.dart` (not gen-l10n); marketing/legal copy on the web is separate.
 - **UX timers and shells** — e.g. incoming request countdown is client-side timing; **outcome** still goes through API where required.
-- **Direct Supabase reads/writes** — many lists and profile updates use the Supabase client. That is still **remote** logic enforcement (RLS + triggers), but **not** the same as “everything goes only through the Go binary.” Splitting reads vs writes is a product/engineering choice documented in `apps/driver/DRIVER_APP_MAP.md` (e.g. ride lifecycle via API).
+- **Direct Supabase reads/writes** — many lists and profile updates use the Supabase client. Enforcement still belongs to RLS, triggers, RPCs, and Edge Functions. Splitting reads vs writes is a product/engineering choice documented in `apps/driver/DRIVER_APP_MAP.md` (e.g. ride lifecycle through RPCs).
 
 For a wider gap analysis (what could move next), see `BUSINESS-LOGIC-SEPARATION.md` and `SERVER-DRIVEN-APP-ARCHITECTURE.md` at repo root.
 

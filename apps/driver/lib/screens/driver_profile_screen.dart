@@ -13,14 +13,11 @@ import '../services/driver_data_service.dart'
     show
         DriverProfile,
         ProfilePhotoConnectionException,
-        ProfilePhotoLimitException,
-        VehiclePhotoLimitException;
+        ProfilePhotoLimitException;
 import '../theme/app_icons.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_identity_body.dart';
-import '../utils/driver_account_deletion.dart';
-import '../utils/driver_logout.dart';
 import '../utils/validation_utils.dart';
 
 /// Full profile screen — name, photo (one-time), rating.
@@ -143,7 +140,6 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) {
-        final themeColors = ref.read(colorsProvider);
         return AlertDialog(
           title: Text(DriverStrings.profilePhotoConfirmTitle),
           content: SingleChildScrollView(
@@ -168,7 +164,9 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
     setState(() => _busy = true);
     String? url;
     try {
-      url = await ref.read(driverDataServiceProvider).uploadDriverProfilePhotoOnce(
+      url = await ref
+          .read(driverDataServiceProvider)
+          .uploadDriverProfilePhotoOnce(
             driverId: id,
             bytes: bytes,
             contentType: contentType,
@@ -185,7 +183,8 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.profilePhotoUploadConnectionError)),
+        SnackBar(
+            content: Text(DriverStrings.profilePhotoUploadConnectionError)),
       );
       return;
     }
@@ -333,7 +332,9 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                                   },
                                 ),
                                 if (_profilePhotoChangesRemaining(
-                                      ref.read(driverProfileProvider).valueOrNull ??
+                                      ref
+                                              .read(driverProfileProvider)
+                                              .valueOrNull ??
                                           profile,
                                     ) >
                                     0)
@@ -360,7 +361,9 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                         Center(
                           child: Text(
                             _profilePhotoChangesRemaining(
-                                      ref.read(driverProfileProvider).valueOrNull ??
+                                      ref
+                                              .read(driverProfileProvider)
+                                              .valueOrNull ??
                                           profile,
                                     ) >
                                     0
@@ -408,10 +411,10 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                             await _saveNameFromSheet(t, id);
                           },
                           style: FilledButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14)),
-                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14)),
+                          ),
                           child: Text(DriverStrings.saveAction),
                         ),
                         const SizedBox(height: 12),
@@ -486,8 +489,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                   emphasizePlaceholder: !hasName,
                   rating: rating,
                   foundingNumber: profile?.foundingNumber,
-                  showFoundingShield:
-                      (profile?.isFoundingDriver ?? false) &&
+                  showFoundingShield: (profile?.isFoundingDriver ?? false) &&
                       ((profile?.foundingNumber ?? 0) >= 1) &&
                       ((profile?.foundingNumber ?? 0) <= 200),
                   isVerifiedBadge: profile?.isVerifiedBadge ?? false,
@@ -534,7 +536,6 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
     );
   }
 }
-
 
 class _DriverAvatar extends StatelessWidget {
   final String? photoUrl;

@@ -15,7 +15,8 @@ class RiderPrerideHomeBanner extends ConsumerStatefulWidget {
       _RiderPrerideHomeBannerState();
 }
 
-class _RiderPrerideHomeBannerState extends ConsumerState<RiderPrerideHomeBanner> {
+class _RiderPrerideHomeBannerState
+    extends ConsumerState<RiderPrerideHomeBanner> {
   Map<String, dynamic>? _row;
   DateTime? _lastPoll;
 
@@ -32,7 +33,8 @@ class _RiderPrerideHomeBannerState extends ConsumerState<RiderPrerideHomeBanner>
       return;
     }
     final now = DateTime.now();
-    if (_lastPoll != null && now.difference(_lastPoll!) < const Duration(seconds: 20)) {
+    if (_lastPoll != null &&
+        now.difference(_lastPoll!) < const Duration(seconds: 20)) {
       return;
     }
     _lastPoll = now;
@@ -62,6 +64,7 @@ class _RiderPrerideHomeBannerState extends ConsumerState<RiderPrerideHomeBanner>
     }
 
     if (!shouldWatch || _row == null) return const SizedBox.shrink();
+    final activeRideId = rideId;
 
     final sent = _row!['rider_preride_request_sent_at'];
     if (sent == null) return const SizedBox.shrink();
@@ -108,24 +111,22 @@ class _RiderPrerideHomeBannerState extends ConsumerState<RiderPrerideHomeBanner>
             const SizedBox(height: 8),
             FilledButton(
               onPressed: () async {
-                      final ok = await ref
-                          .read(rideRequestProvider.notifier)
-                          .confirmPrerideServer(rideId!);
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            ok
-                                ? l10n.prerideConfirmedThanks
-                                : l10n.connectionProblem,
-                          ),
-                        ),
-                      );
-                      if (ok) {
-                        _lastPoll = null;
-                        await _pollIfDue();
-                      }
-                    },
+                final ok = await ref
+                    .read(rideRequestProvider.notifier)
+                    .confirmPrerideServer(activeRideId);
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      ok ? l10n.prerideConfirmedThanks : l10n.connectionProblem,
+                    ),
+                  ),
+                );
+                if (ok) {
+                  _lastPoll = null;
+                  await _pollIfDue();
+                }
+              },
               child: Text(l10n.prerideConfirmAttending),
             ),
           ],

@@ -45,8 +45,6 @@ class DriverEarningsModal extends ConsumerStatefulWidget {
 
 class _DriverEarningsModalState extends ConsumerState<DriverEarningsModal> {
   bool _amountVisible = true;
-  double? _swipeStartY;
-  bool _swipeDismissed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +63,6 @@ class _DriverEarningsModalState extends ConsumerState<DriverEarningsModal> {
     final profiles = profilesAsync.valueOrNull ?? [];
     final driverIdAsync = ref.watch(driverIdProvider);
     final driverId = driverIdAsync.valueOrNull;
-    final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
 
     return GestureDetector(
       onTap: widget.onDismiss,
@@ -112,7 +109,7 @@ class _DriverEarningsModalState extends ConsumerState<DriverEarningsModal> {
                         ),
                       ),
                     ),
-                    
+
                     // Header
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -140,14 +137,15 @@ class _DriverEarningsModalState extends ConsumerState<DriverEarningsModal> {
                             visualDensity: VisualDensity.compact,
                           ),
                           IconButton(
-                            icon: Icon(Icons.close, color: colors.textSoft, size: 22),
+                            icon: Icon(Icons.close,
+                                color: colors.textSoft, size: 22),
                             onPressed: widget.onDismiss,
                             visualDensity: VisualDensity.compact,
                           ),
                         ],
                       ),
                     ),
-                    
+
                     // Earnings - Large and clean
                     GestureDetector(
                       onTap: () {
@@ -156,7 +154,8 @@ class _DriverEarningsModalState extends ConsumerState<DriverEarningsModal> {
                         });
                       },
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 8),
                         child: Text(
                           displayAmount,
                           style: typo.headingLarge.copyWith(
@@ -168,7 +167,7 @@ class _DriverEarningsModalState extends ConsumerState<DriverEarningsModal> {
                         ),
                       ),
                     ),
-                    
+
                     // Status line
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -200,15 +199,16 @@ class _DriverEarningsModalState extends ConsumerState<DriverEarningsModal> {
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 24),
                     const Divider(height: 1),
-                    
+
                     // Active Tariff - Clean and simple
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: () => _showTariffDetails(context, activeProfile, colors, typo),
+                        onTap: () => _showTariffDetails(
+                            context, activeProfile, colors, typo),
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
                           child: Row(
@@ -270,7 +270,8 @@ class _DriverEarningsModalState extends ConsumerState<DriverEarningsModal> {
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             itemCount: profiles.length,
-                            separatorBuilder: (_, __) => const SizedBox(width: 8),
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 8),
                             itemBuilder: (context, index) {
                               final p = profiles[index];
                               final isActive = p.id == activeProfile?.id;
@@ -278,30 +279,40 @@ class _DriverEarningsModalState extends ConsumerState<DriverEarningsModal> {
                                 onTap: isActive
                                     ? null
                                     : () async {
-                                        debugPrint('Tapped tariff: ${p.profileName}, id: ${p.id}');
+                                        debugPrint(
+                                            'Tapped tariff: ${p.profileName}, id: ${p.id}');
                                         debugPrint('driverId: $driverId');
                                         if (driverId == null) {
-                                          debugPrint('ERROR: driverId is null!');
+                                          debugPrint(
+                                              'ERROR: driverId is null!');
                                           return;
                                         }
-                                        debugPrint('Switching to profile ${p.id}...');
+                                        debugPrint(
+                                            'Switching to profile ${p.id}...');
                                         final ok = await ref
                                             .read(driverDataServiceProvider)
                                             .switchRateProfile(driverId, p.id);
                                         debugPrint('Switch result: $ok');
                                         if (ok) {
-                                          ref.invalidate(driverRateProfilesProvider);
-                                          ref.invalidate(activeRateProfileProvider);
+                                          ref.invalidate(
+                                              driverRateProfilesProvider);
+                                          ref.invalidate(
+                                              activeRateProfileProvider);
                                           debugPrint('Providers invalidated');
                                         }
                                       },
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 8),
                                   decoration: BoxDecoration(
-                                    color: isActive ? colors.accent : colors.card,
+                                    color:
+                                        isActive ? colors.accent : colors.card,
                                     borderRadius: BorderRadius.circular(18),
                                     border: Border.all(
-                                      color: isActive ? Colors.transparent : colors.border.withValues(alpha: 0.5),
+                                      color: isActive
+                                          ? Colors.transparent
+                                          : colors.border
+                                              .withValues(alpha: 0.5),
                                     ),
                                   ),
                                   child: Row(
@@ -318,8 +329,12 @@ class _DriverEarningsModalState extends ConsumerState<DriverEarningsModal> {
                                       Text(
                                         p.profileName,
                                         style: typo.labelSmall.copyWith(
-                                          color: isActive ? colors.onAccent : colors.text,
-                                          fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                                          color: isActive
+                                              ? colors.onAccent
+                                              : colors.text,
+                                          fontWeight: isActive
+                                              ? FontWeight.w600
+                                              : FontWeight.w500,
                                         ),
                                       ),
                                     ],
@@ -579,7 +594,8 @@ class _TariffDetailsSheetState extends State<_TariffDetailsSheet> {
                       onTap: _switching || isActive
                           ? null
                           : () async {
-                              debugPrint('Modal tapped tariff: ${p.profileName}');
+                              debugPrint(
+                                  'Modal tapped tariff: ${p.profileName}');
                               setState(() => _switching = true);
                               await widget.onSwitchProfile(p.id);
                               debugPrint('Modal switch completed');
@@ -726,4 +742,3 @@ class _RateRow extends StatelessWidget {
     );
   }
 }
-

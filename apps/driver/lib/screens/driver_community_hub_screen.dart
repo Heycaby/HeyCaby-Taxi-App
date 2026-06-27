@@ -1,8 +1,6 @@
-import 'package:easy_refresh/easy_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
@@ -41,10 +39,12 @@ class _DriverCommunityHubScreenState
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
     final themeColors = ref.watch(colorsProvider);
     final themeTypo = ref.watch(typographyProvider);
-    final announcementsAsync = ref.watch(communityPostsProvider('announcements'));
+    final announcementsAsync =
+        ref.watch(communityPostsProvider('announcements'));
     final talkAsync = ref.watch(communityPostsProvider('general'));
     final unreadNotificationCount =
         ref.watch(communityUnreadNotificationsCountProvider).valueOrNull ?? 0;
@@ -59,7 +59,8 @@ class _DriverCommunityHubScreenState
       onAnnouncementsTap: () => setState(() => _activeFeed = 'announcements'),
       onDriverTalkTap: () => setState(() => _activeFeed = 'general'),
       onViewAll: () => _navigateToAllPosts(context),
-      onNewPost: () => showCreatePostSheet(context, ref, themeColors, themeTypo),
+      onNewPost: () =>
+          showCreatePostSheet(context, ref, themeColors, themeTypo),
       onRefresh: () async {
         ref.invalidate(communityPostsProvider('announcements'));
         ref.invalidate(communityPostsProvider('general'));
@@ -145,7 +146,8 @@ class _DriverCommunityHubScreenState
             .toList();
         _refreshReactions(posts, myDriverId);
         if (parsed.isEmpty) {
-          if (!isCategoryBlock) return const SliverToBoxAdapter(child: SizedBox());
+          if (!isCategoryBlock)
+            return const SliverToBoxAdapter(child: SizedBox());
           return SliverToBoxAdapter(
             child: EmptyBlock(
               icon: Icons.forum_outlined,
@@ -171,7 +173,8 @@ class _DriverCommunityHubScreenState
               thankedByMe: _reactions[list[i].post.id]?.thankedByMe ?? false,
               onLike: () => _toggleReaction(list[i].post.id, 'like'),
               onThanks: () => _toggleReaction(list[i].post.id, 'thanks'),
-              canManage: myDriverId != null && myDriverId == list[i].post.authorDriverId,
+              canManage: myDriverId != null &&
+                  myDriverId == list[i].post.authorDriverId,
               onEdit: () => _editPost(list[i].post),
               onDelete: () => _deletePost(list[i].post),
               poll: list[i].post.poll,
@@ -188,7 +191,8 @@ class _DriverCommunityHubScreenState
     );
   }
 
-  Future<void> _refreshReactions(List<CommunityPost> posts, String? driverId) async {
+  Future<void> _refreshReactions(
+      List<CommunityPost> posts, String? driverId) async {
     if (driverId == null || posts.isEmpty || !mounted) return;
     final ids = posts.map((e) => e.id).toList();
     final key = '${driverId}_${ids.join(',')}';
@@ -205,11 +209,12 @@ class _DriverCommunityHubScreenState
     final driverId = await ref.read(driverIdProvider.future);
     if (driverId == null) return;
     _applyLocalReaction(postId, type);
-    final ok = await ref.read(driverDataServiceProvider).toggleCommunityReaction(
-          postId: postId,
-          driverId: driverId,
-          reactionType: type,
-        );
+    final ok =
+        await ref.read(driverDataServiceProvider).toggleCommunityReaction(
+              postId: postId,
+              driverId: driverId,
+              reactionType: type,
+            );
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -229,11 +234,12 @@ class _DriverCommunityHubScreenState
   Future<void> _voteOnPoll(String pollId, String optionId) async {
     final driverId = await ref.read(driverIdProvider.future);
     if (driverId == null || !mounted) return;
-    final ok = await ref.read(driverDataServiceProvider).upsertCommunityPollVote(
-          pollId: pollId,
-          optionId: optionId,
-          driverId: driverId,
-        );
+    final ok =
+        await ref.read(driverDataServiceProvider).upsertCommunityPollVote(
+              pollId: pollId,
+              optionId: optionId,
+              driverId: driverId,
+            );
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(DriverStrings.communityPollVoteFailed)),
@@ -249,9 +255,8 @@ class _DriverCommunityHubScreenState
     final isLike = type == 'like';
     final toggledOn = isLike ? !current.likedByMe : !current.thankedByMe;
     final next = CommunityReactionSummary(
-      likeCount: isLike
-          ? current.likeCount + (toggledOn ? 1 : -1)
-          : current.likeCount,
+      likeCount:
+          isLike ? current.likeCount + (toggledOn ? 1 : -1) : current.likeCount,
       thanksCount: isLike
           ? current.thanksCount
           : current.thanksCount + (toggledOn ? 1 : -1),
@@ -355,8 +360,9 @@ class _DriverCommunityHubScreenState
 
   Future<void> _ensureCommunityDisclaimer() async {
     if (_showingDisclaimer || !mounted) return;
-    final accepted =
-        await ref.read(driverDataServiceProvider).isCommunityDisclaimerAccepted();
+    final accepted = await ref
+        .read(driverDataServiceProvider)
+        .isCommunityDisclaimerAccepted();
     if (accepted || !mounted) return;
     _showingDisclaimer = true;
     await showDriverCommunityDisclaimerDialog(context, ref);

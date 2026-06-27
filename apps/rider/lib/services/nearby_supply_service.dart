@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
-import 'package:dio/dio.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_models/heycaby_models.dart';
 
@@ -72,7 +71,8 @@ class NearbySupplyService {
 
   NearbySupplyService._();
 
-  static double get searchRadiusKm => riderRuntimeConfig.current.maxSearchRadiusKm;
+  static double get searchRadiusKm =>
+      riderRuntimeConfig.current.maxSearchRadiusKm;
   static Duration get maxLocationAge =>
       Duration(minutes: riderRuntimeConfig.current.driverLocationMaxAgeMinutes);
 
@@ -110,22 +110,19 @@ class NearbySupplyService {
   }
 
   /// Applies a driver's active return-trip discount % to an already-rounded heuristic fare.
-  static double applyReturnTripDiscountToFare(double fareEuro, double discountPct) {
+  static double applyReturnTripDiscountToFare(
+      double fareEuro, double discountPct) {
     if (discountPct <= 0) return fareEuro;
     final factor = 1.0 - (discountPct.clamp(0, 40) / 100.0);
     final v = fareEuro * factor;
     return (v * 10).roundToDouble() / 10;
   }
 
-  static bool _hasSupply(
-    Map<RiderVehicleCategory, CategorySupplySnapshot> snapshots,
-  ) {
-    return snapshots.values.any((s) => s.driverCount > 0);
-  }
-
-  static Future<Map<RiderVehicleCategory, CategorySupplySnapshot>> loadForPickup({
+  static Future<Map<RiderVehicleCategory, CategorySupplySnapshot>>
+      loadForPickup({
     required AddressResult pickup,
     AddressResult? destination,
+
     /// When false: full tariff estimate and no return-discount badge on rows.
     bool returnTripFareEstimatesEnabled = false,
   }) async {
@@ -134,15 +131,6 @@ class NearbySupplyService {
       destination: destination,
       returnTripFareEstimatesEnabled: returnTripFareEstimatesEnabled,
     );
-    if (_hasSupply(supabase)) return supabase;
-
-    final backend = await _loadFromBackend(
-      pickup: pickup,
-      destination: destination,
-      returnTripFareEstimatesEnabled: returnTripFareEstimatesEnabled,
-    );
-    if (backend != null && _hasSupply(backend)) return backend;
-
     return supabase;
   }
 
@@ -156,91 +144,54 @@ class NearbySupplyService {
         ? distanceKm(pickup.lat, pickup.lng, destination.lat, destination.lng)
         : 2.0;
 
-    final latDelta = searchRadiusKm / 111.0;
-    final cosLat = math.max(0.35, math.cos(pickup.lat * math.pi / 180.0));
-    final lngDelta = searchRadiusKm / (111.0 * cosLat);
-    final now = DateTime.now().toUtc();
-
-    // 1. Fetch nearby online driver locations
-    List<dynamic> locRows;
+    List<dynamic> rows;
     try {
-      final res = await HeyCabySupabase.client
-          .from('driver_locations')
-          .select('driver_id, latitude, longitude, updated_at')
-          .gte('latitude', pickup.lat - latDelta)
-          .lte('latitude', pickup.lat + latDelta)
-          .gte('longitude', pickup.lng - lngDelta)
-          .lte('longitude', pickup.lng + lngDelta);
-      locRows = res as List<dynamic>;
+      final raw = await HeyCabySupabase.client.rpc(
+        'fn_rider_nearby_supply',
+        params: {
+          'p_lat': pickup.lat,
+          'p_lng': pickup.lng,
+          'p_radius_km': searchRadiusKm,
+          'p_max_age_minutes': maxLocationAge.inMinutes,
+        },
+      );
+      rows = raw is List ? raw : const [];
     } catch (_) {
-      locRows = const [];
+      rows = const [];
     }
 
-    // Filter fresh locations only
-    final freshByDriverId = <String, Map<String, dynamic>>{};
-    for (final row in locRows) {
-      final m = row as Map<String, dynamic>;
-      final id = m['driver_id'] as String?;
-      if (id == null) continue;
-      final rawTs = m['updated_at'];
-      if (rawTs is String) {
-        final ts = DateTime.tryParse(rawTs)?.toUtc();
-        if (ts != null && now.difference(ts) > maxLocationAge) continue;
-      }
-      freshByDriverId[id] = m;
+    if (rows.isEmpty) {
+      return {
+        for (final c in RiderVehicleCategory.values)
+          c: CategorySupplySnapshot.empty(c),
+      };
     }
 
-    if (freshByDriverId.isEmpty) {
-      return {for (final c in RiderVehicleCategory.values) c: CategorySupplySnapshot.empty(c)};
-    }
-
-    // 2. Fetch driver profiles + pricing in one query
-    Map<String, Map<String, dynamic>> driverById = {};
-    try {
-      final ids = freshByDriverId.keys.toList();
-      // drivers.status is enum driver_status: available | on_ride | offline | on_break
-      final res = await HeyCabySupabase.client
-          .from('drivers')
-          .select(
-            'id, full_name, profile_photo_url, rating, base_fare, per_km_rate, '
-            'vehicle_category, active_return_discount_pct',
-          )
-          .inFilter('id', ids)
-          .inFilter('status', ['available', 'on_ride']);
-      for (final row in (res as List<dynamic>)) {
-        final m = row as Map<String, dynamic>;
-        final id = m['id'] as String?;
-        if (id != null) driverById[id] = m;
-      }
-    } catch (_) {}
-
-    // 3. Build per-category offer lists
     final byCategory = <RiderVehicleCategory, List<NearbyDriverOffer>>{
       for (final c in RiderVehicleCategory.values) c: <NearbyDriverOffer>[],
     };
 
-    for (final entry in freshByDriverId.entries) {
-      final driverId = entry.key;
-      final locRow = entry.value;
-      final dRow = driverById[driverId];
-      if (dRow == null) continue; // skip offline drivers
-
-      final lat = (locRow['latitude'] as num?)?.toDouble();
-      final lng = (locRow['longitude'] as num?)?.toDouble();
-      if (lat == null || lng == null) continue;
-
-      final dKm = distanceKm(pickup.lat, pickup.lng, lat, lng);
+    for (final raw in rows) {
+      if (raw is! Map) continue;
+      final row = Map<String, dynamic>.from(raw);
+      final driverId = row['driver_id']?.toString();
+      if (driverId == null || driverId.isEmpty) continue;
+      final dKm = (row['distance_km'] as num?)?.toDouble();
+      if (dKm == null) continue;
       if (dKm > searchRadiusKm) continue;
 
-      final rawCat = dRow['vehicle_category'] as String?;
-      final cat = RiderVehicleCategory.tryParse(rawCat) ?? _categoryForDriver(driverId);
+      final rawCat = row['vehicle_category'] as String?;
+      final cat =
+          RiderVehicleCategory.tryParse(rawCat) ?? _categoryForDriver(driverId);
 
-      final base = (dRow['base_fare'] as num?)?.toDouble() ?? _fallbackBase;
-      final perKm = (dRow['per_km_rate'] as num?)?.toDouble() ?? _fallbackPerKm;
-      final fullFare = _computeFare(tripKm: tripKm, baseFare: base, perKmRate: perKm);
-      final rawDiscount = ((dRow['active_return_discount_pct'] as num?)?.toDouble() ?? 0.0)
-          .clamp(0, 40)
-          .toDouble();
+      final base = (row['base_fare'] as num?)?.toDouble() ?? _fallbackBase;
+      final perKm = (row['per_km_rate'] as num?)?.toDouble() ?? _fallbackPerKm;
+      final fullFare =
+          _computeFare(tripKm: tripKm, baseFare: base, perKmRate: perKm);
+      final rawDiscount =
+          ((row['active_return_discount_pct'] as num?)?.toDouble() ?? 0.0)
+              .clamp(0, 40)
+              .toDouble();
       final discount = returnTripFareEstimatesEnabled ? rawDiscount : 0.0;
       final fare = returnTripFareEstimatesEnabled && rawDiscount > 0
           ? applyReturnTripDiscountToFare(fullFare, rawDiscount)
@@ -248,11 +199,11 @@ class NearbySupplyService {
 
       byCategory[cat]!.add(NearbyDriverOffer(
         driverId: driverId,
-        driverName: (dRow['full_name'] as String?)?.trim().isNotEmpty == true
-            ? dRow['full_name'] as String
+        driverName: (row['full_name'] as String?)?.trim().isNotEmpty == true
+            ? row['full_name'] as String
             : _fallbackDriverLabel(),
-        driverPhoto: dRow['profile_photo_url'] as String?,
-        driverRating: (dRow['rating'] as num?)?.toDouble() ?? 5.0,
+        driverPhoto: row['profile_photo_url'] as String?,
+        driverRating: (row['rating'] as num?)?.toDouble() ?? 5.0,
         distanceKmPickup: dKm,
         estimatedFareEuro: fare,
         baseFare: base,
@@ -284,97 +235,5 @@ class NearbySupplyService {
       );
     }
     return out;
-  }
-
-  static Future<Map<RiderVehicleCategory, CategorySupplySnapshot>?> _loadFromBackend({
-    required AddressResult pickup,
-    AddressResult? destination,
-    required bool returnTripFareEstimatesEnabled,
-  }) async {
-    try {
-      final dio = Dio(
-        BaseOptions(
-          baseUrl: 'https://heycaby.nl',
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 15),
-          headers: {'Content-Type': 'application/json'},
-        ),
-      );
-      final token = HeyCabySupabase.client.auth.currentSession?.accessToken;
-      if (token != null && token.isNotEmpty) {
-        dio.options.headers['Authorization'] = 'Bearer $token';
-      }
-      final response = await dio.get<Map<String, dynamic>>(
-        '/api/v1/rider/nearby-supply',
-        queryParameters: {
-          'lat': pickup.lat,
-          'lng': pickup.lng,
-          'rider_radius_km': searchRadiusKm,
-        },
-      );
-      final list = (response.data?['drivers'] as List?) ?? const [];
-      if (list.isEmpty) {
-        return {
-          for (final c in RiderVehicleCategory.values) c: CategorySupplySnapshot.empty(c),
-        };
-      }
-      final tripKm = destination != null
-          ? distanceKm(pickup.lat, pickup.lng, destination.lat, destination.lng)
-          : 2.0;
-      final byCategory = <RiderVehicleCategory, List<NearbyDriverOffer>>{
-        for (final c in RiderVehicleCategory.values) c: <NearbyDriverOffer>[],
-      };
-      for (final raw in list) {
-        if (raw is! Map) continue;
-        final row = raw.cast<String, dynamic>();
-        final driverId = (row['driver_id'] ?? row['id'] ?? '').toString();
-        if (driverId.isEmpty) continue;
-        final base = (row['base_fare'] as num?)?.toDouble() ?? _fallbackBase;
-        final perKm = (row['per_km_rate'] as num?)?.toDouble() ?? _fallbackPerKm;
-        final fullFare = _computeFare(tripKm: tripKm, baseFare: base, perKmRate: perKm);
-        final rawDiscount = ((row['active_return_discount_pct'] as num?)?.toDouble() ?? 0.0)
-            .clamp(0, 40)
-            .toDouble();
-        final discount = returnTripFareEstimatesEnabled ? rawDiscount : 0.0;
-        final fare = returnTripFareEstimatesEnabled && rawDiscount > 0
-            ? applyReturnTripDiscountToFare(fullFare, rawDiscount)
-            : fullFare;
-        final category = RiderVehicleCategory.tryParse(row['vehicle_category'] as String?) ??
-            _categoryForDriver(driverId);
-        final distance = (row['distance_km'] as num?)?.toDouble() ?? 0.0;
-        byCategory[category]!.add(
-          NearbyDriverOffer(
-            driverId: driverId,
-            driverName: (row['name'] ?? row['full_name'] ?? _fallbackDriverLabel()).toString(),
-            driverPhoto: row['photo_url'] as String?,
-            driverRating: (row['rating'] as num?)?.toDouble() ?? 5.0,
-            distanceKmPickup: distance,
-            estimatedFareEuro: fare,
-            baseFare: base,
-            perKmRate: perKm,
-            returnDiscountPct: discount,
-          ),
-        );
-      }
-      final out = <RiderVehicleCategory, CategorySupplySnapshot>{};
-      for (final c in RiderVehicleCategory.values) {
-        final drivers = byCategory[c]!..sort((a, b) => a.distanceKmPickup.compareTo(b.distanceKmPickup));
-        final listForCategory = List<NearbyDriverOffer>.unmodifiable(drivers);
-        if (listForCategory.isEmpty) {
-          out[c] = CategorySupplySnapshot.empty(c);
-          continue;
-        }
-        out[c] = CategorySupplySnapshot(
-          category: c,
-          driverCount: listForCategory.length,
-          nearestDistanceKm: listForCategory.first.distanceKmPickup,
-          fromPriceEuro: listForCategory.map((e) => e.estimatedFareEuro).reduce(math.min),
-          drivers: listForCategory,
-        );
-      }
-      return out;
-    } catch (_) {
-      return null;
-    }
   }
 }

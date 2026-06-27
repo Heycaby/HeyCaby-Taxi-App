@@ -1,45 +1,12 @@
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'supabase_client.dart';
 import 'app_notifications_service.dart';
-import 'driver_api_base_resolver.dart';
+import 'supabase_client.dart';
 
 class RiderApi {
   static const _notifications = AppNotificationsService();
 
-  RiderApi({String? baseUrl}) {
-    _dio = Dio(
-      BaseOptions(
-        baseUrl: baseUrl ?? '',
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 15),
-        headers: {'Content-Type': 'application/json'},
-      ),
-    );
-    _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) {
-          final token = HeyCabySupabase.client.auth.currentSession?.accessToken;
-          if (token != null) {
-            options.headers['Authorization'] = 'Bearer $token';
-          }
-          handler.next(options);
-        },
-      ),
-    );
-    if (kDebugMode) {
-      _dio.interceptors.add(LogInterceptor(
-        requestHeader: false,
-        responseHeader: false,
-        requestBody: true,
-        responseBody: true,
-      ));
-    }
-  }
-
-  late final Dio _dio;
+  const RiderApi();
 
   Future<List<RiderNotificationItem>> getNotifications({
     required String riderIdentityId,
@@ -64,7 +31,8 @@ class RiderApi {
     await _notifications.markRead(notificationId);
   }
 
-  Future<void> markAllNotificationsRead({required String riderIdentityId}) async {
+  Future<void> markAllNotificationsRead(
+      {required String riderIdentityId}) async {
     await _notifications.markAllRead(
       userType: 'rider',
       riderIdentityId: riderIdentityId,
@@ -89,18 +57,18 @@ class RiderApi {
     }
   }
 
-  /// Accept marketplace bid — Supabase-first in app; legacy Go route removed (Phase E).
+  /// Accept marketplace bid — Supabase-backed in app.
   Future<void> acceptBid({
     required String rideRequestId,
     required String bidId,
   }) async {
-    throw GoApiDisabledException(
+    throw UnsupportedError(
       'Use Supabase ride_requests update (acceptMarketplaceOffer).',
     );
   }
 }
 
-final riderApiProvider = Provider<RiderApi>((_) => RiderApi());
+final riderApiProvider = Provider<RiderApi>((_) => const RiderApi());
 
 class RiderNotificationItem {
   const RiderNotificationItem({
@@ -139,7 +107,8 @@ class RiderNotificationItem {
       priority: j['priority'] as String?,
       readAt: _parseDate(j['read_at']),
       createdAt: _parseDate(j['created_at']),
-      data: j['data'] is Map ? Map<String, dynamic>.from(j['data'] as Map) : null,
+      data:
+          j['data'] is Map ? Map<String, dynamic>.from(j['data'] as Map) : null,
     );
   }
 }
