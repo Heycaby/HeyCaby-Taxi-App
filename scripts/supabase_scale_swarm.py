@@ -538,7 +538,13 @@ def main() -> int:
     parser.add_argument("--manifest", default="build/load/scale_drivers.jsonl")
     parser.add_argument("--seed-batch-size", type=int, default=250)
     parser.add_argument("--output-dir", default="build/load")
+    parser.add_argument("--run-label", default="", help="Artifact subdirectory name. Defaults to UTC timestamp.")
     parser.add_argument("--no-write-manifest", action="store_true")
+    parser.add_argument(
+        "--allow-missing-db-url",
+        action="store_true",
+        help="Allow runs without SUPABASE_DB_URL/DATABASE_URL. Use only for local harness smoke checks.",
+    )
     args = parser.parse_args()
 
     supabase_url = os.getenv("SUPABASE_URL", "")
@@ -549,8 +555,16 @@ def main() -> int:
         raise SystemExit("SUPABASE_URL, SUPABASE_ANON_KEY, and SUPABASE_JWT_SECRET are required")
     if args.driver_source in ("existing", "seed") and not service_key:
         raise SystemExit("SUPABASE_SERVICE_KEY is required for --driver-source existing|seed")
+    if not (os.getenv("SUPABASE_DB_URL") or os.getenv("DATABASE_URL")) and not args.allow_missing_db_url:
+        raise SystemExit(
+            "SUPABASE_DB_URL for staging is required for measured load runs. "
+            "Use --allow-missing-db-url only for local harness smoke checks."
+        )
 
-    output_dir = Path(args.output_dir)
+    if not args.run_label:
+        args.run_label = time.strftime("scale_%Y%m%dT%H%M%SZ", time.gmtime())
+
+    output_dir = Path(args.output_dir) / args.run_label
     output_dir.mkdir(parents=True, exist_ok=True)
     rest = SupabaseRest(supabase_url, anon_key, service_key or None)
 
@@ -578,7 +592,11 @@ def main() -> int:
 
     summaries = []
     for interval in args.intervals:
-        summaries.append(run_interval(args, rest, actors, interval, output_dir))
+        interval_summary = run_interval(args, rest, actors, interval, output_dir)
+        interval_summary_path = output_dir / f"interval_{interval}s_summary.json"
+        interval_summary["summary_file"] = str(interval_summary_path)
+        interval_summary_path.write_text(json.dumps(interval_summary, indent=2, default=str) + "\n")
+        summaries.append(interval_summary)
 
     summary_path = output_dir / "scale_summary.json"
     summary = {
