@@ -39,6 +39,8 @@ class DriverHelpHubBody extends StatelessWidget {
     required this.onChatWithLee,
     required this.onViewThreads,
     required this.onViewFaq,
+    this.onShiftHandoverAudit,
+    this.onFleetAllowlist,
   });
 
   final DriverColors colors;
@@ -52,6 +54,8 @@ class DriverHelpHubBody extends StatelessWidget {
   final VoidCallback onChatWithLee;
   final VoidCallback onViewThreads;
   final VoidCallback onViewFaq;
+  final VoidCallback? onShiftHandoverAudit;
+  final VoidCallback? onFleetAllowlist;
 
   @override
   Widget build(BuildContext context) {
@@ -162,8 +166,27 @@ class DriverHelpHubBody extends StatelessWidget {
                 colors: colors,
                 typography: typography,
                 onTap: onViewFaq,
-                showDivider: false,
+                showDivider:
+                    onShiftHandoverAudit != null || onFleetAllowlist != null,
               ),
+              if (onShiftHandoverAudit != null)
+                DriverSupportNavRow(
+                  icon: Icons.shield_outlined,
+                  title: DriverStrings.shiftHandoverAuditNavTitle,
+                  colors: colors,
+                  typography: typography,
+                  onTap: onShiftHandoverAudit!,
+                  showDivider: onFleetAllowlist != null,
+                ),
+              if (onFleetAllowlist != null)
+                DriverSupportNavRow(
+                  icon: Icons.people_outline_rounded,
+                  title: DriverStrings.fleetAllowlistNavTitle,
+                  colors: colors,
+                  typography: typography,
+                  onTap: onFleetAllowlist!,
+                  showDivider: false,
+                ),
             ],
           ).driverFadeSlideIn(staggerIndex: 2),
         ],

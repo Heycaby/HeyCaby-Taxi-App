@@ -19,7 +19,7 @@ import '../widgets/driver_brand_moment_body.dart';
 /// Total intro length — enough for staggered copy without feeling slow.
 const _kTotalMs = 5200;
 
-/// Driver welcome — logo on black, value props below.
+/// Driver welcome — logo on light background, value props below.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -83,6 +83,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _ctrl.forward().then((_) => _onIntroFinished());
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(appPublicLinks.refresh(force: true));
       if (HeyCabySupabase.client.auth.currentSession != null) {
         unawaited(ref.read(driverRuntimeServiceProvider).fetchRuntime());
       }

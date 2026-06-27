@@ -16,6 +16,19 @@
   "searchNoLocalRecentsYet": "No recent addresses yet. Search for a place and select it — we keep the last 10 here so the next search can be faster.",
   "searchLocalMatchesHeader": "Matches on this device",
   "whereTo": "Where to?",
+  "homeDestinationPrompt": "Where do you want to go?",
+  "homeContinue": "Continue",
+  "homeSmartOptionsTitle": "How do you want to ride?",
+  "homeBestPriceTitle": "Marketplace",
+  "homeBestPriceSubtitle": "Drivers compete for your trip.",
+  "homeScheduleLaterTitle": "Schedule later",
+  "homeScheduleLaterSubtitle": "Pick a pickup time that works for you.",
+  "homePopularAirportsTitle": "Popular",
+  "homeRecentTrips": "Recent trips",
+  "homeAirportChipSchiphol": "Schiphol",
+  "homeAirportChipRotterdam": "Rotterdam Airport",
+  "homeAirportChipEindhoven": "Eindhoven",
+  "homeAirportChipBrussels": "Brussels Airport",
   "pickup": "Pickup",
   "destination": "Destination",
   "findMyDriver": "Find my driver",
@@ -84,35 +97,95 @@
   "home": "Home",
   "rides": "Rides",
   "account": "Account",
-  "tellAFriendNavLabel": "TAF",
-  "tellAFriendNavSemanticLabel": "Invite friends — grow your ride circle",
-  "tellAFriendScreenTitle": "Invite friends",
-  "tellAFriendSharePrompt": "Send your link. Friends join free — you’ll see them here when they sign up.",
+  "tellAFriendNavLabel": "Community",
+  "tellAFriendNavSemanticLabel": "Grow your city — build the HeyCaby community",
+  "tellAFriendScreenTitle": "Grow Your City",
+  "tellAFriendSharePrompt": "Share HeyCaby with people who need rides in your city. Every new rider helps local taxi drivers stay busy.",
   "tellAFriendHeroTitle": "Invite friends",
   "tellAFriendHeroSubtitle": "Share your link in one tap.",
   "tellAFriendBodyLine1": "Grow your ride circle nearby.",
   "tellAFriendBodyLine2": "More trusted riders can mean quicker matches for everyone.",
   "tellAFriendFriendsInvitedLabel": "Friends invited",
   "tellAFriendFriendsInvitedZeroHint": "No joins yet — share below.",
-  "tellAFriendRewardTitle": "Why it helps",
-  "tellAFriendRewardBullet1": "More riders nearby can speed up matching.",
-  "tellAFriendRewardBullet2": "Perks may unlock as your circle grows.",
-  "tellAFriendRewardBullet3": "Weekend discounts when available",
-  "tellAFriendRewardBullet4": "Helps drivers see demand in your area",
-  "tellAFriendInviteLinkLabel": "Your link",
+  "tellAFriendRewardTitle": "Why help?",
+  "tellAFriendRewardBullet1": "More riders nearby",
+  "tellAFriendRewardBullet2": "More ride requests for drivers",
+  "tellAFriendRewardBullet3": "Shorter waiting times",
+  "tellAFriendRewardBullet4": "Stronger taxi community",
+  "tellAFriendInviteLinkLabel": "App Store link",
+  "tellAFriendWebsiteLinkLabel": "Share link",
   "tellAFriendLinkResolving": "Getting your short invite link…",
   "tellAFriendCopyLink": "Copy link",
-  "tellAFriendShareLink": "Share invite",
-  "tellAFriendShowQr": "Show QR code",
+  "tellAFriendShareLink": "Share HeyCaby",
+  "tellAFriendShowQr": "QR code",
   "tellAFriendQrTitle": "Scan to join HeyCaby",
-  "tellAFriendQrHint": "Scanning opens heycaby.nl in the browser. Use Share or Copy for your personal invite link.",
-  "tellAFriendSocialProof": "Thanks for helping HeyCaby grow locally.",
-  "tellAFriendShareDoneSnackbar": "Invite sent — thanks for spreading the word!",
+  "tellAFriendQrHint": "Scanning opens the HeyCaby Rider app on the App Store. Use Share or Copy to send your download link.",
+  "tellAFriendSocialProof": "Thanks for helping build the largest independent taxi network in the Netherlands.",
+  "tellAFriendShareDoneSnackbar": "Thanks for sharing HeyCaby!",
   "tellAFriendLinkCopied": "Copied — ready to paste anywhere",
-  "tellAFriendShareSubject": "Join me on HeyCaby",
-  "tellAFriendShareMessage": "I'm building my ride circle on HeyCaby — want in? Tap my invite:",
-  "tellAFriendLinkUnavailable": "Link not ready yet",
-  "tellAFriendLinkUnavailableHint": "Open this screen again in a moment, or restart the app.",
+  "tellAFriendShareSubject": "Join HeyCaby — grow your city",
+  "tellAFriendShareMessage": "Download HeyCaby Rider — the independent taxi app for the Netherlands:",
+  "tellAFriendLinkUnavailable": "App Store link not configured",
+  "tellAFriendLinkUnavailableHint": "Add RIDER_IOS_APP_STORE_URL to your build environment, then rebuild the app.",
+  "growCityHeroTitle": "Grow HeyCaby in {cityName}",
+  "@growCityHeroTitle": {
+    "placeholders": {
+      "cityName": { "type": "String" }
+    }
+  },
+  "growCityHeroBody1": "Invite friends and family who need reliable taxis in your city.",
+  "growCityHeroBody2": "More riders nearby means more ride requests for local drivers and shorter waits for everyone.",
+  "growCityHeroMission": "Help us build the largest independent taxi network in the Netherlands.",
+  "growCityCommunityTitle": "{cityName} community",
+  "@growCityCommunityTitle": {
+    "placeholders": {
+      "cityName": { "type": "String" }
+    }
+  },
+  "growCityDriversLabel": "Drivers",
+  "growCityRidersLabel": "Riders",
+  "growCityMonthlyRidersLabel": "Monthly riders",
+  "growCityMonthlyDriversLabel": "Monthly drivers",
+  "growCityMilestoneLabel": "Next milestone",
+  "growCityDriverCapLabel": "Driver network cap",
+  "growCityRiderCapLabel": "Monthly rider vision",
+  "growCityProgressCount": "{current} / {milestone}",
+  "@growCityProgressCount": {
+    "placeholders": {
+      "current": { "type": "String" },
+      "milestone": { "type": "String" }
+    }
+  },
+  "growCityMilestoneHint": "{remaining} monthly riders until we celebrate {milestone}.",
+  "@growCityMilestoneHint": {
+    "placeholders": {
+      "remaining": { "type": "String" },
+      "milestone": { "type": "String" }
+    }
+  },
+  "growCityFinalGoalReached": "We reached 1 million monthly riders in the Netherlands. Thank you for growing HeyCaby with us.",
+  "growCityMilestoneCelebrationTitle": "Milestone reached!",
+  "growCityMilestoneCelebrationBody": "The HeyCaby community just hit {milestone} monthly riders in the Netherlands. Thank you for helping us grow — on to the next milestone!",
+  "@growCityMilestoneCelebrationBody": {
+    "placeholders": {
+      "milestone": { "type": "String" }
+    }
+  },
+  "growCityMilestoneCelebrationCta": "Let's keep growing",
+  "growCityImpactTitle": "Your impact",
+  "growCityPeopleInvited": "Riders invited",
+  "growCityJoined": "Joined",
+  "growCityCompletedRides": "Completed rides",
+  "growCityBadgesTitle": "Community badges",
+  "growCityBadgeSupporter": "Community Supporter",
+  "growCityBadgeBuilder": "Community Builder",
+  "growCityBadgeAmbassador": "City Ambassador",
+  "growCityBadgeTopPromoter": "Top Promoter",
+  "growCityWhyHelpTitle": "Why help?",
+  "growCityWhyHelpBullet1": "More riders nearby",
+  "growCityWhyHelpBullet2": "More work for local taxi drivers",
+  "growCityWhyHelpBullet3": "Shorter waiting times",
+  "growCityWhyHelpBullet4": "Stronger taxi community",
   "iosUpdateRequiredTitle": "Please update iOS",
   "iosUpdateRequiredBody": "HeyCaby requires iOS {minimumVersion} or later. This iPhone is on iOS {currentVersion}. Open Settings → General → Software Update to install the latest iOS your device supports.",
   "@iosUpdateRequiredBody": {
@@ -134,9 +207,11 @@
   "prerideConfirmAttending": "I'm coming",
   "prerideConfirmedThanks": "Thanks — you're confirmed.",
   "myRides": "My rides",
-  "favouriteDrivers": "Favourite drivers",
-  "favouriteDriversSubtitle": "Book a driver you trust",
-  "favouriteDriversSubtitleWithCount": "{count} favourite drivers",
+  "myDrivers": "My Drivers",
+  "myDriversHomeSubtitle": "Ride with someone you trust",
+  "favouriteDrivers": "My Drivers",
+  "favouriteDriversSubtitle": "Your trusted driver network",
+  "favouriteDriversSubtitleWithCount": "{count} drivers in your network",
   "@favouriteDriversSubtitleWithCount": {
     "placeholders": {
       "count": { "type": "int" }
@@ -150,7 +225,113 @@
   "instantRide": "Instant",
   "scheduledRide": "Schedule",
   "marketplace": "Marketplace",
-  "marketplaceSubtitle": "Drivers heading your way — save up to 40%",
+  "marketplaceTagline": "Drivers compete for your trip.",
+  "makeAnOffer": "Marketplace",
+  "marketplacePostRequest": "Post request",
+  "marketplaceOfferHeadline": "Choose what you want to pay.",
+  "marketplaceOfferExplanation": "Drivers already travelling in your direction can accept your offer or suggest another price.",
+  "marketplaceDriversAcceptHint": "Drivers can accept, counter, or ignore — HeyCaby does not set the fare.",
+  "marketplaceDriversOnline": "{count} drivers online",
+  "@marketplaceDriversOnline": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "marketplaceWhereAreYouGoing": "Where are you going?",
+  "marketplaceYouAreHere": "You're here",
+  "marketplaceYouAreHereIn": "You're here in {area}",
+  "@marketplaceYouAreHereIn": {
+    "placeholders": { "area": { "type": "String" } }
+  },
+  "marketplaceYouAreHereOn": "You're on {street}",
+  "@marketplaceYouAreHereOn": {
+    "placeholders": { "street": { "type": "String" } }
+  },
+  "marketplaceLocatingYou": "Finding your location…",
+  "marketplaceLocationNeeded": "Turn on location to see where you are",
+  "marketplaceNameYourPrice": "Name your price",
+  "marketplaceNameYourPriceSubtitle": "Drivers will see your offer and respond.",
+  "marketplaceTypicalRangeLabel": "Typical range: {range}",
+  "@marketplaceTypicalRangeLabel": {
+    "placeholders": { "range": { "type": "String" } }
+  },
+  "marketplaceControlBanner": "You're in control. Drivers can accept, counter, or ignore your offer.",
+  "marketplaceFasterOffersTip": "Want faster offers? Increase your price to get more responses.",
+  "marketplaceEnterCustomPrice": "Tap to type any amount",
+  "marketplacePriceHint": "50",
+  "marketplaceBidRangeHint": "You can offer between €{min} and €{max}",
+  "@marketplaceBidRangeHint": {
+    "placeholders": {
+      "min": { "type": "int" },
+      "max": { "type": "int" }
+    }
+  },
+  "marketplaceTypicalFareTitle": "Typical fare",
+  "marketplaceYourOfferTitle": "Your offer",
+  "marketplaceRequestOffers": "Post request",
+  "marketplaceMatchingTitle": "Marketplace",
+  "marketplaceMatchingHeadline": "Searching for drivers…",
+  "marketplaceMatchingNotifySubtitle": "We'll notify you when offers arrive.",
+  "marketplaceDriversReceivedRequest": "{count} drivers received your request",
+  "@marketplaceDriversReceivedRequest": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "marketplaceExpectedWait": "Expected wait: 1 – 2 min",
+  "marketplaceOffersFromDrivers": "Offers from drivers",
+  "marketplaceRecommended": "Recommended",
+  "marketplaceViewProfile": "View profile",
+  "marketplaceOfferAcceptsYourPrice": "Accepts your offer",
+  "marketplaceOfferCounterLabel": "Counter offer",
+  "marketplaceOffersExpireIn": "Offers expire in",
+  "marketplaceBoostOffer": "Boost your offer",
+  "marketplaceBoostOfferSubtitle": "Increase price to get more offers",
+  "marketplaceCancelRequest": "Cancel request",
+  "marketplaceCancelRequestConfirm": "Drivers will stop seeing your offer. Cancel this request?",
+  "marketplaceReceiveChooseTitle": "Receive & choose offers",
+  "marketplaceReceiveChooseBullet1": "Drivers accept or counter",
+  "marketplaceReceiveChooseBullet2": "Compare price, rating, ETA",
+  "marketplaceReceiveChooseBullet3": "Choose the best match",
+  "marketplaceMatchingSubhead": "{nearby} nearby · {received} offers received",
+  "@marketplaceMatchingSubhead": {
+    "placeholders": {
+      "nearby": { "type": "int" },
+      "received": { "type": "int" }
+    }
+  },
+  "marketplaceMatchingWaiting": "Waiting for driver responses",
+  "marketplaceMatchingWaitingBody": "Independent drivers can accept your price, counter, or ignore. You choose who to ride with.",
+  "marketplaceOfferAccepts": "Accepts {price}",
+  "@marketplaceOfferAccepts": {
+    "placeholders": { "price": { "type": "String" } }
+  },
+  "marketplaceOfferCounter": "Counter {price}",
+  "@marketplaceOfferCounter": {
+    "placeholders": { "price": { "type": "String" } }
+  },
+  "marketplaceOfferMinutesAway": "{minutes} min away",
+  "@marketplaceOfferMinutesAway": {
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+  "marketplaceOfferExpiresIn": "Offer expires {time}",
+  "@marketplaceOfferExpiresIn": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "marketplaceDriverUsuallyAccepts": "Usually accepts rider prices",
+  "marketplaceDriverOftenCounters": "Often sends counter offers",
+  "marketplaceDriverMayCounter": "May accept or counter your offer",
+  "declineBid": "Decline",
+  "marketplaceDriverScopeTitle": "Who should see your request?",
+  "marketplaceDriverScopeEveryone": "Everyone",
+  "marketplaceDriverScopeMyDriversFirst": "My Drivers first",
+  "marketplaceDriverScopeMyDriversOnly": "My Drivers only",
+  "marketplaceAcceptanceGood": "Good chance of acceptance",
+  "marketplaceAcceptanceFair": "Fair offer — drivers may accept or counter",
+  "marketplaceAcceptanceLow": "Offer is quite low — expect counter offers",
+  "marketplaceDemandLowTitle": "Low demand",
+  "marketplaceDemandHighTitle": "High demand",
+  "marketplaceDemandLowHint": "Drivers are likely to accept lower offers.",
+  "marketplaceDemandHighHint": "Offering slightly more may get faster responses.",
+  "marketplaceSubtitle": "Choose your price — independent drivers decide.",
   "homeAirportBookingTitle": "Airport drop-off",
   "homeAirportBookingSubtitle": "Schiphol, Brussels, Luxembourg & more — one tap",
   "homeAirportBookingBadge": "Fast",
@@ -406,7 +587,7 @@
   },
   "marketplaceYourBid": "Your bid",
   "marketplaceQuickSelect": "Quick select",
-  "marketplaceHeroTagline": "Name your price — drivers accept or suggest a counter.",
+  "marketplaceHeroTagline": "Name your price — drivers heading your way can accept or counter.",
   "marketplaceYourRoute": "Your route",
   "marketplaceDragToAdjustHint": "Slide to adjust",
   "marketplaceSetPickupDestinationHint": "Add pickup and destination to post your ride to the marketplace.",
@@ -512,7 +693,7 @@
   "supportYazAssistantTitle": "Yaz AI support assistant",
   "supportYazAssistantSubtitle": "Ask anything about your ride, account, or payment.",
   "supportYazMessageHint": "Message Yaz...",
-  "favouriteDriversAccountSubtitle": "Save trusted drivers and send rides directly to them.",
+  "favouriteDriversAccountSubtitle": "Build your network of trusted drivers.",
   "openLocationSettings": "Open location settings",
   "openNotificationSettings": "Open notification settings",
   "cashSubtitle": "Pay with cash directly to driver",

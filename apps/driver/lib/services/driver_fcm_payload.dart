@@ -7,30 +7,42 @@ class DriverFcmPayload {
     this.rideRequestId,
     this.screen,
     this.notificationId,
+    this.requestId,
+    this.title,
+    this.body,
+    this.rawData,
   });
 
   final String? category;
   final String? rideRequestId;
   final String? screen;
   final String? notificationId;
+  final String? requestId;
+  final String? title;
+  final String? body;
+  final Map<String, dynamic>? rawData;
 
   factory DriverFcmPayload.fromRemoteMessage(RemoteMessage message) {
     final data = message.data;
     final title = message.notification?.title ?? '';
+    final body = message.notification?.body ?? '';
     return DriverFcmPayload.fromData(
       data,
       notificationTitle: title,
+      notificationBody: body,
     );
   }
 
   factory DriverFcmPayload.fromData(
     Map<String, dynamic> data, {
     String notificationTitle = '',
+    String notificationBody = '',
   }) {
     final category = (data['category'] as String?)?.trim();
     final rideId = (data['ride_request_id'] as String?)?.trim();
     final screen = (data['screen'] as String?)?.trim();
     final notificationId = (data['notification_id'] as String?)?.trim();
+    final requestId = (data['request_id'] as String?)?.trim();
 
     return DriverFcmPayload(
       category: category?.isNotEmpty == true
@@ -42,6 +54,10 @@ class DriverFcmPayload {
       rideRequestId: rideId?.isNotEmpty == true ? rideId : null,
       screen: screen?.isNotEmpty == true ? screen : null,
       notificationId: notificationId?.isNotEmpty == true ? notificationId : null,
+      requestId: requestId?.isNotEmpty == true ? requestId : null,
+      title: notificationTitle.isNotEmpty ? notificationTitle : null,
+      body: notificationBody.isNotEmpty ? notificationBody : null,
+      rawData: data,
     );
   }
 

@@ -96,6 +96,12 @@ type HeartbeatResult struct {
 
 // Heartbeat processes a 30-second driver ping: updates Redis GEO (if enabled) + Supabase audit.
 func (s *DriverService) Heartbeat(ctx context.Context, in HeartbeatInput) (*HeartbeatResult, error) {
+	resolvedID, err := s.resolveDriverID(ctx, in.DriverID)
+	if err != nil {
+		return nil, err
+	}
+	in.DriverID = resolvedID
+
 	flags := s.cfg.GetFlags()
 	useRedisLocations := flags.UseRedisLocations || flags.UseGoDriverLocations
 	if useRedisLocations && s.redis != nil {
@@ -167,6 +173,14 @@ type DocumentValidateResult struct {
 // reviewAccount skips strict checks when the JWT carries user_metadata.review_account (App Store review).
 func (s *DriverService) CheckReadiness(ctx context.Context, driverID, countryCode string, reviewAccount bool) (*ReadinessResult, error) {
 	cc := strings.ToUpper(strings.TrimSpace(countryCode))
+	if !reviewAccount {
+		resolvedID, err := s.resolveDriverID(ctx, driverID)
+		if err != nil {
+			return nil, err
+		}
+		driverID = resolvedID
+	}
+
 	if reviewAccount {
 		return &ReadinessResult{
 			CanGoOnline: true,
@@ -317,6 +331,14 @@ func (s *DriverService) CheckReadiness(ctx context.Context, driverID, countryCod
 
 // SetStatus updates the driver's status in DB and Redis.
 func (s *DriverService) SetStatus(ctx context.Context, driverID, countryCode, status string, reviewAccount bool) (*StatusDecision, error) {
+	if !reviewAccount {
+		resolvedID, err := s.resolveDriverID(ctx, driverID)
+		if err != nil {
+			return nil, err
+		}
+		driverID = resolvedID
+	}
+
 	if status == "available" {
 		readiness, err := s.CheckReadiness(ctx, driverID, countryCode, reviewAccount)
 		if err != nil {

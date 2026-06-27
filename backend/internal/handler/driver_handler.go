@@ -139,6 +139,13 @@ func (h *DriverHandler) ValidateDocument(c *fiber.Ctx) error {
 	return ok(c, result)
 }
 
+func mapDriverServiceError(err error) error {
+	if driverservice.IsDriverNotFound(err) {
+		return fiber.NewError(fiber.StatusNotFound, "driver profile not found")
+	}
+	return err
+}
+
 // GET /api/driver/status
 func (h *DriverHandler) BillingStatus(c *fiber.Ctx) error {
 	if authmw.GetRole(c) != "driver" {
@@ -147,7 +154,7 @@ func (h *DriverHandler) BillingStatus(c *fiber.Ctx) error {
 	driverID := authmw.GetUID(c)
 	status, err := h.svc.GetBillingStatus(c.Context(), driverID)
 	if err != nil {
-		return err
+		return mapDriverServiceError(err)
 	}
 	// Same contract as SetStatus(available): JWT user_metadata.review_account skips the weekly-fee
 	// requirement so App Store Review can go online with a non-paying test account.

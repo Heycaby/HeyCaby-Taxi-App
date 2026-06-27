@@ -518,19 +518,145 @@ class DriverStrings {
       'Vul je kenteken in — we halen voertuiggegevens op bij RDW. '
       'Daarna ga je door naar de voorwaarden.';
   static const String onboardingPlateContinue = 'Doorgaan naar voorwaarden';
-  static const String onboardingSharedFleetTitle = 'Gedeelde taxi?';
-  static const String onboardingSharedFleetBody =
-      'Dit kenteken is al gekoppeld aan een ander account of actieve sessie. '
-      'Als jullie dezelfde taxi delen (bijv. huur- of ploegentaxi), bevestig dan '
-      'dat je mag rijden met dit kenteken. Je neemt de actieve sessie over.';
-  static const String onboardingSharedFleetConfirm = 'Ja, ik mag deze taxi rijden';
+  static const String onboardingPlateContinueGoOnline = 'Doorgaan';
+  static const String goOnlinePlateSubtitle =
+      'Voordat je online kunt gaan, verifiëren we je taxikenteken via RDW.';
+  static const String goOnlineOnboardingReadyHint =
+      'Kenteken en voorwaarden zijn klaar. Veeg opnieuw om online te gaan.';
+  static const String onboardingPlateSaveFailed =
+      'Voertuig opslaan mislukt. Probeer het opnieuw of neem contact op met de ondersteuning.';
+  static const String startShiftFlowTitle = 'Dienst starten';
+  static const String startShiftVerifiedTitle = 'Taxi geverifieerd';
+  static const String startShiftActiveTitle = 'Deze taxi is al actief';
+  static const String startShiftActiveBody =
+      'Deze taxi wordt op dit moment al gebruikt in HeyCaby. '
+      'Er kan maar één chauffeur tegelijk actief zijn met dezelfde taxi.';
+  static const String startShiftActiveFootnote =
+      'Start je dienst: we starten een Secure Shift Handover™. '
+      'De huidige chauffeur krijgt tijd om te reageren. Daarna kun jij verder.';
+
+  static const String shiftHandoverBrandName = 'Secure Shift Handover™';
+  static const String shiftHandoverWaitingTitle =
+      'Secure Shift Handover™';
+  static const String shiftHandoverWaitingBody =
+      'De huidige chauffeur is op de hoogte gebracht. '
+      'Je dienst start automatisch zodra de wachttijd voorbij is, '
+      'tenzij hij of zij nog rijdt.';
+  static const String shiftHandoverWaitingEta = 'Maximale wachttijd';
+  static const String shiftHandoverDeniedMessage =
+      'Deze taxi is nog in gebruik.';
+  static const String shiftHandoverActiveRideMessage =
+      'Deze taxi is bezig met een rit. Probeer het opnieuw zodra de rit is afgerond.';
+  static const String shiftHandoverPrivateBlockedMessage =
+      'Deze taxi is privé geregistreerd en kan niet door andere chauffeurs worden geactiveerd.';
+  static const String shiftHandoverRateLimitedMessage =
+      'Je kunt deze taxi nu niet opnieuw aanvragen. Wacht even of neem contact op met ondersteuning.';
+  static const String shiftHandoverNotEligibleMessage =
+      'Rond je verificatie af voordat je een dienstwissel kunt aanvragen.';
+  static const String shiftHandoverNotAllowlistedMessage =
+      'Je staat niet op de toegestane chauffeurslijst voor deze gedeelde taxi. '
+      'Neem contact op met je fleetmanager.';
+  static const String shiftHandoverStepUpTitle = 'Bevestig je identiteit';
+  static const String shiftHandoverStepUpBody =
+      'Voor een veilige Secure Shift Handover™ bevestigen we wie je bent. '
+      'Gebruik Face ID / Touch ID of een eenmalige code per e-mail.';
+  static const String shiftHandoverBiometricReason =
+      'Bevestig je identiteit voor Secure Shift Handover™';
+  static const String shiftHandoverStepUpUseEmail = 'Code per e-mail';
+  static const String shiftHandoverStepUpSendCode = 'Code versturen';
+  static const String shiftHandoverStepUpConfirm = 'Bevestigen en doorgaan';
+  static const String shiftHandoverStepUpRequired =
+      'Bevestig je identiteit voordat je een dienstwissel aanvraagt.';
+  static const String shiftHandoverStepUpNoEmail =
+      'Geen e-mailadres gevonden voor je account.';
+  static const String shiftHandoverStepUpFailed =
+      'Verificatie mislukt. Probeer het opnieuw.';
+  static const String shiftHandoverPromptTitle = 'Secure Shift Handover™';
+  static String shiftHandoverPromptLead(String name, String plate) =>
+      '$name wil Taxi $plate besturen.';
+  static const String shiftHandoverPromptVerified = 'Geverifieerd';
+  static String shiftHandoverPromptMemberSince(int year) =>
+      'Chauffeur sinds $year';
+  static String shiftHandoverPromptTimeoutHint(int minutes) =>
+      'Geen actie? Je dienst eindigt automatisch over maximaal $minutes minuten.';
+  static const String shiftHandoverPromptUnexpected =
+      'Verwacht je dit niet? Tik direct op Ik rij nog.';
+  static const String shiftHandoverEndShift = 'Dienst beëindigen';
+  static const String shiftHandoverStillDriving = 'Ik rij nog';
+  static const String shiftHandoverEndShiftBiometricReason =
+      'Bevestig dat je je dienst wilt beëindigen';
+  static const String shiftHandoverEndShiftConfirmTitle = 'Dienst beëindigen?';
+  static const String shiftHandoverEndShiftConfirmBody =
+      'Een collega neemt deze taxi over. Je gaat offline en ontvangt geen ritten meer op dit kenteken.';
+  static const String shiftHandoverFleetAlertTitle = 'Dienstwissel geweigerd';
+  static const String shiftHandoverFleetAlertBody =
+      'Een chauffeur probeerde deze taxi te starten. De huidige chauffeur rijdt nog. Was dit verwacht?';
+  static const String shiftHandoverPrivateAlertTitle =
+      'Poging tot taxi-activering';
+  static const String shiftHandoverPrivateAlertBody =
+      'Iemand probeerde je privé-taxi te activeren. Was dit verwacht? Neem contact op met ondersteuning als je dit verdacht vindt.';
+  static const String shiftHandoverAuditNavTitle =
+      'Secure Shift Handover — audit';
+  static const String fleetAllowlistTitle = 'Fleet — toegestane chauffeurs';
+  static const String fleetAllowlistNavTitle = 'Fleet chauffeurslijst';
+  static const String fleetAllowlistEmpty =
+      'Je beheert nog geen gedeelde taxi\'s in HeyCaby.';
+  static const String fleetAllowlistForbidden =
+      'Geen toegang om deze fleet-instellingen te beheren.';
+  static const String fleetAllowlistOpenFleet =
+      'Geen restrictie — elke geverifieerde chauffeur mag een dienstwissel aanvragen.';
+  static String fleetAllowlistDriverCount(int count) =>
+      '$count chauffeur${count == 1 ? '' : 's'} op de lijst';
+  static const String fleetAllowlistVehicleBody =
+      'Alleen chauffeurs op deze lijst kunnen Secure Shift Handover™ aanvragen voor deze taxi. '
+      'Laat de lijst leeg om alle geverifieerde chauffeurs toe te staan.';
+  static const String fleetAllowlistAddDriver = 'Chauffeur toevoegen';
+  static const String fleetAllowlistSearchLabel = 'Naam of e-mail';
+  static const String fleetAllowlistSearchHint =
+      'Typ minimaal 3 tekens (naam of e-mail).';
+  static const String fleetAllowlistSearchAction = 'Zoeken';
+  static const String fleetAllowlistUpdateFailed =
+      'Kon de chauffeurslijst niet bijwerken. Probeer het opnieuw.';
+  static const String shiftHandoverWaitingSubtitle =
+      'Geschatte dienstwissel — meestal 10–30 seconden';
+  static const String shiftHandoverAuditTitle =
+      'Secure Shift Handover — audit';
+  static const String shiftHandoverAuditEmpty =
+      'Nog geen dienstwissel-aanvragen geregistreerd.';
+  static const String shiftHandoverAuditForbidden =
+      'Geen toegang. Alleen HeyCaby staff kan dit auditlog bekijken.';
+  static const String taxiSessionRevokedTitle =
+      'Taxi toegewezen aan andere chauffeur';
+  static String taxiSessionRevokedBody(String plate) =>
+      plate.trim().isEmpty
+          ? 'Je taxi-sessie is beëindigd. Een andere geverifieerde chauffeur neemt het over.'
+          : 'Je taxi $plate is toegewezen aan een andere geverifieerde chauffeur. '
+              'Je bent offline gezet.';
+  static const String taxiSessionRevokedVoluntaryTitle = 'Dienst beëindigd';
+  static String taxiSessionRevokedVoluntaryBody(String plate) =>
+      plate.trim().isEmpty
+          ? 'Je dienst is beëindigd. Een collega neemt de taxi over.'
+          : 'Je dienst op taxi $plate is beëindigd. Een collega neemt de taxi over.';
+  static const String taxiSessionRevokedCta = 'Naar home';
+  static const String startShiftPrimary = 'Start mijn dienst';
+
+  @Deprecated('Use startShift* strings')
+  static const String onboardingSharedFleetTitle = startShiftActiveTitle;
+  @Deprecated('Use startShift* strings')
+  static const String onboardingSharedFleetBody = startShiftActiveBody;
+  @Deprecated('Use startShift* strings')
+  static const String onboardingSharedFleetConfirm = startShiftPrimary;
   static String progressiveVerificationProgress(int rides, int milestone) =>
       'Progressieve verificatie: $rides/$milestone ritten';
+  static const String progressiveVerificationMilestone10Hint =
+      'Na 10 voltooide ritten vragen we extra verificatie zodat je online kunt blijven.';
   static const String progressiveVerificationMilestone20Hint =
-      'Na 20 ritten: KvK, chauffeurspas en profiel-/voertuigfoto\'s zijn verplicht om online te blijven.';
+      progressiveVerificationMilestone10Hint;
   static const String progressiveVerificationMilestone50Hint =
-      'Na 50 ritten: taxiverzekering en rijbewijsverificatie (Veriff) zijn verplicht.';
+      'Na 50 ritten: volledige taxidocumentatie moet up-to-date blijven.';
   static const String progressiveVerificationCompleteDocs = 'Documenten afronden';
+  static const String runtimeGoOnlineEarlyOnboardingBody =
+      'Rond je kenteken en voorwaarden af om online te gaan. Extra documenten komen pas na 10 ritten.';
   static const String lookupPlate = 'Kenteken opzoeken';
   static const String plateNotFoundRdw =
       'Kenteken niet gevonden in RDW. Controleer tikfouten en probeer opnieuw.';
@@ -684,6 +810,8 @@ class DriverStrings {
   static const String billingFoundingMember = 'Founding Member';
   static const String billingRegularMember = 'Regulier lid';
   static const String billingWeeklyFee = 'Weekprijs';
+  static const String billingPerRideSuffix = 'per rit';
+  static const String billingOutstandingLimit = 'Openstaand / limiet';
   static const String billingNextPayment = 'Volgende betaling';
   static const String billingPaymentStatus = 'Betalingsstatus';
   static const String billingStatusActive = 'Actief';
@@ -863,7 +991,7 @@ class DriverStrings {
   static const String congratsBody =
       'Je profiel is goedgekeurd. Je kunt nu ritaanvragen ontvangen.';
   static const String congratsStart = 'Start mijn eerste rit';
-  static const String congratsInvite = 'Vrienden uitnodigen';
+  static const String congratsInvite = 'Groei je stad';
   static const String recentPassengerComments =
       'Recente opmerkingen van passagiers';
   static const String whatReducedMyScore = 'Waardoor daalde mijn score?';

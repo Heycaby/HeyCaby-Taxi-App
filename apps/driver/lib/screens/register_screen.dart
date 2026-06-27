@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../router.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
+import '../utils/driver_entry_navigation.dart';
 import '../widgets/driver_onboarding_gate_body.dart';
 
 /// **Onboarding Gate** — join as a driver with confidence.
@@ -42,7 +44,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         data: const {'user_type': 'driver'},
       );
       if (!mounted) return;
-      context.go('/driver/onboarding/plate');
+      await navigateDriverAfterAuth(
+        ref: ref,
+        router: appRouter,
+        context: context,
+      );
     } on Exception catch (e) {
       if (!mounted) return;
       setState(() {

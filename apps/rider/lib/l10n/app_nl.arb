@@ -16,6 +16,19 @@
   "searchNoLocalRecentsYet": "Nog geen recente adressen. Zoek een plek en kies hem — we bewaren de laatste 10 hier zodat de volgende zoekslag sneller kan.",
   "searchLocalMatchesHeader": "Treffers op dit apparaat",
   "whereTo": "Waar naartoe?",
+  "homeDestinationPrompt": "Waar wil je naartoe?",
+  "homeContinue": "Doorgaan",
+  "homeSmartOptionsTitle": "Hoe wil je rijden?",
+  "homeBestPriceTitle": "Marktplaats",
+  "homeBestPriceSubtitle": "Chauffeurs strijden om jouw rit.",
+  "homeScheduleLaterTitle": "Later plannen",
+  "homeScheduleLaterSubtitle": "Kies een ophaaltijd die voor jou werkt.",
+  "homePopularAirportsTitle": "Populair",
+  "homeRecentTrips": "Recente ritten",
+  "homeAirportChipSchiphol": "Schiphol",
+  "homeAirportChipRotterdam": "Rotterdam Airport",
+  "homeAirportChipEindhoven": "Eindhoven",
+  "homeAirportChipBrussels": "Brussel Airport",
   "pickup": "Ophaallocatie",
   "destination": "Bestemming",
   "findMyDriver": "Zoek mijn chauffeur",
@@ -84,35 +97,95 @@
   "home": "Home",
   "rides": "Ritten",
   "account": "Account",
-  "tellAFriendNavLabel": "TAF",
-  "tellAFriendNavSemanticLabel": "Nodig vrienden uit — vergroot je ritkring",
-  "tellAFriendScreenTitle": "Vrienden uitnodigen",
-  "tellAFriendSharePrompt": "Stuur je link. Vrienden melden zich gratis aan — je ziet ze hier zodra ze joinen.",
+  "tellAFriendNavLabel": "Community",
+  "tellAFriendNavSemanticLabel": "Groei je stad — bouw de HeyCaby-gemeenschap",
+  "tellAFriendScreenTitle": "Groei je stad",
+  "tellAFriendSharePrompt": "Deel HeyCaby met mensen die een rit nodig hebben in jouw stad. Elke nieuwe passagier helpt lokale taxichauffeurs.",
   "tellAFriendHeroTitle": "Vrienden uitnodigen",
   "tellAFriendHeroSubtitle": "Deel je link met één tik.",
   "tellAFriendBodyLine1": "Vergroot je ritkring in de buurt.",
   "tellAFriendBodyLine2": "Meer vertrouwde passagiers kan snellere matches betekenen.",
   "tellAFriendFriendsInvitedLabel": "Vrienden uitgenodigd",
   "tellAFriendFriendsInvitedZeroHint": "Nog niemand — deel hieronder.",
-  "tellAFriendRewardTitle": "Waarom het helpt",
-  "tellAFriendRewardBullet1": "Meer passagiers nabij kan matchen versnellen.",
-  "tellAFriendRewardBullet2": "Voordelen kunnen groeien met je kring.",
-  "tellAFriendRewardBullet3": "Weekendkorting wanneer beschikbaar",
-  "tellAFriendRewardBullet4": "Helpt chauffeurs vraag in je buurt te zien",
-  "tellAFriendInviteLinkLabel": "Jouw link",
+  "tellAFriendRewardTitle": "Waarom helpen?",
+  "tellAFriendRewardBullet1": "Meer passagiers in de buurt",
+  "tellAFriendRewardBullet2": "Meer ritverzoeken voor chauffeurs",
+  "tellAFriendRewardBullet3": "Kortere wachttijden",
+  "tellAFriendRewardBullet4": "Sterkere taxigemeenschap",
+  "tellAFriendInviteLinkLabel": "App Store-link",
+  "tellAFriendWebsiteLinkLabel": "Deel link",
   "tellAFriendLinkResolving": "Je korte uitnodigingslink ophalen…",
   "tellAFriendCopyLink": "Link kopiëren",
-  "tellAFriendShareLink": "Uitnodiging delen",
-  "tellAFriendShowQr": "QR-code tonen",
+  "tellAFriendShareLink": "Deel HeyCaby",
+  "tellAFriendShowQr": "QR-code",
   "tellAFriendQrTitle": "Scan om mee te doen op HeyCaby",
-  "tellAFriendQrHint": "Scannen opent heycaby.nl in de browser. Gebruik Delen of Kopiëren voor je persoonlijke uitnodigingslink.",
-  "tellAFriendSocialProof": "Bedankt dat je HeyCaby lokaal helpt groeien.",
-  "tellAFriendShareDoneSnackbar": "Uitnodiging verstuurd — bedankt!",
+  "tellAFriendQrHint": "Scannen opent de HeyCaby Rider-app in de App Store. Gebruik Delen of Kopiëren voor je downloadlink.",
+  "tellAFriendSocialProof": "Bedankt dat je helpt het grootste onafhankelijke taxinetwerk van Nederland te bouwen.",
+  "tellAFriendShareDoneSnackbar": "Bedankt voor het delen van HeyCaby!",
   "tellAFriendLinkCopied": "Gekopieerd — plakken waar je wilt",
-  "tellAFriendShareSubject": "Doe mee met HeyCaby",
-  "tellAFriendShareMessage": "Ik bouw mijn ritkring op HeyCaby — zin om mee te doen? Tik op mijn uitnodiging:",
-  "tellAFriendLinkUnavailable": "Link nog niet beschikbaar",
-  "tellAFriendLinkUnavailableHint": "Probeer het zo opnieuw of start de app opnieuw.",
+  "tellAFriendShareSubject": "Doe mee met HeyCaby — groei je stad",
+  "tellAFriendShareMessage": "Download HeyCaby Rider — de onafhankelijke taxi-app voor Nederland:",
+  "tellAFriendLinkUnavailable": "App Store-link niet geconfigureerd",
+  "tellAFriendLinkUnavailableHint": "Voeg RIDER_IOS_APP_STORE_URL toe aan je build-omgeving en bouw de app opnieuw.",
+  "growCityHeroTitle": "Laat HeyCaby groeien in {cityName}",
+  "@growCityHeroTitle": {
+    "placeholders": {
+      "cityName": { "type": "String" }
+    }
+  },
+  "growCityHeroBody1": "Nodig vrienden en familie uit die betrouwbaar taxivervoer nodig hebben in jouw stad.",
+  "growCityHeroBody2": "Meer passagiers in de buurt betekent meer ritten voor lokale chauffeurs en kortere wachttijden voor iedereen.",
+  "growCityHeroMission": "Help ons het grootste onafhankelijke taxinetwerk van Nederland te bouwen.",
+  "growCityCommunityTitle": "{cityName}-gemeenschap",
+  "@growCityCommunityTitle": {
+    "placeholders": {
+      "cityName": { "type": "String" }
+    }
+  },
+  "growCityDriversLabel": "Chauffeurs",
+  "growCityRidersLabel": "Passagiers",
+  "growCityMonthlyRidersLabel": "Maandelijkse passagiers",
+  "growCityMonthlyDriversLabel": "Maandelijkse chauffeurs",
+  "growCityMilestoneLabel": "Volgende mijlpaal",
+  "growCityDriverCapLabel": "Chauffeursnetwerk-limiet",
+  "growCityRiderCapLabel": "Maandelijkse passagiers-visie",
+  "growCityProgressCount": "{current} / {milestone}",
+  "@growCityProgressCount": {
+    "placeholders": {
+      "current": { "type": "String" },
+      "milestone": { "type": "String" }
+    }
+  },
+  "growCityMilestoneHint": "Nog {remaining} maandelijkse passagiers tot we {milestone} vieren.",
+  "@growCityMilestoneHint": {
+    "placeholders": {
+      "remaining": { "type": "String" },
+      "milestone": { "type": "String" }
+    }
+  },
+  "growCityFinalGoalReached": "We hebben 1 miljoen maandelijkse passagiers in Nederland bereikt. Bedankt dat je HeyCaby met ons laat groeien.",
+  "growCityMilestoneCelebrationTitle": "Mijlpaal bereikt!",
+  "growCityMilestoneCelebrationBody": "De HeyCaby-community heeft {milestone} maandelijkse passagiers in Nederland bereikt. Bedankt voor je hulp — door naar de volgende mijlpaal!",
+  "@growCityMilestoneCelebrationBody": {
+    "placeholders": {
+      "milestone": { "type": "String" }
+    }
+  },
+  "growCityMilestoneCelebrationCta": "Laten we doorgroeien",
+  "growCityImpactTitle": "Jouw impact",
+  "growCityPeopleInvited": "Passagiers uitgenodigd",
+  "growCityJoined": "Aangemeld",
+  "growCityCompletedRides": "Voltooide ritten",
+  "growCityBadgesTitle": "Community-badges",
+  "growCityBadgeSupporter": "Community Supporter",
+  "growCityBadgeBuilder": "Community Builder",
+  "growCityBadgeAmbassador": "Stadsambassadeur",
+  "growCityBadgeTopPromoter": "Top Promoter",
+  "growCityWhyHelpTitle": "Waarom helpen?",
+  "growCityWhyHelpBullet1": "Meer passagiers in de buurt",
+  "growCityWhyHelpBullet2": "Meer werk voor lokale taxichauffeurs",
+  "growCityWhyHelpBullet3": "Kortere wachttijden",
+  "growCityWhyHelpBullet4": "Sterkere taxigemeenschap",
   "iosUpdateRequiredTitle": "Werk iOS bij",
   "iosUpdateRequiredBody": "HeyCaby vereist iOS {minimumVersion} of nieuwer. Deze iPhone draait iOS {currentVersion}. Ga naar Instellingen → Algemeen → Software-update om de nieuwste iOS voor je toestel te installeren.",
   "@iosUpdateRequiredBody": {
@@ -134,9 +207,11 @@
   "prerideConfirmAttending": "Ik kom",
   "prerideConfirmedThanks": "Bedankt — je bent bevestigd.",
   "myRides": "Mijn ritten",
-  "favouriteDrivers": "Favoriete chauffeurs",
-  "favouriteDriversSubtitle": "Boek een chauffeur die je vertrouwt",
-  "favouriteDriversSubtitleWithCount": "{count} favoriete chauffeurs",
+  "myDrivers": "Mijn chauffeurs",
+  "myDriversHomeSubtitle": "Rijd met iemand die je vertrouwt",
+  "favouriteDrivers": "Mijn chauffeurs",
+  "favouriteDriversSubtitle": "Jouw netwerk van vertrouwde chauffeurs",
+  "favouriteDriversSubtitleWithCount": "{count} chauffeurs in jouw netwerk",
   "@favouriteDriversSubtitleWithCount": {
     "placeholders": {
       "count": { "type": "int" }
@@ -150,7 +225,114 @@
   "instantRide": "Direct",
   "scheduledRide": "Plannen",
   "marketplace": "Marktplaats",
-  "marketplaceSubtitle": "Chauffeurs op weg naar jou — bespaar tot 40%",
+  "marketplaceTagline": "Chauffeurs strijden om jouw rit.",
+  "makeAnOffer": "Marktplaats",
+  "marketplacePostRequest": "Plaats verzoek",
+  "marketplaceRequestOffers": "Plaats verzoek",
+  "marketplaceMatchingTitle": "Marktplaats",
+  "marketplaceMatchingHeadline": "Chauffeurs zoeken…",
+  "marketplaceMatchingNotifySubtitle": "We sturen je een melding zodra er aanbiedingen zijn.",
+  "marketplaceDriversReceivedRequest": "{count} chauffeurs hebben je verzoek ontvangen",
+  "@marketplaceDriversReceivedRequest": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "marketplaceExpectedWait": "Verwachte wachttijd: 1 – 2 min",
+  "marketplaceOffersFromDrivers": "Aanbiedingen van chauffeurs",
+  "marketplaceRecommended": "Aanbevolen",
+  "marketplaceViewProfile": "Profiel bekijken",
+  "marketplaceOfferAcceptsYourPrice": "Accepteert je bod",
+  "marketplaceOfferCounterLabel": "Tegenbod",
+  "marketplaceOffersExpireIn": "Aanbiedingen verlopen over",
+  "marketplaceBoostOffer": "Verhoog je bod",
+  "marketplaceBoostOfferSubtitle": "Verhoog de prijs voor meer aanbiedingen",
+  "marketplaceCancelRequest": "Verzoek annuleren",
+  "marketplaceCancelRequestConfirm": "Chauffeurs zien je bod niet meer. Dit verzoek annuleren?",
+  "marketplaceReceiveChooseTitle": "Ontvang & kies aanbiedingen",
+  "marketplaceReceiveChooseBullet1": "Chauffeurs accepteren of bieden tegen",
+  "marketplaceReceiveChooseBullet2": "Vergelijk prijs, rating en ETA",
+  "marketplaceReceiveChooseBullet3": "Kies de beste match",
+  "marketplaceMatchingSubhead": "{nearby} in de buurt · {received} aanbiedingen",
+  "@marketplaceMatchingSubhead": {
+    "placeholders": {
+      "nearby": { "type": "int" },
+      "received": { "type": "int" }
+    }
+  },
+  "marketplaceMatchingWaiting": "Wachten op reacties",
+  "marketplaceMatchingWaitingBody": "Onafhankelijke chauffeurs kunnen accepteren, tegenbieden of negeren. Jij kiest met wie je rijdt.",
+  "marketplaceOfferAccepts": "Accepteert {price}",
+  "@marketplaceOfferAccepts": {
+    "placeholders": { "price": { "type": "String" } }
+  },
+  "marketplaceOfferCounter": "Tegenbod {price}",
+  "@marketplaceOfferCounter": {
+    "placeholders": { "price": { "type": "String" } }
+  },
+  "marketplaceOfferMinutesAway": "{minutes} min verwijderd",
+  "@marketplaceOfferMinutesAway": {
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+  "marketplaceOfferExpiresIn": "Aanbod verloopt {time}",
+  "@marketplaceOfferExpiresIn": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "marketplaceDriverUsuallyAccepts": "Accepteert meestal riderprijzen",
+  "marketplaceDriverOftenCounters": "Stuurt vaak tegenbiedingen",
+  "marketplaceDriverMayCounter": "Kan accepteren of tegenbieden",
+  "declineBid": "Weiger",
+  "marketplaceDriverScopeTitle": "Wie ziet je verzoek?",
+  "marketplaceDriverScopeEveryone": "Iedereen",
+  "marketplaceDriverScopeMyDriversFirst": "Mijn chauffeurs eerst",
+  "marketplaceDriverScopeMyDriversOnly": "Alleen mijn chauffeurs",
+  "marketplaceOfferHeadline": "Kies wat je wilt betalen.",
+  "marketplaceOfferExplanation": "Chauffeurs die al jouw richting op rijden kunnen je bod accepteren of een ander prijsvoorstel doen.",
+  "marketplaceDriversAcceptHint": "Chauffeurs kunnen accepteren, tegenbieden of negeren — HeyCaby bepaalt niet de prijs.",
+  "marketplaceDriversOnline": "{count} chauffeurs online",
+  "@marketplaceDriversOnline": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "marketplaceWhereAreYouGoing": "Waar ga je naartoe?",
+  "marketplaceYouAreHere": "Je bent hier",
+  "marketplaceYouAreHereIn": "Je bent hier in {area}",
+  "@marketplaceYouAreHereIn": {
+    "placeholders": { "area": { "type": "String" } }
+  },
+  "marketplaceYouAreHereOn": "Je bent op {street}",
+  "@marketplaceYouAreHereOn": {
+    "placeholders": { "street": { "type": "String" } }
+  },
+  "marketplaceLocatingYou": "Locatie ophalen…",
+  "marketplaceLocationNeeded": "Zet locatie aan om te zien waar je bent",
+  "marketplaceNameYourPrice": "Noem je prijs",
+  "marketplaceNameYourPriceSubtitle": "Chauffeurs zien je bod en reageren.",
+  "marketplaceTypicalRangeLabel": "Typisch bereik: {range}",
+  "@marketplaceTypicalRangeLabel": {
+    "placeholders": { "range": { "type": "String" } }
+  },
+  "marketplaceControlBanner": "Jij bepaalt. Chauffeurs kunnen accepteren, tegenbieden of negeren.",
+  "marketplaceFasterOffersTip": "Sneller reacties? Verhoog je prijs voor meer aanbiedingen.",
+  "marketplaceEnterCustomPrice": "Tik om een bedrag in te typen",
+  "marketplacePriceHint": "50",
+  "marketplaceBidRangeHint": "Je kunt bieden tussen €{min} en €{max}",
+  "@marketplaceBidRangeHint": {
+    "placeholders": {
+      "min": { "type": "int" },
+      "max": { "type": "int" }
+    }
+  },
+  "marketplaceTypicalFareTitle": "Gebruikelijke prijs",
+  "marketplaceYourOfferTitle": "Jouw bod",
+  "marketplaceRequestOffers": "Vraag aanbiedingen",
+  "marketplaceAcceptanceGood": "Goede kans op acceptatie",
+  "marketplaceAcceptanceFair": "Redelijk bod — chauffeurs kunnen accepteren of tegenbieden",
+  "marketplaceAcceptanceLow": "Bod is vrij laag — verwacht tegenbiedingen",
+  "marketplaceDemandLowTitle": "Lage vraag",
+  "marketplaceDemandHighTitle": "Hoge vraag",
+  "marketplaceDemandLowHint": "Chauffeurs accepteren waarschijnlijk lagere biedingen.",
+  "marketplaceDemandHighHint": "Iets meer bieden kan snellere reacties geven.",
+  "marketplaceSubtitle": "Kies je prijs — onafhankelijke chauffeurs beslissen.",
   "homeAirportBookingTitle": "Naar de luchthaven",
   "homeAirportBookingSubtitle": "Schiphol, Zaventem, Luxemburg & meer — één tik",
   "homeAirportBookingBadge": "Snel",
@@ -403,7 +585,7 @@
   },
   "marketplaceYourBid": "Jouw bod",
   "marketplaceQuickSelect": "Snel selecteren",
-  "marketplaceHeroTagline": "Bied je prijs — chauffeurs accepteren of stellen een tegenbod.",
+  "marketplaceHeroTagline": "Bied je prijs — chauffeurs die al jouw kant op rijden kunnen accepteren of tegenbieden.",
   "marketplaceYourRoute": "Jouw route",
   "marketplaceDragToAdjustHint": "Schuif om aan te passen",
   "marketplaceSetPickupDestinationHint": "Voeg ophaal- en bestemmingsadres toe om te plaatsen op de marktplaats.",
@@ -509,7 +691,7 @@
   "supportYazAssistantTitle": "Yaz AI-supportassistent",
   "supportYazAssistantSubtitle": "Stel vragen over je rit, account of betaling.",
   "supportYazMessageHint": "Bericht aan Yaz...",
-  "favouriteDriversAccountSubtitle": "Bewaar vertrouwde chauffeurs en stuur ritten direct naar hen.",
+  "favouriteDriversAccountSubtitle": "Bouw je netwerk van vertrouwde chauffeurs op.",
   "openLocationSettings": "Open locatie-instellingen",
   "openNotificationSettings": "Open meldingsinstellingen",
   "cashSubtitle": "Betaal contant aan de chauffeur",

@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import '../l10n/driver_strings.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_motion_presets.dart';
+import '../theme/driver_radius.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
 import '../ui/driver_button.dart';
 import '../ui/driver_card.dart';
 import '../ui/driver_status_badge.dart';
-import '../ui/driver_text_field.dart';
 import 'driver_settings_flow_common.dart';
 
 enum DriverVehiclePlateStatus { idle, checking, taxi, notTaxi, notFound }
@@ -107,40 +107,12 @@ class DriverVehicleProfileBody extends StatelessWidget {
                 ).driverFadeSlideIn(staggerIndex: 1),
               ],
             ] else ...[
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: DriverSpacing.md,
-                      vertical: 18,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.surface,
-                      borderRadius: const BorderRadius.horizontal(
-                        left: Radius.circular(12),
-                      ),
-                      border: Border.all(color: colors.border),
-                    ),
-                    child: Text(
-                      'NL',
-                      style: typography.labelLarge.copyWith(
-                        color: colors.text,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: DriverTextField(
-                      controller: plateController,
-                      colors: colors,
-                      typography: typography,
-                      label: DriverStrings.vehicle,
-                      hint: 'XX-000-X',
-                      onSubmitted: (_) => onLookupPlate(),
-                    ),
-                  ),
-                ],
+              _DutchPlateField(
+                controller: plateController,
+                colors: colors,
+                typography: typography,
+                enabled: !saving,
+                onSubmitted: onLookupPlate,
               ).driverFadeSlideIn(staggerIndex: 0),
               const SizedBox(height: DriverSpacing.sm),
               DriverButton(
@@ -212,48 +184,146 @@ class _LockedPlateRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(
+          DriverStrings.vehiclePlate,
+          style: typography.labelMedium.copyWith(color: colors.textSecondary),
+        ),
+        const SizedBox(height: DriverSpacing.sm),
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: DriverSpacing.md,
-            vertical: DriverSpacing.lg,
-          ),
+          height: 56,
           decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: const BorderRadius.horizontal(
-              left: Radius.circular(12),
-            ),
+            color: colors.card,
+            borderRadius: DriverRadius.smAll,
             border: Border.all(color: colors.border),
           ),
-          child: Text(
-            'NL',
-            style: typography.labelLarge.copyWith(
-              color: colors.text,
-              fontWeight: FontWeight.w800,
-            ),
+          clipBehavior: Clip.antiAlias,
+          child: Row(
+            children: [
+              Container(
+                width: 56,
+                alignment: Alignment.center,
+                color: colors.surface,
+                child: Text(
+                  'NL',
+                  style: typography.labelLarge.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+              Container(width: 1, color: colors.border),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: DriverSpacing.lg,
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      plate,
+                      style: typography.titleMedium.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: DriverSpacing.lg,
-              vertical: DriverSpacing.lg,
-            ),
-            decoration: BoxDecoration(
-              border: Border.all(color: colors.border),
-              borderRadius: const BorderRadius.horizontal(
-                right: Radius.circular(12),
+      ],
+    );
+  }
+}
+
+class _DutchPlateField extends StatelessWidget {
+  const _DutchPlateField({
+    required this.controller,
+    required this.colors,
+    required this.typography,
+    required this.enabled,
+    required this.onSubmitted,
+  });
+
+  final TextEditingController controller;
+  final DriverColors colors;
+  final DriverTypography typography;
+  final bool enabled;
+  final VoidCallback onSubmitted;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          DriverStrings.vehiclePlate,
+          style: typography.labelMedium.copyWith(color: colors.textSecondary),
+        ),
+        const SizedBox(height: DriverSpacing.sm),
+        Container(
+          height: 56,
+          decoration: BoxDecoration(
+            color: colors.card,
+            borderRadius: DriverRadius.smAll,
+            border: Border.all(color: colors.border),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Row(
+            children: [
+              Container(
+                width: 56,
+                alignment: Alignment.center,
+                color: colors.surface,
+                child: Text(
+                  'NL',
+                  style: typography.labelLarge.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ),
-            ),
-            child: Text(
-              plate,
-              style: typography.titleMedium.copyWith(
-                color: colors.text,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.5,
+              Container(width: 1, color: colors.border),
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  enabled: enabled,
+                  textCapitalization: TextCapitalization.characters,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (_) => onSubmitted(),
+                  style: typography.titleMedium.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.4,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'XX-000-X',
+                    hintStyle: typography.bodyMedium.copyWith(
+                      color: colors.textMuted,
+                      letterSpacing: 1.2,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: DriverSpacing.lg,
+                    ),
+                    isDense: true,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ],

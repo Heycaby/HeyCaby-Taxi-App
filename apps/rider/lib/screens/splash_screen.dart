@@ -48,7 +48,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     // if permission was already granted before.
     await ref.read(locationProvider.notifier).refreshIfPermitted();
     try {
-      await riderRuntimeConfig.refresh(force: true);
+      await Future.wait([
+        riderRuntimeConfig.refresh(force: true),
+        appPublicLinks.refresh(force: true),
+      ]);
     } catch (_) {
       // Keep startup resilient; app falls back to local defaults.
     }

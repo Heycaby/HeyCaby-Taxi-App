@@ -36,7 +36,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
           onPressed: () => context.pop(),
         ),
         title: Text(
-          l10n.favouriteDrivers,
+          l10n.myDrivers,
           style: typo.headingLarge.copyWith(
             color: colors.text,
             fontWeight: FontWeight.w700,

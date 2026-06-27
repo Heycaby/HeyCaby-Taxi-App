@@ -7,6 +7,7 @@ import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
+import '../providers/driver_data_providers.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../ui/driver_status_badge.dart';
@@ -24,11 +25,32 @@ class DriverSupportScreen extends ConsumerStatefulWidget {
 class _DriverSupportScreenState extends ConsumerState<DriverSupportScreen> {
   List<Map<String, dynamic>> _tickets = [];
   bool _loading = true;
+  bool _staffUser = false;
+  bool _fleetManager = false;
 
   @override
   void initState() {
     super.initState();
+    _staffUser = _isStaffUser();
     _loadTickets();
+    _loadFleetAccess();
+  }
+
+  bool _isStaffUser() {
+    final user = HeyCabySupabase.client.auth.currentUser;
+    if (user == null) return false;
+    final appMeta = user.appMetadata;
+    final role = (appMeta['role'] ?? appMeta['user_role'])?.toString();
+    return role == 'admin' || role == 'super_admin';
+  }
+
+  Future<void> _loadFleetAccess() async {
+    final res =
+        await ref.read(driverDataServiceProvider).fetchFleetHandoverVehicles();
+    if (!mounted) return;
+    final raw = res?['items'];
+    final hasVehicles = raw is List && raw.isNotEmpty;
+    setState(() => _fleetManager = res?['ok'] == true && hasVehicles);
   }
 
   Future<void> _loadTickets() async {
@@ -131,6 +153,12 @@ class _DriverSupportScreenState extends ConsumerState<DriverSupportScreen> {
       onChatWithLee: () => context.push('/driver/support/lee'),
       onViewThreads: () => context.push('/driver/support/threads'),
       onViewFaq: () => context.push('/driver/faq'),
+      onShiftHandoverAudit: _staffUser
+          ? () => context.push('/driver/admin/shift-handovers')
+          : null,
+      onFleetAllowlist: _fleetManager
+          ? () => context.push('/driver/fleet/allowlist')
+          : null,
     );
   }
 }

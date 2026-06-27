@@ -2,5 +2,5 @@
 <resources>
     <!-- Matches HeyCaby Fresh (Botanical light) bg — see kHeyCabyFresh in heycaby_ui -->
     <color name="heycaby_fresh_bg">#F2F4F3</color>
-    <color name="heycaby_launch_bg">#000000</color>
+    <color name="heycaby_launch_bg">#F5F7F6</color>
 </resources>

@@ -26,6 +26,9 @@ import 'screens/driver_preferences_screen.dart';
 import 'screens/driver_profile_screen.dart';
 import 'screens/driver_documents_screen.dart';
 import 'screens/driver_veriff_screen.dart';
+import 'screens/driver_fleet_allowlist_screen.dart';
+import 'screens/driver_fleet_allowlist_vehicle_screen.dart';
+import 'screens/driver_shift_handover_audit_screen.dart';
 import 'screens/driver_support_screen.dart';
 import 'screens/driver_faq_screen.dart';
 import 'screens/driver_terms_screen.dart';
@@ -289,6 +292,40 @@ final appRouter = GoRouter(
           path: '/driver/veriff',
           pageBuilder: (_, state) =>
               _shellPage(state, const DriverVeriffScreen()),
+        ),
+        GoRoute(
+          path: '/driver/admin/shift-handovers',
+          pageBuilder: (_, state) => _shellPage(
+            state,
+            const DriverShiftHandoverAuditScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/driver/fleet/allowlist',
+          pageBuilder: (_, state) => _shellPage(
+            state,
+            const DriverFleetAllowlistScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/driver/fleet/allowlist/:vehicleId',
+          redirect: (context, state) {
+            if (!isValidUuid(state.pathParameters['vehicleId'])) {
+              return '/driver/fleet/allowlist';
+            }
+            return null;
+          },
+          pageBuilder: (_, state) {
+            final vehicleId = state.pathParameters['vehicleId']!;
+            final plate = state.extra is String ? state.extra! as String : vehicleId;
+            return _shellPage(
+              state,
+              DriverFleetAllowlistVehicleScreen(
+                vehicleId: vehicleId,
+                plateDisplay: plate,
+              ),
+            );
+          },
         ),
         GoRoute(
           path: '/driver/support',

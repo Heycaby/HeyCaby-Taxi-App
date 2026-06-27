@@ -55,6 +55,8 @@
 	<string>HeyCaby needs your location to show the map, find rides, and navigate. Without location you cannot use the driver app.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>HeyCaby needs your location to show the map, find rides, and navigate. Without location you cannot use the driver app.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>HeyCaby gebruikt Face ID om een veilige dienstwissel (Secure Shift Handover) te bevestigen.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>HeyCaby needs access to your photo library to select profile photos and upload documents.</string>
 	<key>UIApplicationSceneManifest</key>

@@ -15,6 +15,8 @@ enum DriverNotificationBehavior {
   chat,
   rating,
   verification,
+  shiftHandover,
+  taxiSessionRevoked,
   generic,
 }
 
@@ -29,6 +31,12 @@ DriverNotificationBehavior driverBehaviorForCategory(String? category) {
   if (c.contains('chat')) return DriverNotificationBehavior.chat;
   if (c.contains('rating')) return DriverNotificationBehavior.rating;
   if (c.contains('verification')) return DriverNotificationBehavior.verification;
+  if (c.contains('shift_handover')) {
+    return DriverNotificationBehavior.shiftHandover;
+  }
+  if (c.contains('taxi_session_revoked')) {
+    return DriverNotificationBehavior.taxiSessionRevoked;
+  }
   return DriverNotificationBehavior.generic;
 }
 
@@ -51,6 +59,12 @@ Future<void> playDriverNotificationFeedback(
       await sound.playNotification();
     case DriverNotificationBehavior.verification:
       await HapticService.mediumTap();
+      await sound.playNotification();
+    case DriverNotificationBehavior.shiftHandover:
+      await HapticService.heavyTap();
+      await sound.playNotification();
+    case DriverNotificationBehavior.taxiSessionRevoked:
+      await HapticService.heavyTap();
       await sound.playNotification();
     case DriverNotificationBehavior.generic:
       await HapticService.lightTap();
@@ -108,6 +122,11 @@ Future<void> dispatchDriverNotification({
   }
 
   if (!foreground || behavior == DriverNotificationBehavior.incomingRide) {
+    return;
+  }
+
+  if (behavior == DriverNotificationBehavior.shiftHandover ||
+      behavior == DriverNotificationBehavior.taxiSessionRevoked) {
     return;
   }
 

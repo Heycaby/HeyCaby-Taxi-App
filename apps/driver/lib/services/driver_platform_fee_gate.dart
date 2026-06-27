@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../services/driver_billing_service.dart';
 import '../l10n/driver_strings.dart';
 import 'driver_apple_iap_billing.dart';
 import '../widgets/driver_billing_plan_picker.dart';
@@ -50,6 +51,17 @@ Future<bool> ensureDriverPlatformFeeAllowsOnline(
 
   final paymentRequired = data['payment_required'] == true;
   if (!paymentRequired) return true;
+
+  final isLedger = DriverBillingService.isLedgerV1(data);
+  if (isLedger && data['can_settle_outstanding'] != true) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(DriverStrings.platformFeeStatusError)),
+      );
+    }
+    return false;
+  }
+
   if (driverStatusUsesAppleBilling(data) && !driverAppleIapSupportedOnDevice) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -66,13 +78,18 @@ Future<bool> ensureDriverPlatformFeeAllowsOnline(
   final feeEuro = weeklyCents is num
       ? (weeklyCents / 100).toStringAsFixed(2)
       : '?';
-  final plans = parseServerBillingPlans(data);
-  final selectedPlan = await pickDriverBillingPlanCode(
-    context,
-    colors: colors,
-    typo: typo,
-    plans: plans,
-  );
+  String? selectedPlan;
+  if (isLedger) {
+    selectedPlan = 'settlement';
+  } else {
+    final plans = parseServerBillingPlans(data);
+    selectedPlan = await pickDriverBillingPlanCode(
+      context,
+      colors: colors,
+      typo: typo,
+      plans: plans,
+    );
+  }
   if (selectedPlan == null || !context.mounted) return false;
 
   final pay = await showDialog<bool>(
@@ -151,7 +168,9 @@ Future<bool> ensureDriverPlatformFeeAllowsOnline(
   } else {
     Map<String, dynamic> created;
     try {
-      created = await api.createDriverPlatformPayment(plan: selectedPlan);
+      created = isLedger
+          ? await api.createDriverPlatformPayment()
+          : await api.createDriverPlatformPayment(plan: selectedPlan);
     } catch (e) {
       _logPlatformFeeTelemetry(
         scope: 'platform_fee',

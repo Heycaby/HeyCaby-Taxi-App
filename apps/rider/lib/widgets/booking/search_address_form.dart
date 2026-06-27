@@ -23,6 +23,7 @@ class SearchAddressHeader extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onWhenTap;
   final DateTime? scheduledAt;
+  final bool pickupLoading;
 
   const SearchAddressHeader({
     super.key,
@@ -40,6 +41,7 @@ class SearchAddressHeader extends StatelessWidget {
     required this.onBack,
     required this.onWhenTap,
     this.scheduledAt,
+    this.pickupLoading = false,
   });
 
   @override
@@ -126,6 +128,8 @@ class SearchAddressHeader extends StatelessWidget {
                         colors: colors,
                         typo: typo,
                         onChanged: onPickupChanged,
+                        isLoading: pickupLoading,
+                        loadingHint: l10n.marketplaceLocatingYou,
                       ),
                       Divider(height: 1, thickness: 1, color: colors.border.withValues(alpha: 0.5)),
                       _SearchAddressField(
@@ -284,6 +288,8 @@ class _SearchAddressField extends StatelessWidget {
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
   final ValueChanged<String> onChanged;
+  final bool isLoading;
+  final String? loadingHint;
 
   const _SearchAddressField({
     required this.controller,
@@ -292,6 +298,8 @@ class _SearchAddressField extends StatelessWidget {
     required this.colors,
     required this.typo,
     required this.onChanged,
+    this.isLoading = false,
+    this.loadingHint,
   });
 
   @override
@@ -300,6 +308,7 @@ class _SearchAddressField extends StatelessWidget {
       controller: controller,
       focusNode: focusNode,
       onChanged: onChanged,
+      enabled: !isLoading,
       maxLines: 1,
       inputFormatters: [LengthLimitingTextInputFormatter(200)],
       style: typo.bodyLarge.copyWith(
@@ -308,13 +317,27 @@ class _SearchAddressField extends StatelessWidget {
       ),
       textAlignVertical: TextAlignVertical.center,
       decoration: InputDecoration(
-        hintText: hint,
+        hintText: isLoading ? (loadingHint ?? hint) : hint,
         hintStyle: typo.bodyLarge.copyWith(color: colors.textSoft),
         border: InputBorder.none,
         enabledBorder: InputBorder.none,
         focusedBorder: InputBorder.none,
         isDense: true,
         contentPadding: const EdgeInsetsDirectional.fromSTEB(0, 14, 8, 14),
+        suffixIcon: isLoading
+            ? Padding(
+                padding: const EdgeInsetsDirectional.only(end: 4),
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: colors.accent,
+                  ),
+                ),
+              )
+            : null,
+        suffixIconConstraints: const BoxConstraints(minWidth: 28, minHeight: 28),
       ),
     );
   }

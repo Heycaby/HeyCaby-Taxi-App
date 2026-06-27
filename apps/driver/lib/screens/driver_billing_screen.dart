@@ -9,6 +9,7 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
+import '../services/driver_billing_service.dart';
 import '../utils/driver_runtime_refresh.dart';
 import '../services/driver_apple_iap_billing.dart';
 import '../theme/driver_colors.dart';
@@ -33,6 +34,24 @@ String? _weeklyFeeEuro(Map<String, dynamic>? s) {
   return (c / 100).toStringAsFixed(2);
 }
 
+String? _ledgerOutstandingLabel(Map<String, dynamic>? s) {
+  if (s == null || !DriverBillingService.isLedgerV1(s)) return null;
+  final outstanding = s['outstanding_cents'];
+  final limit = s['limit_cents'];
+  if (outstanding is! num || limit is! num) return null;
+  final cur = (s['currency'] as String?)?.trim().toUpperCase();
+  final sym = cur == 'EUR' || cur == null ? '€' : '$cur ';
+  return '$sym${(outstanding / 100).toStringAsFixed(2)} / $sym${(limit / 100).toStringAsFixed(2)}';
+}
+
+String _ledgerFeePerRideLabel(Map<String, dynamic>? s) {
+  final cents = s?['platform_fee_cents'];
+  if (cents is num) {
+    return '€${(cents / 100).toStringAsFixed(2)} ${DriverStrings.billingPerRideSuffix}';
+  }
+  return DriverStrings.billingDash;
+}
+
 void _refreshAfterBillingMutation(WidgetRef ref) {
   ref.invalidate(driverBillingStatusProvider);
   ref.invalidate(driverProfileProvider);
@@ -42,6 +61,14 @@ void _refreshAfterBillingMutation(WidgetRef ref) {
 
 String _paymentStatusLine(Map<String, dynamic>? s, bool paymentRequired) {
   if (s == null) return DriverStrings.billingDash;
+  if (DriverBillingService.isLedgerV1(s)) {
+    final st = (s['status'] as String?)?.toUpperCase();
+    if (st == 'LOCKED' || paymentRequired) {
+      return DriverStrings.billingStatusPaymentRequired;
+    }
+    if (st == 'WARNING') return DriverStrings.billingStatusOverdue;
+    return DriverStrings.billingStatusNoPaymentDue;
+  }
   final explicit =
       s['billing_status_label'] as String? ?? s['subscription_status'] as String?;
   if (explicit != null && explicit.trim().isNotEmpty) return explicit.trim();
@@ -186,19 +213,26 @@ class DriverBillingScreen extends ConsumerWidget {
     final profile = profileAsync.valueOrNull;
     final billingStatus = billingStatusAsync.valueOrNull;
     final paymentRequired = billingStatus?['payment_required'] == true;
-    final weeklyEuro = _weeklyFeeEuro(billingStatus);
-    final weeklyFeeDisplay =
-        weeklyEuro != null ? '€$weeklyEuro' : DriverStrings.billingDash;
-    final paidUntil = _firstDateFromKeys(
-      billingStatus,
-      const ['next_payment_due_at', 'subscription_expires_at'],
-    );
+    final ledgerV1 = DriverBillingService.isLedgerV1(billingStatus);
+    final weeklyEuro = ledgerV1
+        ? null
+        : _weeklyFeeEuro(billingStatus);
+    final weeklyFeeDisplay = ledgerV1
+        ? _ledgerFeePerRideLabel(billingStatus)
+        : (weeklyEuro != null ? '€$weeklyEuro' : DriverStrings.billingDash);
+    final paidUntil = ledgerV1
+        ? null
+        : _firstDateFromKeys(
+            billingStatus,
+            const ['next_payment_due_at', 'subscription_expires_at'],
+          );
     final daysRemaining = paidUntil == null
         ? null
         : (paidUntil.difference(DateTime.now()).inHours / 24).ceil();
     final statusLine = _paymentStatusLine(billingStatus, paymentRequired);
     final starterBody = _starterBody(billingStatus);
-    final showSub = _hasSubscriptionControls(billingStatus) &&
+    final showSub = !ledgerV1 &&
+        _hasSubscriptionControls(billingStatus) &&
         !_subscriptionCanceled(billingStatus) &&
         !driverStatusUsesAppleBilling(
           Map<String, dynamic>.from(billingStatus ?? const {}),
@@ -210,7 +244,9 @@ class DriverBillingScreen extends ConsumerWidget {
         driverAppleIapSupportedOnDevice;
 
     String? nextPaymentLabel;
-    if (paidUntil != null) {
+    if (ledgerV1) {
+      nextPaymentLabel = _ledgerOutstandingLabel(billingStatus);
+    } else if (paidUntil != null) {
       final value = (daysRemaining != null && daysRemaining > 0)
           ? DriverStrings.billingDaysRemaining(daysRemaining)
           : DriverStrings.billingNextPaymentDueSoon;
@@ -221,7 +257,7 @@ class DriverBillingScreen extends ConsumerWidget {
       isFounding: profile?.isFoundingDriver == true,
       foundingNumber: profile?.foundingNumber,
       weeklyFeeDisplay: weeklyFeeDisplay,
-      weeklyFeeUnknown: weeklyEuro == null,
+      weeklyFeeUnknown: ledgerV1 ? false : weeklyEuro == null,
       statusLine: statusLine,
       statusTone: _paymentStatusTone(tokens, billingStatus, paymentRequired),
       nextPaymentLabel: nextPaymentLabel,
@@ -231,7 +267,7 @@ class DriverBillingScreen extends ConsumerWidget {
       paymentRequired: paymentRequired,
       showOptionalCheckout: prepay && !paymentRequired,
       showAppleRestore: appleIapUi,
-      showPaymentMethods: !appleIapUi,
+      showPaymentMethods: !appleIapUi && !ledgerV1,
     );
 
     void invalidateBilling() => _refreshAfterBillingMutation(ref);
@@ -357,8 +393,13 @@ class DriverBillingScreen extends ConsumerWidget {
     final colors = ref.read(colorsProvider);
     final typo = ref.read(typographyProvider);
     final api = ref.read(driverApiProvider);
-    final selectedPlan = await _pickBillingPlan(context, ref, billingStatus);
-    if (selectedPlan == null || !context.mounted) return;
+    final ledgerV1 = DriverBillingService.isLedgerV1(billingStatus);
+
+    String? selectedPlan;
+    if (!ledgerV1) {
+      selectedPlan = await _pickBillingPlan(context, ref, billingStatus);
+      if (selectedPlan == null || !context.mounted) return;
+    }
 
     final bs = billingStatus ?? const <String, dynamic>{};
     if (driverStatusUsesAppleBilling(bs) && !driverAppleIapSupportedOnDevice) {
@@ -394,10 +435,15 @@ class DriverBillingScreen extends ConsumerWidget {
     );
 
     if (useApple) {
+      final plan = selectedPlan;
+      if (plan == null) {
+        if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
+        return;
+      }
       final ok = await purchaseDriverPlatformAccessWithAppleIap(
         context: context,
         api: api,
-        planCode: selectedPlan,
+        planCode: plan,
       );
       if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
       if (ok && context.mounted) {
@@ -408,7 +454,9 @@ class DriverBillingScreen extends ConsumerWidget {
 
     Map<String, dynamic> created;
     try {
-      created = await api.createDriverPlatformPayment(plan: selectedPlan);
+      created = await api.createDriverPlatformPayment(
+        plan: ledgerV1 ? null : selectedPlan,
+      );
     } catch (e) {
       if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
       if (context.mounted) {
@@ -448,6 +496,10 @@ class DriverBillingScreen extends ConsumerWidget {
     );
 
     if (success == true && context.mounted) {
+      final paymentId = created['mollie_payment_id']?.toString();
+      if (paymentId != null && paymentId.isNotEmpty) {
+        await api.syncDriverBillingPayment(paymentId);
+      }
       _refreshAfterBillingMutation(ref);
     }
   }

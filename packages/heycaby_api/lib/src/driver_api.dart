@@ -1,8 +1,9 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:heycaby_api/src/app_notifications_service.dart';
 import 'package:heycaby_api/src/driver_api_base_resolver.dart';
+import 'package:heycaby_api/src/driver_billing_edge_service.dart';
 import 'package:heycaby_api/src/supabase_client.dart';
 
 /// Supabase RPC [fn_driver_accept_ride_invite] returned a business error (no HTTP fallback).
@@ -13,267 +14,146 @@ class DriverAcceptRideException implements Exception {
   String toString() => code;
 }
 
-/// HTTP client for driver app. Adds Supabase JWT to all requests.
-/// Driver actions (status, ride lifecycle) go through the backend API.
+/// Supabase ride lifecycle RPC returned a business error.
+class DriverRideLifecycleException implements Exception {
+  const DriverRideLifecycleException(this.code);
+  final String code;
+  @override
+  String toString() => code;
+}
+
+/// Supabase-first driver API (Phase E — Go REST disabled in production).
 class DriverApi {
-  static const _apiBaseUrlFromDefine = String.fromEnvironment('API_BASE_URL', defaultValue: '');
+  DriverApi({String? baseUrl});
 
-  late final Dio _dio;
-  final bool _skipDynamicBase;
-  bool _apiBaseReady = false;
-
-  DriverApi({String? baseUrl})
-      : _skipDynamicBase = baseUrl != null || _apiBaseUrlFromDefine.trim().isNotEmpty {
-    final fromEnv = _apiBaseUrlFromDefine.trim();
-    final initial = baseUrl ?? (fromEnv.isNotEmpty ? fromEnv : '');
-    _dio = Dio(
-      BaseOptions(
-        baseUrl: initial,
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 15),
-        headers: {'Content-Type': 'application/json'},
-      ),
-    );
-    _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          if (!_skipDynamicBase) {
-            try {
-              await _ensureGoApiBaseUrl();
-            } catch (e, st) {
-              handler.reject(
-                DioException(
-                  requestOptions: options,
-                  error: e,
-                  stackTrace: st,
-                  type: DioExceptionType.unknown,
-                ),
-              );
-              return;
-            }
-          }
-          handler.next(options);
-        },
-      ),
-    );
-    _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) {
-          final token = HeyCabySupabase.client.auth.currentSession?.accessToken;
-          if (token != null) {
-            options.headers['Authorization'] = 'Bearer $token';
-          }
-          handler.next(options);
-        },
-      ),
-    );
-    if (kDebugMode) {
-      _dio.interceptors.add(LogInterceptor(
-        requestHeader: false,
-        responseHeader: false,
-        requestBody: true,
-        responseBody: true,
-      ));
-    }
-  }
-
-  Future<void> _ensureGoApiBaseUrl() async {
-    if (_skipDynamicBase || _apiBaseReady) return;
-    final resolved = await DriverApiBaseResolver.resolve();
-    _dio.options.baseUrl = resolved;
-    _apiBaseReady = true;
-  }
+  static const _notifications = AppNotificationsService();
+  static const _billingEdge = DriverBillingEdgeService();
 
   Future<List<DriverNotificationItem>> getNotifications({
     bool unreadOnly = false,
     int limit = 30,
   }) async {
-    final params = <String, dynamic>{
-      'limit': limit,
-      if (unreadOnly) 'unread': 1,
-    };
-    Response<Map<String, dynamic>> res;
-    try {
-      res = await _dio.get<Map<String, dynamic>>(
-        '/api/driver/notifications',
-        queryParameters: params,
-      );
-    } on DioException catch (e) {
-      final status = e.response?.statusCode;
-      if (status != 401) {
-        rethrow;
-      }
-      final refreshed = await HeyCabySupabase.client.auth.refreshSession();
-      if (refreshed.session == null) return const [];
-      try {
-        res = await _dio.get<Map<String, dynamic>>(
-          '/api/driver/notifications',
-          queryParameters: params,
-        );
-      } on DioException catch (retryErr) {
-        if (retryErr.response?.statusCode == 401) return const [];
-        rethrow;
-      }
-    }
-
-    final raw = res.data?['notifications'];
-    if (raw is! List) return const [];
-    return raw
-        .whereType<Map>()
-        .map((e) =>
-            DriverNotificationItem.fromJson(Map<String, dynamic>.from(e)))
+    final supabaseRows = await _notifications.listOrNull(
+      userType: 'driver',
+      unreadOnly: unreadOnly,
+      limit: limit,
+    );
+    return (supabaseRows ?? const [])
+        .map((e) => DriverNotificationItem.fromJson(e))
         .toList();
   }
 
   Future<void> markNotificationRead(String notificationId) async {
-    try {
-      await _dio.patch('/api/driver/notifications', data: {
-        'notification_id': notificationId,
-      });
-    } on DioException catch (e) {
-      if (e.response?.statusCode != 401) rethrow;
-    }
+    await _notifications.markRead(notificationId);
   }
 
   Future<void> markAllNotificationsRead() async {
-    try {
-      await _dio.patch('/api/driver/notifications', data: {'all': true});
-    } on DioException catch (e) {
-      if (e.response?.statusCode != 401) rethrow;
-    }
+    await _notifications.markAllRead(userType: 'driver');
   }
 
-  /// Update driver status via v1 server-driven endpoint.
-  /// GET /api/driver/status — license + platform-fee eligibility (`can_go_online`, `payment_required`, etc.).
+  /// Billing / platform-fee status — Supabase [fn_driver_billing_status] (Phase E; no Go).
   Future<Map<String, dynamic>> fetchDriverStatus() async {
-    final res = await _dio.get<Map<String, dynamic>>('/api/driver/status');
-    return Map<String, dynamic>.from(res.data ?? const {});
+    final status = await _billingEdge.fetchBillingStatusOrNull();
+    if (status != null) return status;
+    throw GoApiDisabledException('Billing status unavailable from Supabase.');
   }
 
-  /// POST /api/driver/billing/apple/verify — receipt validation; extends `subscription_expires_at`.
+  /// Apple receipt validation via Supabase Edge (Phase C/E).
   Future<void> verifyAppleDriverReceipt({
     required String receiptData,
     String planCode = '',
   }) async {
-    await _dio.post<Map<String, dynamic>>(
-      '/api/driver/billing/apple/verify',
-      data: {
-        'receipt_data': receiptData,
-        'plan_code': planCode.trim().toLowerCase(),
-      },
+    final ok = await _billingEdge.verifyAppleReceiptOrNull(
+      receiptData: receiptData,
+      planCode: planCode,
     );
-  }
-
-  /// POST /api/driver/payment/create — returns `checkoutUrl` + `mollie_payment_id` when payment is required.
-  Future<Map<String, dynamic>> createDriverPlatformPayment({String? plan}) async {
-    final payload = <String, dynamic>{};
-    if (plan != null && plan.trim().isNotEmpty) {
-      payload['plan'] = plan.trim().toLowerCase();
+    if (!ok) {
+      throw GoApiDisabledException('Apple receipt verification failed.');
     }
-    final res = await _dio.post<Map<String, dynamic>>(
-      '/api/driver/payment/create',
-      data: payload.isEmpty ? null : payload,
+  }
+
+  /// Mollie checkout — Supabase Edge (settlement or legacy subscription).
+  Future<Map<String, dynamic>> createDriverPlatformPayment({String? plan}) async {
+    final ledgerStatus = await _billingEdge.fetchBillingStatusOrNull();
+    final isLedger = DriverBillingEdgeService.isLedgerV1(ledgerStatus);
+    final edge = await _billingEdge.createCheckoutOrNull(
+      kind: isLedger ? 'settlement' : 'subscription',
+      plan: isLedger ? null : plan,
     );
-    return Map<String, dynamic>.from(res.data ?? const {});
+    if (edge != null) {
+      return edge;
+    }
+    throw GoApiDisabledException('Billing checkout unavailable from Supabase Edge.');
   }
 
-  /// POST /api/driver/subscription/cancel — cancels Mollie subscription if `mollie_subscription_id` exists; otherwise no-op JSON.
+  /// Confirm Mollie payment after checkout redirect (Edge webhook fallback).
+  Future<bool> syncDriverBillingPayment(String molliePaymentId) =>
+      _billingEdge.syncMolliePayment(molliePaymentId);
+
+  /// Legacy Mollie subscription controls — disabled after Phase E cutover.
   Future<Map<String, dynamic>> cancelDriverPlatformSubscription() async {
-    final res = await _dio
-        .post<Map<String, dynamic>>('/api/driver/subscription/cancel');
-    return Map<String, dynamic>.from(res.data ?? const {});
+    throw GoApiDisabledException('Legacy subscription cancel is no longer available.');
   }
 
-  /// POST /api/driver/subscription/pause — pauses recurring collection (backend → Mollie). Throws on hard errors.
   Future<Map<String, dynamic>> pauseDriverPlatformSubscription() async {
-    final res =
-        await _dio.post<Map<String, dynamic>>('/api/driver/subscription/pause');
-    return Map<String, dynamic>.from(res.data ?? const {});
+    throw GoApiDisabledException('Legacy subscription pause is no longer available.');
   }
 
-  /// POST /api/driver/subscription/resume — resumes paused subscription.
   Future<Map<String, dynamic>> resumeDriverPlatformSubscription() async {
-    final res = await _dio
-        .post<Map<String, dynamic>>('/api/driver/subscription/resume');
-    return Map<String, dynamic>.from(res.data ?? const {});
+    throw GoApiDisabledException('Legacy subscription resume is no longer available.');
   }
 
-  /// GET /api/driver/payments — payment ledger (`payments` / `items` / `rows`). Returns empty list if route missing (404).
+  /// Ledger history from [fn_driver_billing_ledger_history].
   Future<List<Map<String, dynamic>>> fetchDriverPaymentLedger() async {
     try {
-      final res = await _dio.get<Map<String, dynamic>>('/api/driver/payments');
-      final data = res.data;
-      if (data == null) return const [];
-      final raw = data['payments'] ?? data['items'] ?? data['rows'];
-      if (raw is! List) return const [];
-      return raw
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) return const [];
-      rethrow;
+      final raw = await HeyCabySupabase.client.rpc(
+        'fn_driver_billing_ledger_history',
+        params: {'p_limit': 50},
+      );
+      if (raw is! Map || raw['ok'] != true) return const [];
+      final entries = raw['entries'];
+      if (entries is! List) return const [];
+      return [
+        for (final e in entries)
+          if (e is Map) Map<String, dynamic>.from(e),
+      ];
+    } catch (_) {
+      return const [];
     }
   }
 
-  /// GET /api/driver/payment/methods-portal — `{ portalUrl }` or `{ url }` for Mollie mandate/card management.
-  /// Returns null if the route is not deployed (404) or the body has no URL.
-  Future<String?> fetchDriverPaymentMethodsPortalUrl() async {
-    try {
-      final res = await _dio
-          .get<Map<String, dynamic>>('/api/driver/payment/methods-portal');
-      final m = res.data ?? const <String, dynamic>{};
-      final u = m['portalUrl'] ?? m['url'] ?? m['checkoutUrl'];
-      if (u is String && u.trim().isNotEmpty) return u.trim();
-      return null;
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) return null;
-      rethrow;
-    }
-  }
+  /// Mollie mandate portal — not used on ledger V1.
+  Future<String?> fetchDriverPaymentMethodsPortalUrl() async => null;
 
+  /// Driver availability — Supabase RPC `fn_driver_set_status` only (no Go fallback).
   Future<void> setStatus({
     required String status,
     double? lat,
     double? lng,
     String? driverId,
   }) async {
-    try {
-      final raw = await HeyCabySupabase.client.rpc(
-        'fn_driver_set_status',
-        params: {
-          'p_status': status,
-          if (lat != null) 'p_lat': lat,
-          if (lng != null) 'p_lng': lng,
-        },
-      );
-      if (raw is Map) {
-        final blocked = raw['blocked_reason'];
-        if (blocked != null && blocked.toString().isNotEmpty) {
-          throw DioException(
+    final raw = await HeyCabySupabase.client.rpc(
+      'fn_driver_set_status',
+      params: {
+        'p_status': status,
+        if (lat != null) 'p_lat': lat,
+        if (lng != null) 'p_lng': lng,
+      },
+    );
+    if (raw is Map) {
+      final blocked = raw['blocked_reason'];
+      if (blocked != null && blocked.toString().isNotEmpty) {
+        throw DioException(
+          requestOptions: RequestOptions(path: 'rpc/fn_driver_set_status'),
+          response: Response(
             requestOptions: RequestOptions(path: 'rpc/fn_driver_set_status'),
-            response: Response(
-              requestOptions: RequestOptions(path: 'rpc/fn_driver_set_status'),
-              statusCode: 409,
-              data: raw,
-            ),
-            type: DioExceptionType.badResponse,
-          );
-        }
+            statusCode: 409,
+            data: raw,
+          ),
+          type: DioExceptionType.badResponse,
+        );
       }
-      return;
-    } on DioException {
-      rethrow;
-    } catch (_) {
-      // Legacy Go path only if Supabase RPC is unavailable (non-launch fallback).
     }
-
-    final data = <String, dynamic>{'status': status};
-    if (lat != null && lng != null) {
-      data['lat'] = lat;
-      data['lng'] = lng;
-    }
-    await _dio.post('/api/v1/driver/status', data: data);
   }
 
   Future<DriverManualRideResult> createManualRide({
@@ -350,16 +230,19 @@ class DriverApi {
     }
   }
 
+  /// Location uploads use direct Supabase upsert ([DriverLocationService]).
   Future<void> uploadLocation({
     required double lat,
     required double lng,
     double? heading,
+  }) async {}
+
+  /// Notify rider — use Supabase Edge `driver-agent` ([sendDriverRiderPing]).
+  Future<void> nudgeRider({
+    required String rideRequestId,
+    required String kind,
   }) async {
-    await _dio.post('/api/driver/location', data: {
-      'lat': lat,
-      'lng': lng,
-      if (heading != null) 'heading': heading,
-    });
+    throw GoApiDisabledException('Use driver-agent Edge for rider pings.');
   }
 
   /// Atomic Supabase RPC [fn_driver_accept_ride_invite] — no HTTP fallback.
@@ -380,129 +263,151 @@ class DriverApi {
     }
   }
 
+  Future<void> _invokeDriverRideRpc(
+    String rpcName,
+    Map<String, dynamic> params,
+  ) async {
+    try {
+      final r = await HeyCabySupabase.client.rpc(rpcName, params: params);
+      if (r is Map && r['ok'] == true) return;
+      final err =
+          r is Map ? r['error']?.toString() ?? 'rpc_failed' : 'rpc_failed';
+      throw DriverRideLifecycleException(err);
+    } on DriverRideLifecycleException {
+      rethrow;
+    } catch (e) {
+      throw DriverRideLifecycleException('rpc_unavailable:${e.toString()}');
+    }
+  }
+
+  /// Supabase RPC `fn_driver_ride_arrived` — no Go fallback (Phase B).
   Future<void> markArrived({required String rideRequestId}) async {
-    await _dio.post('/api/driver/ride/arrived',
-        data: {'ride_request_id': rideRequestId});
+    await _invokeDriverRideRpc(
+      'fn_driver_ride_arrived',
+      {'p_ride_request_id': rideRequestId},
+    );
   }
 
+  /// Supabase RPC `fn_driver_ride_start` — no Go fallback (Phase B).
   Future<void> startRide({required String rideRequestId}) async {
-    await _dio.post('/api/driver/ride/start',
-        data: {'ride_request_id': rideRequestId});
+    await _invokeDriverRideRpc(
+      'fn_driver_ride_start',
+      {'p_ride_request_id': rideRequestId},
+    );
   }
 
+  /// Supabase RPC `fn_driver_ride_complete` — no Go fallback (Phase B).
   Future<void> completeRide({required String rideRequestId}) async {
-    await _dio.post('/api/driver/ride/complete',
-        data: {'ride_request_id': rideRequestId});
+    await _invokeDriverRideRpc(
+      'fn_driver_ride_complete',
+      {'p_ride_request_id': rideRequestId},
+    );
   }
 
-  /// Cancel an already accepted/assigned ride before completion.
-  ///
-  /// Backend routes vary by environment, so we try common variants.
+  /// Supabase RPC `fn_driver_ride_cancel` — no Go fallback (Phase B).
   Future<void> cancelRide({
     required String rideRequestId,
     String? reason,
   }) async {
-    final body = <String, dynamic>{
-      'ride_request_id': rideRequestId,
-      if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
-    };
-    DioException? lastError;
-    for (final path in const [
-      '/api/driver/ride/cancel',
-      '/api/driver/ride/cancelled',
-      '/api/driver/ride/end',
-    ]) {
-      try {
-        await _dio.post(path, data: body);
-        return;
-      } on DioException catch (e) {
-        lastError = e;
-      }
-    }
-    if (lastError != null) throw lastError;
+    await _invokeDriverRideRpc(
+      'fn_driver_ride_cancel',
+      {
+        'p_ride_request_id': rideRequestId,
+        if (reason != null && reason.trim().isNotEmpty)
+          'p_reason': reason.trim(),
+      },
+    );
   }
 
-  /// Notify rider that driver is waiting nearby/outside.
-  ///
-  /// Backend route names may vary during rollout; try common variants.
-  Future<void> nudgeRider({
-    required String rideRequestId,
-    required String kind,
-  }) async {
-    final body = <String, dynamic>{
-      'ride_request_id': rideRequestId,
-      'kind': kind, // outside | nearby
-    };
-    DioException? lastError;
-    for (final path in const [
-      '/api/driver/ride/nudge',
-      '/api/driver/rider/nudge',
-      '/api/driver/notify-rider',
-    ]) {
-      try {
-        await _dio.post(path, data: body);
-        return;
-      } on DioException catch (e) {
-        lastError = e;
-      }
-    }
-    if (lastError != null) throw lastError;
-  }
 
-  Future<void> reportNoShow({required Map<String, dynamic> payload}) async {
-    await _dio.post('/api/driver/ride/no-show', data: payload);
-  }
-
-  Future<void> rateRider({required Map<String, dynamic> payload}) async {
-    await _dio.post('/api/driver/ride/rate', data: payload);
-  }
-
-  Future<void> createReceipt({required Map<String, dynamic> payload}) async {
-    await _dio.post('/api/driver/receipt', data: payload);
-  }
-
+  /// Legacy auction routes — removed after Phase E (marketplace uses Supabase).
   Future<void> placeBid({required Map<String, dynamic> payload}) async {
-    await _dio.post('/api/auction/bid', data: payload);
+    throw GoApiDisabledException('Auction bidding is not available.');
   }
 
   Future<void> acceptFirst({required String rideRequestId}) async {
-    await _dio.post('/api/auction/accept-first',
-        data: {'ride_request_id': rideRequestId});
-  }
-
-  /// Best-effort decline path for incoming offers.
-  ///
-  /// Some environments expose `/api/driver/ride/decline`, others use
-  /// `/api/driver/ride/reject`. We try both before surfacing the error.
-  Future<void> declineRide({required String rideRequestId}) async {
-    final body = {'ride_request_id': rideRequestId};
-    DioException? lastError;
-
-    for (final path in const [
-      '/api/driver/ride/decline',
-      '/api/driver/ride/reject',
-    ]) {
-      try {
-        await _dio.post(path, data: body);
-        return;
-      } on DioException catch (e) {
-        lastError = e;
-      }
-    }
-
-    if (lastError != null) {
-      throw lastError;
-    }
+    throw GoApiDisabledException('Auction accept-first is not available.');
   }
 
   Future<Map<String, dynamic>> getRadar(
       {required double lat, required double lng}) async {
-    final res = await _dio.get<Map<String, dynamic>>(
-      '/api/auction/radar',
-      queryParameters: {'lat': lat, 'lng': lng},
-    );
-    return res.data ?? {};
+    throw GoApiDisabledException('Auction radar is not available.');
   }
+
+  /// Supabase RPC `fn_driver_ride_no_show` — no Go fallback (Phase B).
+  Future<void> reportNoShow({required Map<String, dynamic> payload}) async {
+    final rideRequestId = payload['ride_request_id']?.toString();
+    if (rideRequestId == null || rideRequestId.isEmpty) {
+      throw const DriverRideLifecycleException('missing_ride_request_id');
+    }
+    await _invokeDriverRideRpc(
+      'fn_driver_ride_no_show',
+      {'p_ride_request_id': rideRequestId},
+    );
+  }
+
+  /// Supabase RPC `fn_driver_rate_rider` — no Go fallback (Phase B).
+  Future<void> rateRider({required Map<String, dynamic> payload}) async {
+    final rideRequestId = payload['ride_request_id']?.toString();
+    if (rideRequestId == null || rideRequestId.isEmpty) {
+      throw const DriverRideLifecycleException('missing_ride_request_id');
+    }
+    final rating = payload['driver_rating_of_rider'];
+    final stars = rating is num ? rating.toInt() : int.tryParse('$rating');
+    if (stars == null || stars < 1 || stars > 5) {
+      throw const DriverRideLifecycleException('invalid_rating');
+    }
+    final comment = payload['rider_comment']?.toString();
+    await _invokeDriverRideRpc(
+      'fn_driver_rate_rider',
+      {
+        'p_ride_request_id': rideRequestId,
+        'p_rating': stars,
+        if (comment != null && comment.trim().isNotEmpty)
+          'p_comment': comment.trim(),
+      },
+    );
+  }
+
+  /// Supabase RPC `fn_driver_create_receipt` — no Go fallback (Phase B).
+  Future<void> createReceipt({required Map<String, dynamic> payload}) async {
+    final rideRequestId = payload['ride_request_id']?.toString();
+    if (rideRequestId == null || rideRequestId.isEmpty) {
+      throw const DriverRideLifecycleException('missing_ride_request_id');
+    }
+    final paidRaw = payload['paid_amount'];
+    final paid = paidRaw is num
+        ? paidRaw.toDouble()
+        : double.tryParse('$paidRaw'.replaceAll(',', '.'));
+    if (paid == null || paid <= 0) {
+      throw const DriverRideLifecycleException('invalid_amount');
+    }
+    final expectedRaw = payload['expected_amount'];
+    final expected = expectedRaw is num
+        ? expectedRaw.toDouble()
+        : double.tryParse('$expectedRaw'.replaceAll(',', '.'));
+    final method = payload['payment_method']?.toString() ?? 'cash';
+    final note = payload['note']?.toString();
+    await _invokeDriverRideRpc(
+      'fn_driver_create_receipt',
+      {
+        'p_ride_request_id': rideRequestId,
+        'p_paid_amount': paid,
+        if (expected != null) 'p_expected_amount': expected,
+        'p_payment_method': method,
+        if (note != null && note.trim().isNotEmpty) 'p_note': note.trim(),
+      },
+    );
+  }
+
+  /// Supabase RPC `fn_driver_decline_ride_invite` — no Go fallback (Phase B).
+  Future<void> declineRide({required String rideRequestId}) async {
+    await _invokeDriverRideRpc(
+      'fn_driver_decline_ride_invite',
+      {'p_ride_request_id': rideRequestId},
+    );
+  }
+
 }
 
 class DriverManualRideResult {

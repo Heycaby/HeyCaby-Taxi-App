@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../constants/driver_progressive_verification.dart';
 import '../l10n/driver_strings.dart';
 import '../models/driver_runtime_models.dart';
 import '../providers/driver_runtime_providers.dart';
@@ -17,11 +18,10 @@ class DriverProgressiveVerificationBanner extends ConsumerWidget {
   const DriverProgressiveVerificationBanner({super.key});
 
   String _milestoneHint(DriverReadinessState readiness) {
-    final milestone = readiness.nextMilestoneAt;
-    if (milestone >= 50) {
+    if (readiness.completedRides >= 50) {
       return DriverStrings.progressiveVerificationMilestone50Hint;
     }
-    return DriverStrings.progressiveVerificationMilestone20Hint;
+    return DriverStrings.progressiveVerificationMilestone10Hint;
   }
 
   void _openDocs(BuildContext context, DriverReadinessState readiness) {
@@ -45,7 +45,16 @@ class DriverProgressiveVerificationBanner extends ConsumerWidget {
     }
 
     final readiness = configAsync.valueOrNull?.readiness;
-    if (readiness == null || !readiness.hasUpcomingMilestone) {
+    if (readiness == null) {
+      return const SizedBox.shrink();
+    }
+
+    // Passive onboarding: no KVK/chauffeur/Veriff messaging before 10 completed rides.
+    if (readiness.completedRides < kDriverProgressiveVerificationStartsAt) {
+      return const SizedBox.shrink();
+    }
+
+    if (!readiness.hasUpcomingMilestone && readiness.canGoOnline) {
       return const SizedBox.shrink();
     }
 
@@ -54,10 +63,8 @@ class DriverProgressiveVerificationBanner extends ConsumerWidget {
         DriverTypography.fromTheme(ref.watch(typographyProvider));
     final rides = readiness.completedRides;
     final milestone = readiness.nextMilestoneAt;
-    final incompleteDeferred = readiness.checklist
-        .where((item) => !item.complete && item.note != null && item.note!.isNotEmpty)
-        .length;
-    if (incompleteDeferred == 0 && readiness.canGoOnline) {
+    final blockingMissing = readiness.missingItems;
+    if (blockingMissing.isEmpty && readiness.canGoOnline) {
       return const SizedBox.shrink();
     }
 

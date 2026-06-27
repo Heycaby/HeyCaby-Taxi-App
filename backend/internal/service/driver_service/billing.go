@@ -205,6 +205,11 @@ func foundingStarterPeriodActive(p *repository.DriverBillingProfile) bool {
 }
 
 func (s *DriverService) GetBillingStatus(ctx context.Context, driverID string) (*BillingStatus, error) {
+	driverID, err := s.resolveDriverID(ctx, driverID)
+	if err != nil {
+		return nil, err
+	}
+
 	profile, err := s.drivers.GetBillingProfile(ctx, driverID)
 	if err != nil {
 		return nil, err
@@ -269,6 +274,11 @@ func (s *DriverService) GetBillingStatus(ctx context.Context, driverID string) (
 }
 
 func (s *DriverService) CreatePlatformPayment(ctx context.Context, driverID string, planCode string) (*PaymentCreateResult, error) {
+	driverID, err := s.resolveDriverID(ctx, driverID)
+	if err != nil {
+		return nil, err
+	}
+
 	status, err := s.GetBillingStatus(ctx, driverID)
 	if err != nil {
 		return nil, err
@@ -319,19 +329,32 @@ func (s *DriverService) CreatePlatformPayment(ctx context.Context, driverID stri
 }
 
 func (s *DriverService) ListDriverPayments(ctx context.Context, driverID string) ([]repository.DriverPaymentEvent, error) {
+	driverID, err := s.resolveDriverID(ctx, driverID)
+	if err != nil {
+		return nil, err
+	}
 	_ = s.syncRecentPayments(ctx, driverID, nil)
 	return s.drivers.ListDriverPaymentEvents(ctx, driverID, 100)
 }
 
 func (s *DriverService) PauseSubscription(ctx context.Context, driverID string) error {
+	driverID, err := s.resolveDriverID(ctx, driverID)
+	if err != nil {
+		return err
+	}
 	return s.drivers.CancelSubscription(ctx, driverID)
 }
 
-func (s *DriverService) ResumeSubscription(ctx context.Context, _ string) error {
-	return nil
+func (s *DriverService) ResumeSubscription(ctx context.Context, driverID string) error {
+	_, err := s.resolveDriverID(ctx, driverID)
+	return err
 }
 
 func (s *DriverService) CancelSubscription(ctx context.Context, driverID string) error {
+	driverID, err := s.resolveDriverID(ctx, driverID)
+	if err != nil {
+		return err
+	}
 	return s.drivers.CancelSubscription(ctx, driverID)
 }
 

@@ -65,7 +65,8 @@ class DriverBrandMomentBody extends StatelessWidget {
   final double loadingProgress;
   final VoidCallback onContinue;
 
-  static const _splashBlack = Color(0xFF000000);
+  static const _splashBackground = Color(0xFFF5F7F6);
+  static const _splashText = Color(0xFF111827);
   static const _splashAccent = Color(0xFFFFD100);
 
   @override
@@ -74,11 +75,11 @@ class DriverBrandMomentBody extends StatelessWidget {
     final buttonHeight = isIOS ? 54.0 : 52.0;
 
     return Scaffold(
-      backgroundColor: _splashBlack,
+      backgroundColor: _splashBackground,
       body: Opacity(
         opacity: exitOpacity,
         child: ColoredBox(
-          color: _splashBlack,
+          color: _splashBackground,
           child: SafeArea(
             child: Stack(
               children: [
@@ -153,9 +154,9 @@ class DriverBrandMomentBody extends StatelessWidget {
                               child: OutlinedButton(
                                 onPressed: onContinue,
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.white,
+                                  foregroundColor: _splashText,
                                   side: BorderSide(
-                                    color: Colors.white.withValues(alpha: 0.35),
+                                    color: _splashText.withValues(alpha: 0.35),
                                   ),
                                   minimumSize: Size.fromHeight(buttonHeight),
                                   shape: RoundedRectangleBorder(
@@ -166,7 +167,7 @@ class DriverBrandMomentBody extends StatelessWidget {
                                   copy.skipLabel,
                                   style: typography.labelLarge.copyWith(
                                     fontWeight: FontWeight.w700,
-                                    color: Colors.white,
+                                    color: _splashText,
                                   ),
                                 ),
                               ),
@@ -177,7 +178,7 @@ class DriverBrandMomentBody extends StatelessWidget {
                                 onPressed: onContinue,
                                 style: FilledButton.styleFrom(
                                   backgroundColor: _splashAccent,
-                                  foregroundColor: _splashBlack,
+                                  foregroundColor: _splashText,
                                   minimumSize: Size.fromHeight(buttonHeight),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(radius),
@@ -187,7 +188,7 @@ class DriverBrandMomentBody extends StatelessWidget {
                                   copy.continueLabel,
                                   style: typography.labelLarge.copyWith(
                                     fontWeight: FontWeight.w800,
-                                    color: _splashBlack,
+                                    color: _splashText,
                                   ),
                                 ),
                               ),
@@ -217,7 +218,7 @@ class DriverBrandMomentBody extends StatelessWidget {
     required String text,
     required bool accentLast,
   }) {
-    const white = Color(0xFFF5F5F5);
+    const textColor = Color(0xFF111827);
     return Opacity(
       opacity: opacity.clamp(0.0, 1.0),
       child: Transform.translate(
@@ -226,7 +227,7 @@ class DriverBrandMomentBody extends StatelessWidget {
           text,
           textAlign: TextAlign.center,
           style: typography.titleMedium.copyWith(
-            color: accentLast ? _splashAccent : white.withValues(alpha: 0.92),
+            color: accentLast ? _splashAccent : textColor.withValues(alpha: 0.92),
             height: 1.28,
             letterSpacing: isIOS ? -0.28 : -0.2,
             fontWeight: FontWeight.w700,
@@ -250,6 +251,7 @@ class DriverBrandMomentLoadingRow extends StatelessWidget {
   final bool isIOS;
 
   static const _accent = Color(0xFFFFD100);
+  static const _track = Color(0xFF111827);
 
   @override
   Widget build(BuildContext context) {
@@ -262,7 +264,7 @@ class DriverBrandMomentLoadingRow extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Container(color: Colors.white.withValues(alpha: 0.12)),
+                Container(color: _track.withValues(alpha: 0.12)),
                 FractionallySizedBox(
                   alignment: Alignment.centerLeft,
                   widthFactor:
@@ -302,6 +304,7 @@ class _LoadingDot extends StatelessWidget {
   final bool isIOS;
 
   static const _accent = Color(0xFFFFD100);
+  static const _inactive = Color(0xFF111827);
 
   @override
   Widget build(BuildContext context) {
@@ -311,7 +314,7 @@ class _LoadingDot extends StatelessWidget {
       width: active ? (isIOS ? 22 : 18) : (isIOS ? 7 : 8),
       height: isIOS ? 7 : 8,
       decoration: BoxDecoration(
-        color: active ? _accent : Colors.white.withValues(alpha: 0.25),
+        color: active ? _accent : _inactive.withValues(alpha: 0.25),
         borderRadius: BorderRadius.circular(999),
       ),
     );

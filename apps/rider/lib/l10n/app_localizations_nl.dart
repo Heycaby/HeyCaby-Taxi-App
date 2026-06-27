@@ -60,6 +60,46 @@ class AppLocalizationsNl extends AppLocalizations {
   String get whereTo => 'Waar naartoe?';
 
   @override
+  String get homeDestinationPrompt => 'Waar wil je naartoe?';
+
+  @override
+  String get homeContinue => 'Doorgaan';
+
+  @override
+  String get homeSmartOptionsTitle => 'Hoe wil je rijden?';
+
+  @override
+  String get homeBestPriceTitle => 'Marktplaats';
+
+  @override
+  String get homeBestPriceSubtitle => 'Chauffeurs strijden om jouw rit.';
+
+  @override
+  String get homeScheduleLaterTitle => 'Later plannen';
+
+  @override
+  String get homeScheduleLaterSubtitle =>
+      'Kies een ophaaltijd die voor jou werkt.';
+
+  @override
+  String get homePopularAirportsTitle => 'Populair';
+
+  @override
+  String get homeRecentTrips => 'Recente ritten';
+
+  @override
+  String get homeAirportChipSchiphol => 'Schiphol';
+
+  @override
+  String get homeAirportChipRotterdam => 'Rotterdam Airport';
+
+  @override
+  String get homeAirportChipEindhoven => 'Eindhoven';
+
+  @override
+  String get homeAirportChipBrussels => 'Brussel Airport';
+
+  @override
   String get pickup => 'Ophaallocatie';
 
   @override
@@ -226,18 +266,18 @@ class AppLocalizationsNl extends AppLocalizations {
   String get account => 'Account';
 
   @override
-  String get tellAFriendNavLabel => 'TAF';
+  String get tellAFriendNavLabel => 'Community';
 
   @override
   String get tellAFriendNavSemanticLabel =>
-      'Nodig vrienden uit — vergroot je ritkring';
+      'Groei je stad — bouw de HeyCaby-gemeenschap';
 
   @override
-  String get tellAFriendScreenTitle => 'Vrienden uitnodigen';
+  String get tellAFriendScreenTitle => 'Groei je stad';
 
   @override
   String get tellAFriendSharePrompt =>
-      'Stuur je link. Vrienden melden zich gratis aan — je ziet ze hier zodra ze joinen.';
+      'Deel HeyCaby met mensen die een rit nodig hebben in jouw stad. Elke nieuwe passagier helpt lokale taxichauffeurs.';
 
   @override
   String get tellAFriendHeroTitle => 'Vrienden uitnodigen';
@@ -260,25 +300,25 @@ class AppLocalizationsNl extends AppLocalizations {
       'Nog niemand — deel hieronder.';
 
   @override
-  String get tellAFriendRewardTitle => 'Waarom het helpt';
+  String get tellAFriendRewardTitle => 'Waarom helpen?';
 
   @override
-  String get tellAFriendRewardBullet1 =>
-      'Meer passagiers nabij kan matchen versnellen.';
+  String get tellAFriendRewardBullet1 => 'Meer passagiers in de buurt';
 
   @override
-  String get tellAFriendRewardBullet2 =>
-      'Voordelen kunnen groeien met je kring.';
+  String get tellAFriendRewardBullet2 => 'Meer ritverzoeken voor chauffeurs';
 
   @override
-  String get tellAFriendRewardBullet3 => 'Weekendkorting wanneer beschikbaar';
+  String get tellAFriendRewardBullet3 => 'Kortere wachttijden';
 
   @override
-  String get tellAFriendRewardBullet4 =>
-      'Helpt chauffeurs vraag in je buurt te zien';
+  String get tellAFriendRewardBullet4 => 'Sterkere taxigemeenschap';
 
   @override
-  String get tellAFriendInviteLinkLabel => 'Jouw link';
+  String get tellAFriendInviteLinkLabel => 'App Store-link';
+
+  @override
+  String get tellAFriendWebsiteLinkLabel => 'Deel link';
 
   @override
   String get tellAFriendLinkResolving => 'Je korte uitnodigingslink ophalen…';
@@ -287,41 +327,152 @@ class AppLocalizationsNl extends AppLocalizations {
   String get tellAFriendCopyLink => 'Link kopiëren';
 
   @override
-  String get tellAFriendShareLink => 'Uitnodiging delen';
+  String get tellAFriendShareLink => 'Deel HeyCaby';
 
   @override
-  String get tellAFriendShowQr => 'QR-code tonen';
+  String get tellAFriendShowQr => 'QR-code';
 
   @override
   String get tellAFriendQrTitle => 'Scan om mee te doen op HeyCaby';
 
   @override
   String get tellAFriendQrHint =>
-      'Scannen opent heycaby.nl in de browser. Gebruik Delen of Kopiëren voor je persoonlijke uitnodigingslink.';
+      'Scannen opent de HeyCaby Rider-app in de App Store. Gebruik Delen of Kopiëren voor je downloadlink.';
 
   @override
   String get tellAFriendSocialProof =>
-      'Bedankt dat je HeyCaby lokaal helpt groeien.';
+      'Bedankt dat je helpt het grootste onafhankelijke taxinetwerk van Nederland te bouwen.';
 
   @override
-  String get tellAFriendShareDoneSnackbar => 'Uitnodiging verstuurd — bedankt!';
+  String get tellAFriendShareDoneSnackbar =>
+      'Bedankt voor het delen van HeyCaby!';
 
   @override
   String get tellAFriendLinkCopied => 'Gekopieerd — plakken waar je wilt';
 
   @override
-  String get tellAFriendShareSubject => 'Doe mee met HeyCaby';
+  String get tellAFriendShareSubject => 'Doe mee met HeyCaby — groei je stad';
 
   @override
   String get tellAFriendShareMessage =>
-      'Ik bouw mijn ritkring op HeyCaby — zin om mee te doen? Tik op mijn uitnodiging:';
+      'Download HeyCaby Rider — de onafhankelijke taxi-app voor Nederland:';
 
   @override
-  String get tellAFriendLinkUnavailable => 'Link nog niet beschikbaar';
+  String get tellAFriendLinkUnavailable => 'App Store-link niet geconfigureerd';
 
   @override
   String get tellAFriendLinkUnavailableHint =>
-      'Probeer het zo opnieuw of start de app opnieuw.';
+      'Voeg RIDER_IOS_APP_STORE_URL toe aan je build-omgeving en bouw de app opnieuw.';
+
+  @override
+  String growCityHeroTitle(String cityName) {
+    return 'Laat HeyCaby groeien in $cityName';
+  }
+
+  @override
+  String get growCityHeroBody1 =>
+      'Nodig vrienden en familie uit die betrouwbaar taxivervoer nodig hebben in jouw stad.';
+
+  @override
+  String get growCityHeroBody2 =>
+      'Meer passagiers in de buurt betekent meer ritten voor lokale chauffeurs en kortere wachttijden voor iedereen.';
+
+  @override
+  String get growCityHeroMission =>
+      'Help ons het grootste onafhankelijke taxinetwerk van Nederland te bouwen.';
+
+  @override
+  String growCityCommunityTitle(String cityName) {
+    return '$cityName-gemeenschap';
+  }
+
+  @override
+  String get growCityDriversLabel => 'Chauffeurs';
+
+  @override
+  String get growCityRidersLabel => 'Passagiers';
+
+  @override
+  String get growCityMonthlyRidersLabel => 'Maandelijkse passagiers';
+
+  @override
+  String get growCityMonthlyDriversLabel => 'Maandelijkse chauffeurs';
+
+  @override
+  String get growCityMilestoneLabel => 'Volgende mijlpaal';
+
+  @override
+  String get growCityDriverCapLabel => 'Chauffeursnetwerk-limiet';
+
+  @override
+  String get growCityRiderCapLabel => 'Maandelijkse passagiers-visie';
+
+  @override
+  String growCityProgressCount(String current, String milestone) {
+    return '$current / $milestone';
+  }
+
+  @override
+  String growCityMilestoneHint(String remaining, String milestone) {
+    return 'Nog $remaining maandelijkse passagiers tot we $milestone vieren.';
+  }
+
+  @override
+  String get growCityFinalGoalReached =>
+      'We hebben 1 miljoen maandelijkse passagiers in Nederland bereikt. Bedankt dat je HeyCaby met ons laat groeien.';
+
+  @override
+  String get growCityMilestoneCelebrationTitle => 'Mijlpaal bereikt!';
+
+  @override
+  String growCityMilestoneCelebrationBody(String milestone) {
+    return 'De HeyCaby-community heeft $milestone maandelijkse passagiers in Nederland bereikt. Bedankt voor je hulp — door naar de volgende mijlpaal!';
+  }
+
+  @override
+  String get growCityMilestoneCelebrationCta => 'Laten we doorgroeien';
+
+  @override
+  String get growCityImpactTitle => 'Jouw impact';
+
+  @override
+  String get growCityPeopleInvited => 'Passagiers uitgenodigd';
+
+  @override
+  String get growCityJoined => 'Aangemeld';
+
+  @override
+  String get growCityCompletedRides => 'Voltooide ritten';
+
+  @override
+  String get growCityBadgesTitle => 'Community-badges';
+
+  @override
+  String get growCityBadgeSupporter => 'Community Supporter';
+
+  @override
+  String get growCityBadgeBuilder => 'Community Builder';
+
+  @override
+  String get growCityBadgeAmbassador => 'Stadsambassadeur';
+
+  @override
+  String get growCityBadgeTopPromoter => 'Top Promoter';
+
+  @override
+  String get growCityWhyHelpTitle => 'Waarom helpen?';
+
+  @override
+  String get growCityWhyHelpBullet1 => 'Meer passagiers in de buurt';
+
+  @override
+  String get growCityWhyHelpBullet2 => 'Meer werk voor lokale taxichauffeurs';
+
+  @override
+  String get growCityWhyHelpBullet3 => 'Kortere wachttijden';
+
+  @override
+  String get growCityWhyHelpBullet4 => 'Sterkere taxigemeenschap';
 
   @override
   String get iosUpdateRequiredTitle => 'Werk iOS bij';
@@ -360,14 +511,21 @@ class AppLocalizationsNl extends AppLocalizations {
   String get myRides => 'Mijn ritten';
 
   @override
-  String get favouriteDrivers => 'Favoriete chauffeurs';
+  String get myDrivers => 'Mijn chauffeurs';
 
   @override
-  String get favouriteDriversSubtitle => 'Boek een chauffeur die je vertrouwt';
+  String get myDriversHomeSubtitle => 'Rijd met iemand die je vertrouwt';
+
+  @override
+  String get favouriteDrivers => 'Mijn chauffeurs';
+
+  @override
+  String get favouriteDriversSubtitle =>
+      'Jouw netwerk van vertrouwde chauffeurs';
 
   @override
   String favouriteDriversSubtitleWithCount(int count) {
-    return '$count favoriete chauffeurs';
+    return '$count chauffeurs in jouw netwerk';
   }
 
   @override
@@ -395,8 +553,242 @@ class AppLocalizationsNl extends AppLocalizations {
   String get marketplace => 'Marktplaats';
 
   @override
+  String get marketplaceTagline => 'Chauffeurs strijden om jouw rit.';
+
+  @override
+  String get makeAnOffer => 'Marktplaats';
+
+  @override
+  String get marketplacePostRequest => 'Plaats verzoek';
+
+  @override
+  String get marketplaceOfferHeadline => 'Kies wat je wilt betalen.';
+
+  @override
+  String get marketplaceOfferExplanation =>
+      'Chauffeurs die al jouw richting op rijden kunnen je bod accepteren of een ander prijsvoorstel doen.';
+
+  @override
+  String get marketplaceDriversAcceptHint =>
+      'Chauffeurs kunnen accepteren, tegenbieden of negeren — HeyCaby bepaalt niet de prijs.';
+
+  @override
+  String marketplaceDriversOnline(int count) {
+    return '$count chauffeurs online';
+  }
+
+  @override
+  String get marketplaceWhereAreYouGoing => 'Waar ga je naartoe?';
+
+  @override
+  String get marketplaceYouAreHere => 'Je bent hier';
+
+  @override
+  String marketplaceYouAreHereIn(String area) {
+    return 'Je bent hier in $area';
+  }
+
+  @override
+  String marketplaceYouAreHereOn(String street) {
+    return 'Je bent op $street';
+  }
+
+  @override
+  String get marketplaceLocatingYou => 'Locatie ophalen…';
+
+  @override
+  String get marketplaceLocationNeeded =>
+      'Zet locatie aan om te zien waar je bent';
+
+  @override
+  String get marketplaceNameYourPrice => 'Noem je prijs';
+
+  @override
+  String get marketplaceNameYourPriceSubtitle =>
+      'Chauffeurs zien je bod en reageren.';
+
+  @override
+  String marketplaceTypicalRangeLabel(String range) {
+    return 'Typisch bereik: $range';
+  }
+
+  @override
+  String get marketplaceControlBanner =>
+      'Jij bepaalt. Chauffeurs kunnen accepteren, tegenbieden of negeren.';
+
+  @override
+  String get marketplaceFasterOffersTip =>
+      'Sneller reacties? Verhoog je prijs voor meer aanbiedingen.';
+
+  @override
+  String get marketplaceEnterCustomPrice => 'Tik om een bedrag in te typen';
+
+  @override
+  String get marketplacePriceHint => '50';
+
+  @override
+  String marketplaceBidRangeHint(int min, int max) {
+    return 'Je kunt bieden tussen €$min en €$max';
+  }
+
+  @override
+  String get marketplaceTypicalFareTitle => 'Gebruikelijke prijs';
+
+  @override
+  String get marketplaceYourOfferTitle => 'Jouw bod';
+
+  @override
+  String get marketplaceRequestOffers => 'Vraag aanbiedingen';
+
+  @override
+  String get marketplaceMatchingTitle => 'Marktplaats';
+
+  @override
+  String get marketplaceMatchingHeadline => 'Chauffeurs zoeken…';
+
+  @override
+  String get marketplaceMatchingNotifySubtitle =>
+      'We sturen je een melding zodra er aanbiedingen zijn.';
+
+  @override
+  String marketplaceDriversReceivedRequest(int count) {
+    return '$count chauffeurs hebben je verzoek ontvangen';
+  }
+
+  @override
+  String get marketplaceExpectedWait => 'Verwachte wachttijd: 1 – 2 min';
+
+  @override
+  String get marketplaceOffersFromDrivers => 'Aanbiedingen van chauffeurs';
+
+  @override
+  String get marketplaceRecommended => 'Aanbevolen';
+
+  @override
+  String get marketplaceViewProfile => 'Profiel bekijken';
+
+  @override
+  String get marketplaceOfferAcceptsYourPrice => 'Accepteert je bod';
+
+  @override
+  String get marketplaceOfferCounterLabel => 'Tegenbod';
+
+  @override
+  String get marketplaceOffersExpireIn => 'Aanbiedingen verlopen over';
+
+  @override
+  String get marketplaceBoostOffer => 'Verhoog je bod';
+
+  @override
+  String get marketplaceBoostOfferSubtitle =>
+      'Verhoog de prijs voor meer aanbiedingen';
+
+  @override
+  String get marketplaceCancelRequest => 'Verzoek annuleren';
+
+  @override
+  String get marketplaceCancelRequestConfirm =>
+      'Chauffeurs zien je bod niet meer. Dit verzoek annuleren?';
+
+  @override
+  String get marketplaceReceiveChooseTitle => 'Ontvang & kies aanbiedingen';
+
+  @override
+  String get marketplaceReceiveChooseBullet1 =>
+      'Chauffeurs accepteren of bieden tegen';
+
+  @override
+  String get marketplaceReceiveChooseBullet2 =>
+      'Vergelijk prijs, rating en ETA';
+
+  @override
+  String get marketplaceReceiveChooseBullet3 => 'Kies de beste match';
+
+  @override
+  String marketplaceMatchingSubhead(int nearby, int received) {
+    return '$nearby in de buurt · $received aanbiedingen';
+  }
+
+  @override
+  String get marketplaceMatchingWaiting => 'Wachten op reacties';
+
+  @override
+  String get marketplaceMatchingWaitingBody =>
+      'Onafhankelijke chauffeurs kunnen accepteren, tegenbieden of negeren. Jij kiest met wie je rijdt.';
+
+  @override
+  String marketplaceOfferAccepts(String price) {
+    return 'Accepteert $price';
+  }
+
+  @override
+  String marketplaceOfferCounter(String price) {
+    return 'Tegenbod $price';
+  }
+
+  @override
+  String marketplaceOfferMinutesAway(int minutes) {
+    return '$minutes min verwijderd';
+  }
+
+  @override
+  String marketplaceOfferExpiresIn(String time) {
+    return 'Aanbod verloopt $time';
+  }
+
+  @override
+  String get marketplaceDriverUsuallyAccepts =>
+      'Accepteert meestal riderprijzen';
+
+  @override
+  String get marketplaceDriverOftenCounters => 'Stuurt vaak tegenbiedingen';
+
+  @override
+  String get marketplaceDriverMayCounter => 'Kan accepteren of tegenbieden';
+
+  @override
+  String get declineBid => 'Weiger';
+
+  @override
+  String get marketplaceDriverScopeTitle => 'Wie ziet je verzoek?';
+
+  @override
+  String get marketplaceDriverScopeEveryone => 'Iedereen';
+
+  @override
+  String get marketplaceDriverScopeMyDriversFirst => 'Mijn chauffeurs eerst';
+
+  @override
+  String get marketplaceDriverScopeMyDriversOnly => 'Alleen mijn chauffeurs';
+
+  @override
+  String get marketplaceAcceptanceGood => 'Goede kans op acceptatie';
+
+  @override
+  String get marketplaceAcceptanceFair =>
+      'Redelijk bod — chauffeurs kunnen accepteren of tegenbieden';
+
+  @override
+  String get marketplaceAcceptanceLow =>
+      'Bod is vrij laag — verwacht tegenbiedingen';
+
+  @override
+  String get marketplaceDemandLowTitle => 'Lage vraag';
+
+  @override
+  String get marketplaceDemandHighTitle => 'Hoge vraag';
+
+  @override
+  String get marketplaceDemandLowHint =>
+      'Chauffeurs accepteren waarschijnlijk lagere biedingen.';
+
+  @override
+  String get marketplaceDemandHighHint =>
+      'Iets meer bieden kan snellere reacties geven.';
+
+  @override
   String get marketplaceSubtitle =>
-      'Chauffeurs op weg naar jou — bespaar tot 40%';
+      'Kies je prijs — onafhankelijke chauffeurs beslissen.';
 
   @override
   String get homeAirportBookingTitle => 'Naar de luchthaven';
@@ -1002,7 +1394,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get marketplaceHeroTagline =>
-      'Bied je prijs — chauffeurs accepteren of stellen een tegenbod.';
+      'Bied je prijs — chauffeurs die al jouw kant op rijden kunnen accepteren of tegenbieden.';
 
   @override
   String get marketplaceYourRoute => 'Jouw route';
@@ -1293,7 +1685,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get favouriteDriversAccountSubtitle =>
-      'Bewaar vertrouwde chauffeurs en stuur ritten direct naar hen.';
+      'Bouw je netwerk van vertrouwde chauffeurs op.';
 
   @override
   String get openLocationSettings => 'Open locatie-instellingen';

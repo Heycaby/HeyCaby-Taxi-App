@@ -13,6 +13,7 @@ import '../providers/local_recent_addresses_provider.dart';
 import '../providers/location_provider.dart';
 import '../providers/recent_destinations_provider.dart';
 import '../services/booking_flow_navigation.dart';
+import '../services/booking_pickup_from_location.dart';
 import '../widgets/booking/search_address_form.dart';
 import '../widgets/booking/search_quick_picks_section.dart';
 import '../widgets/schedule_picker.dart';
@@ -34,6 +35,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   List<AddressResult> _suggestions = [];
   Timer? _debounce;
   bool _isLoading = false;
+  bool _isResolvingPickup = false;
   /// When true, [_suggestions] come from on-device recents only (no Mapbox call).
   bool _suggestionsFromLocal = false;
 
@@ -47,13 +49,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final booking = ref.read(bookingProvider);
     if (booking.pickup != null) {
       _pickupController.text = booking.pickup!.displayName;
+    } else if (booking.destination != null) {
+      _activeFocus = SearchAddressFocus.pickup;
     }
     if (booking.destination != null) {
       _destinationController.text = booking.destination!.displayName;
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      BookingFlowNavigation.prefillBookingFromIdentity(ref);
+      unawaited(_bootstrapPickupAndIdentity());
     });
 
     _pickupFocus.addListener(() {
@@ -78,6 +82,25 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     _destinationFocus.dispose();
     _debounce?.cancel();
     super.dispose();
+  }
+
+  Future<void> _bootstrapPickupAndIdentity() async {
+    await BookingFlowNavigation.prefillBookingFromIdentity(ref);
+    if (!mounted) return;
+
+    if (ref.read(bookingProvider).pickup != null) return;
+
+    setState(() => _isResolvingPickup = true);
+    final filled = await fillPickupFromCurrentLocation(ref);
+    if (!mounted) return;
+
+    if (filled) {
+      final pickup = ref.read(bookingProvider).pickup;
+      if (pickup != null) {
+        _pickupController.text = pickup.displayName;
+      }
+    }
+    setState(() => _isResolvingPickup = false);
   }
 
   void _onQueryChanged(String query) {
@@ -273,6 +296,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               },
               onWhenTap: _showDateTimePicker,
               scheduledAt: booking.scheduledAt,
+              pickupLoading: _isResolvingPickup,
             ),
             Expanded(
               child: CustomScrollView(

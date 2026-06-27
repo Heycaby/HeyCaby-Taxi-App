@@ -16,6 +16,7 @@ import 'screens/rides_screen.dart';
 import 'screens/account_screen.dart';
 import 'screens/rider_tell_friend_screen.dart';
 import 'screens/search_screen.dart';
+import 'screens/marketplace_matching_screen.dart';
 import 'screens/marketplace_screen.dart';
 import 'screens/airport_booking_screen.dart';
 import 'screens/favorites_screen.dart';
@@ -214,7 +215,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/marketplace-matching',
         pageBuilder: (_, state) => _page(
           state,
-          const SearchingScreen(variant: RideMatchingVariant.marketplace),
+          const MarketplaceMatchingScreen(),
         ),
       ),
       GoRoute(

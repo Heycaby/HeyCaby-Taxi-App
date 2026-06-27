@@ -6,6 +6,7 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 import '../l10n/driver_strings.dart';
 import '../models/driver_payment_ledger_item.dart';
 import '../providers/driver_data_providers.dart';
+import '../services/driver_billing_service.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_payment_history_body.dart';
@@ -64,6 +65,21 @@ class DriverBillingHistoryScreen extends ConsumerWidget {
           )
           .toList();
       return rows;
+    }
+
+    if (DriverBillingService.isLedgerV1(status)) {
+      final outstanding = status?['outstanding_cents'];
+      final limit = status?['limit_cents'];
+      if (outstanding is num && limit is num) {
+        return [
+          DriverPaymentHistoryEntry(
+            title: DriverStrings.billingOutstandingLimit,
+            subtitle: DriverStrings.billingDash,
+            amountLabel:
+                '€${(outstanding / 100).toStringAsFixed(2)} / €${(limit / 100).toStringAsFixed(2)}',
+          ),
+        ];
+      }
     }
 
     final out = <DriverPaymentHistoryEntry>[];

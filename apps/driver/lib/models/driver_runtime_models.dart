@@ -1,3 +1,5 @@
+import 'package:heycaby_api/heycaby_api.dart';
+
 class DriverRemoteConfig {
   const DriverRemoteConfig({
     required this.searchWindowMinutes,
@@ -6,6 +8,7 @@ class DriverRemoteConfig {
     required this.maxSearchRadiusKm,
     required this.driverLocationMaxAgeMinutes,
     required this.featureFlags,
+    required this.links,
   });
 
   final int searchWindowMinutes;
@@ -14,6 +17,7 @@ class DriverRemoteConfig {
   final double maxSearchRadiusKm;
   final int driverLocationMaxAgeMinutes;
   final Map<String, bool> featureFlags;
+  final AppPublicLinks links;
 
   /// Server E2E test mode: skip client payment gate before go-online.
   bool get skipGoOnlineGates => featureFlags['skip_go_online_gates'] == true;
@@ -38,6 +42,7 @@ class DriverRemoteConfig {
       driverLocationMaxAgeMinutes:
           (search['driver_location_max_age_minutes'] as num?)?.toInt() ?? 3,
       featureFlags: flags,
+      links: AppPublicLinks.fromJson(json['links']),
     );
   }
 }

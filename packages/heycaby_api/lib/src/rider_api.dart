@@ -3,12 +3,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'supabase_client.dart';
+import 'app_notifications_service.dart';
+import 'driver_api_base_resolver.dart';
 
 class RiderApi {
+  static const _notifications = AppNotificationsService();
+
   RiderApi({String? baseUrl}) {
     _dio = Dio(
       BaseOptions(
-        baseUrl: baseUrl ?? 'https://heycaby.nl',
+        baseUrl: baseUrl ?? '',
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 15),
         headers: {'Content-Type': 'application/json'},
@@ -37,108 +41,62 @@ class RiderApi {
 
   late final Dio _dio;
 
-  bool _isUnauthorizedIdentity(DioException e) {
-    final status = e.response?.statusCode;
-    if (status != 401) return false;
-    final data = e.response?.data;
-    if (data is Map) {
-      final err = data['error']?.toString().toLowerCase() ?? '';
-      return err.contains('invalid or unauthorized');
-    }
-    if (data is String) {
-      return data.toLowerCase().contains('invalid or unauthorized');
-    }
-    return false;
-  }
-
   Future<List<RiderNotificationItem>> getNotifications({
     required String riderIdentityId,
     bool unreadOnly = false,
     int limit = 30,
   }) async {
-    try {
-      final res = await _dio.get<Map<String, dynamic>>(
-        '/api/rider/notifications',
-        queryParameters: {
-          'rider_identity_id': riderIdentityId,
-          'limit': limit,
-          if (unreadOnly) 'unread': 1,
-        },
-        options: Options(headers: {
-          'x-rider-identity-id': riderIdentityId,
-        }),
-      );
-      final raw = res.data?['notifications'];
-      if (raw is! List) return const [];
-      return raw
-          .whereType<Map>()
-          .map((e) => RiderNotificationItem.fromJson(Map<String, dynamic>.from(e)))
-          .toList();
-    } on DioException catch (e) {
-      if (_isUnauthorizedIdentity(e)) {
-        // Stale/mismatched rider identity should not break the app UX.
-        return const [];
-      }
-      rethrow;
-    }
+    final supabaseRows = await _notifications.listOrNull(
+      userType: 'rider',
+      unreadOnly: unreadOnly,
+      limit: limit,
+      riderIdentityId: riderIdentityId,
+    );
+    return (supabaseRows ?? const [])
+        .map((e) => RiderNotificationItem.fromJson(e))
+        .toList();
   }
 
   Future<void> markNotificationRead({
     required String riderIdentityId,
     required String notificationId,
   }) async {
-    try {
-      await _dio.patch(
-        '/api/rider/notifications',
-        data: {'notification_id': notificationId},
-        options: Options(headers: {'x-rider-identity-id': riderIdentityId}),
-      );
-    } on DioException catch (e) {
-      if (_isUnauthorizedIdentity(e)) return;
-      rethrow;
-    }
+    await _notifications.markRead(notificationId);
   }
 
   Future<void> markAllNotificationsRead({required String riderIdentityId}) async {
-    try {
-      await _dio.patch(
-        '/api/rider/notifications',
-        data: {'all': true},
-        options: Options(headers: {'x-rider-identity-id': riderIdentityId}),
-      );
-    } on DioException catch (e) {
-      if (_isUnauthorizedIdentity(e)) return;
-      rethrow;
-    }
+    await _notifications.markAllRead(
+      userType: 'rider',
+      riderIdentityId: riderIdentityId,
+    );
   }
 
-  /// Fetches a completed-ride receipt payload for rider view.
-  /// Returns null when route is unavailable or receipt is missing.
+  /// Fetches a completed-ride receipt payload for rider view (Supabase RPC).
   Future<Map<String, dynamic>?> fetchRideReceipt({
     required String rideRequestId,
   }) async {
-    DioException? lastError;
-    for (final path in const [
-      '/api/rider/receipt',
-      '/api/rider/ride/receipt',
-      '/api/receipt/rider',
-    ]) {
-      try {
-        final res = await _dio.get<Map<String, dynamic>>(
-          path,
-          queryParameters: {'ride_request_id': rideRequestId},
-        );
-        final data = res.data;
-        if (data == null || data.isEmpty) return null;
-        return Map<String, dynamic>.from(data);
-      } on DioException catch (e) {
-        lastError = e;
-        if (e.response?.statusCode == 404) continue;
-      }
+    try {
+      final raw = await HeyCabySupabase.client.rpc(
+        'fn_rider_receipt_for_ride',
+        params: {'p_ride_request_id': rideRequestId},
+      );
+      if (raw is! Map) return null;
+      final map = Map<String, dynamic>.from(raw);
+      if (map['ok'] != true) return null;
+      return map;
+    } catch (_) {
+      return null;
     }
-    if (lastError?.response?.statusCode == 404) return null;
-    if (lastError != null) throw lastError!;
-    return null;
+  }
+
+  /// Accept marketplace bid — Supabase-first in app; legacy Go route removed (Phase E).
+  Future<void> acceptBid({
+    required String rideRequestId,
+    required String bidId,
+  }) async {
+    throw GoApiDisabledException(
+      'Use Supabase ride_requests update (acceptMarketplaceOffer).',
+    );
   }
 }
 

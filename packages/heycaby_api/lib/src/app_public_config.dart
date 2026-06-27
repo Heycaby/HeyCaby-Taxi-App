@@ -4,11 +4,22 @@ const String kAppPublicWebOrigin = String.fromEnvironment(
   defaultValue: 'https://heycaby.nl',
 );
 
-/// Plain homepage for marketing / TAF share & copy: **no** `/invite`, `/i/…`, or query string.
+/// Plain homepage for marketing (not used for TAF share — see [riderInviteShareUrl]).
 String get kAppPublicSiteRoot => kAppPublicWebOrigin.replaceAll(RegExp(r'/+$'), '');
 
-/// Encoded in the Rider TAF **QR only** (camera opens this URL). Share / copy use [kAppPublicSiteRoot] (plain homepage).
-/// Override with `--dart-define=APP_QR_MARKETING_URL=...` (e.g. staging homepage).
+/// Dev-only override when Supabase links are unavailable (`--dart-define=RIDER_IOS_APP_STORE_URL=...`).
+const String kRiderIosAppStoreUrl = String.fromEnvironment(
+  'RIDER_IOS_APP_STORE_URL',
+  defaultValue: '',
+);
+
+/// Dev-only override when Supabase links are unavailable (`--dart-define=DRIVER_IOS_APP_STORE_URL=...`).
+const String kDriverIosAppStoreUrl = String.fromEnvironment(
+  'DRIVER_IOS_APP_STORE_URL',
+  defaultValue: '',
+);
+
+/// Legacy QR default (prefer app-specific store URLs in TAF screens).
 const String kAppQrMarketingHomeUrl = String.fromEnvironment(
   'APP_QR_MARKETING_URL',
   defaultValue: 'https://www.heycaby.nl/',

@@ -60,6 +60,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whereTo => 'Where to?';
 
   @override
+  String get homeDestinationPrompt => 'Where do you want to go?';
+
+  @override
+  String get homeContinue => 'Continue';
+
+  @override
+  String get homeSmartOptionsTitle => 'How do you want to ride?';
+
+  @override
+  String get homeBestPriceTitle => 'Marketplace';
+
+  @override
+  String get homeBestPriceSubtitle => 'Drivers compete for your trip.';
+
+  @override
+  String get homeScheduleLaterTitle => 'Schedule later';
+
+  @override
+  String get homeScheduleLaterSubtitle =>
+      'Pick a pickup time that works for you.';
+
+  @override
+  String get homePopularAirportsTitle => 'Popular';
+
+  @override
+  String get homeRecentTrips => 'Recent trips';
+
+  @override
+  String get homeAirportChipSchiphol => 'Schiphol';
+
+  @override
+  String get homeAirportChipRotterdam => 'Rotterdam Airport';
+
+  @override
+  String get homeAirportChipEindhoven => 'Eindhoven';
+
+  @override
+  String get homeAirportChipBrussels => 'Brussels Airport';
+
+  @override
   String get pickup => 'Pickup';
 
   @override
@@ -226,18 +266,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get account => 'Account';
 
   @override
-  String get tellAFriendNavLabel => 'TAF';
+  String get tellAFriendNavLabel => 'Community';
 
   @override
   String get tellAFriendNavSemanticLabel =>
-      'Invite friends — grow your ride circle';
+      'Grow your city — build the HeyCaby community';
 
   @override
-  String get tellAFriendScreenTitle => 'Invite friends';
+  String get tellAFriendScreenTitle => 'Grow Your City';
 
   @override
   String get tellAFriendSharePrompt =>
-      'Send your link. Friends join free — you’ll see them here when they sign up.';
+      'Share HeyCaby with people who need rides in your city. Every new rider helps local taxi drivers stay busy.';
 
   @override
   String get tellAFriendHeroTitle => 'Invite friends';
@@ -259,25 +299,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tellAFriendFriendsInvitedZeroHint => 'No joins yet — share below.';
 
   @override
-  String get tellAFriendRewardTitle => 'Why it helps';
+  String get tellAFriendRewardTitle => 'Why help?';
 
   @override
-  String get tellAFriendRewardBullet1 =>
-      'More riders nearby can speed up matching.';
+  String get tellAFriendRewardBullet1 => 'More riders nearby';
 
   @override
-  String get tellAFriendRewardBullet2 =>
-      'Perks may unlock as your circle grows.';
+  String get tellAFriendRewardBullet2 => 'More ride requests for drivers';
 
   @override
-  String get tellAFriendRewardBullet3 => 'Weekend discounts when available';
+  String get tellAFriendRewardBullet3 => 'Shorter waiting times';
 
   @override
-  String get tellAFriendRewardBullet4 =>
-      'Helps drivers see demand in your area';
+  String get tellAFriendRewardBullet4 => 'Stronger taxi community';
 
   @override
-  String get tellAFriendInviteLinkLabel => 'Your link';
+  String get tellAFriendInviteLinkLabel => 'App Store link';
+
+  @override
+  String get tellAFriendWebsiteLinkLabel => 'Share link';
 
   @override
   String get tellAFriendLinkResolving => 'Getting your short invite link…';
@@ -286,42 +326,151 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tellAFriendCopyLink => 'Copy link';
 
   @override
-  String get tellAFriendShareLink => 'Share invite';
+  String get tellAFriendShareLink => 'Share HeyCaby';
 
   @override
-  String get tellAFriendShowQr => 'Show QR code';
+  String get tellAFriendShowQr => 'QR code';
 
   @override
   String get tellAFriendQrTitle => 'Scan to join HeyCaby';
 
   @override
   String get tellAFriendQrHint =>
-      'Scanning opens heycaby.nl in the browser. Use Share or Copy for your personal invite link.';
+      'Scanning opens the HeyCaby Rider app on the App Store. Use Share or Copy to send your download link.';
 
   @override
   String get tellAFriendSocialProof =>
-      'Thanks for helping HeyCaby grow locally.';
+      'Thanks for helping build the largest independent taxi network in the Netherlands.';
 
   @override
-  String get tellAFriendShareDoneSnackbar =>
-      'Invite sent — thanks for spreading the word!';
+  String get tellAFriendShareDoneSnackbar => 'Thanks for sharing HeyCaby!';
 
   @override
   String get tellAFriendLinkCopied => 'Copied — ready to paste anywhere';
 
   @override
-  String get tellAFriendShareSubject => 'Join me on HeyCaby';
+  String get tellAFriendShareSubject => 'Join HeyCaby — grow your city';
 
   @override
   String get tellAFriendShareMessage =>
-      'I\'m building my ride circle on HeyCaby — want in? Tap my invite:';
+      'Download HeyCaby Rider — the independent taxi app for the Netherlands:';
 
   @override
-  String get tellAFriendLinkUnavailable => 'Link not ready yet';
+  String get tellAFriendLinkUnavailable => 'App Store link not configured';
 
   @override
   String get tellAFriendLinkUnavailableHint =>
-      'Open this screen again in a moment, or restart the app.';
+      'Add RIDER_IOS_APP_STORE_URL to your build environment, then rebuild the app.';
+
+  @override
+  String growCityHeroTitle(String cityName) {
+    return 'Grow HeyCaby in $cityName';
+  }
+
+  @override
+  String get growCityHeroBody1 =>
+      'Invite friends and family who need reliable taxis in your city.';
+
+  @override
+  String get growCityHeroBody2 =>
+      'More riders nearby means more ride requests for local drivers and shorter waits for everyone.';
+
+  @override
+  String get growCityHeroMission =>
+      'Help us build the largest independent taxi network in the Netherlands.';
+
+  @override
+  String growCityCommunityTitle(String cityName) {
+    return '$cityName community';
+  }
+
+  @override
+  String get growCityDriversLabel => 'Drivers';
+
+  @override
+  String get growCityRidersLabel => 'Riders';
+
+  @override
+  String get growCityMonthlyRidersLabel => 'Monthly riders';
+
+  @override
+  String get growCityMonthlyDriversLabel => 'Monthly drivers';
+
+  @override
+  String get growCityMilestoneLabel => 'Next milestone';
+
+  @override
+  String get growCityDriverCapLabel => 'Driver network cap';
+
+  @override
+  String get growCityRiderCapLabel => 'Monthly rider vision';
+
+  @override
+  String growCityProgressCount(String current, String milestone) {
+    return '$current / $milestone';
+  }
+
+  @override
+  String growCityMilestoneHint(String remaining, String milestone) {
+    return '$remaining monthly riders until we celebrate $milestone.';
+  }
+
+  @override
+  String get growCityFinalGoalReached =>
+      'We reached 1 million monthly riders in the Netherlands. Thank you for growing HeyCaby with us.';
+
+  @override
+  String get growCityMilestoneCelebrationTitle => 'Milestone reached!';
+
+  @override
+  String growCityMilestoneCelebrationBody(String milestone) {
+    return 'The HeyCaby community just hit $milestone monthly riders in the Netherlands. Thank you for helping us grow — on to the next milestone!';
+  }
+
+  @override
+  String get growCityMilestoneCelebrationCta => 'Let\'s keep growing';
+
+  @override
+  String get growCityImpactTitle => 'Your impact';
+
+  @override
+  String get growCityPeopleInvited => 'Riders invited';
+
+  @override
+  String get growCityJoined => 'Joined';
+
+  @override
+  String get growCityCompletedRides => 'Completed rides';
+
+  @override
+  String get growCityBadgesTitle => 'Community badges';
+
+  @override
+  String get growCityBadgeSupporter => 'Community Supporter';
+
+  @override
+  String get growCityBadgeBuilder => 'Community Builder';
+
+  @override
+  String get growCityBadgeAmbassador => 'City Ambassador';
+
+  @override
+  String get growCityBadgeTopPromoter => 'Top Promoter';
+
+  @override
+  String get growCityWhyHelpTitle => 'Why help?';
+
+  @override
+  String get growCityWhyHelpBullet1 => 'More riders nearby';
+
+  @override
+  String get growCityWhyHelpBullet2 => 'More work for local taxi drivers';
+
+  @override
+  String get growCityWhyHelpBullet3 => 'Shorter waiting times';
+
+  @override
+  String get growCityWhyHelpBullet4 => 'Stronger taxi community';
 
   @override
   String get iosUpdateRequiredTitle => 'Please update iOS';
@@ -360,14 +509,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get myRides => 'My rides';
 
   @override
-  String get favouriteDrivers => 'Favourite drivers';
+  String get myDrivers => 'My Drivers';
 
   @override
-  String get favouriteDriversSubtitle => 'Book a driver you trust';
+  String get myDriversHomeSubtitle => 'Ride with someone you trust';
+
+  @override
+  String get favouriteDrivers => 'My Drivers';
+
+  @override
+  String get favouriteDriversSubtitle => 'Your trusted driver network';
 
   @override
   String favouriteDriversSubtitleWithCount(int count) {
-    return '$count favourite drivers';
+    return '$count drivers in your network';
   }
 
   @override
@@ -395,7 +550,239 @@ class AppLocalizationsEn extends AppLocalizations {
   String get marketplace => 'Marketplace';
 
   @override
-  String get marketplaceSubtitle => 'Drivers heading your way — save up to 40%';
+  String get marketplaceTagline => 'Drivers compete for your trip.';
+
+  @override
+  String get makeAnOffer => 'Marketplace';
+
+  @override
+  String get marketplacePostRequest => 'Post request';
+
+  @override
+  String get marketplaceOfferHeadline => 'Choose what you want to pay.';
+
+  @override
+  String get marketplaceOfferExplanation =>
+      'Drivers already travelling in your direction can accept your offer or suggest another price.';
+
+  @override
+  String get marketplaceDriversAcceptHint =>
+      'Drivers can accept, counter, or ignore — HeyCaby does not set the fare.';
+
+  @override
+  String marketplaceDriversOnline(int count) {
+    return '$count drivers online';
+  }
+
+  @override
+  String get marketplaceWhereAreYouGoing => 'Where are you going?';
+
+  @override
+  String get marketplaceYouAreHere => 'You\'re here';
+
+  @override
+  String marketplaceYouAreHereIn(String area) {
+    return 'You\'re here in $area';
+  }
+
+  @override
+  String marketplaceYouAreHereOn(String street) {
+    return 'You\'re on $street';
+  }
+
+  @override
+  String get marketplaceLocatingYou => 'Finding your location…';
+
+  @override
+  String get marketplaceLocationNeeded =>
+      'Turn on location to see where you are';
+
+  @override
+  String get marketplaceNameYourPrice => 'Name your price';
+
+  @override
+  String get marketplaceNameYourPriceSubtitle =>
+      'Drivers will see your offer and respond.';
+
+  @override
+  String marketplaceTypicalRangeLabel(String range) {
+    return 'Typical range: $range';
+  }
+
+  @override
+  String get marketplaceControlBanner =>
+      'You\'re in control. Drivers can accept, counter, or ignore your offer.';
+
+  @override
+  String get marketplaceFasterOffersTip =>
+      'Want faster offers? Increase your price to get more responses.';
+
+  @override
+  String get marketplaceEnterCustomPrice => 'Tap to type any amount';
+
+  @override
+  String get marketplacePriceHint => '50';
+
+  @override
+  String marketplaceBidRangeHint(int min, int max) {
+    return 'You can offer between €$min and €$max';
+  }
+
+  @override
+  String get marketplaceTypicalFareTitle => 'Typical fare';
+
+  @override
+  String get marketplaceYourOfferTitle => 'Your offer';
+
+  @override
+  String get marketplaceRequestOffers => 'Post request';
+
+  @override
+  String get marketplaceMatchingTitle => 'Marketplace';
+
+  @override
+  String get marketplaceMatchingHeadline => 'Searching for drivers…';
+
+  @override
+  String get marketplaceMatchingNotifySubtitle =>
+      'We\'ll notify you when offers arrive.';
+
+  @override
+  String marketplaceDriversReceivedRequest(int count) {
+    return '$count drivers received your request';
+  }
+
+  @override
+  String get marketplaceExpectedWait => 'Expected wait: 1 – 2 min';
+
+  @override
+  String get marketplaceOffersFromDrivers => 'Offers from drivers';
+
+  @override
+  String get marketplaceRecommended => 'Recommended';
+
+  @override
+  String get marketplaceViewProfile => 'View profile';
+
+  @override
+  String get marketplaceOfferAcceptsYourPrice => 'Accepts your offer';
+
+  @override
+  String get marketplaceOfferCounterLabel => 'Counter offer';
+
+  @override
+  String get marketplaceOffersExpireIn => 'Offers expire in';
+
+  @override
+  String get marketplaceBoostOffer => 'Boost your offer';
+
+  @override
+  String get marketplaceBoostOfferSubtitle =>
+      'Increase price to get more offers';
+
+  @override
+  String get marketplaceCancelRequest => 'Cancel request';
+
+  @override
+  String get marketplaceCancelRequestConfirm =>
+      'Drivers will stop seeing your offer. Cancel this request?';
+
+  @override
+  String get marketplaceReceiveChooseTitle => 'Receive & choose offers';
+
+  @override
+  String get marketplaceReceiveChooseBullet1 => 'Drivers accept or counter';
+
+  @override
+  String get marketplaceReceiveChooseBullet2 => 'Compare price, rating, ETA';
+
+  @override
+  String get marketplaceReceiveChooseBullet3 => 'Choose the best match';
+
+  @override
+  String marketplaceMatchingSubhead(int nearby, int received) {
+    return '$nearby nearby · $received offers received';
+  }
+
+  @override
+  String get marketplaceMatchingWaiting => 'Waiting for driver responses';
+
+  @override
+  String get marketplaceMatchingWaitingBody =>
+      'Independent drivers can accept your price, counter, or ignore. You choose who to ride with.';
+
+  @override
+  String marketplaceOfferAccepts(String price) {
+    return 'Accepts $price';
+  }
+
+  @override
+  String marketplaceOfferCounter(String price) {
+    return 'Counter $price';
+  }
+
+  @override
+  String marketplaceOfferMinutesAway(int minutes) {
+    return '$minutes min away';
+  }
+
+  @override
+  String marketplaceOfferExpiresIn(String time) {
+    return 'Offer expires $time';
+  }
+
+  @override
+  String get marketplaceDriverUsuallyAccepts => 'Usually accepts rider prices';
+
+  @override
+  String get marketplaceDriverOftenCounters => 'Often sends counter offers';
+
+  @override
+  String get marketplaceDriverMayCounter => 'May accept or counter your offer';
+
+  @override
+  String get declineBid => 'Decline';
+
+  @override
+  String get marketplaceDriverScopeTitle => 'Who should see your request?';
+
+  @override
+  String get marketplaceDriverScopeEveryone => 'Everyone';
+
+  @override
+  String get marketplaceDriverScopeMyDriversFirst => 'My Drivers first';
+
+  @override
+  String get marketplaceDriverScopeMyDriversOnly => 'My Drivers only';
+
+  @override
+  String get marketplaceAcceptanceGood => 'Good chance of acceptance';
+
+  @override
+  String get marketplaceAcceptanceFair =>
+      'Fair offer — drivers may accept or counter';
+
+  @override
+  String get marketplaceAcceptanceLow =>
+      'Offer is quite low — expect counter offers';
+
+  @override
+  String get marketplaceDemandLowTitle => 'Low demand';
+
+  @override
+  String get marketplaceDemandHighTitle => 'High demand';
+
+  @override
+  String get marketplaceDemandLowHint =>
+      'Drivers are likely to accept lower offers.';
+
+  @override
+  String get marketplaceDemandHighHint =>
+      'Offering slightly more may get faster responses.';
+
+  @override
+  String get marketplaceSubtitle =>
+      'Choose your price — independent drivers decide.';
 
   @override
   String get homeAirportBookingTitle => 'Airport drop-off';
@@ -999,7 +1386,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get marketplaceHeroTagline =>
-      'Name your price — drivers accept or suggest a counter.';
+      'Name your price — drivers heading your way can accept or counter.';
 
   @override
   String get marketplaceYourRoute => 'Your route';
@@ -1288,7 +1675,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get favouriteDriversAccountSubtitle =>
-      'Save trusted drivers and send rides directly to them.';
+      'Build your network of trusted drivers.';
 
   @override
   String get openLocationSettings => 'Open location settings';

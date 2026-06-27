@@ -29,26 +29,12 @@ bool isDriverEntryExemptRoute(String location) {
   return false;
 }
 
-/// Post-auth destination from Supabase `fn_driver_runtime()` — single source of truth.
-String resolveDriverEntryRoute(DriverRuntimeSnapshot runtime) {
-  if (!runtime.plateVerified) {
-    return '/driver/onboarding/plate';
-  }
-  if (!runtime.termsAccepted) {
-    return '/driver/terms';
-  }
-  return '/driver';
-}
+/// Post-auth destination — always home. Plate/terms run on first Go Online.
+String resolveDriverEntryRoute(DriverRuntimeSnapshot runtime) => '/driver';
 
-/// Returns true when [location] should be replaced by [resolveDriverEntryRoute].
-bool driverEntryRouteMismatch(String location, DriverRuntimeSnapshot runtime) {
-  if (isDriverEntryExemptRoute(location)) return false;
-  final expected = resolveDriverEntryRoute(runtime);
-  if (location == expected || location.startsWith('$expected/')) return false;
-  // On shell home while onboarding incomplete.
-  if (!runtime.plateVerified || !runtime.termsAccepted) return true;
-  return false;
-}
+/// No longer redirect away from home for incomplete plate/terms.
+bool driverEntryRouteMismatch(String location, DriverRuntimeSnapshot runtime) =>
+    false;
 
 /// Bootstrap session, fetch runtime, restore active ride, then navigate.
 Future<void> navigateDriverAfterAuth({
@@ -72,12 +58,9 @@ Future<void> navigateDriverAfterAuth({
   if (!context.mounted) return;
   ref.read(driverStateProvider.notifier).setUser(session.user.id, driverId);
 
-  DriverRuntimeSnapshot runtime;
   try {
-    runtime = await refreshDriverRuntime(ref);
-  } catch (_) {
-    runtime = DriverRuntimeSnapshot.fromRpc(const {'ok': false, 'error': 'runtime_fetch_failed'});
-  }
+    await refreshDriverRuntime(ref);
+  } catch (_) {}
 
   await restoreDriverOperationalState(ref, router);
   if (!context.mounted) return;
@@ -86,7 +69,7 @@ Future<void> navigateDriverAfterAuth({
     return;
   }
 
-  final target = runtime.ok ? resolveDriverEntryRoute(runtime) : '/driver';
+  final target = '/driver';
   final current = router.routeInformationProvider.value.uri.path;
   if (current != target && !current.startsWith('$target/')) {
     context.go(target);

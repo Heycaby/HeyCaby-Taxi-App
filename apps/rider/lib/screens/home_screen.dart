@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
@@ -26,18 +25,17 @@ import '../services/sound_service.dart';
 import '../services/stale_ride_cleanup.dart';
 import '../utils/map_style_helper.dart';
 import '../constants/rider_search_window.dart';
-import '../providers/saved_addresses_provider.dart';
 import '../widgets/active_notify_search_card.dart';
 import '../widgets/active_search_stop_dialog.dart';
 import '../widgets/booking_draft_resume_card.dart';
 import '../widgets/near_term_ride_home_banner.dart';
 import '../widgets/rider_preride_home_banner.dart';
 import '../widgets/driver_search_expired_dialog.dart';
-import '../widgets/email_modal.dart';
+import '../widgets/home/home_destination_section.dart';
+import '../widgets/home/home_popular_airports_section.dart';
+import '../widgets/home/home_smart_options_section.dart';
 import '../widgets/rider_profile_home_nudge.dart';
-import '../widgets/saved_addresses_sheet.dart';
 import '../widgets/welcome_profile_modals.dart';
-import 'location_required_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -581,33 +579,22 @@ class _BottomSheet extends ConsumerWidget {
                 ),
               ),
             const BookingDraftResumeCard(),
-            const RiderProfileHomeNudge(),
             if (active == null) const NearTermRideHomeBanner(),
+            HomeDestinationSection(colors: colors, typo: typo, l10n: l10n),
+            HomeSmartOptionsSection(colors: colors, typo: typo, l10n: l10n),
+            HomePopularAirportsSection(colors: colors, typo: typo, l10n: l10n),
             Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 8),
-              child: Text(
-                l10n.goWhereverWhenever,
-                style: typo.headingMedium.copyWith(
-                  color: colors.text,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 24,
-                  height: 1.2,
-                ),
+              padding: const EdgeInsetsDirectional.fromSTEB(16, 20, 16, 0),
+              child: _RecentDestinationsSection(
+                colors: colors,
+                typo: typo,
+                l10n: l10n,
               ),
             ),
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 16, 0),
-              child: _WhereToBar(colors: colors, typo: typo, l10n: l10n),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 0),
-              child: _RecentDestinationsSection(colors: colors, typo: typo, l10n: l10n),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 24),
-              child: _BookingCards(colors: colors, typo: typo, l10n: l10n),
+            const SizedBox(height: 12),
+            const Padding(
+              padding: EdgeInsetsDirectional.fromSTEB(16, 0, 16, 8),
+              child: RiderProfileHomeNudge(),
             ),
             // Keep the last card fully above RiderShell bottom navigation.
             SizedBox(
@@ -637,164 +624,6 @@ class _DragHandle extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.border,
           borderRadius: BorderRadius.circular(2),
-        ),
-      ),
-    );
-  }
-}
-
-class _WhereToBar extends ConsumerWidget {
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final AppLocalizations l10n;
-
-  const _WhereToBar({
-    required this.colors,
-    required this.typo,
-    required this.l10n,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      height: 52,
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.border),
-        boxShadow: [
-          BoxShadow(
-            color: colors.text.withValues(alpha: 0.05),
-            blurRadius: 2,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () async {
-                final ok = await ensureLocationForBooking(context: context, ref: ref);
-                if (!ok) return;
-                // Entering the standard search flow from home should default to instant.
-                ref.read(bookingProvider.notifier).setInstant();
-                if (context.mounted) context.go('/search');
-              },
-              child: Padding(
-                padding: const EdgeInsetsDirectional.only(start: 14),
-                child: Row(
-                  children: [
-                    Icon(Icons.search, color: colors.textSoft, size: 20),
-                    const SizedBox(width: 10),
-                    Text(
-                      l10n.whereTo,
-                      style: typo.headingMedium.copyWith(
-                        color: colors.text,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 17,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          _HomeButton(colors: colors, l10n: l10n),
-          _ScheduleButton(colors: colors, typo: typo, l10n: l10n),
-          const SizedBox(width: 8),
-        ],
-      ),
-    );
-  }
-}
-
-class _HomeButton extends ConsumerWidget {
-  final HeyCabyColorTokens colors;
-  final AppLocalizations l10n;
-
-  const _HomeButton({required this.colors, required this.l10n});
-
-  Future<void> _handleHomeTap(BuildContext context, WidgetRef ref) async {
-    final ok = await ensureLocationForBooking(context: context, ref: ref);
-    if (!ok) return;
-    if (!context.mounted) return;
-
-    // Show saved addresses sheet; if rider picks one, set it as destination
-    final picked = await showSavedAddressesSheet(context, ref);
-    if (picked != null && context.mounted) {
-      ref.read(bookingProvider.notifier).setDestination(picked);
-      await BookingFlowNavigation.prefillBookingFromIdentity(ref);
-      if (!context.mounted) return;
-      final next = BookingFlowNavigation.routeAfterAddressesComplete(
-        ref.read(bookingProvider),
-      );
-      context.push(next);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final addressesAsync = ref.watch(savedAddressesProvider);
-    final hasAddresses = addressesAsync.valueOrNull?.isNotEmpty ?? false;
-
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => _handleHomeTap(context, ref),
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Icon(
-          hasAddresses ? Icons.home_rounded : Icons.home_outlined,
-          color: hasAddresses ? colors.accent : colors.textMid,
-          size: 22,
-        ),
-      ),
-    );
-  }
-}
-
-class _ScheduleButton extends ConsumerWidget {
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final AppLocalizations l10n;
-
-  const _ScheduleButton({
-    required this.colors,
-    required this.typo,
-    required this.l10n,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () async {
-        final ok = await ensureLocationForBooking(context: context, ref: ref);
-        if (!ok) return;
-        ref.read(bookingProvider.notifier).setScheduled();
-        if (context.mounted) context.go('/search');
-      },
-      child: Container(
-        margin: const EdgeInsetsDirectional.only(end: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: colors.accentL,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.schedule, color: colors.accent, size: 16),
-            const SizedBox(width: 4),
-            Text(
-              l10n.laterButton,
-              style: typo.bodySmall.copyWith(
-                color: colors.accent,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -847,7 +676,7 @@ class _RecentDestinationsSectionState
             Padding(
               padding: const EdgeInsetsDirectional.only(start: 4, bottom: 12),
               child: Text(
-                l10n.recentDestinations,
+                l10n.homeRecentTrips,
                 style: typo.bodySmall.copyWith(
                   color: colors.textSoft,
                   fontWeight: FontWeight.w600,
@@ -992,357 +821,6 @@ class _RecentDestinationTile extends ConsumerWidget {
               Icon(Icons.chevron_right, color: colors.textSoft, size: 20),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BookingCards extends ConsumerWidget {
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final AppLocalizations l10n;
-
-  const _BookingCards({
-    required this.colors,
-    required this.typo,
-    required this.l10n,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _FavoriteDriverCard(
-                title: l10n.favouriteDrivers,
-                subtitle: l10n.favouriteDriversSubtitle,
-                colors: colors,
-                typo: typo,
-                onTap: () async {
-                  final identity = await ref.read(riderIdentityProvider.future);
-
-                  if (identity.hasSession && identity.email != null) {
-                    if (context.mounted) {
-                      context.push('/favorites');
-                    }
-                  } else {
-                    if (context.mounted) {
-                      final success = await showEmailModal(context, ref);
-                      if (success && context.mounted) {
-                        context.push('/favorites');
-                      }
-                    }
-                  }
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _BookingCard(
-                icon: Icons.sell_outlined,
-                title: l10n.marketplace,
-                subtitle: l10n.marketplaceSubtitle,
-                badge: l10n.bestPrice,
-                colors: colors,
-                typo: typo,
-                onTap: () {
-                  ref.read(bookingProvider.notifier).setMarketplace();
-                  context.push('/marketplace');
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        _AirportBookingHomeCard(colors: colors, typo: typo, l10n: l10n),
-      ],
-    );
-  }
-}
-
-class _AirportBookingHomeCard extends ConsumerWidget {
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final AppLocalizations l10n;
-
-  const _AirportBookingHomeCard({
-    required this.colors,
-    required this.typo,
-    required this.l10n,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () async {
-          final ok = await ensureLocationForBooking(context: context, ref: ref);
-          if (!ok) return;
-          if (context.mounted) context.push('/airport-booking');
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [
-                colors.accent.withValues(alpha: 0.14),
-                colors.card,
-              ],
-            ),
-            border: Border.all(color: colors.border.withValues(alpha: 0.75)),
-            boxShadow: [
-              BoxShadow(
-                color: colors.text.withValues(alpha: 0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 12, 14),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: colors.card,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: colors.border.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.flight_takeoff_rounded,
-                    color: colors.accent,
-                    size: 26,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              l10n.homeAirportBookingTitle,
-                              style: typo.titleMedium.copyWith(
-                                color: colors.text,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: colors.accentL,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              l10n.homeAirportBookingBadge,
-                              style: typo.labelSmall.copyWith(
-                                color: colors.accent,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        l10n.homeAirportBookingSubtitle,
-                        style: typo.bodySmall.copyWith(
-                          color: colors.textMid,
-                          height: 1.35,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.chevron_right_rounded,
-                    color: colors.textSoft, size: 26),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FavoriteDriverCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final VoidCallback onTap;
-
-  const _FavoriteDriverCard({
-    required this.title,
-    required this.subtitle,
-    required this.colors,
-    required this.typo,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: colors.card,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: colors.border),
-          boxShadow: [
-            BoxShadow(
-              color: colors.text.withValues(alpha: 0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Driver Silhouette SVG Icon
-            Container(
-              width: 48,
-              height: 48,
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: colors.accent.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: SvgPicture.asset(
-                'assets/icons/driver_silhouette.svg',
-                color: colors.accent,
-                width: 32,
-                height: 32,
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Title - Favorite driver
-            Text(
-              title,
-              style: typo.titleMedium.copyWith(
-                color: colors.text,
-                fontWeight: FontWeight.w700,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            // Subtitle
-            Text(
-              subtitle,
-              style: typo.bodySmall.copyWith(
-                color: colors.textSoft,
-                fontSize: 12,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BookingCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final String? badge;
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final VoidCallback onTap;
-
-  const _BookingCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    this.badge,
-    required this.colors,
-    required this.typo,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: colors.card,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: colors.border),
-          boxShadow: [
-            BoxShadow(
-              color: colors.text.withValues(alpha: 0.05),
-              blurRadius: 2,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Icon(icon, color: colors.accent, size: 22),
-                if (badge != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.accentL,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      badge!,
-                      style: typo.labelSmall.copyWith(color: colors.accent),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              title,
-              style: typo.titleMedium.copyWith(color: colors.text),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: typo.bodySmall.copyWith(color: colors.textSoft),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
         ),
       ),
     );

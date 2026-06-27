@@ -60,6 +60,45 @@ class AppLocalizationsAr extends AppLocalizations {
   String get whereTo => 'إلى أين؟';
 
   @override
+  String get homeDestinationPrompt => 'إلى أين تريد الذهاب؟';
+
+  @override
+  String get homeContinue => 'متابعة';
+
+  @override
+  String get homeSmartOptionsTitle => 'كيف تريد أن تركب؟';
+
+  @override
+  String get homeBestPriceTitle => 'السوق';
+
+  @override
+  String get homeBestPriceSubtitle => 'السائقون يتنافسون على رحلتك.';
+
+  @override
+  String get homeScheduleLaterTitle => 'جدولة لاحقاً';
+
+  @override
+  String get homeScheduleLaterSubtitle => 'اختر وقت الالتقاط المناسب لك.';
+
+  @override
+  String get homePopularAirportsTitle => 'شائع';
+
+  @override
+  String get homeRecentTrips => 'رحلات حديثة';
+
+  @override
+  String get homeAirportChipSchiphol => 'Schiphol';
+
+  @override
+  String get homeAirportChipRotterdam => 'مطار روتردام';
+
+  @override
+  String get homeAirportChipEindhoven => 'آيندهوفن';
+
+  @override
+  String get homeAirportChipBrussels => 'مطار بروكسل';
+
+  @override
   String get pickup => 'نقطة الانطلاق';
 
   @override
@@ -225,17 +264,17 @@ class AppLocalizationsAr extends AppLocalizations {
   String get account => 'الحساب';
 
   @override
-  String get tellAFriendNavLabel => 'TAF';
+  String get tellAFriendNavLabel => 'Community';
 
   @override
-  String get tellAFriendNavSemanticLabel => 'ادعُ الأصدقاء — وسّع دائرة رحلاتك';
+  String get tellAFriendNavSemanticLabel => 'نمِّ مدينتك — ابنِ مجتمع HeyCaby';
 
   @override
-  String get tellAFriendScreenTitle => 'ادعُ الأصدقاء';
+  String get tellAFriendScreenTitle => 'Grow Your City';
 
   @override
   String get tellAFriendSharePrompt =>
-      'أرسل رابطك. ينضم الأصدقاء مجانًا — ستظهر أعدادهم هنا بعد التسجيل.';
+      'شارك HeyCaby مع من يحتاجون رحلات موثوقة في مدينتك. كل راكب جديد يساعد سائقي التaxi المحليين.';
 
   @override
   String get tellAFriendHeroTitle => 'ادعُ الأصدقاء';
@@ -257,25 +296,25 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tellAFriendFriendsInvitedZeroHint => 'لا انضمام بعد — شارك أدناه.';
 
   @override
-  String get tellAFriendRewardTitle => 'لماذا يفيد';
+  String get tellAFriendRewardTitle => 'لماذا المساعدة؟';
 
   @override
-  String get tellAFriendRewardBullet1 =>
-      'المزيد من الركاب قربك قد يسرّع المطابقة.';
+  String get tellAFriendRewardBullet1 => 'المزيد من الركاب قربك';
 
   @override
-  String get tellAFriendRewardBullet2 => 'قد تظهر مزايا مع نمو دائرتك.';
+  String get tellAFriendRewardBullet2 => 'المزيد من طلبات الرحلات للسائقين';
 
   @override
-  String get tellAFriendRewardBullet3 =>
-      'خصومات أيام عطلة نهاية الأسبوع عند توفرها';
+  String get tellAFriendRewardBullet3 => 'أوقات انتظار أقصر';
 
   @override
-  String get tellAFriendRewardBullet4 =>
-      'تساعد السائقين على رؤية الطلب في منطقتك';
+  String get tellAFriendRewardBullet4 => 'مجتمع تaxi أقوى';
 
   @override
-  String get tellAFriendInviteLinkLabel => 'رابطك';
+  String get tellAFriendInviteLinkLabel => 'رابط App Store';
+
+  @override
+  String get tellAFriendWebsiteLinkLabel => 'رابط المشاركة';
 
   @override
   String get tellAFriendLinkResolving => 'جاري إعداد رابط الدعوة القصير…';
@@ -284,42 +323,151 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tellAFriendCopyLink => 'نسخ الرابط';
 
   @override
-  String get tellAFriendShareLink => 'مشاركة الدعوة';
+  String get tellAFriendShareLink => 'Share HeyCaby';
 
   @override
-  String get tellAFriendShowQr => 'عرض رمز QR';
+  String get tellAFriendShowQr => 'QR code';
 
   @override
-  String get tellAFriendQrTitle => 'امسح للانضمام إلى HeyCaby';
+  String get tellAFriendQrTitle => 'امسح لتحميل HeyCaby';
 
   @override
   String get tellAFriendQrHint =>
-      'المسح يفتح heycaby.nl في المتصفح. استخدم مشاركة أو نسخ للحصول على رابط الدعوة الشخصي.';
+      'يفتح المسح تطبيق HeyCaby Rider في App Store. استخدم مشاركة أو نسخ لإرسال رابط التحميل.';
 
   @override
   String get tellAFriendSocialProof =>
-      'شكرًا لمساعدتك HeyCaby على النمو محليًا.';
+      'شكرًا لمساعدتك في بناء أكبر شبكة تaxi مستقلة في هولندا.';
 
   @override
-  String get tellAFriendShareDoneSnackbar =>
-      'تم إرسال الدعوة — شكرًا لمشاركتك!';
+  String get tellAFriendShareDoneSnackbar => 'شكرًا لمشاركة HeyCaby!';
 
   @override
   String get tellAFriendLinkCopied => 'تم النسخ — جاهز للصق في أي مكان';
 
   @override
-  String get tellAFriendShareSubject => 'انضم إليّ على HeyCaby';
+  String get tellAFriendShareSubject => 'انضم إلى HeyCaby — نمِّ مدينتك';
 
   @override
   String get tellAFriendShareMessage =>
-      'أبني دائرة رحلاتي على HeyCaby — حاب تنضم؟ اضغط على دعوتي:';
+      'حمّل HeyCaby Rider — تطبيق التaxi المستقل في هولندا:';
 
   @override
-  String get tellAFriendLinkUnavailable => 'الرابط غير جاهز بعد';
+  String get tellAFriendLinkUnavailable => 'رابط App Store غير مُعدّ';
 
   @override
   String get tellAFriendLinkUnavailableHint =>
-      'حاول مرة أخرى بعد لحظات أو أعد تشغيل التطبيق.';
+      'أضف RIDER_IOS_APP_STORE_URL إلى بيئة البناء ثم أعد بناء التطبيق.';
+
+  @override
+  String growCityHeroTitle(String cityName) {
+    return 'Grow HeyCaby in $cityName';
+  }
+
+  @override
+  String get growCityHeroBody1 =>
+      'ادعُ الأصدقاء والعائلة ممن يحتاجون تaxi موثوقًا في مدينتك.';
+
+  @override
+  String get growCityHeroBody2 =>
+      'المزيد من الركاب قربك يعني المزيد من طلبات الرحلات للسائقين المحليين وأوقات انتظار أقصر للجميع.';
+
+  @override
+  String get growCityHeroMission =>
+      'Help us build the largest independent taxi network in the Netherlands.';
+
+  @override
+  String growCityCommunityTitle(String cityName) {
+    return '$cityName community';
+  }
+
+  @override
+  String get growCityDriversLabel => 'Drivers';
+
+  @override
+  String get growCityRidersLabel => 'Riders';
+
+  @override
+  String get growCityMonthlyRidersLabel => 'Monthly riders';
+
+  @override
+  String get growCityMonthlyDriversLabel => 'Monthly drivers';
+
+  @override
+  String get growCityMilestoneLabel => 'Next milestone';
+
+  @override
+  String get growCityDriverCapLabel => 'Driver network cap';
+
+  @override
+  String get growCityRiderCapLabel => 'Monthly rider vision';
+
+  @override
+  String growCityProgressCount(String current, String milestone) {
+    return '$current / $milestone';
+  }
+
+  @override
+  String growCityMilestoneHint(String remaining, String milestone) {
+    return '$remaining monthly riders until we celebrate $milestone.';
+  }
+
+  @override
+  String get growCityFinalGoalReached =>
+      'We reached 1 million monthly riders in the Netherlands. Thank you for growing HeyCaby with us.';
+
+  @override
+  String get growCityMilestoneCelebrationTitle => 'Milestone reached!';
+
+  @override
+  String growCityMilestoneCelebrationBody(String milestone) {
+    return 'The HeyCaby community just hit $milestone monthly riders in the Netherlands. Thank you for helping us grow — on to the next milestone!';
+  }
+
+  @override
+  String get growCityMilestoneCelebrationCta => 'Let\'s keep growing';
+
+  @override
+  String get growCityImpactTitle => 'Your impact';
+
+  @override
+  String get growCityPeopleInvited => 'الركاب المدعوون';
+
+  @override
+  String get growCityJoined => 'Joined';
+
+  @override
+  String get growCityCompletedRides => 'Completed rides';
+
+  @override
+  String get growCityBadgesTitle => 'Community badges';
+
+  @override
+  String get growCityBadgeSupporter => 'Community Supporter';
+
+  @override
+  String get growCityBadgeBuilder => 'Community Builder';
+
+  @override
+  String get growCityBadgeAmbassador => 'City Ambassador';
+
+  @override
+  String get growCityBadgeTopPromoter => 'Top Promoter';
+
+  @override
+  String get growCityWhyHelpTitle => 'Why help?';
+
+  @override
+  String get growCityWhyHelpBullet1 => 'More riders nearby';
+
+  @override
+  String get growCityWhyHelpBullet2 => 'المزيد من العمل لسائقي التaxi المحليين';
+
+  @override
+  String get growCityWhyHelpBullet3 => 'Shorter waiting times';
+
+  @override
+  String get growCityWhyHelpBullet4 => 'Stronger taxi community';
 
   @override
   String get iosUpdateRequiredTitle => 'يُرجى تحديث iOS';
@@ -357,14 +505,20 @@ class AppLocalizationsAr extends AppLocalizations {
   String get myRides => 'رحلاتي';
 
   @override
-  String get favouriteDrivers => 'السائقون المفضلون';
+  String get myDrivers => 'سائقوني';
 
   @override
-  String get favouriteDriversSubtitle => 'احجز سائقاً تثق به';
+  String get myDriversHomeSubtitle => 'اركب مع شخص تثق به';
+
+  @override
+  String get favouriteDrivers => 'سائقوني';
+
+  @override
+  String get favouriteDriversSubtitle => 'شبكتك من السائقين الموثوقين';
 
   @override
   String favouriteDriversSubtitleWithCount(int count) {
-    return '$count سائق مفضل';
+    return '$count سائق في شبكتك';
   }
 
   @override
@@ -392,7 +546,235 @@ class AppLocalizationsAr extends AppLocalizations {
   String get marketplace => 'السوق';
 
   @override
-  String get marketplaceSubtitle => 'سائقون في طريقهم إليك — وفّر حتى 40%';
+  String get marketplaceTagline => 'السائقون يتنافسون على رحلتك.';
+
+  @override
+  String get makeAnOffer => 'السوق';
+
+  @override
+  String get marketplacePostRequest => 'نشر الطلب';
+
+  @override
+  String get marketplaceOfferHeadline => 'اختر ما تريد دفعه.';
+
+  @override
+  String get marketplaceOfferExplanation =>
+      'السائقون المتجهون في اتجاهك يمكنهم قبول عرضك أو اقتراح سعر آخر.';
+
+  @override
+  String get marketplaceDriversAcceptHint =>
+      'يمكن للسائقين القبول أو المقابلة أو التجاهل — HeyCaby لا تحدد الأجرة.';
+
+  @override
+  String marketplaceDriversOnline(int count) {
+    return '$count سائق متصل';
+  }
+
+  @override
+  String get marketplaceWhereAreYouGoing => 'إلى أين تذهب؟';
+
+  @override
+  String get marketplaceYouAreHere => 'أنت هنا';
+
+  @override
+  String marketplaceYouAreHereIn(String area) {
+    return 'أنت هنا في $area';
+  }
+
+  @override
+  String marketplaceYouAreHereOn(String street) {
+    return 'أنت في $street';
+  }
+
+  @override
+  String get marketplaceLocatingYou => 'جاري تحديد موقعك…';
+
+  @override
+  String get marketplaceLocationNeeded => 'فعّل الموقع لمعرفة مكانك';
+
+  @override
+  String get marketplaceNameYourPrice => 'حدد سعرك';
+
+  @override
+  String get marketplaceNameYourPriceSubtitle => 'سيرى السائقون عرضك ويردون.';
+
+  @override
+  String marketplaceTypicalRangeLabel(String range) {
+    return 'النطاق المعتاد: $range';
+  }
+
+  @override
+  String get marketplaceControlBanner =>
+      'أنت المتحكم. يمكن للسائقين القبول أو المقابلة أو التجاهل.';
+
+  @override
+  String get marketplaceFasterOffersTip =>
+      'تريد عروضاً أسرع؟ ارفع سعرك للحصول على المزيد من الردود.';
+
+  @override
+  String get marketplaceEnterCustomPrice => 'اضغط لكتابة أي مبلغ';
+
+  @override
+  String get marketplacePriceHint => '50';
+
+  @override
+  String marketplaceBidRangeHint(int min, int max) {
+    return 'يمكنك العرض بين €$min و €$max';
+  }
+
+  @override
+  String get marketplaceTypicalFareTitle => 'الأجرة المعتادة';
+
+  @override
+  String get marketplaceYourOfferTitle => 'عرضك';
+
+  @override
+  String get marketplaceRequestOffers => 'اطلب عروضاً';
+
+  @override
+  String get marketplaceMatchingTitle => 'السوق';
+
+  @override
+  String get marketplaceMatchingHeadline => 'البحث عن سائقين…';
+
+  @override
+  String get marketplaceMatchingNotifySubtitle => 'سنُعلمك عند وصول العروض.';
+
+  @override
+  String marketplaceDriversReceivedRequest(int count) {
+    return 'استلم $count سائقاً طلبك';
+  }
+
+  @override
+  String get marketplaceExpectedWait => 'الانتظار المتوقع: 1 – 2 دقيقة';
+
+  @override
+  String get marketplaceOffersFromDrivers => 'عروض من السائقين';
+
+  @override
+  String get marketplaceRecommended => 'موصى به';
+
+  @override
+  String get marketplaceViewProfile => 'عرض الملف';
+
+  @override
+  String get marketplaceOfferAcceptsYourPrice => 'يقبل عرضك';
+
+  @override
+  String get marketplaceOfferCounterLabel => 'عرض مضاد';
+
+  @override
+  String get marketplaceOffersExpireIn => 'تنتهي العروض خلال';
+
+  @override
+  String get marketplaceBoostOffer => 'عزّز عرضك';
+
+  @override
+  String get marketplaceBoostOfferSubtitle =>
+      'ارفع السعر للحصول على المزيد من العروض';
+
+  @override
+  String get marketplaceCancelRequest => 'إلغاء الطلب';
+
+  @override
+  String get marketplaceCancelRequestConfirm =>
+      'لن يرى السائقون عرضك بعد الآن. إلغاء هذا الطلب؟';
+
+  @override
+  String get marketplaceReceiveChooseTitle => 'استلم واختر العروض';
+
+  @override
+  String get marketplaceReceiveChooseBullet1 => 'السائقون يقبلون أو يقابلون';
+
+  @override
+  String get marketplaceReceiveChooseBullet2 =>
+      'قارن السعر والتقييم ووقت الوصول';
+
+  @override
+  String get marketplaceReceiveChooseBullet3 => 'اختر الأنسب لك';
+
+  @override
+  String marketplaceMatchingSubhead(int nearby, int received) {
+    return '$nearby قريب · $received عروض';
+  }
+
+  @override
+  String get marketplaceMatchingWaiting => 'في انتظار ردود السائقين';
+
+  @override
+  String get marketplaceMatchingWaitingBody =>
+      'السائقون المستقلون يمكنهم القبول أو المقابلة أو التجاهل. أنت تختار من تركب معه.';
+
+  @override
+  String marketplaceOfferAccepts(String price) {
+    return 'يقبل $price';
+  }
+
+  @override
+  String marketplaceOfferCounter(String price) {
+    return 'عرض مضاد $price';
+  }
+
+  @override
+  String marketplaceOfferMinutesAway(int minutes) {
+    return 'على بعد $minutes د';
+  }
+
+  @override
+  String marketplaceOfferExpiresIn(String time) {
+    return 'ينتهي العرض $time';
+  }
+
+  @override
+  String get marketplaceDriverUsuallyAccepts => 'يقبل عادة أسعار الراكب';
+
+  @override
+  String get marketplaceDriverOftenCounters => 'يرسل غالباً عروضاً مضادة';
+
+  @override
+  String get marketplaceDriverMayCounter => 'قد يقبل أو يقترح سعراً آخر';
+
+  @override
+  String get declineBid => 'رفض';
+
+  @override
+  String get marketplaceDriverScopeTitle => 'من يرى طلبك؟';
+
+  @override
+  String get marketplaceDriverScopeEveryone => 'الجميع';
+
+  @override
+  String get marketplaceDriverScopeMyDriversFirst => 'سائقوني أولاً';
+
+  @override
+  String get marketplaceDriverScopeMyDriversOnly => 'سائقوني فقط';
+
+  @override
+  String get marketplaceAcceptanceGood => 'فرصة جيدة للقبول';
+
+  @override
+  String get marketplaceAcceptanceFair =>
+      'عرض معقول — قد يقبل السائق أو يقترح سعراً آخر';
+
+  @override
+  String get marketplaceAcceptanceLow => 'العرض منخفض — توقّع عروضاً مضادة';
+
+  @override
+  String get marketplaceDemandLowTitle => 'طلب منخفض';
+
+  @override
+  String get marketplaceDemandHighTitle => 'طلب مرتفع';
+
+  @override
+  String get marketplaceDemandLowHint =>
+      'من المرجح أن يقبل السائقون عروضاً أقل.';
+
+  @override
+  String get marketplaceDemandHighHint =>
+      'تقديم مبلغ أعلى قليلاً قد يسرّع الرد.';
+
+  @override
+  String get marketplaceSubtitle => 'اختر سعرك — السائقون المستقلون يقررون.';
 
   @override
   String get homeAirportBookingTitle => 'توصيل للمطار';

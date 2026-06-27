@@ -151,6 +151,11 @@ func verifyReceiptWithApple(ctx context.Context, client *http.Client, url, recei
 // VerifyAppleDriverSubscription validates an App Store receipt and extends subscription_expires_at.
 // planCode: daily|weekly|monthly — if empty, accepts any HeyCaby driver product with latest expiry (restore).
 func (s *DriverService) VerifyAppleDriverSubscription(ctx context.Context, driverID, receiptData, planCode string) error {
+	driverID, err := s.resolveDriverID(ctx, driverID)
+	if err != nil {
+		return err
+	}
+
 	if strings.TrimSpace(s.billingProvider) != "apple" {
 		return fmt.Errorf("apple billing is not enabled")
 	}

@@ -12,6 +12,7 @@ import '../l10n/driver_strings.dart';
 import '../providers/driver_location_provider.dart';
 import '../providers/driver_data_providers.dart';
 import '../providers/driver_map_providers.dart';
+import '../services/driver_billing_service.dart';
 import '../services/driver_data_service.dart' show ZoneDemand;
 import '../theme/driver_colors.dart';
 import '../theme/driver_spacing.dart';
@@ -613,6 +614,20 @@ class _DriverDrawerHeader extends StatelessWidget {
     return null;
   }
 
+  String _ledgerDrawerSubtitle(Map<String, dynamic>? s) {
+    if (s == null) return DriverStrings.billingDash;
+    final outstanding = s['outstanding_cents'];
+    final limit = s['limit_cents'];
+    if (outstanding is num && limit is num) {
+      return '€${(outstanding / 100).toStringAsFixed(2)} / €${(limit / 100).toStringAsFixed(2)}';
+    }
+    final fee = s['platform_fee_cents'];
+    if (fee is num) {
+      return '€${(fee / 100).toStringAsFixed(2)} ${DriverStrings.billingPerRideSuffix}';
+    }
+    return DriverStrings.billingDash;
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isFounding = profile?.isFoundingDriver == true;
@@ -640,6 +655,7 @@ class _DriverDrawerHeader extends StatelessWidget {
     final bool? paymentRequired = billingStatus == null
         ? null
         : (billingStatus?['payment_required'] == true);
+    final bool ledgerV1 = DriverBillingService.isLedgerV1(billingStatus);
     final int? weeklyFeeCents = billingStatus?['weekly_fee_cents'] is num
         ? (billingStatus!['weekly_fee_cents'] as num).toInt()
         : null;
@@ -647,25 +663,29 @@ class _DriverDrawerHeader extends StatelessWidget {
         ? null
         : (weeklyFeeCents / 100).toStringAsFixed(2);
     final bool hasLiveStatus = paymentRequired != null;
-    final bool activePass = hasLiveStatus &&
-        paymentRequired == false &&
-        (daysRemaining == null || daysRemaining > 0);
+    final bool activePass = hasLiveStatus && paymentRequired == false;
     final String paymentTitle = !hasLiveStatus
         ? DriverStrings.drawerBillingStatusUnavailable
         : activePass
-            ? DriverStrings.drawerBillingWeeklyPassActive
+            ? (ledgerV1
+                ? DriverStrings.billingStatusNoPaymentDue
+                : DriverStrings.drawerBillingWeeklyPassActive)
             : DriverStrings.billingStatusPaymentRequired;
     final String paymentSubtitle = !hasLiveStatus
         ? DriverStrings.drawerBillingWaitingLiveStatus
         : activePass
-            ? (daysRemaining == null
-                ? (weeklyFeeEuro == null
-                    ? DriverStrings.drawerBillingPaidSubscriptionActive
-                    : DriverStrings.drawerBillingEuroPaid(weeklyFeeEuro))
-                : DriverStrings.billingDaysRemaining(daysRemaining))
-            : (weeklyFeeEuro == null
-                ? DriverStrings.drawerBillingPayWeeklyGeneric
-                : DriverStrings.drawerBillingPayWeeklyEuro(weeklyFeeEuro));
+            ? (ledgerV1
+                ? _ledgerDrawerSubtitle(billingStatus)
+                : (daysRemaining == null
+                    ? (weeklyFeeEuro == null
+                        ? DriverStrings.drawerBillingPaidSubscriptionActive
+                        : DriverStrings.drawerBillingEuroPaid(weeklyFeeEuro))
+                    : DriverStrings.billingDaysRemaining(daysRemaining)))
+            : (ledgerV1
+                ? _ledgerDrawerSubtitle(billingStatus)
+                : (weeklyFeeEuro == null
+                    ? DriverStrings.drawerBillingPayWeeklyGeneric
+                    : DriverStrings.drawerBillingPayWeeklyEuro(weeklyFeeEuro)));
 
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),

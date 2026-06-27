@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 
 import '../models/driver_payment_ledger_item.dart';
+import '../services/driver_billing_service.dart';
 import '../services/driver_data_service.dart';
 import '../services/driver_shift_session_service.dart';
 import '../services/ride_swap_service.dart';
@@ -100,23 +101,22 @@ final activeRateProfileProvider = FutureProvider<DriverRateProfile?>((ref) async
   return null;
 });
 
-/// Billing/payment status from backend (platform fee state, due/paid dates, etc.).
+final driverBillingServiceProvider =
+    Provider<DriverBillingService>((_) => const DriverBillingService());
+
+/// Billing/payment status — Supabase ledger V1 (Phase E; no Go fallback).
 final driverBillingStatusProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
   await ref.watch(driverIdProvider.future);
-  try {
-    final data = await ref.read(driverApiProvider).fetchDriverStatus();
-    return data;
-  } catch (_) {
-    return null;
-  }
+  return ref.read(driverBillingServiceProvider).fetchBillingStatus();
 });
 
-/// Mollie / platform payment rows from GET `/api/driver/payments` (empty if none or route missing).
+/// Platform fee ledger — Supabase [fn_driver_billing_ledger_history] only.
 final driverPaymentLedgerProvider =
     FutureProvider<List<DriverPaymentLedgerItem>>((ref) async {
   await ref.watch(driverIdProvider.future);
-  final raw = await ref.read(driverApiProvider).fetchDriverPaymentLedger();
-  return raw.map(DriverPaymentLedgerItem.fromMap).toList();
+  final ledgerRows =
+      await ref.read(driverBillingServiceProvider).fetchLedgerHistory();
+  return ledgerRows.map(DriverPaymentLedgerItem.fromMap).toList();
 });
 
 /// Driver Hub badge count (open tickets + unresolved safety events). 10 = show "9+".

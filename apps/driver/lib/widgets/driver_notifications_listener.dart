@@ -4,12 +4,16 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/driver_notification_router.dart';
 import '../utils/driver_rider_cancelled_flow.dart';
+import '../models/driver_shift_handover_prompt_args.dart';
+import '../utils/driver_shift_handover_security_alert.dart';
+import '../utils/driver_taxi_session_revoked_flow.dart';
+import '../widgets/driver_shift_handover_prompt.dart';
 
-/// Polls backend driver notifications and surfaces new unread items in-app.
-/// This is needed for Flutter drivers (no PWA notification UI).
+/// Supabase-first in-app notifications with Realtime refetch + light backup poll.
 class DriverNotificationsListener extends ConsumerStatefulWidget {
   const DriverNotificationsListener({super.key});
 
@@ -21,7 +25,11 @@ class DriverNotificationsListener extends ConsumerStatefulWidget {
 class _DriverNotificationsListenerState
     extends ConsumerState<DriverNotificationsListener>
     with WidgetsBindingObserver {
-  Timer? _timer;
+  static const _notifications = AppNotificationsService();
+
+  Timer? _backupPollTimer;
+  Timer? _debounceTimer;
+  RealtimeChannel? _realtimeChannel;
   bool _busy = false;
   bool _notificationsDisabled = false;
   final Set<String> _handledIds = <String>{};
@@ -30,14 +38,17 @@ class _DriverNotificationsListenerState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _subscribeRealtime();
     _poll();
-    _timer = Timer.periodic(const Duration(seconds: 30), (_) => _poll());
+    _backupPollTimer = Timer.periodic(const Duration(seconds: 60), (_) => _poll());
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _timer?.cancel();
+    _backupPollTimer?.cancel();
+    _debounceTimer?.cancel();
+    _realtimeChannel?.unsubscribe();
     super.dispose();
   }
 
@@ -47,6 +58,22 @@ class _DriverNotificationsListenerState
     if (state == AppLifecycleState.resumed) {
       _poll();
     }
+  }
+
+  void _subscribeRealtime() {
+    final uid = HeyCabySupabase.client.auth.currentUser?.id;
+    if (uid == null || uid.isEmpty) return;
+
+    _realtimeChannel?.unsubscribe();
+    _realtimeChannel = _notifications.subscribeToTableChanges(
+      channelName: 'driver-notifications-$uid',
+      onChange: (_) => _schedulePoll(),
+    );
+  }
+
+  void _schedulePoll() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 400), _poll);
   }
 
   Future<void> _poll() async {
@@ -80,6 +107,51 @@ class _DriverNotificationsListenerState
           await api.markNotificationRead(n.id);
           continue;
         }
+        if (category == 'shift_handover') {
+          final requestId = n.data?['request_id']?.toString();
+          if (requestId != null && requestId.isNotEmpty && mounted) {
+            await showDriverShiftHandoverPrompt(
+              context: context,
+              ref: ref,
+              args: DriverShiftHandoverPromptArgs.fromNotification(
+                requestId: requestId,
+                data: n.data,
+                title: n.title,
+                body: n.body,
+              ),
+            );
+          }
+          await api.markNotificationRead(n.id);
+          continue;
+        }
+        if (category == 'shift_handover_fleet' ||
+            category == 'shift_handover_private_attempt') {
+          if (mounted) {
+            await showDriverShiftHandoverSecurityAlert(
+              context: context,
+              ref: ref,
+              category: category,
+              title: n.title,
+              body: n.body,
+            );
+          }
+          await api.markNotificationRead(n.id);
+          continue;
+        }
+        if (category == 'taxi_session_revoked') {
+          if (mounted) {
+            await handleDriverTaxiSessionRevoked(
+              context: context,
+              ref: ref,
+              plate: n.data?['plate']?.toString() ??
+                  n.data?['plate_normalized']?.toString(),
+              reason: n.data?['reason']?.toString(),
+              voluntaryEnd: n.data?['status']?.toString() == 'approved',
+            );
+          }
+          await api.markNotificationRead(n.id);
+          continue;
+        }
 
         if (!mounted) return;
         await dispatchDriverNotification(
@@ -94,7 +166,7 @@ class _DriverNotificationsListenerState
         await api.markNotificationRead(n.id);
       }
     } on DioException catch (e) {
-      // If this host/session is unauthorized for notifications, stop polling for this app session.
+      // Go fallback only: stop polling if unauthorized for legacy HTTP path.
       if (e.response?.statusCode == 401) {
         _notificationsDisabled = true;
       }

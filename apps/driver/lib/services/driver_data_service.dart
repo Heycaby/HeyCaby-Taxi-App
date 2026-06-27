@@ -2245,16 +2245,198 @@ class DriverDataService {
     }
   }
 
+  /// Step-up token after OTP or biometric re-verify (valid ~10 minutes, single use).
+  Future<Map<String, dynamic>?> issueShiftHandoverStepUp({
+    String method = 'otp',
+  }) async {
+    try {
+      final res = await _client.rpc(
+        'fn_driver_shift_handover_issue_step_up',
+        params: {'p_method': method},
+      );
+      if (res is Map<String, dynamic>) return res;
+      if (res is Map) return Map<String, dynamic>.from(res);
+      return null;
+    } catch (e) {
+      if (kDebugMode) debugPrint('issueShiftHandoverStepUp: $e');
+      return {'ok': false, 'error': e.toString()};
+    }
+  }
+
+  /// Secure shift handover — request (grace period before auto transfer).
+  Future<Map<String, dynamic>?> requestShiftHandover({
+    required String vehiclePlate,
+    required String vehiclePlateEntered,
+    required Map<String, dynamic> rdwSnapshot,
+    required String vehicleVerificationStatus,
+    required String stepUpId,
+  }) async {
+    try {
+      final res = await _client.rpc(
+        'fn_driver_shift_handover_request',
+        params: {
+          'p_vehicle_plate': vehiclePlate,
+          'p_vehicle_plate_entered': vehiclePlateEntered,
+          'p_rdw_snapshot': rdwSnapshot,
+          'p_vehicle_verification_status': vehicleVerificationStatus,
+          'p_step_up_id': stepUpId,
+        },
+      );
+      if (res is Map<String, dynamic>) return res;
+      if (res is Map) return Map<String, dynamic>.from(res);
+      return null;
+    } catch (e) {
+      if (kDebugMode) debugPrint('requestShiftHandover: $e');
+      return {'ok': false, 'error': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>?> fetchAdminShiftHandoverList({
+    int limit = 50,
+    int offset = 0,
+    String? plate,
+    String? status,
+  }) async {
+    try {
+      final res = await _client.rpc(
+        'fn_admin_shift_handover_list',
+        params: {
+          'p_limit': limit,
+          'p_offset': offset,
+          if (plate != null && plate.trim().isNotEmpty) 'p_plate': plate.trim(),
+          if (status != null && status.trim().isNotEmpty) 'p_status': status.trim(),
+        },
+      );
+      if (res is Map<String, dynamic>) return res;
+      if (res is Map) return Map<String, dynamic>.from(res);
+      return null;
+    } catch (e) {
+      if (kDebugMode) debugPrint('fetchAdminShiftHandoverList: $e');
+      return {'ok': false, 'error': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>?> fetchFleetHandoverVehicles() async {
+    try {
+      final res = await _client.rpc('fn_driver_fleet_handover_vehicles');
+      if (res is Map<String, dynamic>) return res;
+      if (res is Map) return Map<String, dynamic>.from(res);
+      return null;
+    } catch (e) {
+      if (kDebugMode) debugPrint('fetchFleetHandoverVehicles: $e');
+      return {'ok': false, 'error': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>?> fetchFleetHandoverAllowlist(
+    String vehicleId,
+  ) async {
+    try {
+      final res = await _client.rpc(
+        'fn_admin_shift_handover_allowlist_list',
+        params: {'p_vehicle_id': vehicleId},
+      );
+      if (res is Map<String, dynamic>) return res;
+      if (res is Map) return Map<String, dynamic>.from(res);
+      return null;
+    } catch (e) {
+      if (kDebugMode) debugPrint('fetchFleetHandoverAllowlist: $e');
+      return {'ok': false, 'error': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>?> searchFleetHandoverDrivers(
+    String vehicleId,
+    String query,
+  ) async {
+    try {
+      final res = await _client.rpc(
+        'fn_driver_fleet_handover_driver_search',
+        params: {
+          'p_vehicle_id': vehicleId,
+          'p_query': query,
+        },
+      );
+      if (res is Map<String, dynamic>) return res;
+      if (res is Map) return Map<String, dynamic>.from(res);
+      return null;
+    } catch (e) {
+      if (kDebugMode) debugPrint('searchFleetHandoverDrivers: $e');
+      return {'ok': false, 'error': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>?> setFleetHandoverAllowlist({
+    required String vehicleId,
+    required String driverId,
+    required bool add,
+  }) async {
+    try {
+      final res = await _client.rpc(
+        'fn_admin_shift_handover_allowlist_set',
+        params: {
+          'p_vehicle_id': vehicleId,
+          'p_driver_id': driverId,
+          'p_add': add,
+        },
+      );
+      if (res is Map<String, dynamic>) return res;
+      if (res is Map) return Map<String, dynamic>.from(res);
+      return null;
+    } catch (e) {
+      if (kDebugMode) debugPrint('setFleetHandoverAllowlist: $e');
+      return {'ok': false, 'error': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>?> pollShiftHandover(String requestId) async {
+    try {
+      final res = await _client.rpc(
+        'fn_driver_shift_handover_poll',
+        params: {'p_request_id': requestId},
+      );
+      if (res is Map<String, dynamic>) return res;
+      if (res is Map) return Map<String, dynamic>.from(res);
+      return null;
+    } catch (e) {
+      if (kDebugMode) debugPrint('pollShiftHandover: $e');
+      return {'ok': false, 'error': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>?> respondShiftHandover({
+    required String requestId,
+    required String action,
+  }) async {
+    try {
+      final res = await _client.rpc(
+        'fn_driver_shift_handover_respond',
+        params: {
+          'p_request_id': requestId,
+          'p_action': action,
+        },
+      );
+      if (res is Map<String, dynamic>) return res;
+      if (res is Map) return Map<String, dynamic>.from(res);
+      return null;
+    } catch (e) {
+      if (kDebugMode) debugPrint('respondShiftHandover: $e');
+      return {'ok': false, 'error': e.toString()};
+    }
+  }
+
   /// Onboarding V2 — claim plate via vehicle registry + session RPC.
   Future<Map<String, dynamic>?> claimVehiclePlateV2({
     required String vehiclePlate,
     required String vehiclePlateEntered,
     required Map<String, dynamic> rdwSnapshot,
     required String vehicleVerificationStatus,
-    bool sharedFleetAck = false,
+    bool confirmShiftStart = false,
+    @Deprecated('Use confirmShiftStart') bool sharedFleetAck = false,
   }) async {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) return null;
+    final ack = confirmShiftStart || sharedFleetAck;
     try {
       final res = await _client.rpc(
         'fn_driver_onboarding_v2_claim_plate',
@@ -2264,7 +2446,7 @@ class DriverDataService {
           'p_vehicle_plate_entered': vehiclePlateEntered,
           'p_rdw_snapshot': rdwSnapshot,
           'p_vehicle_verification_status': vehicleVerificationStatus,
-          'p_shared_fleet_ack': sharedFleetAck,
+          'p_shared_fleet_ack': ack,
         },
       );
       if (res is Map<String, dynamic>) return res;

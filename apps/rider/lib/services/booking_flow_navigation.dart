@@ -31,4 +31,17 @@ class BookingFlowNavigation {
     if (booking.paymentMethods.isEmpty) return '/payment';
     return '/summary';
   }
+
+  /// After marketplace post — skip summary when profile is complete and go live.
+  static String routeAfterMarketplacePost(BookingState booking) {
+    if (booking.pickup == null || booking.destination == null) {
+      return '/marketplace';
+    }
+    final name = booking.pickupContactName?.trim() ?? '';
+    final hasVehicle = (booking.vehicleCategory?.trim().isNotEmpty ?? false);
+    if (name.isEmpty || !hasVehicle || booking.paymentMethods.isEmpty) {
+      return routeAfterAddressesComplete(booking);
+    }
+    return '/marketplace-matching';
+  }
 }

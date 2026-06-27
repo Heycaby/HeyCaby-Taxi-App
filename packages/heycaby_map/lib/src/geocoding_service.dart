@@ -104,22 +104,40 @@ class GeocodingService {
         'https://api.mapbox.com/geocoding/v5/mapbox.places/$lng,$lat.json',
         queryParameters: {
           'access_token': _accessToken,
-          'types': 'address',
           'limit': 1,
         },
       );
       final features = res.data?['features'] as List<dynamic>? ?? [];
       if (features.isEmpty) return null;
       final feature = features.first as Map<String, dynamic>;
+      final neighborhood = _neighborhoodFromFeature(feature);
       return AddressResult(
         displayName: feature['text'] as String? ?? '',
         fullAddress: feature['place_name'] as String? ?? '',
         lat: lat,
         lng: lng,
+        city: neighborhood,
       );
     } catch (_) {
       return null;
     }
+  }
+
+  /// Neighbourhood or district label (e.g. De Pijp, Amsterdam-Zuid).
+  String? _neighborhoodFromFeature(Map<String, dynamic> feature) {
+    final context = feature['context'] as List<dynamic>?;
+    if (context == null) return null;
+    String? neighborhood;
+    String? place;
+    for (final raw in context) {
+      if (raw is! Map) continue;
+      final id = raw['id'] as String? ?? '';
+      final text = raw['text'] as String?;
+      if (text == null || text.isEmpty) continue;
+      if (id.startsWith('neighborhood.')) neighborhood = text;
+      if (id.startsWith('place.') || id.startsWith('locality.')) place = text;
+    }
+    return neighborhood ?? place;
   }
 
   AddressResult _suggestionToResult(Map<String, dynamic> s) {

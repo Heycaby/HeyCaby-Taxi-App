@@ -13,6 +13,7 @@ import '../router.dart';
 import '../services/driver_session_bootstrap.dart';
 import '../utils/driver_entry_navigation.dart';
 import '../utils/driver_session_revoked_flow.dart';
+import '../utils/driver_taxi_session_revoked_flow.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_login_hero.dart';
@@ -211,6 +212,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
       if (!mounted) return;
       resetSessionRevokeHandled();
+      resetTaxiSessionRevokeHandled();
       final driverId = await bootstrapDriverSessionAfterAuth(ref);
       ref.read(driverStateProvider.notifier).setUser(
             HeyCabySupabase.client.auth.currentUser!.id,
@@ -266,6 +268,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       if (!mounted) return true;
       resetSessionRevokeHandled();
+      resetTaxiSessionRevokeHandled();
 
       final driverId = await bootstrapDriverSessionAfterAuth(ref);
       final uid = HeyCabySupabase.client.auth.currentUser?.id;

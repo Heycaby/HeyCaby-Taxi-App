@@ -6,9 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/driver_strings.dart';
 import '../providers/driver_runtime_providers.dart';
 import '../screens/driver_runtime_gate_screen.dart';
-import '../services/driver_platform_fee_gate.dart';
 import '../services/location_service.dart';
 import '../utils/driver_network_guard.dart';
+import '../utils/driver_go_online_onboarding.dart';
 import 'driver_battery_optimization_prompt.dart';
 import 'driver_runtime_decision_mapper.dart';
 import 'driver_runtime_refresh.dart';
@@ -64,6 +64,10 @@ Future<DriverGoOnlineAttemptResult> attemptDriverGoOnline({
   required double latitude,
   required double longitude,
 }) async {
+  if (!await ensureDriverGoOnlineOnboarding(context, ref)) {
+    return const DriverGoOnlineAttemptResult.stopped();
+  }
+
   final runtimeService = ref.read(driverRuntimeServiceProvider);
 
   final readiness = await runtimeService.fetchReadiness();
@@ -95,10 +99,6 @@ Future<DriverGoOnlineAttemptResult> attemptDriverGoOnline({
           .toLowerCase()
           .contains('test mode');
     }
-  }
-  if (!skipBillingGate) {
-    final feeOk = await ensureDriverPlatformFeeAllowsOnline(context, ref);
-    if (!feeOk) return const DriverGoOnlineAttemptResult.stopped();
   }
 
   final v1Decision = await runtimeService.setStatusV1(

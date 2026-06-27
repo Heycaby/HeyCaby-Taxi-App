@@ -3,10 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/rider_notification_router.dart';
 
-/// Polls backend rider notifications and surfaces unread admin/system messages.
+/// Supabase-first in-app notifications with Realtime refetch + light backup poll.
 class RiderNotificationsListener extends ConsumerStatefulWidget {
   const RiderNotificationsListener({super.key});
 
@@ -18,7 +19,11 @@ class RiderNotificationsListener extends ConsumerStatefulWidget {
 class _RiderNotificationsListenerState
     extends ConsumerState<RiderNotificationsListener>
     with WidgetsBindingObserver {
-  Timer? _timer;
+  static const _notifications = AppNotificationsService();
+
+  Timer? _backupPollTimer;
+  Timer? _debounceTimer;
+  RealtimeChannel? _realtimeChannel;
   bool _busy = false;
   final Set<String> _handledIds = <String>{};
 
@@ -26,14 +31,17 @@ class _RiderNotificationsListenerState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _subscribeRealtime();
     _poll();
-    _timer = Timer.periodic(const Duration(seconds: 30), (_) => _poll());
+    _backupPollTimer = Timer.periodic(const Duration(seconds: 60), (_) => _poll());
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _timer?.cancel();
+    _backupPollTimer?.cancel();
+    _debounceTimer?.cancel();
+    _realtimeChannel?.unsubscribe();
     super.dispose();
   }
 
@@ -43,6 +51,22 @@ class _RiderNotificationsListenerState
     if (state == AppLifecycleState.resumed) {
       _poll();
     }
+  }
+
+  void _subscribeRealtime() {
+    final uid = HeyCabySupabase.client.auth.currentUser?.id;
+    if (uid == null || uid.isEmpty) return;
+
+    _realtimeChannel?.unsubscribe();
+    _realtimeChannel = _notifications.subscribeToTableChanges(
+      channelName: 'rider-notifications-$uid',
+      onChange: (_) => _schedulePoll(),
+    );
+  }
+
+  void _schedulePoll() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 400), _poll);
   }
 
   Future<void> _poll() async {

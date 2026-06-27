@@ -4,115 +4,17 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
+import 'package:heycaby_rider/models/rider_community_growth_models.dart';
+import 'package:heycaby_rider/providers/rider_invite_impact_provider.dart';
 import 'package:heycaby_rider/providers/rider_invite_url_provider.dart';
-import 'package:heycaby_rider/providers/rider_invited_friends_count_provider.dart';
-import 'package:heycaby_rider/widgets/taf_friends_invited_gauge.dart';
+import 'package:heycaby_rider/widgets/rider_grow_city_milestone_celebration.dart';
+import 'package:heycaby_rider/widgets/rider_grow_city_parts.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
-/// TAF — share the HeyCaby homepage so friends can join as riders (no personalized URL).
+/// **Grow Your City** — community growth hub (not a cash referral program).
 class RiderTellFriendScreen extends ConsumerWidget {
   const RiderTellFriendScreen({super.key});
-
-  static TextStyle _perkLine(
-    HeyCabyTypography typo,
-    HeyCabyColorTokens colors,
-  ) {
-    return typo.bodySmall.copyWith(
-      color: colors.textMid,
-      height: 1.35,
-    );
-  }
-
-  static Widget _perkRow(
-    String text,
-    HeyCabyTypography typo,
-    HeyCabyColorTokens colors,
-  ) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsetsDirectional.only(top: 3),
-            child: Icon(
-              Icons.check_rounded,
-              size: 18,
-              color: colors.accent,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text, style: _perkLine(typo, colors))),
-        ],
-      ),
-    );
-  }
-
-  static void _showInviteQrSheet(
-    BuildContext context,
-    String qrUrl,
-    AppLocalizations l10n,
-    HeyCabyColorTokens colors,
-    HeyCabyTypography typo,
-  ) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: colors.card,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: colors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Text(
-                l10n.tellAFriendQrTitle,
-                textAlign: TextAlign.center,
-                style: typo.titleMedium.copyWith(
-                  color: colors.text,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 20),
-              QrImageView(
-                data: qrUrl.trim(),
-                size: 220,
-                backgroundColor: colors.card,
-                eyeStyle: QrEyeStyle(
-                  eyeShape: QrEyeShape.square,
-                  color: colors.text,
-                ),
-                dataModuleStyle: QrDataModuleStyle(
-                  dataModuleShape: QrDataModuleShape.square,
-                  color: colors.text,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                l10n.tellAFriendQrHint,
-                textAlign: TextAlign.center,
-                style: typo.bodySmall.copyWith(color: colors.textMid),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -121,6 +23,9 @@ class RiderTellFriendScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final identityAsync = ref.watch(riderIdentityProvider);
     final shareUrl = ref.watch(riderInviteShareUrlProvider);
+    final shareReady = ref.watch(riderInviteShareReadyProvider);
+    final sharingAppStore = ref.watch(riderSharingAppStoreProvider);
+    final cityStatsAsync = ref.watch(communityGrowthStatsProvider);
     final bottomPad =
         MediaQuery.paddingOf(context).bottom + HeyCabySpacing.sectionMedium;
 
@@ -150,11 +55,11 @@ class RiderTellFriendScreen extends ConsumerWidget {
         data: (identity) {
           final id = identity.identityId;
           final hasRef = id != null && id.isNotEmpty;
-          final countAsync = hasRef
-              ? ref.watch(riderInvitedFriendsCountProvider)
-              : const AsyncValue<int>.data(0);
+          final impactAsync = hasRef
+              ? ref.watch(riderInviteImpactProvider)
+              : const AsyncValue.data(RiderInviteImpact.empty);
 
-          return SingleChildScrollView(
+          final content = SingleChildScrollView(
             padding: EdgeInsetsDirectional.fromSTEB(
               HeyCabySpacing.screenEdge,
               HeyCabySpacing.component,
@@ -164,34 +69,88 @@ class RiderTellFriendScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Center(
-                  child: countAsync.when(
-                    data: (n) => TafFriendsInvitedGauge(
-                      count: n,
-                      loading: false,
-                      colors: colors,
-                      typo: typo,
-                      l10n: l10n,
-                    ),
-                    loading: () => TafFriendsInvitedGauge(
-                      count: 0,
-                      loading: true,
-                      colors: colors,
-                      typo: typo,
-                      l10n: l10n,
-                    ),
-                    error: (_, __) => TafFriendsInvitedGauge(
-                      count: 0,
-                      loading: false,
-                      colors: colors,
-                      typo: typo,
-                      l10n: l10n,
+                cityStatsAsync.when(
+                  data: (stats) => RiderGrowCityHero(
+                    regionName: stats.regionName,
+                    colors: colors,
+                    typo: typo,
+                    l10n: l10n,
+                  ),
+                  loading: () => RiderGrowCityHero(
+                    regionName: 'Netherlands',
+                    colors: colors,
+                    typo: typo,
+                    l10n: l10n,
+                  ),
+                  error: (_, __) => RiderGrowCityHero(
+                    regionName: 'Netherlands',
+                    colors: colors,
+                    typo: typo,
+                    l10n: l10n,
+                  ),
+                ).animate().fadeIn(duration: 260.ms, curve: Curves.easeOut),
+                const SizedBox(height: HeyCabySpacing.sectionMedium),
+                cityStatsAsync.when(
+                  data: (stats) => RiderCommunityProgressCard(
+                    stats: stats,
+                    colors: colors,
+                    typo: typo,
+                    l10n: l10n,
+                  ),
+                  loading: () => const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: CircularProgressIndicator(),
                     ),
                   ),
-                )
-                    .animate()
-                    .fadeIn(duration: 280.ms, curve: Curves.easeOut),
-                SizedBox(height: HeyCabySpacing.component),
+                  error: (_, __) => RiderCommunityProgressCard(
+                    stats: CommunityGrowthStats.empty,
+                    colors: colors,
+                    typo: typo,
+                    l10n: l10n,
+                  ),
+                ).animate().fadeIn(
+                      duration: 300.ms,
+                      delay: 60.ms,
+                      curve: Curves.easeOut,
+                    ),
+                const SizedBox(height: HeyCabySpacing.sectionMedium),
+                impactAsync.when(
+                  data: (impact) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      RiderYourImpactCard(
+                        impact: impact,
+                        loading: false,
+                        colors: colors,
+                        typo: typo,
+                        l10n: l10n,
+                      ),
+                      const SizedBox(height: HeyCabySpacing.component),
+                      RiderCommunityBadgesRow(
+                        joined: impact.joined,
+                        colors: colors,
+                        typo: typo,
+                        l10n: l10n,
+                      ),
+                    ],
+                  ),
+                  loading: () => RiderYourImpactCard(
+                    impact: RiderInviteImpact.empty,
+                    loading: true,
+                    colors: colors,
+                    typo: typo,
+                    l10n: l10n,
+                  ),
+                  error: (_, __) => RiderYourImpactCard(
+                    impact: RiderInviteImpact.empty,
+                    loading: false,
+                    colors: colors,
+                    typo: typo,
+                    l10n: l10n,
+                  ),
+                ),
+                const SizedBox(height: HeyCabySpacing.sectionMedium),
                 Text(
                   l10n.tellAFriendSharePrompt,
                   textAlign: TextAlign.center,
@@ -200,11 +159,12 @@ class RiderTellFriendScreen extends ConsumerWidget {
                     height: 1.4,
                   ),
                 ),
-                SizedBox(height: HeyCabySpacing.sectionMedium),
+                const SizedBox(height: HeyCabySpacing.sectionMedium),
                 Builder(
                   builder: (ctx) {
                     return FilledButton.icon(
-                      onPressed: () async {
+                      onPressed: shareReady
+                          ? () async {
                               final box = ctx.findRenderObject() as RenderBox?;
                               final origin = box == null
                                   ? null
@@ -223,13 +183,13 @@ class RiderTellFriendScreen extends ConsumerWidget {
                                 if (!ctx.mounted) return;
                                 ScaffoldMessenger.of(ctx).showSnackBar(
                                   SnackBar(
-                                    content: Text(
-                                      l10n.tellAFriendShareDoneSnackbar,
-                                    ),
+                                    content:
+                                        Text(l10n.tellAFriendShareDoneSnackbar),
                                   ),
                                 );
                               }
-                            },
+                            }
+                          : null,
                       icon: const Icon(Icons.ios_share_rounded),
                       label: Text(l10n.tellAFriendShareLink),
                       style: FilledButton.styleFrom(
@@ -245,67 +205,41 @@ class RiderTellFriendScreen extends ConsumerWidget {
                   },
                 ),
                 const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () async {
-                          await HapticService.selectionClick();
-                          await Clipboard.setData(
-                            ClipboardData(text: shareUrl),
-                          );
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(l10n.tellAFriendLinkCopied),
-                            ),
-                          );
-                        },
-                        icon: Icon(Icons.link_rounded, color: colors.accent),
-                        label: Text(l10n.tellAFriendCopyLink),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 14,
-                            horizontal: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: shareReady
+                        ? () async {
+                            await HapticService.selectionClick();
+                            await Clipboard.setData(
+                              ClipboardData(text: shareUrl),
+                            );
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(l10n.tellAFriendLinkCopied),
+                              ),
+                            );
+                          }
+                        : null,
+                    icon: Icon(Icons.link_rounded, color: colors.accent),
+                    label: Text(l10n.tellAFriendCopyLink),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 14,
+                        horizontal: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () async {
-                                await HapticService.lightTap();
-                                if (!context.mounted) return;
-                                _showInviteQrSheet(
-                                  context,
-                                  kAppQrMarketingHomeUrl,
-                                  l10n,
-                                  colors,
-                                  typo,
-                                );
-                              },
-                        icon: Icon(Icons.qr_code_2_rounded, color: colors.accent),
-                        label: Text(l10n.tellAFriendShowQr),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 14,
-                            horizontal: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-                SizedBox(height: HeyCabySpacing.sectionMedium),
+                const SizedBox(height: HeyCabySpacing.sectionMedium),
                 Text(
-                  l10n.tellAFriendInviteLinkLabel,
+                  sharingAppStore
+                      ? l10n.tellAFriendInviteLinkLabel
+                      : l10n.tellAFriendWebsiteLinkLabel,
                   style: typo.labelLarge.copyWith(
                     color: colors.text,
                     fontWeight: FontWeight.w700,
@@ -331,8 +265,8 @@ class RiderTellFriendScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                if (!hasRef) ...[
-                  SizedBox(height: HeyCabySpacing.component),
+                if (!shareReady) ...[
+                  const SizedBox(height: HeyCabySpacing.component),
                   Text(
                     l10n.tellAFriendLinkUnavailable,
                     style: typo.bodyMedium.copyWith(
@@ -346,48 +280,13 @@ class RiderTellFriendScreen extends ConsumerWidget {
                     style: typo.bodySmall.copyWith(color: colors.textSoft),
                   ),
                 ],
-                SizedBox(height: HeyCabySpacing.section),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: colors.surface.withValues(alpha: 0.75),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: colors.border.withValues(alpha: 0.65),
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsetsDirectional.fromSTEB(
-                      14,
-                      12,
-                      14,
-                      10,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.tellAFriendRewardTitle,
-                          style: typo.titleSmall.copyWith(
-                            color: colors.text,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        _perkRow(
-                          l10n.tellAFriendRewardBullet1,
-                          typo,
-                          colors,
-                        ),
-                        _perkRow(
-                          l10n.tellAFriendRewardBullet2,
-                          typo,
-                          colors,
-                        ),
-                      ],
-                    ),
-                  ),
+                const SizedBox(height: HeyCabySpacing.section),
+                RiderGrowCityWhyHelpCard(
+                  colors: colors,
+                  typo: typo,
+                  l10n: l10n,
                 ),
-                SizedBox(height: HeyCabySpacing.component),
+                const SizedBox(height: HeyCabySpacing.component),
                 Text(
                   l10n.tellAFriendSocialProof,
                   textAlign: TextAlign.center,
@@ -398,6 +297,18 @@ class RiderTellFriendScreen extends ConsumerWidget {
                 ),
               ],
             ),
+          );
+
+          return cityStatsAsync.when(
+            data: (stats) => RiderGrowCityMilestoneCelebration(
+              stats: stats,
+              colors: colors,
+              typo: typo,
+              l10n: l10n,
+              child: content,
+            ),
+            loading: () => content,
+            error: (_, __) => content,
           );
         },
         loading: () => Center(

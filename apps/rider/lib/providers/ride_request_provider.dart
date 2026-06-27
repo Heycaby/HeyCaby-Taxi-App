@@ -408,6 +408,7 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
         if (booking.paymentMethods.isNotEmpty)
           'payment_methods': booking.paymentMethods,
         'favorites_first': booking.favoritesFirst,
+        'favorites_only': booking.favoritesOnly,
       };
 
       // Save booking name progressively if newly entered

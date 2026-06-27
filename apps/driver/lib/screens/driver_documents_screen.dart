@@ -11,6 +11,7 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
 import '../providers/driver_runtime_providers.dart';
+import '../utils/driver_go_online_onboarding.dart';
 import '../utils/driver_runtime_refresh.dart';
 import '../services/driver_data_service.dart';
 import '../utils/chauffeurspas_validation.dart';
@@ -225,6 +226,13 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
     });
     if (ok) {
       _refreshComplianceCaches();
+      if (driverGoOnlineResumeRequested(GoRouterState.of(context))) {
+        await continueDriverGoOnlineOnboarding(
+          context: context,
+          ref: ref,
+          resumeGoOnline: true,
+        );
+      }
     }
   }
 
@@ -462,6 +470,13 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
       await _showIndemnificationPassedDialog();
       if (!mounted) return;
       _refreshComplianceCaches();
+      if (driverGoOnlineResumeRequested(GoRouterState.of(context))) {
+        await continueDriverGoOnlineOnboarding(
+          context: context,
+          ref: ref,
+          resumeGoOnline: true,
+        );
+      }
     }
   }
 

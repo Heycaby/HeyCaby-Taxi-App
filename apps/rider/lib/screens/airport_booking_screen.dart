@@ -1,5 +1,3 @@
-import 'dart:async' show unawaited;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,10 +6,7 @@ import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../constants/benelux_airports.dart';
-import '../providers/booking_provider.dart';
-import '../providers/local_recent_addresses_provider.dart';
-import '../providers/recent_destinations_provider.dart';
-import '../services/booking_flow_navigation.dart';
+import '../services/booking_airport_selection.dart';
 
 /// Pick a Benelux airport as destination for a fast airport drop-off flow.
 class AirportBookingScreen extends ConsumerStatefulWidget {
@@ -50,27 +45,11 @@ class _AirportBookingScreenState extends ConsumerState<AirportBookingScreen> {
   }
 
   Future<void> _selectAirport(BeneluxAirport a) async {
-    ref.read(bookingProvider.notifier).setInstant();
-    final dest = a.toAddressResult();
-    ref.read(bookingProvider.notifier).setDestination(dest);
-    await ref.read(localRecentAddressesProvider.notifier).record(dest);
-    unawaited(
-      ref.read(recentDestinationsProvider.notifier).recordDestination(
-            fullAddress: dest.fullAddress,
-            lat: dest.lat,
-            lng: dest.lng,
-          ),
+    await startBookingWithAirportDestination(
+      ref: ref,
+      context: context,
+      airport: a,
     );
-    await BookingFlowNavigation.prefillBookingFromIdentity(ref);
-    if (!mounted) return;
-    final booking = ref.read(bookingProvider);
-    if (booking.pickup == null || booking.destination == null) {
-      context.push('/search');
-    } else {
-      context.push(
-        BookingFlowNavigation.routeAfterAddressesComplete(booking),
-      );
-    }
   }
 
   @override

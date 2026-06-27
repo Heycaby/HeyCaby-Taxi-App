@@ -1,17 +1,23 @@
+import '../constants/driver_progressive_verification.dart';
 import '../l10n/driver_strings.dart';
 import '../models/driver_runtime_models.dart';
 import '../screens/driver_runtime_gate_screen.dart';
 
 class DriverRuntimeDecisionMapper {
   static DriverRuntimeGateArgs fromReadiness(DriverReadinessState readiness) {
+    final blocking = readiness.missingItems;
+    final body = readiness.completedRides < kDriverProgressiveVerificationStartsAt
+        ? DriverStrings.runtimeGoOnlineEarlyOnboardingBody
+        : (readiness.statusMessage ?? DriverStrings.runtimeComplianceBlockedBody);
+
     return DriverRuntimeGateArgs(
       title: DriverStrings.runtimeComplianceBlockedTitle,
-      body: readiness.statusMessage ?? DriverStrings.runtimeComplianceBlockedBody,
+      body: body,
       ctaLabel: DriverStrings.runtimeOpenDocuments,
       ctaRoute: '/driver/documents',
       secondaryLabel: DriverStrings.me,
       secondaryRoute: '/driver/me',
-      checklist: readiness.checklist,
+      checklist: blocking,
     );
   }
 

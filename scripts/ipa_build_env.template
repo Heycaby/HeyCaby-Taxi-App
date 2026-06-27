@@ -30,6 +30,10 @@ MAPBOX_ACCESS_TOKEN=
 # Optional — public web origin for share links / deep links (default: https://heycaby.nl)
 # APP_PUBLIC_WEB_ORIGIN=
 
+# Grow / invite share links — App Store product pages (required for TAF; not heycaby.nl):
+# RIDER_IOS_APP_STORE_URL=https://apps.apple.com/app/id6761512910
+# DRIVER_IOS_APP_STORE_URL=https://apps.apple.com/app/id6761512563
+
 # Rider — per-theme Mapbox style URIs (HeyCaby themes; mapbox://…). Empty = Standard fallback.
 # MAPBOX_STYLE_DAYLIGHT=
 # MAPBOX_STYLE_FRESH=

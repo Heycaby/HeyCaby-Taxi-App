@@ -6,11 +6,20 @@ import '../models/rider_vehicle_category.dart';
 
 enum BookingMode { instant, marketplace, scheduled }
 
+/// Who receives a marketplace trip request (maps to ride_requests flags).
+enum MarketplaceDriverAudience {
+  everyone,
+  myDriversFirst,
+  myDriversOnly,
+}
+
 class BookingState {
   final BookingMode mode;
   final AddressResult? pickup;
   final AddressResult? destination;
   final bool favoritesFirst;
+  final bool favoritesOnly;
+  final MarketplaceDriverAudience marketplaceDriverAudience;
   final DateTime? scheduledAt;
   final String? pickupContactName;
   final String? paymentMethod;
@@ -37,6 +46,8 @@ class BookingState {
     this.pickup,
     this.destination,
     this.favoritesFirst = false,
+    this.favoritesOnly = false,
+    this.marketplaceDriverAudience = MarketplaceDriverAudience.everyone,
     this.scheduledAt,
     this.pickupContactName,
     this.paymentMethod,
@@ -57,6 +68,8 @@ class BookingState {
     AddressResult? pickup,
     AddressResult? destination,
     bool? favoritesFirst,
+    bool? favoritesOnly,
+    MarketplaceDriverAudience? marketplaceDriverAudience,
     DateTime? scheduledAt,
     String? pickupContactName,
     Object? paymentMethod = _sentinel,
@@ -76,6 +89,9 @@ class BookingState {
         pickup: pickup ?? this.pickup,
         destination: destination ?? this.destination,
         favoritesFirst: favoritesFirst ?? this.favoritesFirst,
+        favoritesOnly: favoritesOnly ?? this.favoritesOnly,
+        marketplaceDriverAudience:
+            marketplaceDriverAudience ?? this.marketplaceDriverAudience,
         scheduledAt: scheduledAt ?? this.scheduledAt,
         pickupContactName: pickupContactName ?? this.pickupContactName,
         paymentMethod: paymentMethod == _sentinel
@@ -143,6 +159,15 @@ class BookingNotifier extends Notifier<BookingState> {
 
   void setFavoritesFirst(bool value) =>
       state = state.copyWith(favoritesFirst: value);
+
+  void setMarketplaceDriverAudience(MarketplaceDriverAudience audience) {
+    state = state.copyWith(
+      marketplaceDriverAudience: audience,
+      favoritesFirst: audience == MarketplaceDriverAudience.myDriversFirst ||
+          audience == MarketplaceDriverAudience.myDriversOnly,
+      favoritesOnly: audience == MarketplaceDriverAudience.myDriversOnly,
+    );
+  }
 
   void setPetFriendly(bool value) => state = state.copyWith(petFriendly: value);
 

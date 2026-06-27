@@ -196,6 +196,84 @@ abstract class AppLocalizations {
   /// **'Where to?'**
   String get whereTo;
 
+  /// No description provided for @homeDestinationPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Where do you want to go?'**
+  String get homeDestinationPrompt;
+
+  /// No description provided for @homeContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get homeContinue;
+
+  /// No description provided for @homeSmartOptionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How do you want to ride?'**
+  String get homeSmartOptionsTitle;
+
+  /// No description provided for @homeBestPriceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Marketplace'**
+  String get homeBestPriceTitle;
+
+  /// No description provided for @homeBestPriceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Drivers compete for your trip.'**
+  String get homeBestPriceSubtitle;
+
+  /// No description provided for @homeScheduleLaterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule later'**
+  String get homeScheduleLaterTitle;
+
+  /// No description provided for @homeScheduleLaterSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a pickup time that works for you.'**
+  String get homeScheduleLaterSubtitle;
+
+  /// No description provided for @homePopularAirportsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Popular'**
+  String get homePopularAirportsTitle;
+
+  /// No description provided for @homeRecentTrips.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent trips'**
+  String get homeRecentTrips;
+
+  /// No description provided for @homeAirportChipSchiphol.
+  ///
+  /// In en, this message translates to:
+  /// **'Schiphol'**
+  String get homeAirportChipSchiphol;
+
+  /// No description provided for @homeAirportChipRotterdam.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotterdam Airport'**
+  String get homeAirportChipRotterdam;
+
+  /// No description provided for @homeAirportChipEindhoven.
+  ///
+  /// In en, this message translates to:
+  /// **'Eindhoven'**
+  String get homeAirportChipEindhoven;
+
+  /// No description provided for @homeAirportChipBrussels.
+  ///
+  /// In en, this message translates to:
+  /// **'Brussels Airport'**
+  String get homeAirportChipBrussels;
+
   /// No description provided for @pickup.
   ///
   /// In en, this message translates to:
@@ -505,25 +583,25 @@ abstract class AppLocalizations {
   /// No description provided for @tellAFriendNavLabel.
   ///
   /// In en, this message translates to:
-  /// **'TAF'**
+  /// **'Community'**
   String get tellAFriendNavLabel;
 
   /// No description provided for @tellAFriendNavSemanticLabel.
   ///
   /// In en, this message translates to:
-  /// **'Invite friends — grow your ride circle'**
+  /// **'Grow your city — build the HeyCaby community'**
   String get tellAFriendNavSemanticLabel;
 
   /// No description provided for @tellAFriendScreenTitle.
   ///
   /// In en, this message translates to:
-  /// **'Invite friends'**
+  /// **'Grow Your City'**
   String get tellAFriendScreenTitle;
 
   /// No description provided for @tellAFriendSharePrompt.
   ///
   /// In en, this message translates to:
-  /// **'Send your link. Friends join free — you’ll see them here when they sign up.'**
+  /// **'Share HeyCaby with people who need rides in your city. Every new rider helps local taxi drivers stay busy.'**
   String get tellAFriendSharePrompt;
 
   /// No description provided for @tellAFriendHeroTitle.
@@ -565,38 +643,44 @@ abstract class AppLocalizations {
   /// No description provided for @tellAFriendRewardTitle.
   ///
   /// In en, this message translates to:
-  /// **'Why it helps'**
+  /// **'Why help?'**
   String get tellAFriendRewardTitle;
 
   /// No description provided for @tellAFriendRewardBullet1.
   ///
   /// In en, this message translates to:
-  /// **'More riders nearby can speed up matching.'**
+  /// **'More riders nearby'**
   String get tellAFriendRewardBullet1;
 
   /// No description provided for @tellAFriendRewardBullet2.
   ///
   /// In en, this message translates to:
-  /// **'Perks may unlock as your circle grows.'**
+  /// **'More ride requests for drivers'**
   String get tellAFriendRewardBullet2;
 
   /// No description provided for @tellAFriendRewardBullet3.
   ///
   /// In en, this message translates to:
-  /// **'Weekend discounts when available'**
+  /// **'Shorter waiting times'**
   String get tellAFriendRewardBullet3;
 
   /// No description provided for @tellAFriendRewardBullet4.
   ///
   /// In en, this message translates to:
-  /// **'Helps drivers see demand in your area'**
+  /// **'Stronger taxi community'**
   String get tellAFriendRewardBullet4;
 
   /// No description provided for @tellAFriendInviteLinkLabel.
   ///
   /// In en, this message translates to:
-  /// **'Your link'**
+  /// **'App Store link'**
   String get tellAFriendInviteLinkLabel;
+
+  /// No description provided for @tellAFriendWebsiteLinkLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Share link'**
+  String get tellAFriendWebsiteLinkLabel;
 
   /// No description provided for @tellAFriendLinkResolving.
   ///
@@ -613,13 +697,13 @@ abstract class AppLocalizations {
   /// No description provided for @tellAFriendShareLink.
   ///
   /// In en, this message translates to:
-  /// **'Share invite'**
+  /// **'Share HeyCaby'**
   String get tellAFriendShareLink;
 
   /// No description provided for @tellAFriendShowQr.
   ///
   /// In en, this message translates to:
-  /// **'Show QR code'**
+  /// **'QR code'**
   String get tellAFriendShowQr;
 
   /// No description provided for @tellAFriendQrTitle.
@@ -631,19 +715,19 @@ abstract class AppLocalizations {
   /// No description provided for @tellAFriendQrHint.
   ///
   /// In en, this message translates to:
-  /// **'Scanning opens heycaby.nl in the browser. Use Share or Copy for your personal invite link.'**
+  /// **'Scanning opens the HeyCaby Rider app on the App Store. Use Share or Copy to send your download link.'**
   String get tellAFriendQrHint;
 
   /// No description provided for @tellAFriendSocialProof.
   ///
   /// In en, this message translates to:
-  /// **'Thanks for helping HeyCaby grow locally.'**
+  /// **'Thanks for helping build the largest independent taxi network in the Netherlands.'**
   String get tellAFriendSocialProof;
 
   /// No description provided for @tellAFriendShareDoneSnackbar.
   ///
   /// In en, this message translates to:
-  /// **'Invite sent — thanks for spreading the word!'**
+  /// **'Thanks for sharing HeyCaby!'**
   String get tellAFriendShareDoneSnackbar;
 
   /// No description provided for @tellAFriendLinkCopied.
@@ -655,26 +739,218 @@ abstract class AppLocalizations {
   /// No description provided for @tellAFriendShareSubject.
   ///
   /// In en, this message translates to:
-  /// **'Join me on HeyCaby'**
+  /// **'Join HeyCaby — grow your city'**
   String get tellAFriendShareSubject;
 
   /// No description provided for @tellAFriendShareMessage.
   ///
   /// In en, this message translates to:
-  /// **'I\'m building my ride circle on HeyCaby — want in? Tap my invite:'**
+  /// **'Download HeyCaby Rider — the independent taxi app for the Netherlands:'**
   String get tellAFriendShareMessage;
 
   /// No description provided for @tellAFriendLinkUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Link not ready yet'**
+  /// **'App Store link not configured'**
   String get tellAFriendLinkUnavailable;
 
   /// No description provided for @tellAFriendLinkUnavailableHint.
   ///
   /// In en, this message translates to:
-  /// **'Open this screen again in a moment, or restart the app.'**
+  /// **'Add RIDER_IOS_APP_STORE_URL to your build environment, then rebuild the app.'**
   String get tellAFriendLinkUnavailableHint;
+
+  /// No description provided for @growCityHeroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Grow HeyCaby in {cityName}'**
+  String growCityHeroTitle(String cityName);
+
+  /// No description provided for @growCityHeroBody1.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite friends and family who need reliable taxis in your city.'**
+  String get growCityHeroBody1;
+
+  /// No description provided for @growCityHeroBody2.
+  ///
+  /// In en, this message translates to:
+  /// **'More riders nearby means more ride requests for local drivers and shorter waits for everyone.'**
+  String get growCityHeroBody2;
+
+  /// No description provided for @growCityHeroMission.
+  ///
+  /// In en, this message translates to:
+  /// **'Help us build the largest independent taxi network in the Netherlands.'**
+  String get growCityHeroMission;
+
+  /// No description provided for @growCityCommunityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{cityName} community'**
+  String growCityCommunityTitle(String cityName);
+
+  /// No description provided for @growCityDriversLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Drivers'**
+  String get growCityDriversLabel;
+
+  /// No description provided for @growCityRidersLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Riders'**
+  String get growCityRidersLabel;
+
+  /// No description provided for @growCityMonthlyRidersLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly riders'**
+  String get growCityMonthlyRidersLabel;
+
+  /// No description provided for @growCityMonthlyDriversLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly drivers'**
+  String get growCityMonthlyDriversLabel;
+
+  /// No description provided for @growCityMilestoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Next milestone'**
+  String get growCityMilestoneLabel;
+
+  /// No description provided for @growCityDriverCapLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver network cap'**
+  String get growCityDriverCapLabel;
+
+  /// No description provided for @growCityRiderCapLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly rider vision'**
+  String get growCityRiderCapLabel;
+
+  /// No description provided for @growCityProgressCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} / {milestone}'**
+  String growCityProgressCount(String current, String milestone);
+
+  /// No description provided for @growCityMilestoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{remaining} monthly riders until we celebrate {milestone}.'**
+  String growCityMilestoneHint(String remaining, String milestone);
+
+  /// No description provided for @growCityFinalGoalReached.
+  ///
+  /// In en, this message translates to:
+  /// **'We reached 1 million monthly riders in the Netherlands. Thank you for growing HeyCaby with us.'**
+  String get growCityFinalGoalReached;
+
+  /// No description provided for @growCityMilestoneCelebrationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Milestone reached!'**
+  String get growCityMilestoneCelebrationTitle;
+
+  /// No description provided for @growCityMilestoneCelebrationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The HeyCaby community just hit {milestone} monthly riders in the Netherlands. Thank you for helping us grow — on to the next milestone!'**
+  String growCityMilestoneCelebrationBody(String milestone);
+
+  /// No description provided for @growCityMilestoneCelebrationCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Let\'s keep growing'**
+  String get growCityMilestoneCelebrationCta;
+
+  /// No description provided for @growCityImpactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your impact'**
+  String get growCityImpactTitle;
+
+  /// No description provided for @growCityPeopleInvited.
+  ///
+  /// In en, this message translates to:
+  /// **'Riders invited'**
+  String get growCityPeopleInvited;
+
+  /// No description provided for @growCityJoined.
+  ///
+  /// In en, this message translates to:
+  /// **'Joined'**
+  String get growCityJoined;
+
+  /// No description provided for @growCityCompletedRides.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed rides'**
+  String get growCityCompletedRides;
+
+  /// No description provided for @growCityBadgesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Community badges'**
+  String get growCityBadgesTitle;
+
+  /// No description provided for @growCityBadgeSupporter.
+  ///
+  /// In en, this message translates to:
+  /// **'Community Supporter'**
+  String get growCityBadgeSupporter;
+
+  /// No description provided for @growCityBadgeBuilder.
+  ///
+  /// In en, this message translates to:
+  /// **'Community Builder'**
+  String get growCityBadgeBuilder;
+
+  /// No description provided for @growCityBadgeAmbassador.
+  ///
+  /// In en, this message translates to:
+  /// **'City Ambassador'**
+  String get growCityBadgeAmbassador;
+
+  /// No description provided for @growCityBadgeTopPromoter.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Promoter'**
+  String get growCityBadgeTopPromoter;
+
+  /// No description provided for @growCityWhyHelpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Why help?'**
+  String get growCityWhyHelpTitle;
+
+  /// No description provided for @growCityWhyHelpBullet1.
+  ///
+  /// In en, this message translates to:
+  /// **'More riders nearby'**
+  String get growCityWhyHelpBullet1;
+
+  /// No description provided for @growCityWhyHelpBullet2.
+  ///
+  /// In en, this message translates to:
+  /// **'More work for local taxi drivers'**
+  String get growCityWhyHelpBullet2;
+
+  /// No description provided for @growCityWhyHelpBullet3.
+  ///
+  /// In en, this message translates to:
+  /// **'Shorter waiting times'**
+  String get growCityWhyHelpBullet3;
+
+  /// No description provided for @growCityWhyHelpBullet4.
+  ///
+  /// In en, this message translates to:
+  /// **'Stronger taxi community'**
+  String get growCityWhyHelpBullet4;
 
   /// No description provided for @iosUpdateRequiredTitle.
   ///
@@ -736,22 +1012,34 @@ abstract class AppLocalizations {
   /// **'My rides'**
   String get myRides;
 
+  /// No description provided for @myDrivers.
+  ///
+  /// In en, this message translates to:
+  /// **'My Drivers'**
+  String get myDrivers;
+
+  /// No description provided for @myDriversHomeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride with someone you trust'**
+  String get myDriversHomeSubtitle;
+
   /// No description provided for @favouriteDrivers.
   ///
   /// In en, this message translates to:
-  /// **'Favourite drivers'**
+  /// **'My Drivers'**
   String get favouriteDrivers;
 
   /// No description provided for @favouriteDriversSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Book a driver you trust'**
+  /// **'Your trusted driver network'**
   String get favouriteDriversSubtitle;
 
   /// No description provided for @favouriteDriversSubtitleWithCount.
   ///
   /// In en, this message translates to:
-  /// **'{count} favourite drivers'**
+  /// **'{count} drivers in your network'**
   String favouriteDriversSubtitleWithCount(int count);
 
   /// No description provided for @noFavouritesYet.
@@ -802,10 +1090,400 @@ abstract class AppLocalizations {
   /// **'Marketplace'**
   String get marketplace;
 
+  /// No description provided for @marketplaceTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Drivers compete for your trip.'**
+  String get marketplaceTagline;
+
+  /// No description provided for @makeAnOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'Marketplace'**
+  String get makeAnOffer;
+
+  /// No description provided for @marketplacePostRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Post request'**
+  String get marketplacePostRequest;
+
+  /// No description provided for @marketplaceOfferHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose what you want to pay.'**
+  String get marketplaceOfferHeadline;
+
+  /// No description provided for @marketplaceOfferExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Drivers already travelling in your direction can accept your offer or suggest another price.'**
+  String get marketplaceOfferExplanation;
+
+  /// No description provided for @marketplaceDriversAcceptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drivers can accept, counter, or ignore — HeyCaby does not set the fare.'**
+  String get marketplaceDriversAcceptHint;
+
+  /// No description provided for @marketplaceDriversOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} drivers online'**
+  String marketplaceDriversOnline(int count);
+
+  /// No description provided for @marketplaceWhereAreYouGoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Where are you going?'**
+  String get marketplaceWhereAreYouGoing;
+
+  /// No description provided for @marketplaceYouAreHere.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re here'**
+  String get marketplaceYouAreHere;
+
+  /// No description provided for @marketplaceYouAreHereIn.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re here in {area}'**
+  String marketplaceYouAreHereIn(String area);
+
+  /// No description provided for @marketplaceYouAreHereOn.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re on {street}'**
+  String marketplaceYouAreHereOn(String street);
+
+  /// No description provided for @marketplaceLocatingYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding your location…'**
+  String get marketplaceLocatingYou;
+
+  /// No description provided for @marketplaceLocationNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on location to see where you are'**
+  String get marketplaceLocationNeeded;
+
+  /// No description provided for @marketplaceNameYourPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Name your price'**
+  String get marketplaceNameYourPrice;
+
+  /// No description provided for @marketplaceNameYourPriceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Drivers will see your offer and respond.'**
+  String get marketplaceNameYourPriceSubtitle;
+
+  /// No description provided for @marketplaceTypicalRangeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Typical range: {range}'**
+  String marketplaceTypicalRangeLabel(String range);
+
+  /// No description provided for @marketplaceControlBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re in control. Drivers can accept, counter, or ignore your offer.'**
+  String get marketplaceControlBanner;
+
+  /// No description provided for @marketplaceFasterOffersTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Want faster offers? Increase your price to get more responses.'**
+  String get marketplaceFasterOffersTip;
+
+  /// No description provided for @marketplaceEnterCustomPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to type any amount'**
+  String get marketplaceEnterCustomPrice;
+
+  /// No description provided for @marketplacePriceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'50'**
+  String get marketplacePriceHint;
+
+  /// No description provided for @marketplaceBidRangeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You can offer between €{min} and €{max}'**
+  String marketplaceBidRangeHint(int min, int max);
+
+  /// No description provided for @marketplaceTypicalFareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Typical fare'**
+  String get marketplaceTypicalFareTitle;
+
+  /// No description provided for @marketplaceYourOfferTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your offer'**
+  String get marketplaceYourOfferTitle;
+
+  /// No description provided for @marketplaceRequestOffers.
+  ///
+  /// In en, this message translates to:
+  /// **'Post request'**
+  String get marketplaceRequestOffers;
+
+  /// No description provided for @marketplaceMatchingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Marketplace'**
+  String get marketplaceMatchingTitle;
+
+  /// No description provided for @marketplaceMatchingHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching for drivers…'**
+  String get marketplaceMatchingHeadline;
+
+  /// No description provided for @marketplaceMatchingNotifySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll notify you when offers arrive.'**
+  String get marketplaceMatchingNotifySubtitle;
+
+  /// No description provided for @marketplaceDriversReceivedRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} drivers received your request'**
+  String marketplaceDriversReceivedRequest(int count);
+
+  /// No description provided for @marketplaceExpectedWait.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected wait: 1 – 2 min'**
+  String get marketplaceExpectedWait;
+
+  /// No description provided for @marketplaceOffersFromDrivers.
+  ///
+  /// In en, this message translates to:
+  /// **'Offers from drivers'**
+  String get marketplaceOffersFromDrivers;
+
+  /// No description provided for @marketplaceRecommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get marketplaceRecommended;
+
+  /// No description provided for @marketplaceViewProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'View profile'**
+  String get marketplaceViewProfile;
+
+  /// No description provided for @marketplaceOfferAcceptsYourPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepts your offer'**
+  String get marketplaceOfferAcceptsYourPrice;
+
+  /// No description provided for @marketplaceOfferCounterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Counter offer'**
+  String get marketplaceOfferCounterLabel;
+
+  /// No description provided for @marketplaceOffersExpireIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Offers expire in'**
+  String get marketplaceOffersExpireIn;
+
+  /// No description provided for @marketplaceBoostOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'Boost your offer'**
+  String get marketplaceBoostOffer;
+
+  /// No description provided for @marketplaceBoostOfferSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase price to get more offers'**
+  String get marketplaceBoostOfferSubtitle;
+
+  /// No description provided for @marketplaceCancelRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel request'**
+  String get marketplaceCancelRequest;
+
+  /// No description provided for @marketplaceCancelRequestConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Drivers will stop seeing your offer. Cancel this request?'**
+  String get marketplaceCancelRequestConfirm;
+
+  /// No description provided for @marketplaceReceiveChooseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Receive & choose offers'**
+  String get marketplaceReceiveChooseTitle;
+
+  /// No description provided for @marketplaceReceiveChooseBullet1.
+  ///
+  /// In en, this message translates to:
+  /// **'Drivers accept or counter'**
+  String get marketplaceReceiveChooseBullet1;
+
+  /// No description provided for @marketplaceReceiveChooseBullet2.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare price, rating, ETA'**
+  String get marketplaceReceiveChooseBullet2;
+
+  /// No description provided for @marketplaceReceiveChooseBullet3.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the best match'**
+  String get marketplaceReceiveChooseBullet3;
+
+  /// No description provided for @marketplaceMatchingSubhead.
+  ///
+  /// In en, this message translates to:
+  /// **'{nearby} nearby · {received} offers received'**
+  String marketplaceMatchingSubhead(int nearby, int received);
+
+  /// No description provided for @marketplaceMatchingWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for driver responses'**
+  String get marketplaceMatchingWaiting;
+
+  /// No description provided for @marketplaceMatchingWaitingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Independent drivers can accept your price, counter, or ignore. You choose who to ride with.'**
+  String get marketplaceMatchingWaitingBody;
+
+  /// No description provided for @marketplaceOfferAccepts.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepts {price}'**
+  String marketplaceOfferAccepts(String price);
+
+  /// No description provided for @marketplaceOfferCounter.
+  ///
+  /// In en, this message translates to:
+  /// **'Counter {price}'**
+  String marketplaceOfferCounter(String price);
+
+  /// No description provided for @marketplaceOfferMinutesAway.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min away'**
+  String marketplaceOfferMinutesAway(int minutes);
+
+  /// No description provided for @marketplaceOfferExpiresIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer expires {time}'**
+  String marketplaceOfferExpiresIn(String time);
+
+  /// No description provided for @marketplaceDriverUsuallyAccepts.
+  ///
+  /// In en, this message translates to:
+  /// **'Usually accepts rider prices'**
+  String get marketplaceDriverUsuallyAccepts;
+
+  /// No description provided for @marketplaceDriverOftenCounters.
+  ///
+  /// In en, this message translates to:
+  /// **'Often sends counter offers'**
+  String get marketplaceDriverOftenCounters;
+
+  /// No description provided for @marketplaceDriverMayCounter.
+  ///
+  /// In en, this message translates to:
+  /// **'May accept or counter your offer'**
+  String get marketplaceDriverMayCounter;
+
+  /// No description provided for @declineBid.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get declineBid;
+
+  /// No description provided for @marketplaceDriverScopeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Who should see your request?'**
+  String get marketplaceDriverScopeTitle;
+
+  /// No description provided for @marketplaceDriverScopeEveryone.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone'**
+  String get marketplaceDriverScopeEveryone;
+
+  /// No description provided for @marketplaceDriverScopeMyDriversFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'My Drivers first'**
+  String get marketplaceDriverScopeMyDriversFirst;
+
+  /// No description provided for @marketplaceDriverScopeMyDriversOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'My Drivers only'**
+  String get marketplaceDriverScopeMyDriversOnly;
+
+  /// No description provided for @marketplaceAcceptanceGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Good chance of acceptance'**
+  String get marketplaceAcceptanceGood;
+
+  /// No description provided for @marketplaceAcceptanceFair.
+  ///
+  /// In en, this message translates to:
+  /// **'Fair offer — drivers may accept or counter'**
+  String get marketplaceAcceptanceFair;
+
+  /// No description provided for @marketplaceAcceptanceLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer is quite low — expect counter offers'**
+  String get marketplaceAcceptanceLow;
+
+  /// No description provided for @marketplaceDemandLowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Low demand'**
+  String get marketplaceDemandLowTitle;
+
+  /// No description provided for @marketplaceDemandHighTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'High demand'**
+  String get marketplaceDemandHighTitle;
+
+  /// No description provided for @marketplaceDemandLowHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drivers are likely to accept lower offers.'**
+  String get marketplaceDemandLowHint;
+
+  /// No description provided for @marketplaceDemandHighHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Offering slightly more may get faster responses.'**
+  String get marketplaceDemandHighHint;
+
   /// No description provided for @marketplaceSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Drivers heading your way — save up to 40%'**
+  /// **'Choose your price — independent drivers decide.'**
   String get marketplaceSubtitle;
 
   /// No description provided for @homeAirportBookingTitle.
@@ -1885,7 +2563,7 @@ abstract class AppLocalizations {
   /// No description provided for @marketplaceHeroTagline.
   ///
   /// In en, this message translates to:
-  /// **'Name your price — drivers accept or suggest a counter.'**
+  /// **'Name your price — drivers heading your way can accept or counter.'**
   String get marketplaceHeroTagline;
 
   /// No description provided for @marketplaceYourRoute.
@@ -2401,7 +3079,7 @@ abstract class AppLocalizations {
   /// No description provided for @favouriteDriversAccountSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Save trusted drivers and send rides directly to them.'**
+  /// **'Build your network of trusted drivers.'**
   String get favouriteDriversAccountSubtitle;
 
   /// No description provided for @openLocationSettings.

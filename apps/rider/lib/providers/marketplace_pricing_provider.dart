@@ -78,6 +78,61 @@ Future<double?> _medianFareFromRpc(
   }
 }
 
+const kMarketplaceBidMinEuro = 15;
+const kMarketplaceBidMaxEuro = 2000;
+
+/// Min / max / step for bid UI — scales with route reference fare and current bid.
+class MarketplaceBidBounds {
+  const MarketplaceBidBounds({
+    required this.minEuro,
+    required this.maxEuro,
+    required this.stepEuro,
+  });
+
+  final int minEuro;
+  final int maxEuro;
+  final int stepEuro;
+}
+
+MarketplaceBidBounds marketplaceBidBounds({
+  double? referenceFareEuro,
+  int? currentBidEuro,
+}) {
+  final ref = referenceFareEuro ?? 50.0;
+  final fromRef = math.max(500, (ref * 3).ceil());
+  final fromBid = currentBidEuro != null
+      ? math.max((currentBidEuro * 1.25).ceil(), currentBidEuro + 50)
+      : fromRef;
+  final max = math.min(
+    kMarketplaceBidMaxEuro,
+    math.max(500, math.max(fromRef, fromBid)),
+  );
+  final step = ref >= 250 || max >= 800
+      ? 25
+      : ref >= 120 || max >= 400
+          ? 10
+          : 5;
+  return MarketplaceBidBounds(
+    minEuro: kMarketplaceBidMinEuro,
+    maxEuro: max,
+    stepEuro: step,
+  );
+}
+
+int clampMarketplaceBid(int value, MarketplaceBidBounds bounds) =>
+    value.clamp(bounds.minEuro, bounds.maxEuro);
+
+int marketplaceBidStepFor(int bidEuro) {
+  if (bidEuro >= 300) return 25;
+  if (bidEuro >= 100) return 10;
+  return 5;
+}
+
+int suggestedMarketplaceBid(double? referenceFareEuro) {
+  if (referenceFareEuro == null || referenceFareEuro <= 0) return 50;
+  return referenceFareEuro.round().clamp(kMarketplaceBidMinEuro, kMarketplaceBidMaxEuro);
+}
+
 int marketplaceMatchPercent(double referenceEuro, int bidEuro) {
   if (referenceEuro <= 0) return 0;
   return math.min(100, (bidEuro / referenceEuro * 100).round());
@@ -98,4 +153,38 @@ String formatMarketplaceEuro(double value) {
     return '€${value.round()}';
   }
   return '€${value.toStringAsFixed(1)}';
+}
+
+/// Typical fare band shown to riders (single reference → readable range).
+String formatTypicalFareRange(double referenceEuro) {
+  if (referenceEuro <= 0) return '—';
+  final low = math.max(20, (referenceEuro * 0.90).round());
+  final high = math.max(low + 5, (referenceEuro * 1.12).round());
+  return '${formatMarketplaceEuro(low.toDouble())}–${formatMarketplaceEuro(high.toDouble())}';
+}
+
+/// Star rating 1–4 from existing match-percent heuristic (no new backend).
+int marketplaceAcceptanceStars(int matchPercent) {
+  if (matchPercent >= 85) return 4;
+  if (matchPercent >= 65) return 3;
+  if (matchPercent >= 45) return 2;
+  return 1;
+}
+
+enum MarketplaceDemandLevel { low, high }
+
+MarketplaceDemandLevel marketplaceDemandFromDriverCount(int onlineDrivers) {
+  return onlineDrivers >= 8
+      ? MarketplaceDemandLevel.low
+      : MarketplaceDemandLevel.high;
+}
+
+int sumNearbyDriverCount(
+  Map<RiderVehicleCategory, CategorySupplySnapshot> snap,
+) {
+  var total = 0;
+  for (final s in snap.values) {
+    total += s.driverCount;
+  }
+  return total;
 }

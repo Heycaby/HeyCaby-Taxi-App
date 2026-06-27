@@ -86,10 +86,11 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
   @override
   void didUpdateWidget(covariant ThreeStateToggle oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.currentStatus != widget.currentStatus && !_isDragging) {
-      setState(() {
-        _thumbPosition = _statusToPosition(widget.currentStatus);
-      });
+    if (_isDragging) return;
+    final expectedPosition = _statusToPosition(widget.currentStatus);
+    if (oldWidget.currentStatus != widget.currentStatus ||
+        (_thumbPosition - expectedPosition).abs() > 0.01) {
+      _resetThumbToPosition(widget.currentStatus);
     }
   }
 
@@ -125,9 +126,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
 
   Future<void> _onStatusSnapped(DriverAvailabilityStatus newStatus) async {
     if (!await ensureDriverNetworkForAction(context, ref)) {
-      setState(() {
-        _thumbPosition = _statusToPosition(widget.currentStatus);
-      });
+      _resetThumbToCurrentStatus();
       return;
     }
 
@@ -149,10 +148,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
           ridesToday: ridesToday,
         );
         if (!confirmed) {
-          setState(() {
-            _thumbPosition =
-                _statusToPosition(DriverAvailabilityStatus.available);
-          });
+          _resetThumbToPosition(DriverAvailabilityStatus.available);
           return;
         }
       }
@@ -171,9 +167,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
           );
           HapticService.mediumTap();
           SoundService().playActionBlocked();
-          setState(() {
-            _thumbPosition = _statusToPosition(widget.currentStatus);
-          });
+          _resetThumbToCurrentStatus();
           return;
         }
         final attempt = await attemptDriverGoOnline(
@@ -187,20 +181,11 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
           HapticService.mediumTap();
           SoundService().playActionBlocked();
           await showDriverGoOnlineGuidanceSheet(context, ref, args: attempt.gateArgs!);
-          setState(() {
-            _thumbPosition = _statusToPosition(widget.currentStatus);
-          });
+          _resetThumbToCurrentStatus();
           return;
         }
         if (!attempt.succeeded) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(DriverStrings.goOnlineFailed)),
-            );
-          }
-          setState(() {
-            _thumbPosition = _statusToPosition(widget.currentStatus);
-          });
+          _resetThumbToCurrentStatus();
           return;
         }
         if (!mounted) return;
@@ -208,6 +193,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
         SoundService().playStatusOnline();
         final notifier = ref.read(driverStateProvider.notifier);
         notifier.setStatus(DriverAppState.onlineAvailable);
+        _resetThumbToPosition(DriverAvailabilityStatus.available);
         final id = await ref.read(driverIdProvider.future);
         if (id != null) {
           await ref
@@ -254,9 +240,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _thumbPosition = _statusToPosition(widget.currentStatus);
-      });
+      _resetThumbToCurrentStatus();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${DriverStrings.goOnlineFailed} ($e)'),
@@ -307,6 +291,18 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
       ),
     );
     return result ?? false;
+  }
+
+  void _resetThumbToPosition(DriverAvailabilityStatus status) {
+    _controller.stop();
+    _controller.reset();
+    setState(() {
+      _thumbPosition = _statusToPosition(status);
+    });
+  }
+
+  void _resetThumbToCurrentStatus() {
+    _resetThumbToPosition(widget.currentStatus);
   }
 
   void _animateToPosition(double target) {
@@ -375,9 +371,17 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                 _isDragging = false;
                 _didStartDragHaptic = false;
                 final snappedStatus = _positionToStatus(_thumbPosition);
-                final targetPos = _statusToPosition(snappedStatus);
-                _animateToPosition(targetPos);
+                final goingOnline =
+                    snappedStatus == DriverAvailabilityStatus.available;
+                if (!goingOnline) {
+                  _animateToPosition(_statusToPosition(snappedStatus));
+                }
                 await _onStatusSnapped(snappedStatus);
+                if (!mounted) return;
+                if (goingOnline &&
+                    widget.currentStatus != DriverAvailabilityStatus.available) {
+                  _resetThumbToCurrentStatus();
+                }
               },
               child: Container(
                 height: 58,

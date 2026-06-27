@@ -117,19 +117,41 @@ class NearbySupplyService {
     return (v * 10).roundToDouble() / 10;
   }
 
+  static bool _hasSupply(
+    Map<RiderVehicleCategory, CategorySupplySnapshot> snapshots,
+  ) {
+    return snapshots.values.any((s) => s.driverCount > 0);
+  }
+
   static Future<Map<RiderVehicleCategory, CategorySupplySnapshot>> loadForPickup({
     required AddressResult pickup,
     AddressResult? destination,
     /// When false: full tariff estimate and no return-discount badge on rows.
     bool returnTripFareEstimatesEnabled = false,
   }) async {
+    final supabase = await _loadFromSupabase(
+      pickup: pickup,
+      destination: destination,
+      returnTripFareEstimatesEnabled: returnTripFareEstimatesEnabled,
+    );
+    if (_hasSupply(supabase)) return supabase;
+
     final backend = await _loadFromBackend(
       pickup: pickup,
       destination: destination,
       returnTripFareEstimatesEnabled: returnTripFareEstimatesEnabled,
     );
-    if (backend != null) return backend;
+    if (backend != null && _hasSupply(backend)) return backend;
 
+    return supabase;
+  }
+
+  static Future<Map<RiderVehicleCategory, CategorySupplySnapshot>>
+      _loadFromSupabase({
+    required AddressResult pickup,
+    AddressResult? destination,
+    required bool returnTripFareEstimatesEnabled,
+  }) async {
     final tripKm = destination != null
         ? distanceKm(pickup.lat, pickup.lng, destination.lat, destination.lng)
         : 2.0;

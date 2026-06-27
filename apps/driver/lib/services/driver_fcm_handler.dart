@@ -8,9 +8,13 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 import '../providers/driver_state_provider.dart';
 import '../utils/driver_rider_cancelled_flow.dart';
 import '../utils/driver_session_revoked_flow.dart';
+import '../models/driver_shift_handover_prompt_args.dart';
+import '../utils/driver_shift_handover_security_alert.dart';
+import '../utils/driver_taxi_session_revoked_flow.dart';
 import 'driver_fcm_payload.dart';
 import 'driver_notification_router.dart';
 import 'sound_service.dart';
+import '../widgets/driver_shift_handover_prompt.dart';
 
 /// Routes + side effects for driver FCM categories (Program 3C).
 class DriverFcmHandler {
@@ -23,7 +27,8 @@ class DriverFcmHandler {
     required bool fromTap,
     bool foreground = false,
   }) async {
-    switch (payload.effectiveCategory) {
+    final category = payload.effectiveCategory ?? '';
+    switch (category) {
       case 'incoming_ride':
         await _handleIncomingRide(
           payload: payload,
@@ -39,6 +44,40 @@ class DriverFcmHandler {
         );
       case 'session_revoked':
         await handleDriverSessionRevoked(context: context, ref: ref);
+      case 'shift_handover':
+        final requestId = payload.requestId;
+        if (requestId != null && requestId.isNotEmpty && context.mounted) {
+          await showDriverShiftHandoverPrompt(
+            context: context,
+            ref: ref,
+            args: DriverShiftHandoverPromptArgs.fromNotification(
+              requestId: requestId,
+              data: payload.rawData,
+            ),
+          );
+        }
+      case 'shift_handover_fleet':
+      case 'shift_handover_private_attempt':
+        if (context.mounted) {
+          await showDriverShiftHandoverSecurityAlert(
+            context: context,
+            ref: ref,
+            category: category,
+            title: payload.title ?? '',
+            body: payload.body ?? '',
+          );
+        }
+      case 'taxi_session_revoked':
+        if (context.mounted) {
+          await handleDriverTaxiSessionRevoked(
+            context: context,
+            ref: ref,
+            plate: payload.rawData?['plate']?.toString() ??
+                payload.rawData?['plate_normalized']?.toString(),
+            reason: payload.rawData?['reason']?.toString(),
+            voluntaryEnd: payload.rawData?['status']?.toString() == 'approved',
+          );
+        }
       case 'chat':
         await dispatchDriverNotification(
           context: context,

@@ -16,7 +16,6 @@ import 'driver_resilience_banner.dart';
 import 'driver_resilience_listener.dart';
 import 'driver_ride_proximity_listener.dart';
 import 'driver_automatic_ping_listener.dart';
-import 'driver_onboarding_redirect_listener.dart';
 import '../utils/driver_immersive_shell.dart';
 
 class DriverShell extends ConsumerStatefulWidget {
@@ -97,7 +96,6 @@ class _DriverShellState extends ConsumerState<DriverShell>
           const DriverLocationTrackingListener(),
           const DriverRideProximityListener(),
           const DriverAutomaticPingListener(),
-          const DriverOnboardingRedirectListener(),
           const DriverResilienceListener(),
           const DriverResilienceBanner(),
         ],

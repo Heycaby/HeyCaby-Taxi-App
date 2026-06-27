@@ -474,7 +474,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
               icon: Icons.star_outline,
               iconBg: colors.warning.withValues(alpha: 0.15),
               iconColor: colors.warning,
-              title: l10n.favouriteDrivers,
+              title: l10n.myDrivers,
               subtitle: l10n.favouriteDriversAccountSubtitle,
               colors: colors, typo: typo,
               onTap: () async {

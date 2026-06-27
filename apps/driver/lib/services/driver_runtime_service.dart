@@ -31,6 +31,7 @@ class DriverRuntimeService {
             'client=$kDriverRuntimeContractVersion',
           );
         }
+        appPublicLinks.apply(snapshot.config.links);
         _cachedRuntime = snapshot;
         _cachedAt = DateTime.now();
       }
