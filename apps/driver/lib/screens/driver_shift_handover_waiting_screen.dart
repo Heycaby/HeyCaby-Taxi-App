@@ -15,7 +15,7 @@ import '../ui/driver_button.dart';
 import '../utils/driver_go_online_onboarding.dart';
 import '../widgets/driver_settings_flow_common.dart';
 
-/// Waiting room while the current driver is notified (5-minute secure handover).
+/// Waiting room while the current driver is notified for Secure Shift Handover.
 class DriverShiftHandoverWaitingScreen extends ConsumerStatefulWidget {
   const DriverShiftHandoverWaitingScreen({
     super.key,
@@ -36,6 +36,7 @@ class DriverShiftHandoverWaitingScreen extends ConsumerStatefulWidget {
 class _DriverShiftHandoverWaitingScreenState
     extends ConsumerState<DriverShiftHandoverWaitingScreen> {
   bool _busy = false;
+  bool _queuedActiveRide = false;
   Timer? _pollTimer;
   Timer? _countdownTimer;
   Duration _remaining = Duration.zero;
@@ -91,6 +92,11 @@ class _DriverShiftHandoverWaitingScreenState
       return;
     }
 
+    if (res['queued_active_ride'] == true && mounted) {
+      setState(() => _queuedActiveRide = true);
+      return;
+    }
+
     if (status == 'denied') {
       _pollTimer?.cancel();
       _countdownTimer?.cancel();
@@ -98,7 +104,7 @@ class _DriverShiftHandoverWaitingScreenState
       Navigator.of(context).pop(false);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.shiftHandoverDeniedMessage)),
+        const SnackBar(content: Text(DriverStrings.shiftHandoverDeniedMessage)),
       );
       return;
     }
@@ -111,7 +117,9 @@ class _DriverShiftHandoverWaitingScreenState
       Navigator.of(context).pop(false);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.shiftHandoverActiveRideMessage)),
+        const SnackBar(
+          content: Text(DriverStrings.shiftHandoverActiveRideMessage),
+        ),
       );
     }
   }
@@ -161,7 +169,9 @@ class _DriverShiftHandoverWaitingScreenState
                     ),
                     const SizedBox(height: DriverSpacing.xl),
                     Text(
-                      DriverStrings.shiftHandoverWaitingTitle,
+                      _queuedActiveRide
+                          ? DriverStrings.shiftHandoverQueuedRideTitle
+                          : DriverStrings.shiftHandoverWaitingTitle,
                       textAlign: TextAlign.center,
                       style: typography.headlineSmall.copyWith(
                         color: colors.text,
@@ -170,7 +180,9 @@ class _DriverShiftHandoverWaitingScreenState
                     ),
                     const SizedBox(height: DriverSpacing.md),
                     Text(
-                      DriverStrings.shiftHandoverWaitingBody,
+                      _queuedActiveRide
+                          ? DriverStrings.shiftHandoverQueuedRideBody
+                          : DriverStrings.shiftHandoverWaitingBody,
                       textAlign: TextAlign.center,
                       style: typography.bodyMedium.copyWith(
                         color: colors.textSecondary,
@@ -179,28 +191,32 @@ class _DriverShiftHandoverWaitingScreenState
                     ),
                     const SizedBox(height: DriverSpacing.md),
                     Text(
-                      DriverStrings.shiftHandoverWaitingSubtitle,
+                      _queuedActiveRide
+                          ? DriverStrings.shiftHandoverQueuedRideSubtitle
+                          : DriverStrings.shiftHandoverWaitingSubtitle,
                       textAlign: TextAlign.center,
                       style: typography.bodySmall.copyWith(
                         color: colors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: DriverSpacing.xl),
-                    Text(
-                      _formatRemaining(_remaining),
-                      style: typography.displaySmall.copyWith(
-                        color: colors.primary,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 2,
+                    if (!_queuedActiveRide) ...[
+                      Text(
+                        _formatRemaining(_remaining),
+                        style: typography.displaySmall.copyWith(
+                          color: colors.primary,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: DriverSpacing.sm),
-                    Text(
-                      DriverStrings.shiftHandoverWaitingEta,
-                      style: typography.bodySmall.copyWith(
-                        color: colors.textSecondary,
+                      const SizedBox(height: DriverSpacing.sm),
+                      Text(
+                        DriverStrings.shiftHandoverWaitingEta,
+                        style: typography.bodySmall.copyWith(
+                          color: colors.textSecondary,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),

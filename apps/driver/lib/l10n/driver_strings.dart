@@ -543,10 +543,16 @@ class DriverStrings {
       'Je dienst start automatisch zodra de wachttijd voorbij is, '
       'tenzij hij of zij nog rijdt.';
   static const String shiftHandoverWaitingEta = 'Maximale wachttijd';
+  static const String shiftHandoverQueuedRideTitle =
+      'Je aanvraag staat klaar';
+  static const String shiftHandoverQueuedRideBody =
+      'De taxi is bezig met een rit. Je dienst start automatisch zodra die rit is afgerond.';
+  static const String shiftHandoverQueuedRideSubtitle =
+      'Je hoeft niets opnieuw aan te vragen.';
   static const String shiftHandoverDeniedMessage =
       'Deze taxi is nog in gebruik.';
   static const String shiftHandoverActiveRideMessage =
-      'Deze taxi is bezig met een rit. Probeer het opnieuw zodra de rit is afgerond.';
+      'Deze taxi is bezig met een rit. Je aanvraag wordt klaargezet tot de rit is afgerond.';
   static const String shiftHandoverPrivateBlockedMessage =
       'Deze taxi is privé geregistreerd en kan niet door andere chauffeurs worden geactiveerd.';
   static const String shiftHandoverRateLimitedMessage =

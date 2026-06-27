@@ -85,7 +85,7 @@ class _DriverShiftHandoverPromptSheetState
   int get _graceMinutes {
     final secs = widget.args.graceSeconds;
     if (secs != null && secs > 0) return (secs / 60).ceil();
-    return 5;
+    return 2;
   }
 
   Future<void> _respond(String action) async {

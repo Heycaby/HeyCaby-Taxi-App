@@ -31,7 +31,8 @@ class DriverStartShiftScreen extends ConsumerStatefulWidget {
       _DriverStartShiftScreenState();
 }
 
-class _DriverStartShiftScreenState extends ConsumerState<DriverStartShiftScreen> {
+class _DriverStartShiftScreenState
+    extends ConsumerState<DriverStartShiftScreen> {
   bool _starting = false;
 
   Future<void> _startShift() async {
@@ -67,8 +68,8 @@ class _DriverStartShiftScreenState extends ConsumerState<DriverStartShiftScreen>
       final expiresRaw = res['expires_at']?.toString();
       final expiresAt = expiresRaw != null
           ? DateTime.tryParse(expiresRaw)?.toUtc() ??
-              DateTime.now().toUtc().add(const Duration(minutes: 5))
-          : DateTime.now().toUtc().add(const Duration(minutes: 5));
+              DateTime.now().toUtc().add(const Duration(minutes: 2))
+          : DateTime.now().toUtc().add(const Duration(minutes: 2));
       setState(() => _starting = false);
       if (!mounted) return;
       await Navigator.of(context).pushReplacement(
@@ -107,7 +108,8 @@ class _DriverStartShiftScreenState extends ConsumerState<DriverStartShiftScreen>
     setState(() => _starting = false);
     if (!mounted) return;
     final message = _handoverErrorMessage(res);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   String _handoverErrorMessage(Map<String, dynamic>? res) {

@@ -604,7 +604,6 @@ BEGIN
     DELETE FROM public.taxi_vehicle_driver_allowlist
     WHERE vehicle_id = p_vehicle_id AND driver_id = p_driver_id;
   END IF;
-  END IF;
 
   RETURN jsonb_build_object('ok', true);
 END;
