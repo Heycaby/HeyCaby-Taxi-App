@@ -245,7 +245,6 @@ class SupabaseRest:
                     "full_name": f"Scale Driver {idx}",
                     "status": "available",
                     "country_code": country_code,
-                    "vehicle_category": random.choice(["standard", "comfort", "xl"]),
                     "pickup_distance_max_km": random.choice([3, 5, 10, 25]),
                     "profile_photo_url": "https://example.com/heycaby-scale-driver.png",
                     "_seed_lat": lat,
@@ -316,7 +315,7 @@ def upsert_driver_location(rest: SupabaseRest, actor: DriverActor, country_code:
         "driver_id": actor.driver_id,
         "latitude": round(lat, 7),
         "longitude": round(lng, 7),
-        "heading": round(random.random() * 360.0, 1),
+        "heading": random.randint(0, 359),
         "country_code": country_code,
         "updated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
