@@ -118,8 +118,8 @@ class DriverChatNotifier extends AutoDisposeAsyncNotifier<ChatState> {
           .map((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
           .toList();
       final messages = raw
-          .where((m) =>
-              !_blockedSenderKeys.contains(_senderKey(m.senderType, m.senderId)))
+          .where((m) => !_blockedSenderKeys
+              .contains(_senderKey(m.senderType, m.senderId)))
           .toList();
 
       state = AsyncData(ChatState(messages: messages));
@@ -144,8 +144,8 @@ class DriverChatNotifier extends AutoDisposeAsyncNotifier<ChatState> {
           ),
           callback: (payload) {
             final newMessage = ChatMessage.fromJson(payload.newRecord);
-            if (_blockedSenderKeys
-                .contains(_senderKey(newMessage.senderType, newMessage.senderId))) {
+            if (_blockedSenderKeys.contains(
+                _senderKey(newMessage.senderType, newMessage.senderId))) {
               return;
             }
             final currentMessages = state.value?.messages ?? [];
@@ -248,7 +248,8 @@ class _DriverChatScreenState extends ConsumerState<DriverChatScreen> {
       DriverAppState.assigned ||
       DriverAppState.arrived ||
       DriverAppState.inProgress ||
-      DriverAppState.completingRide => true,
+      DriverAppState.completingRide =>
+        true,
       _ => false,
     };
   }
@@ -256,8 +257,8 @@ class _DriverChatScreenState extends ConsumerState<DriverChatScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(
-        () => ref.read(driverChatProvider.notifier).loadMessages(widget.rideId));
+    Future.microtask(() =>
+        ref.read(driverChatProvider.notifier).loadMessages(widget.rideId));
   }
 
   @override
@@ -310,11 +311,11 @@ class _DriverChatScreenState extends ConsumerState<DriverChatScreen> {
           icon: Icon(Icons.more_vert, color: colors.text),
           onSelected: (v) => _onChatMenuSelected(v, peer),
           itemBuilder: (_) => [
-            PopupMenuItem(
+            const PopupMenuItem(
               value: 'report',
               child: Text(DriverStrings.reportRider),
             ),
-            PopupMenuItem(
+            const PopupMenuItem(
               value: 'block',
               child: Text(DriverStrings.blockRider),
             ),
@@ -422,7 +423,8 @@ class _DriverChatScreenState extends ConsumerState<DriverChatScreen> {
                 style: typo.bodyMedium.copyWith(color: themeColors.text),
                 decoration: InputDecoration(
                   hintText: DriverStrings.reportReasonHint,
-                  hintStyle: typo.bodySmall.copyWith(color: themeColors.textSoft),
+                  hintStyle:
+                      typo.bodySmall.copyWith(color: themeColors.textSoft),
                 ),
               ),
             ],

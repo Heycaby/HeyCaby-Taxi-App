@@ -20,8 +20,7 @@ class RideCompleteScreen extends ConsumerStatefulWidget {
   final String rideId;
 
   @override
-  ConsumerState<RideCompleteScreen> createState() =>
-      _RideCompleteScreenState();
+  ConsumerState<RideCompleteScreen> createState() => _RideCompleteScreenState();
 }
 
 class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
@@ -103,12 +102,12 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
       });
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.receiptSent)),
+        const SnackBar(content: Text(DriverStrings.receiptSent)),
       );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.receiptSendFailed)),
+        const SnackBar(content: Text(DriverStrings.receiptSendFailed)),
       );
     } finally {
       if (mounted) setState(() => _sendingReceipt = false);
@@ -126,7 +125,8 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
     final driver = ref.watch(driverStateProvider);
 
     return DriverRewardScreenBody(

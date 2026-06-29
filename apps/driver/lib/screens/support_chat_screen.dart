@@ -98,8 +98,8 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
           .single();
       if (mounted) {
         setState(() {
-          _messages = List<Map<String, dynamic>>.from(
-              (res['messages'] as List?) ?? []);
+          _messages =
+              List<Map<String, dynamic>>.from((res['messages'] as List?) ?? []);
           _status = res['status'] as String? ?? 'open';
           _category = res['category'] as String? ?? '';
           _rideRequestId = res['ride_request_id'] as String?;
@@ -110,11 +110,11 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
     } catch (e) {
       unawaited(
         ref.read(driverDataServiceProvider).logClientTelemetry(
-              scope: 'support_chat',
-              event: 'load_failed',
-              detail: e.toString(),
-              extra: {'ticket_id': widget.ticketId},
-            ),
+          scope: 'support_chat',
+          event: 'load_failed',
+          detail: e.toString(),
+          extra: {'ticket_id': widget.ticketId},
+        ),
       );
       if (mounted) setState(() => _loading = false);
     }
@@ -158,7 +158,9 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
     if (!allowed || !mounted) return;
     setState(() => _sending = true);
     try {
-      final result = await ref.read(driverDataServiceProvider).sendDriverSupportChatMessage(
+      final result = await ref
+          .read(driverDataServiceProvider)
+          .sendDriverSupportChatMessage(
             message: text,
             ticketId: widget.ticketId,
           );
@@ -171,14 +173,15 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
           await _load();
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(DriverStrings.supportChatOfflineSaved)),
+            const SnackBar(
+                content: Text(DriverStrings.supportChatOfflineSaved)),
           );
           setState(() => _sending = false);
           _scrollToBottom();
           return;
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(DriverStrings.supportChatSendFailed)),
+          const SnackBar(content: Text(DriverStrings.supportChatSendFailed)),
         );
         setState(() => _sending = false);
         return;
@@ -192,11 +195,11 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
     } catch (e) {
       unawaited(
         ref.read(driverDataServiceProvider).logClientTelemetry(
-              scope: 'support_chat',
-              event: 'send_failed_fallback',
-              detail: e.toString(),
-              extra: {'ticket_id': widget.ticketId},
-            ),
+          scope: 'support_chat',
+          event: 'send_failed_fallback',
+          detail: e.toString(),
+          extra: {'ticket_id': widget.ticketId},
+        ),
       );
       final localSaved = await _appendFallbackSupportMessage(text);
       if (mounted) {
@@ -222,10 +225,10 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
   Future<bool> _appendFallbackSupportMessage(String userText) async {
     unawaited(
       ref.read(driverDataServiceProvider).logClientTelemetry(
-            scope: 'support_chat',
-            event: 'local_fallback_append_attempt',
-            extra: {'ticket_id': widget.ticketId},
-          ),
+        scope: 'support_chat',
+        event: 'local_fallback_append_attempt',
+        extra: {'ticket_id': widget.ticketId},
+      ),
     );
     try {
       final row = await HeyCabySupabase.client
@@ -236,13 +239,16 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
       if (row == null) return false;
 
       final status = (row['status'] as String? ?? 'open').toLowerCase();
-      final shouldReopen =
-          status == 'closed' || status == 'resolved' || status == 'auto_resolved';
+      final shouldReopen = status == 'closed' ||
+          status == 'resolved' ||
+          status == 'auto_resolved';
 
       final existing = row['messages'];
-      final list = existing is List ? List<dynamic>.from(existing) : <dynamic>[];
+      final list =
+          existing is List ? List<dynamic>.from(existing) : <dynamic>[];
       final now = DateTime.now().toUtc().toIso8601String();
-      list.add(<String, dynamic>{'role': 'user', 'content': userText, 'ts': now});
+      list.add(
+          <String, dynamic>{'role': 'user', 'content': userText, 'ts': now});
       list.add(<String, dynamic>{
         'role': 'assistant',
         'content':
@@ -257,10 +263,10 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
       }).eq('id', widget.ticketId);
       unawaited(
         ref.read(driverDataServiceProvider).logClientTelemetry(
-              scope: 'support_chat',
-              event: 'local_fallback_append_success',
-              extra: {'ticket_id': widget.ticketId},
-            ),
+          scope: 'support_chat',
+          event: 'local_fallback_append_success',
+          extra: {'ticket_id': widget.ticketId},
+        ),
       );
       return true;
     } catch (e) {
@@ -269,11 +275,11 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
       }
       unawaited(
         ref.read(driverDataServiceProvider).logClientTelemetry(
-              scope: 'support_chat',
-              event: 'local_fallback_append_failed',
-              detail: e.toString(),
-              extra: {'ticket_id': widget.ticketId},
-            ),
+          scope: 'support_chat',
+          event: 'local_fallback_append_failed',
+          detail: e.toString(),
+          extra: {'ticket_id': widget.ticketId},
+        ),
       );
       return false;
     }
@@ -300,27 +306,32 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
               children: [
                 Text(
                   DriverStrings.supportAiConsentIntro,
-                  style: typo.bodyMedium.copyWith(color: colors.textMid, height: 1.4),
+                  style: typo.bodyMedium
+                      .copyWith(color: colors.textMid, height: 1.4),
                 ),
                 const SizedBox(height: 10),
                 Text(
                   DriverStrings.supportAiConsentDataSent,
-                  style: typo.bodySmall.copyWith(color: colors.textMid, height: 1.5),
+                  style: typo.bodySmall
+                      .copyWith(color: colors.textMid, height: 1.5),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   DriverStrings.supportAiConsentThirdParty,
-                  style: typo.bodySmall.copyWith(color: colors.textMid, height: 1.5),
+                  style: typo.bodySmall
+                      .copyWith(color: colors.textMid, height: 1.5),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   DriverStrings.supportAiConsentPolicy,
-                  style: typo.bodySmall.copyWith(color: colors.textMid, height: 1.5),
+                  style: typo.bodySmall
+                      .copyWith(color: colors.textMid, height: 1.5),
                 ),
                 const SizedBox(height: 10),
                 CheckboxListTile(
                   value: consentChecked,
-                  onChanged: (v) => setDialogState(() => consentChecked = v ?? false),
+                  onChanged: (v) =>
+                      setDialogState(() => consentChecked = v ?? false),
                   contentPadding: EdgeInsets.zero,
                   dense: true,
                   controlAffinity: ListTileControlAffinity.leading,
@@ -335,7 +346,8 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(DriverStrings.cancel, style: TextStyle(color: colors.textMid)),
+              child: Text(DriverStrings.cancel,
+                  style: TextStyle(color: colors.textMid)),
             ),
             FilledButton(
               onPressed: consentChecked
@@ -344,7 +356,7 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
                       Navigator.of(ctx).pop(true);
                     }
                   : null,
-              child: Text(DriverStrings.supportAiConsentContinue),
+              child: const Text(DriverStrings.supportAiConsentContinue),
             ),
           ],
         ),
@@ -370,12 +382,12 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
       await _load();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.ticketStatusResolved)),
+        const SnackBar(content: Text(DriverStrings.ticketStatusResolved)),
       );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.supportChatSendFailed)),
+        const SnackBar(content: Text(DriverStrings.supportChatSendFailed)),
       );
     }
   }
@@ -383,11 +395,11 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
     final isClosed = _isClosedStatus(_status);
-    final messages = _messages
-        .map(DriverSupportTicketMessageParser.fromMap)
-        .toList();
+    final messages =
+        _messages.map(DriverSupportTicketMessageParser.fromMap).toList();
     final rideId = _rideRequestId?.trim();
 
     return DriverSupportConversationBody(

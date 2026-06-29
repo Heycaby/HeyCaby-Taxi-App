@@ -21,7 +21,8 @@ class ScheduledRidesScreen extends ConsumerStatefulWidget {
   const ScheduledRidesScreen({super.key});
 
   @override
-  ConsumerState<ScheduledRidesScreen> createState() => _ScheduledRidesScreenState();
+  ConsumerState<ScheduledRidesScreen> createState() =>
+      _ScheduledRidesScreenState();
 }
 
 class _ScheduledRidesScreenState extends ConsumerState<ScheduledRidesScreen> {
@@ -30,7 +31,8 @@ class _ScheduledRidesScreenState extends ConsumerState<ScheduledRidesScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
     final themeColors = ref.watch(colorsProvider);
     final themeTypo = ref.watch(typographyProvider);
     final tabKey = _tab == ScheduledTab.requests ? 'requests' : 'confirmed';
@@ -149,7 +151,10 @@ class _ScheduledRidesScreenState extends ConsumerState<ScheduledRidesScreen> {
         footer = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (prerideFooter != null) ...[prerideFooter, const SizedBox(height: 14)],
+            if (prerideFooter != null) ...[
+              prerideFooter,
+              const SizedBox(height: 14)
+            ],
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
@@ -170,7 +175,7 @@ class _ScheduledRidesScreenState extends ConsumerState<ScheduledRidesScreen> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => _openRideDetail(context, ride),
-                    child: Text(DriverStrings.rideDetails),
+                    child: const Text(DriverStrings.rideDetails),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -192,13 +197,16 @@ class _ScheduledRidesScreenState extends ConsumerState<ScheduledRidesScreen> {
         footer = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (prerideFooter != null) ...[prerideFooter, const SizedBox(height: 14)],
+            if (prerideFooter != null) ...[
+              prerideFooter,
+              const SizedBox(height: 14)
+            ],
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => _openRideDetail(context, ride),
-                    child: Text(DriverStrings.rideDetails),
+                    child: const Text(DriverStrings.rideDetails),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -212,8 +220,9 @@ class _ScheduledRidesScreenState extends ConsumerState<ScheduledRidesScreen> {
                         if (mounted) setState(() {});
                       },
                     ),
-                    icon: Icon(Icons.swap_horiz_rounded, size: 18, color: colors.text),
-                    label: Text(DriverStrings.swapAction),
+                    icon: Icon(Icons.swap_horiz_rounded,
+                        size: 18, color: colors.text),
+                    label: const Text(DriverStrings.swapAction),
                   ),
                 ),
               ],
@@ -252,14 +261,15 @@ class _ScheduledRidesScreenState extends ConsumerState<ScheduledRidesScreen> {
   ) async {
     final driverId = await ref.read(driverIdProvider.future);
     if (driverId == null) return;
-    final swapId = await ref.read(rideSwapServiceProvider).fetchOpenSwapIdForRide(
-          offeringDriverId: driverId,
-          rideRequestId: ride.id,
-        );
+    final swapId =
+        await ref.read(rideSwapServiceProvider).fetchOpenSwapIdForRide(
+              offeringDriverId: driverId,
+              rideRequestId: ride.id,
+            );
     if (!context.mounted) return;
     if (swapId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.swapErrorNotAvailable)),
+        const SnackBar(content: Text(DriverStrings.swapErrorNotAvailable)),
       );
       return;
     }
@@ -267,8 +277,10 @@ class _ScheduledRidesScreenState extends ConsumerState<ScheduledRidesScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(DriverStrings.swapCancelConfirmTitle, style: typo.titleMedium),
-        content: Text(DriverStrings.swapCancelConfirmBody, style: typo.bodyMedium),
+        title:
+            Text(DriverStrings.swapCancelConfirmTitle, style: typo.titleMedium),
+        content:
+            Text(DriverStrings.swapCancelConfirmBody, style: typo.bodyMedium),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -276,7 +288,7 @@ class _ScheduledRidesScreenState extends ConsumerState<ScheduledRidesScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(DriverStrings.swapCancelConfirmCta),
+            child: const Text(DriverStrings.swapCancelConfirmCta),
           ),
         ],
       ),
@@ -290,7 +302,7 @@ class _ScheduledRidesScreenState extends ConsumerState<ScheduledRidesScreen> {
     if (res?['success'] == true) {
       ref.invalidate(scheduledRidesByTabProvider('confirmed'));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.swapCancelledOk)),
+        const SnackBar(content: Text(DriverStrings.swapCancelledOk)),
       );
     } else {
       final err = res?['error']?.toString() ?? '';
@@ -300,4 +312,3 @@ class _ScheduledRidesScreenState extends ConsumerState<ScheduledRidesScreen> {
     }
   }
 }
-
