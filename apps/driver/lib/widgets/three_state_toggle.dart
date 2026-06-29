@@ -554,6 +554,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                           children: [
                             _SegmentButton(
                               label: DriverStrings.offline,
+                              semanticsLabel: 'Driver status offline',
                               active: dragStatus ==
                                   DriverAvailabilityStatus.offline,
                               activeColor: activeColor,
@@ -562,6 +563,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                             ),
                             _SegmentButton(
                               label: DriverStrings.onBreak,
+                              semanticsLabel: 'Driver status break',
                               active: dragStatus ==
                                   DriverAvailabilityStatus.onBreak,
                               activeColor: activeColor,
@@ -570,6 +572,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                             ),
                             _SegmentButton(
                               label: DriverStrings.online,
+                              semanticsLabel: 'Driver status online',
                               active: dragStatus ==
                                   DriverAvailabilityStatus.available,
                               activeColor: activeColor,
@@ -611,6 +614,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
 class _SegmentButton extends StatelessWidget {
   const _SegmentButton({
     required this.label,
+    required this.semanticsLabel,
     required this.active,
     required this.activeColor,
     required this.inactiveColor,
@@ -618,6 +622,7 @@ class _SegmentButton extends StatelessWidget {
   });
 
   final String label;
+  final String semanticsLabel;
   final bool active;
   final Color activeColor;
   final Color inactiveColor;
@@ -626,18 +631,23 @@ class _SegmentButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Center(
-        child: AnimatedDefaultTextStyle(
-          duration: const Duration(milliseconds: 160),
-          curve: Curves.easeOut,
-          style: style.copyWith(
-            color: active ? activeColor : inactiveColor,
-            fontWeight: active ? FontWeight.w800 : FontWeight.w700,
-          ),
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+      child: Semantics(
+        label: semanticsLabel,
+        selected: active,
+        button: true,
+        child: Center(
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOut,
+            style: style.copyWith(
+              color: active ? activeColor : inactiveColor,
+              fontWeight: active ? FontWeight.w800 : FontWeight.w700,
+            ),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ),
       ),
