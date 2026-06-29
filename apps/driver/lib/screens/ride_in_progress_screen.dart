@@ -14,7 +14,6 @@ import '../utils/driver_cancel_ride_flow.dart';
 import '../utils/driver_navigation_launch.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
-import '../utils/driver_communication_distance.dart';
 import '../widgets/driver_ride_communication_sheet.dart';
 import '../widgets/driver_navigation_focus_body.dart';
 
@@ -86,15 +85,19 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
     if (continueClose != true) return;
     setState(() => _loading = true);
     try {
-      await ref.read(driverApiProvider).completeRide(rideRequestId: widget.rideId);
-      ref.read(driverStateProvider.notifier).setStatus(DriverAppState.completed);
+      await ref
+          .read(driverApiProvider)
+          .completeRide(rideRequestId: widget.rideId);
+      ref
+          .read(driverStateProvider.notifier)
+          .setStatus(DriverAppState.completed);
       SoundService().playTripComplete();
       if (!mounted) return;
       context.go('/driver/ride/complete/${widget.rideId}');
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${DriverStrings.actionFailedPrefix} $e')),
+        SnackBar(content: Text(DriverStrings.rideActionFailedMessage)),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -108,7 +111,8 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        icon: Icon(Icons.payments_rounded, color: themeColors.warning, size: 34),
+        icon:
+            Icon(Icons.payments_rounded, color: themeColors.warning, size: 34),
         title: Text(
           DriverStrings.collectPaymentTitle,
           style: typo.titleMedium.copyWith(
@@ -141,11 +145,11 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(DriverStrings.collectPaymentBack),
+            child: const Text(DriverStrings.collectPaymentBack),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(DriverStrings.collectPaymentContinue),
+            child: const Text(DriverStrings.collectPaymentContinue),
           ),
         ],
       ),
@@ -189,7 +193,8 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
     final driver = ref.watch(driverStateProvider);
     final proximity = ref.watch(driverRideProximityProvider);
 

@@ -1984,6 +1984,30 @@ class DriverStrings {
   static const String thanksForRating = 'Bedankt voor je beoordeling!';
   static const String acceptRideFailedCode = 'Accepteren mislukt:';
   static const String acceptRideFailed = 'Rit accepteren mislukt:';
+  static String get rideActionFailedMessage => _t(
+        'Actie mislukt. Controleer je verbinding en probeer opnieuw.',
+        en: 'Action failed. Check your connection and try again.',
+        es: 'La acción falló. Revisa tu conexión e inténtalo de nuevo.',
+        ar: 'فشل الإجراء. تحقق من اتصالك وحاول مرة أخرى.',
+      );
+  static String get rideRequestLoadFailedMessage => _t(
+        'Ritaanvraag laden mislukt. Controleer je verbinding.',
+        en: 'Could not load the ride request. Check your connection.',
+        es: 'No se pudo cargar la solicitud de viaje. Revisa tu conexión.',
+        ar: 'تعذر تحميل طلب الرحلة. تحقق من اتصالك.',
+      );
+  static String get acceptRideFailedMessage => _t(
+        'Rit accepteren mislukt. De aanvraag is mogelijk al verlopen.',
+        en: 'Could not accept the ride. The request may have expired.',
+        es: 'No se pudo aceptar el viaje. Es posible que la solicitud haya caducado.',
+        ar: 'تعذر قبول الرحلة. ربما انتهت صلاحية الطلب.',
+      );
+  static String get requestStatusUpdateFailedMessage => _t(
+        'Aanvraagstatus bijwerken mislukt. Probeer opnieuw.',
+        en: 'Could not update request status. Try again.',
+        es: 'No se pudo actualizar el estado de solicitudes. Inténtalo de nuevo.',
+        ar: 'تعذر تحديث حالة الطلبات. حاول مرة أخرى.',
+      );
   static const String enterValidPaidAmount =
       'Voer een geldig betaald bedrag in.';
   static String get appSuggestionTooShort => _t(

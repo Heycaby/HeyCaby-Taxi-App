@@ -75,13 +75,15 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
     try {
       await ref.read(driverApiProvider).startRide(rideRequestId: widget.rideId);
       await _pickupWaitService.clear(widget.rideId);
-      ref.read(driverStateProvider.notifier).setStatus(DriverAppState.inProgress);
+      ref
+          .read(driverStateProvider.notifier)
+          .setStatus(DriverAppState.inProgress);
       if (!mounted) return;
       context.go('/driver/ride/progress/${widget.rideId}');
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${DriverStrings.actionFailedPrefix} $e')),
+        SnackBar(content: Text(DriverStrings.rideActionFailedMessage)),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -120,10 +122,10 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text(DriverStrings.noShowReported)),
       );
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${DriverStrings.actionFailedPrefix} $e')),
+        SnackBar(content: Text(DriverStrings.rideActionFailedMessage)),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -156,7 +158,8 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
     final driver = ref.watch(driverStateProvider);
 
     return Column(
@@ -168,20 +171,20 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
         ),
         Expanded(
           child: DriverPickupArrivalBody(
-      colors: colors,
-      typography: typography,
-      pickupAddress: driver.pickupAddress ?? DriverStrings.pickupAddress,
-      destinationAddress:
-          driver.destinationAddress ?? DriverStrings.destination,
-      riderName: driver.riderContactName,
-      waitSeconds: _waitSeconds,
-      canReportNoShow: _waitSeconds >= _noShowAfterSeconds,
-      loading: _loading,
-      onBack: _handleBack,
-      onStartRide: _startRide,
-      onOpenCommunication: _openCommunication,
-      onReportNoShow: _reportNoShow,
-      onCancelRide: _cancelRide,
+            colors: colors,
+            typography: typography,
+            pickupAddress: driver.pickupAddress ?? DriverStrings.pickupAddress,
+            destinationAddress:
+                driver.destinationAddress ?? DriverStrings.destination,
+            riderName: driver.riderContactName,
+            waitSeconds: _waitSeconds,
+            canReportNoShow: _waitSeconds >= _noShowAfterSeconds,
+            loading: _loading,
+            onBack: _handleBack,
+            onStartRide: _startRide,
+            onOpenCommunication: _openCommunication,
+            onReportNoShow: _reportNoShow,
+            onCancelRide: _cancelRide,
           ),
         ),
       ],

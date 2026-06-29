@@ -72,9 +72,9 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
         _rideData = res;
         _error = res == null ? DriverStrings.rideNotFound : null;
       });
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
-      setState(() => _error = e.toString());
+      setState(() => _error = DriverStrings.rideRequestLoadFailedMessage);
     }
   }
 
@@ -82,7 +82,9 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
     SoundService().stopRideRequest();
     SoundService().playDriverCancelled();
     try {
-      await ref.read(driverApiProvider).declineRide(rideRequestId: widget.rideId);
+      await ref
+          .read(driverApiProvider)
+          .declineRide(rideRequestId: widget.rideId);
     } catch (_) {}
     if (!mounted) return;
     await _showMissedRequestDialog();
@@ -95,7 +97,9 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
     SoundService().stopRideRequest();
 
     try {
-      await ref.read(driverApiProvider).acceptRide(rideRequestId: widget.rideId);
+      await ref
+          .read(driverApiProvider)
+          .acceptRide(rideRequestId: widget.rideId);
       SoundService().playRideAccepted();
       HapticService.success();
       final r = _rideData;
@@ -119,20 +123,20 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
       );
       if (!mounted) return;
       context.go('/driver/ride/active/${widget.rideId}');
-    } on DriverAcceptRideException catch (e) {
+    } on DriverAcceptRideException {
       if (!mounted) return;
       setState(() => _isAccepting = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${DriverStrings.acceptRideFailedCode} ${e.code}'),
+          content: Text(DriverStrings.acceptRideFailedMessage),
         ),
       );
       context.go('/driver');
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
       setState(() => _isAccepting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${DriverStrings.acceptRideFailed} $e')),
+        SnackBar(content: Text(DriverStrings.acceptRideFailedMessage)),
       );
       context.go('/driver');
     }
@@ -145,7 +149,9 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
     SoundService().stopRideRequest();
     SoundService().playDriverCancelled();
     try {
-      await ref.read(driverApiProvider).declineRide(rideRequestId: widget.rideId);
+      await ref
+          .read(driverApiProvider)
+          .declineRide(rideRequestId: widget.rideId);
     } catch (_) {}
     if (mounted) setState(() => _isDeclining = false);
     if (!mounted) return;
@@ -159,7 +165,8 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        icon: Icon(Icons.warning_amber_rounded, color: themeColors.warning, size: 36),
+        icon: Icon(Icons.warning_amber_rounded,
+            color: themeColors.warning, size: 36),
         title: Text(
           DriverStrings.missedRequestTitle,
           style: typo.titleMedium.copyWith(
@@ -170,7 +177,8 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
         ),
         content: Text(
           DriverStrings.missedRequestBody,
-          style: typo.bodyMedium.copyWith(color: themeColors.textMid, height: 1.35),
+          style: typo.bodyMedium
+              .copyWith(color: themeColors.textMid, height: 1.35),
           textAlign: TextAlign.center,
         ),
         actions: [
@@ -191,7 +199,8 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
 
     return DriverOpportunityScreenBody(
       colors: colors,

@@ -36,6 +36,14 @@ void main() {
     expect(DriverStrings.communityNotificationsTitle, 'Notifications');
     expect(
         DriverStrings.communitySearchHint, 'Search posts, topics, or users...');
+    expect(
+      DriverStrings.rideActionFailedMessage,
+      'Action failed. Check your connection and try again.',
+    );
+    expect(
+      DriverStrings.acceptRideFailedMessage,
+      'Could not accept the ride. The request may have expired.',
+    );
     expect(DriverStrings.faq, 'Frequently asked questions');
     expect(DriverStrings.faqHowGoOnlineQuestion, 'How do I go online?');
     expect(
@@ -69,6 +77,14 @@ void main() {
     expect(DriverStrings.communityNotificationsTitle, 'Notificaciones');
     expect(DriverStrings.communitySearchHint,
         'Buscar publicaciones, temas o usuarios...');
+    expect(
+      DriverStrings.rideActionFailedMessage,
+      'La acción falló. Revisa tu conexión e inténtalo de nuevo.',
+    );
+    expect(
+      DriverStrings.acceptRideFailedMessage,
+      'No se pudo aceptar el viaje. Es posible que la solicitud haya caducado.',
+    );
     expect(DriverStrings.faq, 'Preguntas frecuentes');
     expect(DriverStrings.faqHowGoOnlineQuestion, '¿Cómo me conecto?');
     expect(
@@ -99,6 +115,14 @@ void main() {
     expect(DriverStrings.communityNotificationsTitle, 'الإشعارات');
     expect(DriverStrings.communitySearchHint,
         'ابحث في المنشورات أو المواضيع أو المستخدمين...');
+    expect(
+      DriverStrings.rideActionFailedMessage,
+      'فشل الإجراء. تحقق من اتصالك وحاول مرة أخرى.',
+    );
+    expect(
+      DriverStrings.acceptRideFailedMessage,
+      'تعذر قبول الرحلة. ربما انتهت صلاحية الطلب.',
+    );
     expect(DriverStrings.faq, 'الأسئلة الشائعة');
     expect(DriverStrings.faqHowGoOnlineQuestion, 'كيف أصبح متصلا؟');
     expect(

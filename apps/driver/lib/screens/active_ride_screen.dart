@@ -58,10 +58,10 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
       ref.read(driverStateProvider.notifier).setStatus(DriverAppState.arrived);
       if (!mounted) return;
       context.go('/driver/ride/pickup/${widget.rideId}');
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${DriverStrings.actionFailedPrefix} $e')),
+        SnackBar(content: Text(DriverStrings.rideActionFailedMessage)),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -101,11 +101,11 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
           ),
         ),
       );
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${DriverStrings.requestStatusUpdateFailed} $e'),
+          content: Text(DriverStrings.requestStatusUpdateFailedMessage),
         ),
       );
     } finally {
@@ -135,7 +135,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
     final driver = ref.watch(driverStateProvider);
     final proximity = ref.watch(driverRideProximityProvider);
 
@@ -148,23 +149,23 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
         ),
         Expanded(
           child: DriverActiveTripBody(
-      colors: colors,
-      typography: typography,
-      pickupAddress: driver.pickupAddress ?? DriverStrings.pickupAddress,
-      destinationAddress:
-          driver.destinationAddress ?? DriverStrings.destination,
-      riderName: driver.riderContactName,
-      requestsPaused: driver.appState == DriverAppState.onBreak,
-      statusBusy: _statusBusy,
-      arriving: _loading,
-      onBack: _handleBack,
-      onArrived: _markArrived,
-      onNavigate: _openNavigationApp,
-      onOpenCommunication: _openCommunication,
-      onCancelOrder: _cancelOrder,
-      onToggleRequests: _toggleNewRequests,
-      showNearPickupAssist:
-          proximity == DriverRideProximityAssist.nearPickup,
+            colors: colors,
+            typography: typography,
+            pickupAddress: driver.pickupAddress ?? DriverStrings.pickupAddress,
+            destinationAddress:
+                driver.destinationAddress ?? DriverStrings.destination,
+            riderName: driver.riderContactName,
+            requestsPaused: driver.appState == DriverAppState.onBreak,
+            statusBusy: _statusBusy,
+            arriving: _loading,
+            onBack: _handleBack,
+            onArrived: _markArrived,
+            onNavigate: _openNavigationApp,
+            onOpenCommunication: _openCommunication,
+            onCancelOrder: _cancelOrder,
+            onToggleRequests: _toggleNewRequests,
+            showNearPickupAssist:
+                proximity == DriverRideProximityAssist.nearPickup,
           ),
         ),
       ],
