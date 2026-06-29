@@ -55,22 +55,27 @@ class DriverOnboardingGateBody extends StatelessWidget {
                   alignment: AlignmentDirectional.topStart,
                   child: IconButton(
                     onPressed: onBack,
-                    icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                    icon: const Icon(
+                      Icons.arrow_back_rounded,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          Expanded(child: _FormSheet(
-            colors: colors,
-            typography: typography,
-            compact: compact,
-            emailController: emailController,
-            passwordController: passwordController,
-            loading: loading,
-            error: error,
-            onSubmit: onSubmit,
-          )),
+          Expanded(
+            child: _FormSheet(
+              colors: colors,
+              typography: typography,
+              compact: compact,
+              emailController: emailController,
+              passwordController: passwordController,
+              loading: loading,
+              error: error,
+              onSubmit: onSubmit,
+            ),
+          ),
         ],
       ),
     );
@@ -119,21 +124,24 @@ class _FormSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Create account',
-                style: (compact ? typography.headlineMedium : typography.displaySmall)
+                DriverStrings.registerDriverTitle,
+                style: (compact
+                        ? typography.headlineMedium
+                        : typography.displaySmall)
                     .copyWith(color: colors.text),
               ).driverFadeSlideIn(staggerIndex: 0),
               const SizedBox(height: DriverSpacing.sm),
               Text(
-                'Register as a driver',
-                style: typography.bodyLarge.copyWith(color: colors.textSecondary),
+                DriverStrings.registerDriverSubtitle,
+                style:
+                    typography.bodyLarge.copyWith(color: colors.textSecondary),
               ).driverFadeSlideIn(staggerIndex: 1),
               const SizedBox(height: DriverSpacing.xl),
               DriverTextField(
                 controller: emailController,
                 colors: colors,
                 typography: typography,
-                hint: 'Email',
+                hint: DriverStrings.loginEmailHint,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
                 autofillHints: const [AutofillHints.email],
@@ -143,7 +151,7 @@ class _FormSheet extends StatelessWidget {
                 controller: passwordController,
                 colors: colors,
                 typography: typography,
-                hint: 'Password (min 6 characters)',
+                hint: DriverStrings.passwordMinSixHint,
                 obscureText: true,
                 textInputAction: TextInputAction.done,
                 autofillHints: const [AutofillHints.newPassword],

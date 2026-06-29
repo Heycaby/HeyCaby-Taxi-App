@@ -2390,7 +2390,12 @@ class DriverStrings {
   static const String rateRiderSubmit = 'Versturen';
   static const String rateRiderSkip = 'Overslaan';
   static const String skip = 'Overslaan';
-  static const String createAccount = 'Account aanmaken';
+  static String get createAccount => _t(
+        'Account aanmaken',
+        en: 'Create account',
+        es: 'Crear cuenta',
+        ar: 'إنشاء حساب',
+      );
   static String get sendSuggestion => _t(
         'Suggestie versturen',
         en: 'Send suggestion',
@@ -2521,6 +2526,13 @@ class DriverStrings {
         es: 'Bienvenido de nuevo',
         ar: 'مرحبا بعودتك',
       );
+  static String get registerDriverTitle => createAccount;
+  static String get registerDriverSubtitle => _t(
+        'Registreer je als chauffeur',
+        en: 'Register as a driver',
+        es: 'Regístrate como conductor',
+        ar: 'سجل كسائق',
+      );
   static String get loginFormTitleOtp => _t(
         'Code',
         en: 'Code',
@@ -2544,6 +2556,12 @@ class DriverStrings {
         en: 'Email address',
         es: 'Correo electrónico',
         ar: 'البريد الإلكتروني',
+      );
+  static String get passwordMinSixHint => _t(
+        'Wachtwoord (min. 6 tekens)',
+        en: 'Password (min 6 characters)',
+        es: 'Contraseña (mín. 6 caracteres)',
+        ar: 'كلمة المرور (6 أحرف على الأقل)',
       );
   static String get loginCtaStart => _t(
         'Doorgaan',

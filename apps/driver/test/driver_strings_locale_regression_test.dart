@@ -33,6 +33,9 @@ void main() {
     expect(DriverStrings.enableLocation, 'Enable location');
     expect(DriverStrings.tryAgain, 'Try again');
     expect(DriverStrings.loginFormTitle, 'Welcome back');
+    expect(DriverStrings.createAccount, 'Create account');
+    expect(DriverStrings.registerDriverSubtitle, 'Register as a driver');
+    expect(DriverStrings.passwordMinSixHint, 'Password (min 6 characters)');
     expect(DriverStrings.appSuggestion, 'Suggestion for the app');
     expect(DriverStrings.homeAutoAcceptReturnRides, 'Auto-accept return rides');
     expect(DriverStrings.homeTodayRidesCount(0), 'No rides yet');
@@ -141,6 +144,9 @@ void main() {
     expect(DriverStrings.enableLocation, 'Activar ubicación');
     expect(DriverStrings.tryAgain, 'Intentar de nuevo');
     expect(DriverStrings.loginFormTitle, 'Bienvenido de nuevo');
+    expect(DriverStrings.createAccount, 'Crear cuenta');
+    expect(DriverStrings.registerDriverSubtitle, 'Regístrate como conductor');
+    expect(DriverStrings.passwordMinSixHint, 'Contraseña (mín. 6 caracteres)');
     expect(DriverStrings.appSuggestion, 'Sugerencia para la app');
     expect(
       DriverStrings.homeAutoAcceptReturnRides,
@@ -251,6 +257,9 @@ void main() {
     expect(DriverStrings.enableLocation, 'تفعيل الموقع');
     expect(DriverStrings.tryAgain, 'حاول مرة أخرى');
     expect(DriverStrings.loginFormTitle, 'مرحبا بعودتك');
+    expect(DriverStrings.createAccount, 'إنشاء حساب');
+    expect(DriverStrings.registerDriverSubtitle, 'سجل كسائق');
+    expect(DriverStrings.passwordMinSixHint, 'كلمة المرور (6 أحرف على الأقل)');
     expect(DriverStrings.appSuggestion, 'اقتراح للتطبيق');
     expect(
         DriverStrings.homeAutoAcceptReturnRides, 'قبول رحلات العودة تلقائيا');

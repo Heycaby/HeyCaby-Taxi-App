@@ -69,7 +69,7 @@ class DriverScheduledRidesBody extends StatelessWidget {
                             colors: colors,
                             typography: typography,
                             icon: Icons.event_rounded,
-                            title: emptyMessage ?? 'No rides',
+                            title: emptyMessage ?? DriverStrings.noRidesYet,
                           )
                         : ListView.builder(
                             padding: const EdgeInsets.symmetric(
