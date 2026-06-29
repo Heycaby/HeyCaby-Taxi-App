@@ -14,6 +14,7 @@ import '../providers/driver_locale_provider.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
+import '../ui/driver_app_bar.dart';
 import '../widgets/driver_grow_city_milestone_celebration.dart';
 import '../widgets/driver_grow_city_parts.dart';
 
@@ -36,13 +37,13 @@ class DriverTellFriendScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: colors.background,
-      appBar: AppBar(
-        backgroundColor: colors.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
+      appBar: DriverAppBar(
+        title: strings.screenTitle,
+        colors: colors,
+        typography: typography,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: Icon(Icons.arrow_back_rounded, color: colors.text),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -50,13 +51,6 @@ class DriverTellFriendScreen extends ConsumerWidget {
               context.go('/driver');
             }
           },
-        ),
-        title: Text(
-          strings.screenTitle,
-          style: typography.titleMedium.copyWith(
-            color: colors.text,
-            fontWeight: FontWeight.w700,
-          ),
         ),
       ),
       body: cityStatsAsync.when(
@@ -115,203 +109,203 @@ class DriverTellFriendScreen extends ConsumerWidget {
     double bottomPad,
   ) {
     return SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(
-          DriverSpacing.screenEdge,
-          DriverSpacing.lg,
-          DriverSpacing.screenEdge,
-          bottomPad,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            cityStatsAsync.when(
-              data: (stats) => DriverGrowCityHero(
-                regionName: stats.regionName,
-                colors: colors,
-                typography: typography,
-                strings: strings,
-              ),
-              loading: () => DriverGrowCityHero(
-                regionName: 'Netherlands',
-                colors: colors,
-                typography: typography,
-                strings: strings,
-              ),
-              error: (_, __) => DriverGrowCityHero(
-                regionName: 'Netherlands',
-                colors: colors,
-                typography: typography,
-                strings: strings,
-              ),
-            ),
-            const SizedBox(height: DriverSpacing.xl),
-            cityStatsAsync.when(
-              data: (stats) => DriverCommunityProgressCard(
-                stats: stats,
-                colors: colors,
-                typography: typography,
-                strings: strings,
-              ),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => DriverCommunityProgressCard(
-                stats: CommunityGrowthStats.empty,
-                colors: colors,
-                typography: typography,
-                strings: strings,
-              ),
-            ),
-            const SizedBox(height: DriverSpacing.xl),
-            impactAsync.when(
-              data: (impact) => Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  DriverYourImpactCard(
-                    impact: impact,
-                    loading: false,
-                    colors: colors,
-                    typography: typography,
-                    strings: strings,
-                  ),
-                  const SizedBox(height: DriverSpacing.lg),
-                  DriverCommunityBadgesRow(
-                    joined: impact.joined,
-                    colors: colors,
-                    typography: typography,
-                    strings: strings,
-                  ),
-                ],
-              ),
-              loading: () => DriverYourImpactCard(
-                impact: DriverInviteImpact.empty,
-                loading: true,
-                colors: colors,
-                typography: typography,
-                strings: strings,
-              ),
-              error: (_, __) => DriverYourImpactCard(
-                impact: DriverInviteImpact.empty,
-                loading: false,
-                colors: colors,
-                typography: typography,
-                strings: strings,
-              ),
-            ),
-            const SizedBox(height: DriverSpacing.xl),
-            Text(
-              strings.sharePrompt,
-              textAlign: TextAlign.center,
-              style: typography.bodyMedium.copyWith(
-                color: colors.textSecondary,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: DriverSpacing.xl),
-            FilledButton.icon(
-              onPressed: shareReady
-                  ? () async {
-                      await HapticService.mediumTap();
-                      final box = context.findRenderObject() as RenderBox?;
-                      final origin = box == null
-                          ? null
-                          : box.localToGlobal(Offset.zero) & box.size;
-                      final text = '${strings.shareMessage}\n\n$shareUrl';
-                      final result = await Share.shareWithResult(
-                        text,
-                        subject: strings.shareSubject,
-                        sharePositionOrigin: origin,
-                      );
-                      if (!context.mounted) return;
-                      if (result.status == ShareResultStatus.success) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(strings.shareDoneSnackbar)),
-                        );
-                      }
-                    }
-                  : null,
-              icon: const Icon(Icons.ios_share_rounded),
-              label: Text(strings.shareLink),
-            ),
-            const SizedBox(height: 10),
-            Center(
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: shareReady
-                      ? () async {
-                          await Clipboard.setData(
-                            ClipboardData(text: shareUrl),
-                          );
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(strings.linkCopied)),
-                          );
-                        }
-                      : null,
-                  icon: Icon(Icons.link_rounded, color: colors.primary),
-                  label: Text(strings.copyLink),
-                ),
-              ),
-            ),
-            const SizedBox(height: DriverSpacing.xl),
-            Text(
-              strings.inviteLinkLabel,
-              style: typography.labelLarge.copyWith(
-                color: colors.text,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: colors.card,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: colors.border.withValues(alpha: 0.85)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: SelectableText(
-                  shareUrl,
-                  style: typography.bodySmall.copyWith(
-                    color: colors.text,
-                    height: 1.4,
-                  ),
-                ),
-              ),
-            ),
-            if (!shareReady) ...[
-              const SizedBox(height: DriverSpacing.lg),
-              Text(
-                strings.linkUnavailable,
-                style: typography.bodyMedium.copyWith(
-                  color: colors.warning,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                strings.linkUnavailableHint,
-                style: typography.bodySmall.copyWith(
-                  color: colors.textMuted,
-                ),
-              ),
-            ],
-            const SizedBox(height: DriverSpacing.xxl),
-            DriverGrowCityWhyHelpCard(
+      padding: EdgeInsets.fromLTRB(
+        DriverSpacing.screenEdge,
+        DriverSpacing.lg,
+        DriverSpacing.screenEdge,
+        bottomPad,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          cityStatsAsync.when(
+            data: (stats) => DriverGrowCityHero(
+              regionName: stats.regionName,
               colors: colors,
               typography: typography,
               strings: strings,
             ),
+            loading: () => DriverGrowCityHero(
+              regionName: 'Netherlands',
+              colors: colors,
+              typography: typography,
+              strings: strings,
+            ),
+            error: (_, __) => DriverGrowCityHero(
+              regionName: 'Netherlands',
+              colors: colors,
+              typography: typography,
+              strings: strings,
+            ),
+          ),
+          const SizedBox(height: DriverSpacing.xl),
+          cityStatsAsync.when(
+            data: (stats) => DriverCommunityProgressCard(
+              stats: stats,
+              colors: colors,
+              typography: typography,
+              strings: strings,
+            ),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (_, __) => DriverCommunityProgressCard(
+              stats: CommunityGrowthStats.empty,
+              colors: colors,
+              typography: typography,
+              strings: strings,
+            ),
+          ),
+          const SizedBox(height: DriverSpacing.xl),
+          impactAsync.when(
+            data: (impact) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                DriverYourImpactCard(
+                  impact: impact,
+                  loading: false,
+                  colors: colors,
+                  typography: typography,
+                  strings: strings,
+                ),
+                const SizedBox(height: DriverSpacing.lg),
+                DriverCommunityBadgesRow(
+                  joined: impact.joined,
+                  colors: colors,
+                  typography: typography,
+                  strings: strings,
+                ),
+              ],
+            ),
+            loading: () => DriverYourImpactCard(
+              impact: DriverInviteImpact.empty,
+              loading: true,
+              colors: colors,
+              typography: typography,
+              strings: strings,
+            ),
+            error: (_, __) => DriverYourImpactCard(
+              impact: DriverInviteImpact.empty,
+              loading: false,
+              colors: colors,
+              typography: typography,
+              strings: strings,
+            ),
+          ),
+          const SizedBox(height: DriverSpacing.xl),
+          Text(
+            strings.sharePrompt,
+            textAlign: TextAlign.center,
+            style: typography.bodyMedium.copyWith(
+              color: colors.textSecondary,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: DriverSpacing.xl),
+          FilledButton.icon(
+            onPressed: shareReady
+                ? () async {
+                    final box = context.findRenderObject() as RenderBox?;
+                    final origin = box == null
+                        ? null
+                        : box.localToGlobal(Offset.zero) & box.size;
+                    await HapticService.mediumTap();
+                    final text = '${strings.shareMessage}\n\n$shareUrl';
+                    final result = await Share.shareWithResult(
+                      text,
+                      subject: strings.shareSubject,
+                      sharePositionOrigin: origin,
+                    );
+                    if (!context.mounted) return;
+                    if (result.status == ShareResultStatus.success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(strings.shareDoneSnackbar)),
+                      );
+                    }
+                  }
+                : null,
+            icon: const Icon(Icons.ios_share_rounded),
+            label: Text(strings.shareLink),
+          ),
+          const SizedBox(height: 10),
+          Center(
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: shareReady
+                    ? () async {
+                        await Clipboard.setData(
+                          ClipboardData(text: shareUrl),
+                        );
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(strings.linkCopied)),
+                        );
+                      }
+                    : null,
+                icon: Icon(Icons.link_rounded, color: colors.primary),
+                label: Text(strings.copyLink),
+              ),
+            ),
+          ),
+          const SizedBox(height: DriverSpacing.xl),
+          Text(
+            strings.inviteLinkLabel,
+            style: typography.labelLarge.copyWith(
+              color: colors.text,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: colors.card,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colors.border.withValues(alpha: 0.85)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: SelectableText(
+                shareUrl,
+                style: typography.bodySmall.copyWith(
+                  color: colors.text,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ),
+          if (!shareReady) ...[
             const SizedBox(height: DriverSpacing.lg),
             Text(
-              strings.socialProof,
-              textAlign: TextAlign.center,
-              style: typography.labelSmall.copyWith(
+              strings.linkUnavailable,
+              style: typography.bodyMedium.copyWith(
+                color: colors.warning,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              strings.linkUnavailableHint,
+              style: typography.bodySmall.copyWith(
                 color: colors.textMuted,
-                height: 1.35,
               ),
             ),
           ],
-        ),
+          const SizedBox(height: DriverSpacing.xxl),
+          DriverGrowCityWhyHelpCard(
+            colors: colors,
+            typography: typography,
+            strings: strings,
+          ),
+          const SizedBox(height: DriverSpacing.lg),
+          Text(
+            strings.socialProof,
+            textAlign: TextAlign.center,
+            style: typography.labelSmall.copyWith(
+              color: colors.textMuted,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

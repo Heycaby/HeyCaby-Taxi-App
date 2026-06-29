@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 
@@ -9,6 +10,7 @@ import '../providers/driver_data_providers.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
+import '../ui/driver_app_bar.dart';
 import '../ui/driver_button.dart';
 
 /// Manage allowlisted drivers for one shared-fleet taxi.
@@ -69,17 +71,20 @@ class _DriverFleetAllowlistVehicleScreenState
   }
 
   Future<void> _remove(String driverId) async {
-    final res = await ref.read(driverDataServiceProvider).setFleetHandoverAllowlist(
-          vehicleId: widget.vehicleId,
-          driverId: driverId,
-          add: false,
-        );
+    final res =
+        await ref.read(driverDataServiceProvider).setFleetHandoverAllowlist(
+              vehicleId: widget.vehicleId,
+              driverId: driverId,
+              add: false,
+            );
     if (!mounted) return;
     if (res?['ok'] == true) {
       await _load();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.fleetAllowlistUpdateFailed)),
+        const SnackBar(
+          content: Text(DriverStrings.fleetAllowlistUpdateFailed),
+        ),
       );
     }
   }
@@ -103,18 +108,31 @@ class _DriverFleetAllowlistVehicleScreenState
         DriverTypography.fromTheme(ref.watch(typographyProvider));
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.plateDisplay),
+      backgroundColor: colors.background,
+      appBar: DriverAppBar(
+        title: widget.plateDisplay,
+        colors: colors,
+        typography: typography,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: colors.text),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/driver/fleet/allowlist');
+            }
+          },
+        ),
       ),
       floatingActionButton: _error == null
           ? FloatingActionButton.extended(
               onPressed: _showAddSheet,
               icon: const Icon(LucideIcons.userPlus),
-              label: Text(DriverStrings.fleetAllowlistAddDriver),
+              label: const Text(DriverStrings.fleetAllowlistAddDriver),
             )
           : null,
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: colors.primary))
           : _error != null
               ? Center(
                   child: Padding(
@@ -165,9 +183,8 @@ class _DriverFleetAllowlistVehicleScreenState
                               trailing: IconButton(
                                 icon: Icon(Icons.remove_circle_outline,
                                     color: colors.error),
-                                onPressed: id.isEmpty
-                                    ? null
-                                    : () => _remove(id),
+                                onPressed:
+                                    id.isEmpty ? null : () => _remove(id),
                               ),
                             ),
                           );
@@ -207,7 +224,9 @@ class _AddDriverSheetState extends ConsumerState<_AddDriverSheet> {
     final q = _queryController.text.trim();
     if (q.length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.fleetAllowlistSearchHint)),
+        const SnackBar(
+          content: Text(DriverStrings.fleetAllowlistSearchHint),
+        ),
       );
       return;
     }
@@ -229,18 +248,21 @@ class _AddDriverSheetState extends ConsumerState<_AddDriverSheet> {
   }
 
   Future<void> _add(String driverId) async {
-    final res = await ref.read(driverDataServiceProvider).setFleetHandoverAllowlist(
-          vehicleId: widget.vehicleId,
-          driverId: driverId,
-          add: true,
-        );
+    final res =
+        await ref.read(driverDataServiceProvider).setFleetHandoverAllowlist(
+              vehicleId: widget.vehicleId,
+              driverId: driverId,
+              add: true,
+            );
     if (!mounted) return;
     if (res?['ok'] == true) {
       Navigator.of(context).pop();
       await widget.onAdded();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.fleetAllowlistUpdateFailed)),
+        const SnackBar(
+          content: Text(DriverStrings.fleetAllowlistUpdateFailed),
+        ),
       );
     }
   }
@@ -278,7 +300,7 @@ class _AddDriverSheetState extends ConsumerState<_AddDriverSheet> {
                 const SizedBox(height: DriverSpacing.md),
                 TextField(
                   controller: _queryController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: DriverStrings.fleetAllowlistSearchLabel,
                     hintText: DriverStrings.fleetAllowlistSearchHint,
                   ),
@@ -311,8 +333,7 @@ class _AddDriverSheetState extends ConsumerState<_AddDriverSheet> {
                             : null,
                       ),
                       title: Text(name),
-                      subtitle:
-                          email.isNotEmpty ? Text(email) : null,
+                      subtitle: email.isNotEmpty ? Text(email) : null,
                       trailing: IconButton(
                         icon: const Icon(Icons.add_circle_outline),
                         onPressed: id.isEmpty ? null : () => _add(id),

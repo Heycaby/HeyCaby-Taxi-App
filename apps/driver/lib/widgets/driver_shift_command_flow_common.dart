@@ -5,6 +5,7 @@ import '../theme/driver_colors.dart';
 import '../theme/driver_radius.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
+import '../ui/driver_app_bar.dart';
 import '../ui/driver_card.dart';
 import '../ui/driver_statistic_card.dart';
 
@@ -203,10 +204,15 @@ class DriverShiftCommandShellPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: colors.background,
-      appBar: AppBar(
-        backgroundColor: colors.card,
-        elevation: 0,
-        leading: Icon(Icons.arrow_back_rounded, color: colors.text),
+      appBar: DriverAppBar(
+        title: earningsSelected ? earningsTab : availableRidesTab,
+        colors: colors,
+        typography: typography,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: colors.text),
+          onPressed: () => Navigator.maybePop(context),
+        ),
       ),
       body: SafeArea(
         child: Column(

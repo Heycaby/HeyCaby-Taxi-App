@@ -8,6 +8,7 @@ import '../providers/driver_data_providers.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
+import '../ui/driver_app_bar.dart';
 
 /// Fleet manager: pick a shared taxi to manage its driver allowlist.
 class DriverFleetAllowlistScreen extends ConsumerStatefulWidget {
@@ -65,9 +66,24 @@ class _DriverFleetAllowlistScreenState
         DriverTypography.fromTheme(ref.watch(typographyProvider));
 
     return Scaffold(
-      appBar: AppBar(title: Text(DriverStrings.fleetAllowlistTitle)),
+      backgroundColor: colors.background,
+      appBar: DriverAppBar(
+        title: DriverStrings.fleetAllowlistTitle,
+        colors: colors,
+        typography: typography,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: colors.text),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/driver');
+            }
+          },
+        ),
+      ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: colors.primary))
           : RefreshIndicator(
               onRefresh: _load,
               child: _vehicles.isEmpty
@@ -115,7 +131,8 @@ class _DriverFleetAllowlistScreenState
                           subtitle: Text(
                             count == 0
                                 ? DriverStrings.fleetAllowlistOpenFleet
-                                : DriverStrings.fleetAllowlistDriverCount(count),
+                                : DriverStrings.fleetAllowlistDriverCount(
+                                    count),
                             style: typography.bodySmall.copyWith(
                               color: colors.textSecondary,
                             ),

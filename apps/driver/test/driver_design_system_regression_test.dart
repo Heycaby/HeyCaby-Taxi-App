@@ -15,6 +15,20 @@ void main() {
         File('lib/widgets/driver_shell.dart').readAsStringSync();
     final splashSource =
         File('lib/widgets/driver_brand_moment_body.dart').readAsStringSync();
+    final tellFriendSource =
+        File('lib/screens/driver_tell_friend_screen.dart').readAsStringSync();
+    final fleetAllowlistSource =
+        File('lib/screens/driver_fleet_allowlist_screen.dart')
+            .readAsStringSync();
+    final fleetAllowlistVehicleSource = File(
+      'lib/screens/driver_fleet_allowlist_vehicle_screen.dart',
+    ).readAsStringSync();
+    final shiftAuditSource = File(
+      'lib/screens/driver_shift_handover_audit_screen.dart',
+    ).readAsStringSync();
+    final shiftCommandFlowSource =
+        File('lib/widgets/driver_shift_command_flow_common.dart')
+            .readAsStringSync();
     final logoSource =
         File('lib/widgets/heycaby_driver_logo.dart').readAsStringSync();
     final brandAssetsSource =
@@ -61,6 +75,19 @@ void main() {
           .toList();
 
       expect(offenders, isEmpty);
+    });
+
+    test('keeps known driver flow headers on shared app bar styling', () {
+      for (final source in [
+        tellFriendSource,
+        fleetAllowlistSource,
+        fleetAllowlistVehicleSource,
+        shiftAuditSource,
+        shiftCommandFlowSource,
+      ]) {
+        expect(source, contains('DriverAppBar('));
+        expect(source, isNot(contains('appBar: AppBar(')));
+      }
     });
 
     test('supports only Dutch, English, Spanish, and Arabic for driver app',

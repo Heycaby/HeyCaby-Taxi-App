@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:intl/intl.dart';
 
@@ -8,6 +9,7 @@ import '../providers/driver_data_providers.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
+import '../ui/driver_app_bar.dart';
 
 /// Staff-only audit list for Secure Shift Handover requests (Supabase RPC gated).
 class DriverShiftHandoverAuditScreen extends ConsumerStatefulWidget {
@@ -74,11 +76,24 @@ class _DriverShiftHandoverAuditScreenState
         DriverTypography.fromTheme(ref.watch(typographyProvider));
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(DriverStrings.shiftHandoverAuditTitle),
+      backgroundColor: colors.background,
+      appBar: DriverAppBar(
+        title: DriverStrings.shiftHandoverAuditTitle,
+        colors: colors,
+        typography: typography,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: colors.text),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/driver');
+            }
+          },
+        ),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: colors.primary))
           : _error != null
               ? Center(
                   child: Padding(
