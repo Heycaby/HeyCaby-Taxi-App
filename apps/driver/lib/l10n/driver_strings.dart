@@ -734,30 +734,122 @@ class DriverStrings {
   static String rideSwapOpenCount(int n) => n == 0
       ? 'Geen open wissels'
       : (n == 1 ? '1 open wissel' : '$n open wissels');
-  static const String swapOfferTitle = 'Rit aanbieden voor wissel';
-  static const String swapOfferBullet1 =
-      'Deze rit wordt zichtbaar voor andere chauffeurs in jouw netwerk.';
-  static const String swapOfferBullet2 =
-      'Zodra een chauffeur de rit overneemt, heb jij er geen toegang meer toe.';
-  static const String swapOfferBullet3 =
-      'De passagier ontvangt automatisch de gegevens van de nieuwe chauffeur.';
-  static const String swapOfferBullet4 =
-      'Wisselaanbiedingen verlopen automatisch als niemand ze oppakt. De rit blijft dan van jou.';
-  static const String swapOfferWhy = 'Waarom kun je niet rijden?';
-  static const String swapReasonPersonal = 'Persoonlijke noodstoestand';
-  static const String swapReasonVehicle = 'Voertuigstoring';
-  static const String swapReasonSchedule = 'Roosterconflict';
-  static const String swapReasonMedical = 'Medisch';
-  static const String swapReasonOther = 'Anders';
-  static const String swapOfferConfirm = 'Ja, rit aanbieden';
-  static const String swapEmergencyWarn =
-      'Spoed: weinig tijd tot ophalen. Zorg dat de passagier op de hoogte is als niemand de rit overneemt.';
-  static const String swapTooLate =
-      'Het is te laat om deze rit te wisselen. Bel de passagier en neem contact op met de ondersteuning.';
-  static const String swapListedBadge = 'Aangeboden voor wissel';
+  static String get swapOfferTitle => _t(
+        'Rit aanbieden voor wissel',
+        en: 'Offer ride for swap',
+        es: 'Ofrecer viaje para cambio',
+        ar: 'عرض الرحلة للتبديل',
+      );
+  static String get swapOfferBullet1 => _t(
+        'Deze rit wordt zichtbaar voor andere chauffeurs in jouw netwerk.',
+        en: 'This ride becomes visible to other drivers in your network.',
+        es: 'Este viaje será visible para otros conductores de tu red.',
+        ar: 'ستصبح هذه الرحلة مرئية للسائقين الآخرين في شبكتك.',
+      );
+  static String get swapOfferBullet2 => _t(
+        'Zodra een chauffeur de rit overneemt, heb jij er geen toegang meer toe.',
+        en: 'Once another driver takes it, you no longer have access to it.',
+        es: 'Cuando otro conductor lo tome, ya no tendrás acceso.',
+        ar: 'عندما يأخذها سائق آخر، لن تتمكن من الوصول إليها.',
+      );
+  static String get swapOfferBullet3 => _t(
+        'De passagier ontvangt automatisch de gegevens van de nieuwe chauffeur.',
+        en: 'The rider automatically receives the new driver details.',
+        es: 'El pasajero recibe automáticamente los datos del nuevo conductor.',
+        ar: 'يتلقى الراكب بيانات السائق الجديد تلقائيا.',
+      );
+  static String get swapOfferBullet4 => _t(
+        'Wisselaanbiedingen verlopen automatisch als niemand ze oppakt. De rit blijft dan van jou.',
+        en: 'Swap offers expire automatically if nobody takes them. The ride then stays yours.',
+        es: 'Las ofertas de cambio caducan automáticamente si nadie las toma. El viaje seguirá siendo tuyo.',
+        ar: 'تنتهي عروض التبديل تلقائيا إذا لم يأخذها أحد. عندها تبقى الرحلة لك.',
+      );
+  static String get swapOfferWhy => _t(
+        'Waarom kun je niet rijden?',
+        en: 'Why can’t you drive?',
+        es: '¿Por qué no puedes conducir?',
+        ar: 'لماذا لا يمكنك القيادة؟',
+      );
+  static String get swapReasonPersonal => _t(
+        'Persoonlijke noodstoestand',
+        en: 'Personal emergency',
+        es: 'Emergencia personal',
+        ar: 'حالة طارئة شخصية',
+      );
+  static String get swapReasonVehicle => _t(
+        'Voertuigstoring',
+        en: 'Vehicle breakdown',
+        es: 'Avería del vehículo',
+        ar: 'عطل في المركبة',
+      );
+  static String get swapReasonSchedule => _t(
+        'Roosterconflict',
+        en: 'Schedule conflict',
+        es: 'Conflicto de horario',
+        ar: 'تعارض في الجدول',
+      );
+  static String get swapReasonMedical => _t(
+        'Medisch',
+        en: 'Medical',
+        es: 'Médico',
+        ar: 'طبي',
+      );
+  static String get swapReasonOther => _t(
+        'Anders',
+        en: 'Other',
+        es: 'Otro',
+        ar: 'أخرى',
+      );
+  static String swapReasonLabel(String code) => switch (code) {
+        'personal_emergency' => swapReasonPersonal,
+        'vehicle_breakdown' => swapReasonVehicle,
+        'schedule_conflict' => swapReasonSchedule,
+        'medical' => swapReasonMedical,
+        _ => swapReasonOther,
+      };
+  static String get swapOfferDetailHint => _t(
+        'Toelichting (optioneel)',
+        en: 'Details (optional)',
+        es: 'Detalles (opcional)',
+        ar: 'التفاصيل (اختياري)',
+      );
+  static String get swapOfferFailed => _t(
+        'Mislukt',
+        en: 'Failed',
+        es: 'Falló',
+        ar: 'فشل',
+      );
+  static String get swapOfferConfirm => _t(
+        'Ja, rit aanbieden',
+        en: 'Yes, offer ride',
+        es: 'Sí, ofrecer viaje',
+        ar: 'نعم، اعرض الرحلة',
+      );
+  static String get swapEmergencyWarn => _t(
+        'Spoed: weinig tijd tot ophalen. Zorg dat de passagier op de hoogte is als niemand de rit overneemt.',
+        en: 'Urgent: pickup is soon. Make sure the rider is informed if nobody takes the ride.',
+        es: 'Urgente: queda poco para la recogida. Avisa al pasajero si nadie toma el viaje.',
+        ar: 'عاجل: وقت الوصول قريب. تأكد من إبلاغ الراكب إذا لم يأخذ أحد الرحلة.',
+      );
+  static String get swapTooLate => _t(
+        'Het is te laat om deze rit te wisselen. Bel de passagier en neem contact op met de ondersteuning.',
+        en: 'It is too late to swap this ride. Call the rider and contact support.',
+        es: 'Es demasiado tarde para cambiar este viaje. Llama al pasajero y contacta con soporte.',
+        ar: 'فات الأوان لتبديل هذه الرحلة. اتصل بالراكب وتواصل مع الدعم.',
+      );
+  static String get swapListedBadge => _t(
+        'Aangeboden voor wissel',
+        en: 'Offered for swap',
+        es: 'Ofrecido para cambio',
+        ar: 'معروضة للتبديل',
+      );
   static const String swapAction = 'Wisselen';
-  static const String swapFeedEmpty =
-      'Momenteel zijn er geen actieve wisselritten beschikbaar.';
+  static String get swapFeedEmpty => _t(
+        'Momenteel zijn er geen actieve wisselritten beschikbaar.',
+        en: 'There are no active swap rides available right now.',
+        es: 'Ahora mismo no hay viajes de cambio activos disponibles.',
+        ar: 'لا توجد رحلات تبديل نشطة متاحة حاليا.',
+      );
   static const String swapClaim = 'Rit overnemen';
   static const String swapViewDetails = 'Bekijk details';
   static const String swapExpiresIn = 'Verloopt over';

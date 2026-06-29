@@ -8,13 +8,13 @@ import '../providers/driver_data_providers.dart';
 import '../services/driver_data_service.dart';
 
 /// Reason codes for `offer_ride_swap` RPC (migration 042).
-const kSwapReasonCodes = <String, String>{
-  'personal_emergency': 'Persoonlijke noodstoestand',
-  'vehicle_breakdown': 'Voertuigstoring',
-  'schedule_conflict': 'Roosterconflict',
-  'medical': 'Medisch',
-  'other': 'Anders',
-};
+const kSwapReasonCodes = <String>[
+  'personal_emergency',
+  'vehicle_breakdown',
+  'schedule_conflict',
+  'medical',
+  'other',
+];
 
 Future<void> showOfferRideSwapDialog(
   BuildContext context,
@@ -50,7 +50,8 @@ class _OfferRideSwapDialogBody extends ConsumerStatefulWidget {
       _OfferRideSwapDialogBodyState();
 }
 
-class _OfferRideSwapDialogBodyState extends ConsumerState<_OfferRideSwapDialogBody> {
+class _OfferRideSwapDialogBodyState
+    extends ConsumerState<_OfferRideSwapDialogBody> {
   String _reason = 'vehicle_breakdown';
   final _detailCtrl = TextEditingController();
   bool _submitting = false;
@@ -73,7 +74,8 @@ class _OfferRideSwapDialogBodyState extends ConsumerState<_OfferRideSwapDialogBo
           driverId: driverId,
           rideId: widget.ride.id,
           reason: _reason,
-          detail: _detailCtrl.text.trim().isEmpty ? null : _detailCtrl.text.trim(),
+          detail:
+              _detailCtrl.text.trim().isEmpty ? null : _detailCtrl.text.trim(),
         );
     if (!mounted) return;
     setState(() => _submitting = false);
@@ -86,7 +88,7 @@ class _OfferRideSwapDialogBodyState extends ConsumerState<_OfferRideSwapDialogBo
       if (err.toLowerCase().contains('too_late') || err.contains('te laat')) {
         _errorText = DriverStrings.swapTooLate;
       } else {
-        _errorText = err.isNotEmpty ? err : 'Mislukt';
+        _errorText = err.isNotEmpty ? err : DriverStrings.swapOfferFailed;
       }
     });
   }
@@ -96,12 +98,12 @@ class _OfferRideSwapDialogBodyState extends ConsumerState<_OfferRideSwapDialogBo
     final colors = ref.watch(colorsProvider);
     final typo = ref.watch(typographyProvider);
     final pickup = widget.ride.scheduledPickupAt;
-    final minsLeft = pickup != null
-        ? pickup.difference(DateTime.now()).inMinutes
-        : 9999;
+    final minsLeft =
+        pickup != null ? pickup.difference(DateTime.now()).inMinutes : 9999;
     final isEmergency = minsLeft <= 45;
     final routeLine = [
-      if ((widget.ride.pickupAddress ?? '').isNotEmpty) widget.ride.pickupAddress!,
+      if ((widget.ride.pickupAddress ?? '').isNotEmpty)
+        widget.ride.pickupAddress!,
       if (pickup != null) DateFormat('EEE d MMM HH:mm').format(pickup),
     ].join(' · ');
 
@@ -134,10 +136,14 @@ class _OfferRideSwapDialogBodyState extends ConsumerState<_OfferRideSwapDialogBo
               ),
             ),
             const SizedBox(height: 16),
-            Text('• ${DriverStrings.swapOfferBullet1}', style: typo.bodySmall.copyWith(height: 1.35)),
-            Text('• ${DriverStrings.swapOfferBullet2}', style: typo.bodySmall.copyWith(height: 1.35)),
-            Text('• ${DriverStrings.swapOfferBullet3}', style: typo.bodySmall.copyWith(height: 1.35)),
-            Text('• ${DriverStrings.swapOfferBullet4}', style: typo.bodySmall.copyWith(height: 1.35)),
+            Text('• ${DriverStrings.swapOfferBullet1}',
+                style: typo.bodySmall.copyWith(height: 1.35)),
+            Text('• ${DriverStrings.swapOfferBullet2}',
+                style: typo.bodySmall.copyWith(height: 1.35)),
+            Text('• ${DriverStrings.swapOfferBullet3}',
+                style: typo.bodySmall.copyWith(height: 1.35)),
+            Text('• ${DriverStrings.swapOfferBullet4}',
+                style: typo.bodySmall.copyWith(height: 1.35)),
             if (isEmergency) ...[
               const SizedBox(height: 12),
               Container(
@@ -148,39 +154,86 @@ class _OfferRideSwapDialogBodyState extends ConsumerState<_OfferRideSwapDialogBo
                 ),
                 child: Text(
                   '⚠️ ${DriverStrings.swapEmergencyWarn}',
-                  style: typo.bodySmall.copyWith(color: colors.text, height: 1.3),
+                  style:
+                      typo.bodySmall.copyWith(color: colors.text, height: 1.3),
                 ),
               ),
             ],
             const SizedBox(height: 16),
             Text(
               DriverStrings.swapOfferWhy,
-              style: typo.labelLarge.copyWith(color: colors.text, fontWeight: FontWeight.w700),
+              style: typo.labelLarge
+                  .copyWith(color: colors.text, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
-            ...kSwapReasonCodes.entries.map(
-              (e) => RadioListTile<String>(
-                dense: true,
-                value: e.key,
-                groupValue: _reason,
-                onChanged: _submitting
-                    ? null
-                    : (v) => setState(() => _reason = v ?? _reason),
-                title: Text(e.value, style: typo.bodySmall),
-              ),
+            ...kSwapReasonCodes.map(
+              (code) {
+                final selected = code == _reason;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: _submitting
+                        ? null
+                        : () => setState(() => _reason = code),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 160),
+                      curve: Curves.easeOut,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? colors.accent.withValues(alpha: 0.10)
+                            : colors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: selected ? colors.accent : colors.border,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            selected
+                                ? Icons.radio_button_checked_rounded
+                                : Icons.radio_button_unchecked_rounded,
+                            size: 20,
+                            color: selected ? colors.accent : colors.textSoft,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              DriverStrings.swapReasonLabel(code),
+                              style: typo.bodySmall.copyWith(
+                                color: colors.text,
+                                fontWeight: selected
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
             TextField(
               controller: _detailCtrl,
               maxLines: 2,
               enabled: !_submitting,
               decoration: InputDecoration(
-                labelText: 'Toelichting (optioneel)',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                labelText: DriverStrings.swapOfferDetailHint,
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
             if (_errorText != null) ...[
               const SizedBox(height: 8),
-              Text(_errorText!, style: typo.bodySmall.copyWith(color: colors.error)),
+              Text(_errorText!,
+                  style: typo.bodySmall.copyWith(color: colors.error)),
             ],
           ],
         ),

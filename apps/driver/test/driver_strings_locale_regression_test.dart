@@ -36,6 +36,12 @@ void main() {
     expect(DriverStrings.createAccount, 'Create account');
     expect(DriverStrings.registerDriverSubtitle, 'Register as a driver');
     expect(DriverStrings.passwordMinSixHint, 'Password (min 6 characters)');
+    expect(DriverStrings.swapOfferTitle, 'Offer ride for swap');
+    expect(
+      DriverStrings.swapReasonLabel('vehicle_breakdown'),
+      'Vehicle breakdown',
+    );
+    expect(DriverStrings.swapOfferDetailHint, 'Details (optional)');
     expect(DriverStrings.appSuggestion, 'Suggestion for the app');
     expect(DriverStrings.homeAutoAcceptReturnRides, 'Auto-accept return rides');
     expect(DriverStrings.homeTodayRidesCount(0), 'No rides yet');
@@ -147,6 +153,12 @@ void main() {
     expect(DriverStrings.createAccount, 'Crear cuenta');
     expect(DriverStrings.registerDriverSubtitle, 'Regístrate como conductor');
     expect(DriverStrings.passwordMinSixHint, 'Contraseña (mín. 6 caracteres)');
+    expect(DriverStrings.swapOfferTitle, 'Ofrecer viaje para cambio');
+    expect(
+      DriverStrings.swapReasonLabel('schedule_conflict'),
+      'Conflicto de horario',
+    );
+    expect(DriverStrings.swapOfferConfirm, 'Sí, ofrecer viaje');
     expect(DriverStrings.appSuggestion, 'Sugerencia para la app');
     expect(
       DriverStrings.homeAutoAcceptReturnRides,
@@ -260,6 +272,9 @@ void main() {
     expect(DriverStrings.createAccount, 'إنشاء حساب');
     expect(DriverStrings.registerDriverSubtitle, 'سجل كسائق');
     expect(DriverStrings.passwordMinSixHint, 'كلمة المرور (6 أحرف على الأقل)');
+    expect(DriverStrings.swapOfferTitle, 'عرض الرحلة للتبديل');
+    expect(DriverStrings.swapReasonLabel('medical'), 'طبي');
+    expect(DriverStrings.swapOfferFailed, 'فشل');
     expect(DriverStrings.appSuggestion, 'اقتراح للتطبيق');
     expect(
         DriverStrings.homeAutoAcceptReturnRides, 'قبول رحلات العودة تلقائيا');
