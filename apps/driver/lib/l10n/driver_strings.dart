@@ -1718,17 +1718,29 @@ class DriverStrings {
         es: 'Puedes seguir usando historial, ingresos, perfil, comunidad y soporte. Solo las nuevas solicitudes de viaje están pausadas.',
         ar: 'يمكنك الاستمرار في استخدام السجل والأرباح والملف الشخصي والمجتمع والدعم. فقط طلبات الرحلات الجديدة متوقفة.',
       );
+  static String get platformBalancePaymentPending => _t(
+        'Betaling in behandeling',
+        en: 'Payment Pending',
+        es: 'Pago pendiente',
+        ar: 'الدفع قيد المعالجة',
+      );
+  static String get platformBalancePaymentPendingBody => _t(
+        'We wachten op bevestiging van je betaling. De meeste betalingen worden binnen enkele minuten bevestigd. Bankoverschrijvingen kunnen langer duren.',
+        en: 'We are waiting for your payment confirmation. Most payments are confirmed within a few minutes. Bank transfers may take longer.',
+        es: 'Estamos esperando la confirmación de tu pago. La mayoría de pagos se confirman en unos minutos. Las transferencias bancarias pueden tardar más.',
+        ar: 'نحن ننتظر تأكيد دفعتك. يتم تأكيد معظم المدفوعات خلال دقائق. قد تستغرق التحويلات البنكية وقتًا أطول.',
+      );
   static String get platformBalanceSettleBalance => _t(
-        'Balans vereffenen',
-        en: 'Settle Balance',
-        es: 'Liquidar balance',
-        ar: 'تسوية الرصيد',
+        'Platformbalans vereffenen',
+        en: 'Settle Platform Balance',
+        es: 'Liquidar balance de plataforma',
+        ar: 'تسوية رصيد المنصة',
       );
   static String get platformBalanceViewHistory => _t(
-        'Geschiedenis bekijken',
-        en: 'View history',
-        es: 'Ver historial',
-        ar: 'عرض السجل',
+        'Platformactiviteit bekijken',
+        en: 'View Platform Activity',
+        es: 'Ver actividad de plataforma',
+        ar: 'عرض نشاط المنصة',
       );
   static String get platformBalancePreparingSettlement => _t(
         'Betaling voorbereiden…',
@@ -1756,16 +1768,16 @@ class DriverStrings {
   static const String billingStatusOverdue = 'Achterstallig';
   static const String billingViewHistory = 'Balansgeschiedenis bekijken';
   static const String billingPaymentMethods = 'Betaalmethoden';
-  static const String billingPayNow = 'Balans vereffenen';
-  static const String billingChoosePlanTitle = 'Balans vereffenen';
+  static const String billingPayNow = 'Platformbalans vereffenen';
+  static const String billingChoosePlanTitle = 'Platformbalans vereffenen';
   static const String billingPlanUnknown = 'Platformbalans';
-  static const String billingUseSelectedPlan = 'Balans vereffenen';
+  static const String billingUseSelectedPlan = 'Platformbalans vereffenen';
 
   /// Shown when `/api/driver/status` returns no usable `plans` (strict server pricing).
   static const String billingPlansUnavailable =
       'Prijzen zijn nu niet beschikbaar. Vernieuw of probeer het later opnieuw.';
-  static const String billingHistoryTitle = 'Balansgeschiedenis';
-  static const String billingHistoryEmpty = 'Nog geen balansgeschiedenis';
+  static const String billingHistoryTitle = 'Platformactiviteit';
+  static const String billingHistoryEmpty = 'Nog geen platformactiviteit';
   static const String billingHistoryDate = 'Datum';
   static const String billingHistoryAmount = 'Bedrag';
   static const String billingHistoryStatus = 'Status';

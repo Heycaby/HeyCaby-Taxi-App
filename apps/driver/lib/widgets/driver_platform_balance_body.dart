@@ -16,6 +16,7 @@ class DriverPlatformBalanceSummary {
     required this.statusLine,
     required this.statusTone,
     required this.rideRequestsPaused,
+    required this.paymentPending,
     required this.canSettle,
     required this.isCurrent,
     this.dueLine,
@@ -26,6 +27,7 @@ class DriverPlatformBalanceSummary {
   final DriverStatusTone statusTone;
   final String? dueLine;
   final bool rideRequestsPaused;
+  final bool paymentPending;
   final bool canSettle;
   final bool isCurrent;
 }
@@ -168,9 +170,11 @@ class _BalanceCard extends StatelessWidget {
             colors: colors,
             typography: typography,
             tone: summary.statusTone,
-            icon: summary.rideRequestsPaused
-                ? Icons.pause_circle_outline_rounded
-                : Icons.verified_outlined,
+            icon: summary.paymentPending
+                ? Icons.hourglass_top_rounded
+                : summary.rideRequestsPaused
+                    ? Icons.pause_circle_outline_rounded
+                    : Icons.verified_outlined,
           ),
           if (summary.dueLine != null) ...[
             const SizedBox(height: DriverSpacing.md),
@@ -201,8 +205,9 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final toneColor =
-        summary.rideRequestsPaused ? colors.warning : colors.primary;
+    final toneColor = summary.paymentPending || summary.rideRequestsPaused
+        ? colors.warning
+        : colors.primary;
     return DriverCard(
       colors: colors,
       child: Row(
@@ -212,9 +217,11 @@ class _InfoCard extends StatelessWidget {
           const SizedBox(width: DriverSpacing.md),
           Expanded(
             child: Text(
-              summary.rideRequestsPaused
-                  ? DriverStrings.platformBalancePausedExplainer
-                  : DriverStrings.platformBalanceExplainer,
+              summary.paymentPending
+                  ? DriverStrings.platformBalancePaymentPendingBody
+                  : summary.rideRequestsPaused
+                      ? DriverStrings.platformBalancePausedExplainer
+                      : DriverStrings.platformBalanceExplainer,
               style: typography.bodySmall.copyWith(
                 color: colors.textSecondary,
                 height: 1.4,

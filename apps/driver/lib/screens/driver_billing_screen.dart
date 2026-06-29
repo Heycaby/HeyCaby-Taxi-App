@@ -30,10 +30,12 @@ DateTime? _dateFrom(Map<String, dynamic>? status, String key) {
 
 String? _dueLine(Map<String, dynamic>? status) {
   final state = (status?['balance_state'] as String?)?.trim();
+  final paymentPending = status?['payment_pending'] == true;
   final dueAt = _dateFrom(status, 'due_at');
   final graceUntil = _dateFrom(status, 'grace_until_at');
   final now = DateTime.now();
 
+  if (paymentPending) return DriverStrings.platformBalancePaymentPendingBody;
   if (state == 'current') return DriverStrings.platformBalanceCurrentBody;
   if (state == 'paused') return DriverStrings.platformBalancePausedBody;
 
@@ -47,6 +49,7 @@ String? _dueLine(Map<String, dynamic>? status) {
 
 DriverStatusTone _statusTone(Map<String, dynamic>? status) {
   final state = (status?['balance_state'] as String?)?.trim();
+  if (status?['payment_pending'] == true) return DriverStatusTone.warning;
   if (state == 'paused') return DriverStatusTone.error;
   if (state == 'due') return DriverStatusTone.warning;
   return DriverStatusTone.success;
@@ -102,12 +105,14 @@ class DriverBillingScreen extends ConsumerWidget {
         : 0;
     final state = (status?['balance_state'] as String?)?.trim() ?? 'current';
     final rideRequestsPaused = status?['ride_requests_paused'] == true;
+    final paymentPending = status?['payment_pending'] == true;
     final canSettle =
         outstanding > 0 && status?['can_settle_outstanding'] == true;
 
     final summary = DriverPlatformBalanceSummary(
       outstandingDisplay: _money(status, outstanding),
       statusLine: switch (state) {
+        _ when paymentPending => DriverStrings.platformBalancePaymentPending,
         'paused' => DriverStrings.platformBalanceRequestsPaused,
         'due' => DriverStrings.platformBalanceOutstanding,
         _ => DriverStrings.platformBalanceCurrent,
@@ -115,6 +120,7 @@ class DriverBillingScreen extends ConsumerWidget {
       statusTone: _statusTone(status),
       dueLine: _dueLine(status),
       rideRequestsPaused: rideRequestsPaused,
+      paymentPending: paymentPending,
       canSettle: canSettle,
       isCurrent: outstanding <= 0,
     );
