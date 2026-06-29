@@ -9,144 +9,110 @@ import '../ui/driver_card.dart';
 import 'driver_support_flow_common.dart';
 
 /// FAQ content used by [DriverQuickAnswersBody] and the FAQ screen.
-const kDriverFaqSections = [
-  DriverFaqSectionData(
-    title: 'Aan de slag',
-    items: [
-      DriverFaqItemData(
-        question: 'Hoe ga ik online?',
-        answer: 'Gebruik de schuifknop op het startscherm om online te gaan. '
-            'Veeg naar rechts om online te gaan, naar het midden voor '
-            'pauze, en naar links om offline te gaan.',
+List<DriverFaqSectionData> get kDriverFaqSections => [
+      DriverFaqSectionData(
+        title: DriverStrings.faqGettingStarted,
+        items: [
+          DriverFaqItemData(
+            question: DriverStrings.faqHowGoOnlineQuestion,
+            answer: DriverStrings.faqHowGoOnlineAnswer,
+          ),
+          DriverFaqItemData(
+            question: DriverStrings.faqRatesQuestion,
+            answer: DriverStrings.faqRatesAnswer,
+          ),
+          DriverFaqItemData(
+            question: DriverStrings.faqRideRequestsQuestion,
+            answer: DriverStrings.faqRideRequestsAnswer,
+          ),
+        ],
       ),
-      DriverFaqItemData(
-        question: 'Hoe stel ik mijn tarieven in?',
-        answer: 'Ga naar het Driver Hub-menu en tik op Tariefprofielen. '
-            'Hier kunt u meerdere tariefprofielen aanmaken en '
-            'schakelen tussen verschillende tarieven.',
+      DriverFaqSectionData(
+        title: DriverStrings.faqRidesEarnings,
+        items: [
+          DriverFaqItemData(
+            question: DriverStrings.faqEarningsQuestion,
+            answer: DriverStrings.faqEarningsAnswer,
+          ),
+          DriverFaqItemData(
+            question: DriverStrings.faqPaymentQuestion,
+            answer: DriverStrings.faqPaymentAnswer,
+          ),
+          DriverFaqItemData(
+            question: DriverStrings.faqReturnTripsQuestion,
+            answer: DriverStrings.faqReturnTripsAnswer,
+          ),
+          DriverFaqItemData(
+            question: DriverStrings.faqMarketplaceQuestion,
+            answer: DriverStrings.faqMarketplaceAnswer,
+          ),
+        ],
       ),
-      DriverFaqItemData(
-        question: 'Hoe ontvang ik ritaanvragen?',
-        answer: 'Zodra u online bent, ontvangt u automatisch '
-            'ritaanvragen van passagiers in de buurt. U krijgt een '
-            'melding met de ritdetails en kunt deze accepteren of '
-            'weigeren.',
+      DriverFaqSectionData(
+        title: DriverStrings.faqBreaksShifts,
+        items: [
+          DriverFaqItemData(
+            question: DriverStrings.faqBreakLimitQuestion,
+            answer: DriverStrings.faqBreakLimitAnswer,
+          ),
+          DriverFaqItemData(
+            question: DriverStrings.faqTakeBreakQuestion,
+            answer: DriverStrings.faqTakeBreakAnswer,
+          ),
+          DriverFaqItemData(
+            question: DriverStrings.faqEndShiftQuestion,
+            answer: DriverStrings.faqEndShiftAnswer,
+          ),
+        ],
       ),
-    ],
-  ),
-  DriverFaqSectionData(
-    title: 'Ritten en verdiensten',
-    items: [
-      DriverFaqItemData(
-        question: 'Hoe berekent HeyCaby mijn verdiensten?',
-        answer: 'Uw verdiensten worden berekend op basis van het '
-            'starttarief + prijs per kilometer + prijs per minuut. '
-            'U stelt deze tarieven zelf in via uw tariefprofiel.',
+      DriverFaqSectionData(
+        title: DriverStrings.faqSafety,
+        items: [
+          DriverFaqItemData(
+            question: DriverStrings.faqSafetyKitQuestion,
+            answer: DriverStrings.faqSafetyKitAnswer,
+          ),
+          DriverFaqItemData(
+            question: DriverStrings.faqAudioQuestion,
+            answer: DriverStrings.faqAudioAnswer,
+          ),
+        ],
       ),
-      DriverFaqItemData(
-        question: 'Wanneer krijg ik betaald?',
-        answer: 'Passagiers betalen direct aan u via contant geld, pin '
-            'of Tikkie. HeyCaby rekent 0% commissie.',
+      DriverFaqSectionData(
+        title: DriverStrings.faqDocumentsCompliance,
+        items: [
+          DriverFaqItemData(
+            question: DriverStrings.faqDocumentsQuestion,
+            answer: DriverStrings.faqDocumentsAnswer,
+          ),
+          DriverFaqItemData(
+            question: DriverStrings.faqRenewDocumentsQuestion,
+            answer: DriverStrings.faqRenewDocumentsAnswer,
+          ),
+          DriverFaqItemData(
+            question: DriverStrings.faqExpiredCardQuestion,
+            answer: DriverStrings.faqExpiredCardAnswer,
+          ),
+        ],
       ),
-      DriverFaqItemData(
-        question: 'Wat zijn retourritten?',
-        answer: 'Retourritten zijn ritten die terugkeren naar uw '
-            'thuisgebied. Via de retourrittenmarktplaats kunt u '
-            'ritten vinden die in uw richting gaan.',
+      DriverFaqSectionData(
+        title: DriverStrings.faqSupport,
+        items: [
+          DriverFaqItemData(
+            question: DriverStrings.faqContactSupportQuestion,
+            answer: DriverStrings.faqContactSupportAnswer,
+          ),
+          DriverFaqItemData(
+            question: DriverStrings.faqCallSupportQuestion,
+            answer: DriverStrings.faqCallSupportAnswer,
+          ),
+          DriverFaqItemData(
+            question: DriverStrings.faqResponseTimeQuestion,
+            answer: DriverStrings.faqResponseTimeAnswer,
+          ),
+        ],
       ),
-      DriverFaqItemData(
-        question: 'Hoe werkt de Marktplaats?',
-        answer: 'Op de Marktplaats kunt u bieden op beschikbare ritten. '
-            'Passagiers plaatsen een ritverzoek en u kunt hier op '
-            'reageren met uw tarief.',
-      ),
-    ],
-  ),
-  DriverFaqSectionData(
-    title: 'Pauzes en diensten',
-    items: [
-      DriverFaqItemData(
-        question: 'Hoe lang mag ik rijden zonder pauze?',
-        answer: 'Volgens Nederlandse wet- en regelgeving mag u maximaal '
-            '4,5 uur achtereen rijden. Daarna is een pauze van '
-            'minimaal 30 minuten verplicht.',
-      ),
-      DriverFaqItemData(
-        question: 'Hoe neem ik pauze?',
-        answer: 'Veeg de statusschakelaar naar het midden (pauze). '
-            'Uw status verandert naar oranje en u ontvangt geen '
-            'nieuwe ritaanvragen.',
-      ),
-      DriverFaqItemData(
-        question: 'Hoe beëindig ik mijn dienst?',
-        answer: 'Veeg de statusschakelaar naar links (offline). Als u '
-            'langer dan 30 minuten online bent geweest, wordt er '
-            'een bevestigingsdialoog getoond.',
-      ),
-    ],
-  ),
-  DriverFaqSectionData(
-    title: 'Veiligheid',
-    items: [
-      DriverFaqItemData(
-        question: 'Wat is de veiligheidskit?',
-        answer: 'De veiligheidskit bevat drie functies: noodoproep '
-            '(112), rit delen met contactpersonen, en '
-            'audio-opname tijdens ritten.',
-      ),
-      DriverFaqItemData(
-        question: 'Hoe gebruik ik audio-opname?',
-        answer: 'Audio-opname is alleen beschikbaar tijdens actieve '
-            'ritten. Tik op Audio-opname in de veiligheidskit om '
-            'te starten. De opname wordt lokaal opgeslagen.',
-      ),
-    ],
-  ),
-  DriverFaqSectionData(
-    title: 'Documenten en compliance',
-    items: [
-      DriverFaqItemData(
-        question: 'Welke documenten heb ik nodig?',
-        answer: 'U heeft nodig: chauffeurspas, rijbewijs, VOG '
-            '(Verklaring Omtrent het Gedrag), taxidiploma en '
-            'taxiverzekering.',
-      ),
-      DriverFaqItemData(
-        question: 'Hoe verleng ik mijn documenten?',
-        answer: 'Neem contact op met het RDW of uw gemeente voor '
-            'verlenging van uw chauffeurspas en rijbewijs. Voor '
-            'de VOG kunt u terecht bij Justis.',
-      ),
-      DriverFaqItemData(
-        question: 'Wat als mijn chauffeurspas verloopt?',
-        answer: 'Als uw chauffeurspas verloopt, wordt uw account '
-            'opgeschort. Neem contact op met support via de '
-            'in-app chat om uw documenten bij te werken.',
-      ),
-    ],
-  ),
-  DriverFaqSectionData(
-    title: 'Ondersteuning',
-    items: [
-      DriverFaqItemData(
-        question: 'Hoe neem ik contact op met support?',
-        answer: 'Ga naar Ondersteuning in het menu en tik op '
-            '"Nieuw bericht" om een chatgesprek te starten met '
-            'ons supportteam.',
-      ),
-      DriverFaqItemData(
-        question: 'Kan ik bellen met support?',
-        answer: 'Nee, communicatie met support verloopt uitsluitend '
-            'via de in-app chat.',
-      ),
-      DriverFaqItemData(
-        question: 'Hoe lang duurt het voor ik antwoord krijg?',
-        answer: 'Ons supportteam streeft ernaar binnen 24 uur te '
-            'reageren op uw bericht.',
-      ),
-    ],
-  ),
-];
+    ];
 
 /// One FAQ question + answer.
 class DriverFaqItemData {

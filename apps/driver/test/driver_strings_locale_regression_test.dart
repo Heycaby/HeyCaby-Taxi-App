@@ -29,6 +29,8 @@ void main() {
     expect(DriverStrings.homeAvailableCount(3), '3 available');
     expect(DriverStrings.pricingBase, 'Start price');
     expect(DriverStrings.pricingSwitchTariff, 'Switch tariff');
+    expect(DriverStrings.faq, 'Frequently asked questions');
+    expect(DriverStrings.faqHowGoOnlineQuestion, 'How do I go online?');
 
     DriverStrings.useLocale(const Locale('es'));
     expect(DriverStrings.home, 'Inicio');
@@ -44,6 +46,8 @@ void main() {
     expect(DriverStrings.homeAvailableCount(3), '3 disponibles');
     expect(DriverStrings.pricingBase, 'Precio inicial');
     expect(DriverStrings.pricingSwitchTariff, 'Cambiar tarifa');
+    expect(DriverStrings.faq, 'Preguntas frecuentes');
+    expect(DriverStrings.faqHowGoOnlineQuestion, '¿Cómo me conecto?');
 
     DriverStrings.useLocale(const Locale('ar'));
     expect(DriverStrings.home, 'الرئيسية');
@@ -57,5 +61,7 @@ void main() {
     expect(DriverStrings.homeAvailableCount(3), '3 متاحة');
     expect(DriverStrings.pricingBase, 'سعر البداية');
     expect(DriverStrings.pricingSwitchTariff, 'تغيير التعرفة');
+    expect(DriverStrings.faq, 'الأسئلة الشائعة');
+    expect(DriverStrings.faqHowGoOnlineQuestion, 'كيف أصبح متصلا؟');
   });
 }

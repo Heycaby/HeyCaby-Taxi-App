@@ -1617,7 +1617,264 @@ class DriverStrings {
   static const String gebruiksvoorwaarden = 'Gebruiksvoorwaarden';
 
   // FAQ / Terms / Privacy
-  static const String faq = 'Veelgestelde vragen';
+  static String get faq => _t(
+        'Veelgestelde vragen',
+        en: 'Frequently asked questions',
+        es: 'Preguntas frecuentes',
+        ar: 'الأسئلة الشائعة',
+      );
+  static String get faqGettingStarted => _t(
+        'Aan de slag',
+        en: 'Getting started',
+        es: 'Primeros pasos',
+        ar: 'البدء',
+      );
+  static String get faqRidesEarnings => _t(
+        'Ritten en verdiensten',
+        en: 'Rides and earnings',
+        es: 'Viajes y ganancias',
+        ar: 'الرحلات والأرباح',
+      );
+  static String get faqBreaksShifts => _t(
+        'Pauzes en diensten',
+        en: 'Breaks and shifts',
+        es: 'Descansos y turnos',
+        ar: 'الاستراحات والورديات',
+      );
+  static String get faqSafety => _t(
+        'Veiligheid',
+        en: 'Safety',
+        es: 'Seguridad',
+        ar: 'السلامة',
+      );
+  static String get faqDocumentsCompliance => _t(
+        'Documenten en compliance',
+        en: 'Documents and compliance',
+        es: 'Documentos y cumplimiento',
+        ar: 'المستندات والامتثال',
+      );
+  static String get faqSupport => _t(
+        'Ondersteuning',
+        en: 'Support',
+        es: 'Soporte',
+        ar: 'الدعم',
+      );
+  static String get faqHowGoOnlineQuestion => _t(
+        'Hoe ga ik online?',
+        en: 'How do I go online?',
+        es: '¿Cómo me conecto?',
+        ar: 'كيف أصبح متصلا؟',
+      );
+  static String get faqHowGoOnlineAnswer => _t(
+        'Gebruik de schuifknop op het startscherm om online te gaan. Veeg naar rechts om online te gaan, naar het midden voor pauze, en naar links om offline te gaan.',
+        en: 'Use the status control on the home screen. Slide right to go online, to the middle for break, and left to go offline.',
+        es: 'Usa el control de estado en la pantalla de inicio. Desliza a la derecha para conectarte, al centro para descanso y a la izquierda para desconectarte.',
+        ar: 'استخدم زر الحالة في الشاشة الرئيسية. مرر يمينا للاتصال، وإلى الوسط للاستراحة، ويسارا لعدم الاتصال.',
+      );
+  static String get faqRatesQuestion => _t(
+        'Hoe stel ik mijn tarieven in?',
+        en: 'How do I set my rates?',
+        es: '¿Cómo configuro mis tarifas?',
+        ar: 'كيف أحدد أسعاري؟',
+      );
+  static String get faqRatesAnswer => _t(
+        'Ga naar het Driver Hub-menu en tik op Tariefprofielen. Hier kunt u meerdere tariefprofielen aanmaken en schakelen tussen verschillende tarieven.',
+        en: 'Open Driver Hub and tap tariff profiles. You can create multiple profiles and switch between rates.',
+        es: 'Abre Driver Hub y toca perfiles de tarifa. Puedes crear varios perfiles y cambiar entre tarifas.',
+        ar: 'افتح مركز السائق واضغط على ملفات التعرفة. يمكنك إنشاء عدة ملفات والتبديل بين الأسعار.',
+      );
+  static String get faqRideRequestsQuestion => _t(
+        'Hoe ontvang ik ritaanvragen?',
+        en: 'How do I receive ride requests?',
+        es: '¿Cómo recibo solicitudes de viaje?',
+        ar: 'كيف أستقبل طلبات الرحلات؟',
+      );
+  static String get faqRideRequestsAnswer => _t(
+        'Zodra u online bent, ontvangt u automatisch ritaanvragen van passagiers in de buurt. U krijgt een melding met de ritdetails en kunt deze accepteren of weigeren.',
+        en: 'Once you are online, nearby rider requests arrive automatically. You get a notification with ride details and can accept or decline.',
+        es: 'Cuando estás en línea, las solicitudes cercanas llegan automáticamente. Recibirás una notificación con detalles y podrás aceptar o rechazar.',
+        ar: 'عندما تكون متصلا، تصل طلبات الركاب القريبة تلقائيا. ستتلقى إشعارا بتفاصيل الرحلة ويمكنك القبول أو الرفض.',
+      );
+  static String get faqEarningsQuestion => _t(
+        'Hoe berekent HeyCaby mijn verdiensten?',
+        en: 'How does HeyCaby calculate my earnings?',
+        es: '¿Cómo calcula HeyCaby mis ganancias?',
+        ar: 'كيف يحسب HeyCaby أرباحي؟',
+      );
+  static String get faqEarningsAnswer => _t(
+        'Uw verdiensten worden berekend op basis van het starttarief + prijs per kilometer + prijs per minuut. U stelt deze tarieven zelf in via uw tariefprofiel.',
+        en: 'Your earnings are based on start price + price per kilometer + price per minute. You set these rates in your tariff profile.',
+        es: 'Tus ganancias se basan en precio inicial + precio por kilómetro + precio por minuto. Tú configuras estas tarifas en tu perfil.',
+        ar: 'تعتمد أرباحك على سعر البداية + السعر لكل كيلومتر + السعر لكل دقيقة. أنت تحدد هذه الأسعار في ملف التعرفة.',
+      );
+  static String get faqPaymentQuestion => _t(
+        'Wanneer krijg ik betaald?',
+        en: 'When do I get paid?',
+        es: '¿Cuándo cobro?',
+        ar: 'متى أحصل على الدفع؟',
+      );
+  static String get faqPaymentAnswer => _t(
+        'Passagiers betalen direct aan u via contant geld, pin of Tikkie. HeyCaby rekent 0% commissie.',
+        en: 'Riders pay you directly by cash, card, or Tikkie. HeyCaby charges 0% commission.',
+        es: 'Los pasajeros te pagan directamente en efectivo, tarjeta o Tikkie. HeyCaby cobra 0% de comisión.',
+        ar: 'يدفع لك الركاب مباشرة نقدا أو بالبطاقة أو عبر Tikkie. لا يأخذ HeyCaby أي عمولة.',
+      );
+  static String get faqReturnTripsQuestion => _t(
+        'Wat zijn retourritten?',
+        en: 'What are return rides?',
+        es: '¿Qué son los viajes de vuelta?',
+        ar: 'ما هي رحلات العودة؟',
+      );
+  static String get faqReturnTripsAnswer => _t(
+        'Retourritten zijn ritten die terugkeren naar uw thuisgebied. Via de retourrittenmarktplaats kunt u ritten vinden die in uw richting gaan.',
+        en: 'Return rides are trips heading back toward your home area. The return ride marketplace helps you find rides in your direction.',
+        es: 'Los viajes de vuelta son trayectos que regresan hacia tu zona. El mercado de retorno te ayuda a encontrar viajes en tu dirección.',
+        ar: 'رحلات العودة هي رحلات تتجه نحو منطقتك. يساعدك سوق رحلات العودة في العثور على رحلات باتجاهك.',
+      );
+  static String get faqMarketplaceQuestion => _t(
+        'Hoe werkt de Marktplaats?',
+        en: 'How does the marketplace work?',
+        es: '¿Cómo funciona el mercado?',
+        ar: 'كيف يعمل السوق؟',
+      );
+  static String get faqMarketplaceAnswer => _t(
+        'Op de Marktplaats kunt u bieden op beschikbare ritten. Passagiers plaatsen een ritverzoek en u kunt hier op reageren met uw tarief.',
+        en: 'In the marketplace you can respond to available ride requests with your own fare.',
+        es: 'En el mercado puedes responder a solicitudes disponibles con tu propia tarifa.',
+        ar: 'في السوق يمكنك الرد على طلبات الرحلات المتاحة بسعرك الخاص.',
+      );
+  static String get faqBreakLimitQuestion => _t(
+        'Hoe lang mag ik rijden zonder pauze?',
+        en: 'How long can I drive without a break?',
+        es: '¿Cuánto puedo conducir sin descanso?',
+        ar: 'كم يمكنني القيادة دون استراحة؟',
+      );
+  static String get faqBreakLimitAnswer => _t(
+        'Volgens Nederlandse wet- en regelgeving mag u maximaal 4,5 uur achtereen rijden. Daarna is een pauze van minimaal 30 minuten verplicht.',
+        en: 'Under Dutch rules, you may drive up to 4.5 hours continuously. After that, a break of at least 30 minutes is required.',
+        es: 'Según las normas neerlandesas, puedes conducir hasta 4,5 horas seguidas. Después se requiere un descanso mínimo de 30 minutos.',
+        ar: 'حسب القواعد الهولندية، يمكنك القيادة حتى 4.5 ساعات متواصلة. بعدها يلزم أخذ استراحة لا تقل عن 30 دقيقة.',
+      );
+  static String get faqTakeBreakQuestion => _t(
+        'Hoe neem ik pauze?',
+        en: 'How do I take a break?',
+        es: '¿Cómo tomo un descanso?',
+        ar: 'كيف آخذ استراحة؟',
+      );
+  static String get faqTakeBreakAnswer => _t(
+        'Veeg de statusschakelaar naar het midden (pauze). Uw status verandert naar pauze en u ontvangt geen nieuwe ritaanvragen.',
+        en: 'Slide the status control to the middle. Your status changes to break and you will not receive new ride requests.',
+        es: 'Desliza el control de estado al centro. Tu estado cambia a descanso y no recibirás nuevas solicitudes.',
+        ar: 'مرر زر الحالة إلى الوسط. ستتغير حالتك إلى استراحة ولن تستقبل طلبات جديدة.',
+      );
+  static String get faqEndShiftQuestion => _t(
+        'Hoe beëindig ik mijn dienst?',
+        en: 'How do I end my shift?',
+        es: '¿Cómo termino mi turno?',
+        ar: 'كيف أنهي ورديتي؟',
+      );
+  static String get faqEndShiftAnswer => _t(
+        'Veeg de statusschakelaar naar links (offline). Als u langer dan 30 minuten online bent geweest, wordt er een bevestigingsdialoog getoond.',
+        en: 'Slide the status control left to offline. If you were online for more than 30 minutes, a confirmation dialog appears.',
+        es: 'Desliza el control a la izquierda para desconectarte. Si estuviste en línea más de 30 minutos, aparecerá una confirmación.',
+        ar: 'مرر زر الحالة يسارا لعدم الاتصال. إذا كنت متصلا لأكثر من 30 دقيقة، ستظهر رسالة تأكيد.',
+      );
+  static String get faqSafetyKitQuestion => _t(
+        'Wat is de veiligheidskit?',
+        en: 'What is the safety kit?',
+        es: '¿Qué es el kit de seguridad?',
+        ar: 'ما هي حزمة السلامة؟',
+      );
+  static String get faqSafetyKitAnswer => _t(
+        'De veiligheidskit bevat drie functies: noodoproep (112), rit delen met contactpersonen, en audio-opname tijdens ritten.',
+        en: 'The safety kit includes emergency call, trip sharing with contacts, and ride audio recording.',
+        es: 'El kit de seguridad incluye llamada de emergencia, compartir viaje con contactos y grabación de audio durante el viaje.',
+        ar: 'تتضمن حزمة السلامة مكالمة طوارئ ومشاركة الرحلة مع جهات الاتصال وتسجيل الصوت أثناء الرحلات.',
+      );
+  static String get faqAudioQuestion => _t(
+        'Hoe gebruik ik audio-opname?',
+        en: 'How do I use audio recording?',
+        es: '¿Cómo uso la grabación de audio?',
+        ar: 'كيف أستخدم تسجيل الصوت؟',
+      );
+  static String get faqAudioAnswer => _t(
+        'Audio-opname is alleen beschikbaar tijdens actieve ritten. Tik op Audio-opname in de veiligheidskit om te starten. De opname wordt lokaal opgeslagen.',
+        en: 'Audio recording is available only during active rides. Tap audio recording in the safety kit to start. The recording is stored locally.',
+        es: 'La grabación de audio solo está disponible durante viajes activos. Toca grabación en el kit de seguridad para iniciar. Se guarda localmente.',
+        ar: 'تسجيل الصوت متاح فقط أثناء الرحلات النشطة. اضغط تسجيل الصوت في حزمة السلامة للبدء. يتم حفظ التسجيل محليا.',
+      );
+  static String get faqDocumentsQuestion => _t(
+        'Welke documenten heb ik nodig?',
+        en: 'Which documents do I need?',
+        es: '¿Qué documentos necesito?',
+        ar: 'ما المستندات التي أحتاجها؟',
+      );
+  static String get faqDocumentsAnswer => _t(
+        'U heeft nodig: chauffeurspas, rijbewijs, VOG, taxidiploma en taxiverzekering.',
+        en: 'You need your driver card, driving licence, VOG, taxi diploma, and taxi insurance.',
+        es: 'Necesitas tarjeta de conductor, permiso de conducir, VOG, diploma de taxi y seguro de taxi.',
+        ar: 'تحتاج إلى بطاقة السائق ورخصة القيادة وVOG ودبلوم التاكسي وتأمين التاكسي.',
+      );
+  static String get faqRenewDocumentsQuestion => _t(
+        'Hoe verleng ik mijn documenten?',
+        en: 'How do I renew my documents?',
+        es: '¿Cómo renuevo mis documentos?',
+        ar: 'كيف أجدد مستنداتي؟',
+      );
+  static String get faqRenewDocumentsAnswer => _t(
+        'Neem contact op met het RDW of uw gemeente voor verlenging van uw chauffeurspas en rijbewijs. Voor de VOG kunt u terecht bij Justis.',
+        en: 'Contact RDW or your municipality to renew your driver card and licence. For VOG, use Justis.',
+        es: 'Contacta con RDW o tu municipio para renovar tu tarjeta de conductor y permiso. Para VOG, usa Justis.',
+        ar: 'تواصل مع RDW أو بلديتك لتجديد بطاقة السائق والرخصة. بالنسبة إلى VOG استخدم Justis.',
+      );
+  static String get faqExpiredCardQuestion => _t(
+        'Wat als mijn chauffeurspas verloopt?',
+        en: 'What if my driver card expires?',
+        es: '¿Qué pasa si caduca mi tarjeta de conductor?',
+        ar: 'ماذا لو انتهت صلاحية بطاقة السائق؟',
+      );
+  static String get faqExpiredCardAnswer => _t(
+        'Als uw chauffeurspas verloopt, wordt uw account opgeschort. Neem contact op met support via de in-app chat om uw documenten bij te werken.',
+        en: 'If your driver card expires, your account is suspended. Contact support in the app chat to update your documents.',
+        es: 'Si caduca tu tarjeta de conductor, tu cuenta se suspende. Contacta con soporte por el chat de la app para actualizar documentos.',
+        ar: 'إذا انتهت صلاحية بطاقة السائق، سيتم تعليق حسابك. تواصل مع الدعم عبر دردشة التطبيق لتحديث المستندات.',
+      );
+  static String get faqContactSupportQuestion => _t(
+        'Hoe neem ik contact op met support?',
+        en: 'How do I contact support?',
+        es: '¿Cómo contacto con soporte?',
+        ar: 'كيف أتواصل مع الدعم؟',
+      );
+  static String get faqContactSupportAnswer => _t(
+        'Ga naar Ondersteuning in het menu en tik op "Nieuw bericht" om een chatgesprek te starten met ons supportteam.',
+        en: 'Go to Support in the menu and tap “New message” to start a chat with our support team.',
+        es: 'Ve a Soporte en el menú y toca “Nuevo mensaje” para iniciar un chat con nuestro equipo.',
+        ar: 'اذهب إلى الدعم في القائمة واضغط "رسالة جديدة" لبدء محادثة مع فريق الدعم.',
+      );
+  static String get faqCallSupportQuestion => _t(
+        'Kan ik bellen met support?',
+        en: 'Can I call support?',
+        es: '¿Puedo llamar a soporte?',
+        ar: 'هل يمكنني الاتصال بالدعم؟',
+      );
+  static String get faqCallSupportAnswer => _t(
+        'Nee, communicatie met support verloopt uitsluitend via de in-app chat.',
+        en: 'No. Support communication happens through the in-app chat.',
+        es: 'No. La comunicación con soporte se realiza por el chat de la app.',
+        ar: 'لا. يتم التواصل مع الدعم عبر دردشة التطبيق.',
+      );
+  static String get faqResponseTimeQuestion => _t(
+        'Hoe lang duurt het voor ik antwoord krijg?',
+        en: 'How long does it take to get a reply?',
+        es: '¿Cuánto tardan en responder?',
+        ar: 'كم يستغرق الحصول على رد؟',
+      );
+  static String get faqResponseTimeAnswer => _t(
+        'Ons supportteam streeft ernaar binnen 24 uur te reageren op uw bericht.',
+        en: 'Our support team aims to reply within 24 hours.',
+        es: 'Nuestro equipo de soporte intenta responder en 24 horas.',
+        ar: 'يسعى فريق الدعم للرد خلال 24 ساعة.',
+      );
   static const String termsOfService = 'Gebruiksvoorwaarden';
   static const String privacyPolicy = 'Privacy beleid';
   static const String indemnification = 'Vrijwaring';
