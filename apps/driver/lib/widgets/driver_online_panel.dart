@@ -6,7 +6,7 @@ import '../l10n/driver_strings.dart';
 String _formatMinutes(int minutes) {
   final h = minutes ~/ 60;
   final m = minutes % 60;
-  return '${h}:${m.toString().padLeft(2, '0')}';
+  return '$h:${m.toString().padLeft(2, '0')}';
 }
 
 /// Panel when tapping online status. Shift summary, break, end shift.
@@ -111,8 +111,8 @@ class DriverOnlinePanel extends StatelessWidget {
               child: FilledButton(
                 onPressed: onResume,
                 style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
                 child: Text(DriverStrings.goOnline),
               ),
             )

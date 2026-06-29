@@ -12,7 +12,9 @@ List<dynamic> normalizeTicketMessages(dynamic raw) {
       if (decoded is List) return List<dynamic>.from(decoded);
       if (decoded is Map) return [decoded];
     } catch (_) {
-      return [<String, dynamic>{'role': 'system', 'content': t}];
+      return [
+        <String, dynamic>{'role': 'system', 'content': t}
+      ];
     }
     return const [];
   }
@@ -25,7 +27,7 @@ List<Map<String, dynamic>> ticketMessagesToMapList(dynamic raw) {
   final out = <Map<String, dynamic>>[];
   for (final e in normalizeTicketMessages(raw)) {
     if (e is Map) {
-      out.add(Map<String, dynamic>.from(e as Map));
+      out.add(Map<String, dynamic>.from(e));
     } else {
       out.add(<String, dynamic>{'role': 'system', 'content': e.toString()});
     }

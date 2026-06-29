@@ -159,7 +159,7 @@ class _DriverRideCommunicationSheetState
                 FilledButton.icon(
                   onPressed: widget.onOpenChat,
                   icon: const Icon(Icons.chat_bubble_outline_rounded),
-                  label: Text(DriverStrings.communicationChat),
+                  label: const Text(DriverStrings.communicationChat),
                 ),
                 const SizedBox(height: DriverSpacing.lg),
                 Divider(color: widget.colors.border),
@@ -183,14 +183,13 @@ class _DriverRideCommunicationSheetState
                   return Padding(
                     padding: const EdgeInsets.only(bottom: DriverSpacing.sm),
                     child: OutlinedButton.icon(
-                      onPressed: onCooldown || busy
-                          ? null
-                          : () => _sendPing(type),
+                      onPressed:
+                          onCooldown || busy ? null : () => _sendPing(type),
                       icon: Icon(_iconForPing(type)),
                       label: Text(
                         onCooldown
                             ? DriverStrings.pingCooldownButton(
-                                remaining!.inSeconds,
+                                remaining.inSeconds,
                               )
                             : _labelForPing(type),
                       ),
