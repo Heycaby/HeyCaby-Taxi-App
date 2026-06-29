@@ -56,6 +56,12 @@ void main() {
     expect(DriverStrings.communityNotificationsTitle, 'Notifications');
     expect(
         DriverStrings.communitySearchHint, 'Search posts, topics, or users...');
+    expect(DriverStrings.communityNewPostTitle, 'New post');
+    expect(
+      DriverStrings.communityPostComposerHint,
+      'Share a tip, update, or question...',
+    );
+    expect(DriverStrings.communityPostButton, 'Post');
     expect(
       DriverStrings.rideActionFailedMessage,
       'Action failed. Check your connection and try again.',
@@ -148,6 +154,12 @@ void main() {
     expect(DriverStrings.communityNotificationsTitle, 'Notificaciones');
     expect(DriverStrings.communitySearchHint,
         'Buscar publicaciones, temas o usuarios...');
+    expect(DriverStrings.communityNewPostTitle, 'Nueva publicación');
+    expect(
+      DriverStrings.communityPostComposerHint,
+      'Comparte un consejo, una novedad o una pregunta...',
+    );
+    expect(DriverStrings.communityPostButton, 'Publicar');
     expect(
       DriverStrings.rideActionFailedMessage,
       'La acción falló. Revisa tu conexión e inténtalo de nuevo.',
@@ -237,6 +249,12 @@ void main() {
     expect(DriverStrings.communityNotificationsTitle, 'الإشعارات');
     expect(DriverStrings.communitySearchHint,
         'ابحث في المنشورات أو المواضيع أو المستخدمين...');
+    expect(DriverStrings.communityNewPostTitle, 'منشور جديد');
+    expect(
+      DriverStrings.communityPostComposerHint,
+      'شارك نصيحة أو تحديثا أو سؤالا...',
+    );
+    expect(DriverStrings.communityPostButton, 'نشر');
     expect(
       DriverStrings.rideActionFailedMessage,
       'فشل الإجراء. تحقق من اتصالك وحاول مرة أخرى.',

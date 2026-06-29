@@ -2861,7 +2861,24 @@ class DriverStrings {
       'Nog geen berichten in Chauffeurpraat.';
   static const String communityNotificationsLoadFailed =
       'Meldingen laden mislukt.';
-  static const String communityPostButton = 'Plaatsen';
+  static String get communityNewPostTitle => _t(
+        'Nieuw bericht',
+        en: 'New post',
+        es: 'Nueva publicación',
+        ar: 'منشور جديد',
+      );
+  static String get communityPostComposerHint => _t(
+        'Deel een tip, update of vraag...',
+        en: 'Share a tip, update, or question...',
+        es: 'Comparte un consejo, una novedad o una pregunta...',
+        ar: 'شارك نصيحة أو تحديثا أو سؤالا...',
+      );
+  static String get communityPostButton => _t(
+        'Plaatsen',
+        en: 'Post',
+        es: 'Publicar',
+        ar: 'نشر',
+      );
 
   /// Create-post sheet chips (also used as card heading for compact posts).
   static const String communityPostChipTraffic = 'Verkeer melden';

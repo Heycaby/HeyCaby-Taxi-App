@@ -22,7 +22,7 @@ class _MeScreenState extends ConsumerState<MeScreen> {
   String _activeChannel = 'general';
 
   static final _channels = [
-    const DriverMeCommunityChannel(
+    DriverMeCommunityChannel(
       id: 'announcements',
       label: DriverStrings.announcements,
       icon: Icons.campaign_outlined,
@@ -37,7 +37,8 @@ class _MeScreenState extends ConsumerState<MeScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
     final postsAsync = ref.watch(communityPostsProvider(_activeChannel));
 
     final posts = postsAsync.maybeWhen(
@@ -51,7 +52,8 @@ class _MeScreenState extends ConsumerState<MeScreen> {
                   ? DateFormat('d MMM, HH:mm').format(post.createdAt!)
                   : '',
               body: post.body ?? '',
-              swapBadge: _activeChannel == 'swap' ? DriverStrings.rideSwap : null,
+              swapBadge:
+                  _activeChannel == 'swap' ? DriverStrings.rideSwap : null,
               claimLabel: post.isSwapOpen ? DriverStrings.claimRide : null,
               onClaim: post.isSwapOpen ? () => _claimSwap(post) : null,
             ),
@@ -123,7 +125,7 @@ void _showCreatePostModal(
               ),
               const SizedBox(height: 16),
               Text(
-                'Nieuw bericht',
+                DriverStrings.communityNewPostTitle,
                 style: typography.titleMedium.copyWith(color: colors.text),
               ),
               const SizedBox(height: 12),
@@ -131,8 +133,9 @@ void _showCreatePostModal(
                 controller: controller,
                 maxLength: 1000,
                 decoration: InputDecoration(
-                  hintText: 'Deel een tip, update of vraag...',
-                  hintStyle: typography.bodyMedium.copyWith(color: colors.textMuted),
+                  hintText: DriverStrings.communityPostComposerHint,
+                  hintStyle:
+                      typography.bodyMedium.copyWith(color: colors.textMuted),
                   filled: true,
                   fillColor: colors.surface,
                   border: OutlineInputBorder(
@@ -170,14 +173,15 @@ void _showCreatePostModal(
                       if (!ok) {
                         ScaffoldMessenger.of(ctx).showSnackBar(
                           const SnackBar(
-                            content: Text(DriverStrings.communityPostCreateFailed),
+                            content:
+                                Text(DriverStrings.communityPostCreateFailed),
                           ),
                         );
                       }
                     }
                   },
                   child: Text(
-                    'Plaatsen',
+                    DriverStrings.communityPostButton,
                     style: typography.labelLarge.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
