@@ -568,6 +568,25 @@ class DriverStrings {
         es: 'Todos los viajes disponibles',
         ar: 'كل الرحلات المتاحة',
       );
+  static String get homeRidesSection => _t(
+        'Ritten',
+        en: 'Rides',
+        es: 'Viajes',
+        ar: 'الرحلات',
+      );
+  static String get homeSettingsSection => settings;
+  static String get homeAutoAcceptReturnRides => _t(
+        'Retourritten automatisch accepteren',
+        en: 'Auto-accept return rides',
+        es: 'Aceptar viajes de vuelta automáticamente',
+        ar: 'قبول رحلات العودة تلقائيا',
+      );
+  static String get homeShowTodayOnMap => _t(
+        'Ritten vandaag op kaart tonen',
+        en: 'Show today’s rides on map',
+        es: 'Mostrar los viajes de hoy en el mapa',
+        ar: 'عرض رحلات اليوم على الخريطة',
+      );
   static const String scheduled = 'Gepland';
   static const String requests = 'Aanvragen';
   static const String confirmed = 'Bevestigd';
@@ -734,9 +753,42 @@ class DriverStrings {
   static const String hotspotsLearnClose = 'Begrepen';
   static const String hotspotsGoogleMaps = 'Google Maps';
   static const String hotspotsWaze = 'Waze';
-  static const String appSuggestion = 'Suggestie voor de app';
-  static const String appSuggestionSubtitle =
-      'Vertel ons welke functies je wilt zien';
+  static String get appSuggestion => _t(
+        'Suggestie voor de app',
+        en: 'Suggestion for the app',
+        es: 'Sugerencia para la app',
+        ar: 'اقتراح للتطبيق',
+      );
+  static String get appSuggestionSubtitle => _t(
+        'Vertel ons welke functies je wilt zien',
+        en: 'Tell us what features you want to see',
+        es: 'Dinos qué funciones quieres ver',
+        ar: 'أخبرنا بالميزات التي تريدها',
+      );
+  static String get appSuggestionIntro => _t(
+        'Vertel ons welke functies je in de app wilt zien.\n\n'
+        'Wij bouwen voor jou. Ons werk is om tools te maken waarmee je meer verdient, slimmer rijdt en elke dag controle voelt. '
+        'Als iets jouw chauffeursleven makkelijker, sneller of winstgevender maakt, stuur het naar ons. '
+        'Jouw stem bepaalt direct wat we hierna bouwen.',
+        en: 'Tell us what features you want to see on the app.\n\n'
+            'We work for you. Our job is to build the tools that help you earn more, drive smarter, and feel in control every day. '
+            'If something would make your driver life easier, faster, or more profitable, send it to us. '
+            'Your voice directly shapes what we build next.',
+        es: 'Dinos qué funciones quieres ver en la app.\n\n'
+            'Trabajamos para ti. Nuestro trabajo es crear herramientas que te ayuden a ganar más, conducir mejor y sentir control cada día. '
+            'Si algo haría tu vida como conductor más fácil, rápida o rentable, envíanoslo. '
+            'Tu voz influye directamente en lo que construimos.',
+        ar: 'أخبرنا بالميزات التي تريد رؤيتها في التطبيق.\n\n'
+            'نحن نعمل من أجلك. مهمتنا بناء أدوات تساعدك على كسب المزيد، والقيادة بذكاء، والشعور بالتحكم كل يوم. '
+            'إذا كان هناك شيء يجعل حياة السائق أسهل أو أسرع أو أكثر ربحا، فأرسله لنا. '
+            'صوتك يشكل مباشرة ما نبنيه بعد ذلك.',
+      );
+  static String get appSuggestionHint => _t(
+        'Voorbeeld: voeg snelle tolweg-voorkeuren en spitsmeldingen toe in hotspot-navigatie.',
+        en: 'Example: Add quick toll-road preference and city rush-hour alerts in hotspot navigation.',
+        es: 'Ejemplo: añade preferencia rápida de peajes y alertas de hora punta en navegación a hotspots.',
+        ar: 'مثال: أضف تفضيل طرق الرسوم السريع وتنبيهات أوقات الذروة في تنقل المناطق النشطة.',
+      );
   static String get preferencesSectionVehicle => _t(
         'Voertuig & bereik',
         en: 'Vehicle & reach',
@@ -1545,12 +1597,24 @@ class DriverStrings {
   static const String acceptRideFailed = 'Rit accepteren mislukt:';
   static const String enterValidPaidAmount =
       'Voer een geldig betaald bedrag in.';
-  static const String appSuggestionTooShort =
-      'Voeg meer details toe (minimaal 10 tekens).';
-  static const String appSuggestionReceived =
-      'Bedankt! Suggestie ontvangen. We beoordelen deze intern.';
-  static const String appSuggestionSendFailed =
-      'Suggestie versturen mislukt. Probeer opnieuw.';
+  static String get appSuggestionTooShort => _t(
+        'Voeg meer details toe (minimaal 10 tekens).',
+        en: 'Add more detail (at least 10 characters).',
+        es: 'Añade más detalles (mínimo 10 caracteres).',
+        ar: 'أضف تفاصيل أكثر (10 أحرف على الأقل).',
+      );
+  static String get appSuggestionReceived => _t(
+        'Bedankt! Suggestie ontvangen. We beoordelen deze intern.',
+        en: 'Thanks! Suggestion received. We’ll review it internally.',
+        es: '¡Gracias! Sugerencia recibida. La revisaremos internamente.',
+        ar: 'شكرا! تم استلام الاقتراح. سنراجعه داخليا.',
+      );
+  static String get appSuggestionSendFailed => _t(
+        'Suggestie versturen mislukt. Probeer opnieuw.',
+        en: 'Could not send the suggestion. Try again.',
+        es: 'No se pudo enviar la sugerencia. Inténtalo de nuevo.',
+        ar: 'تعذر إرسال الاقتراح. حاول مرة أخرى.',
+      );
   static const String communityPostCreateFailed = 'Plaatsen mislukt.';
   static const String rideNotFound = 'Rit niet gevonden';
   static const String missedRequestTitle = 'Aanvraag gemist';
@@ -1595,13 +1659,36 @@ class DriverStrings {
   static const String rateRiderSkip = 'Overslaan';
   static const String skip = 'Overslaan';
   static const String createAccount = 'Account aanmaken';
-  static const String sendSuggestion = 'Suggestie versturen';
-  static const String topRequestedIdeas = 'Meest gevraagde ideeën';
-  static const String noPublicIdeasYet =
-      'Nog geen publieke ideeën. Wees de eerste met een suggestie.';
-  static const String topIdeasLoadFailed =
-      'Topideeën laden nu niet. Probeer later opnieuw.';
-  static String votesCount(int count) => '$count stemmen';
+  static String get sendSuggestion => _t(
+        'Suggestie versturen',
+        en: 'Send suggestion',
+        es: 'Enviar sugerencia',
+        ar: 'إرسال الاقتراح',
+      );
+  static String get topRequestedIdeas => _t(
+        'Meest gevraagde ideeën',
+        en: 'Top requested ideas',
+        es: 'Ideas más solicitadas',
+        ar: 'أكثر الأفكار طلبا',
+      );
+  static String get noPublicIdeasYet => _t(
+        'Nog geen publieke ideeën. Wees de eerste met een suggestie.',
+        en: 'No public ideas yet. Be the first to suggest one.',
+        es: 'Aún no hay ideas públicas. Sé el primero en sugerir una.',
+        ar: 'لا توجد أفكار عامة بعد. كن أول من يقترح.',
+      );
+  static String get topIdeasLoadFailed => _t(
+        'Topideeën laden nu niet. Probeer later opnieuw.',
+        en: 'Top ideas are not loading right now. Try again later.',
+        es: 'Las ideas principales no cargan ahora. Inténtalo más tarde.',
+        ar: 'لا يمكن تحميل أهم الأفكار الآن. حاول لاحقا.',
+      );
+  static String votesCount(int count) => _t(
+        '$count stemmen',
+        en: '$count votes',
+        es: '$count votos',
+        ar: '$count أصوات',
+      );
   static const String messageCategory = 'Categorie';
   static const String supportMessageSentTitle = 'Bericht verzonden';
   static const String supportMessageSentBody =

@@ -44,7 +44,7 @@ class DriverAppSuggestionBody extends StatelessWidget {
     final bottomPad = MediaQuery.paddingOf(context).bottom;
 
     return DriverWorkFlowScaffold(
-      title: 'Suggestion for the app',
+      title: DriverStrings.appSuggestion,
       colors: colors,
       typography: typography,
       onBack: onBack,

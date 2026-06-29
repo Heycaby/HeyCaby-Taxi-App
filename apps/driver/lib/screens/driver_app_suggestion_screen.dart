@@ -24,16 +24,6 @@ class _DriverAppSuggestionScreenState
   final TextEditingController _controller = TextEditingController();
   bool _isSubmitting = false;
 
-  static const _introText =
-      'Tell us what features you want to see on the app.\n\n'
-      'We work for you. Our job is to build the tools that help you earn more, '
-      'drive smarter, and feel in control every day. '
-      'If something would make your driver life easier, faster, or more profitable, send it to us. '
-      'Your voice directly shapes what we build next.';
-
-  static const _hintText =
-      'Example: Add quick toll-road preference and city rush-hour alerts in hotspot navigation.';
-
   @override
   void dispose() {
     _controller.dispose();
@@ -45,7 +35,7 @@ class _DriverAppSuggestionScreenState
     final text = _controller.text.trim();
     if (text.length < 10) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.appSuggestionTooShort)),
+        SnackBar(content: Text(DriverStrings.appSuggestionTooShort)),
       );
       return;
     }
@@ -64,13 +54,13 @@ class _DriverAppSuggestionScreenState
 
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.appSuggestionReceived)),
+        SnackBar(content: Text(DriverStrings.appSuggestionReceived)),
       );
       _controller.clear();
       ref.invalidate(topDriverAppSuggestionsProvider);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.appSuggestionSendFailed)),
+        SnackBar(content: Text(DriverStrings.appSuggestionSendFailed)),
       );
     }
   }
@@ -78,7 +68,8 @@ class _DriverAppSuggestionScreenState
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
     final topIdeasAsync = ref.watch(topDriverAppSuggestionsProvider);
 
     final List<DriverSuggestionIdeaItem> ideas = topIdeasAsync.maybeWhen(
@@ -98,12 +89,13 @@ class _DriverAppSuggestionScreenState
     return DriverAppSuggestionBody(
       colors: colors,
       typography: typography,
-      introText: _introText,
-      hintText: _hintText,
+      introText: DriverStrings.appSuggestionIntro,
+      hintText: DriverStrings.appSuggestionHint,
       controller: _controller,
       submitting: _isSubmitting,
       ideasLoading: topIdeasAsync.isLoading,
-      ideasError: topIdeasAsync.hasError ? DriverStrings.topIdeasLoadFailed : null,
+      ideasError:
+          topIdeasAsync.hasError ? DriverStrings.topIdeasLoadFailed : null,
       ideas: ideas,
       onBack: () => context.pop(),
       onSubmit: _submit,

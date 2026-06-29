@@ -21,8 +21,12 @@ void main() {
         toggleSource,
         contains('Ga online om live ritaanvragen in jouw zone te zien.'),
       );
-      expect(homeSheetSource, contains("label: 'Ritten'"));
-      expect(homeSheetSource, contains("label: 'Instellingen'"));
+      expect(
+          homeSheetSource, contains('label: DriverStrings.homeRidesSection'));
+      expect(
+        homeSheetSource,
+        contains('label: DriverStrings.homeSettingsSection'),
+      );
     });
 
     test('keeps haptics on status transitions and supporting actions', () {

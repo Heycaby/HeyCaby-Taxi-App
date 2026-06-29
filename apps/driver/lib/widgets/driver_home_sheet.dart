@@ -98,7 +98,7 @@ class DriverHomeSheet extends ConsumerWidget {
                   ],
                   const SizedBox(height: DriverSpacing.lg),
                   _SectionLabel(
-                    label: 'Ritten',
+                    label: DriverStrings.homeRidesSection,
                     colors: colors,
                     typo: typo,
                   ).driverFadeSlideIn(staggerIndex: 2),
@@ -131,7 +131,7 @@ class DriverHomeSheet extends ConsumerWidget {
                   ).driverFadeSlideIn(staggerIndex: 3),
                   const SizedBox(height: DriverSpacing.lg),
                   _SectionLabel(
-                    label: 'Instellingen',
+                    label: DriverStrings.homeSettingsSection,
                     colors: colors,
                     typo: typo,
                   ).driverFadeSlideIn(staggerIndex: 4),
@@ -386,7 +386,7 @@ class _DriverSettingsListState extends State<_DriverSettingsList> {
       child: Column(
         children: [
           _SettingsSwitchRow(
-            label: 'Retourritten automatisch accepteren',
+            label: DriverStrings.homeAutoAcceptReturnRides,
             value: _autoAcceptReturnRides,
             onChanged: _setAutoAcceptReturnRides,
             colors: widget.colors,
@@ -400,7 +400,7 @@ class _DriverSettingsListState extends State<_DriverSettingsList> {
             endIndent: DriverSpacing.md,
           ),
           _SettingsSwitchRow(
-            label: 'Ritten vandaag op kaart tonen',
+            label: DriverStrings.homeShowTodayOnMap,
             value: _showTodayOnMap,
             onChanged: _setShowTodayOnMap,
             colors: widget.colors,
