@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/driver_strings.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_radius.dart';
 import '../theme/driver_spacing.dart';
@@ -73,7 +74,7 @@ class DriverShiftCommandEarningsPreview extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Today',
+                        DriverStrings.today,
                         style: typography.labelLarge.copyWith(
                           color: colors.textMuted,
                           fontWeight: FontWeight.w700,
@@ -98,7 +99,7 @@ class DriverShiftCommandEarningsPreview extends StatelessWidget {
             children: [
               Expanded(
                 child: DriverStatisticCard(
-                  label: 'Rides this week',
+                  label: DriverStrings.ridesThisWeek,
                   value: '${snapshot.weekRides}',
                   colors: colors,
                   typography: typography,
@@ -107,7 +108,7 @@ class DriverShiftCommandEarningsPreview extends StatelessWidget {
               const SizedBox(width: DriverSpacing.sm),
               Expanded(
                 child: DriverStatisticCard(
-                  label: 'This week',
+                  label: DriverStrings.thisWeek,
                   value: snapshot.weekAmount,
                   colors: colors,
                   typography: typography,
@@ -124,7 +125,8 @@ class DriverShiftCommandEarningsPreview extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.trending_up_rounded, color: colors.success, size: 18),
+                Icon(Icons.trending_up_rounded,
+                    color: colors.success, size: 18),
                 const SizedBox(width: DriverSpacing.sm),
                 Text(
                   '$avgPerRideLabel: ${snapshot.avgPerRide}',
@@ -153,7 +155,8 @@ class DriverShiftCommandEarningsPreview extends StatelessWidget {
                 padding: const EdgeInsets.all(DriverSpacing.md),
                 child: Row(
                   children: [
-                    Icon(Icons.local_taxi_outlined, color: colors.primary, size: 18),
+                    Icon(Icons.local_taxi_outlined,
+                        color: colors.primary, size: 18),
                     const SizedBox(width: DriverSpacing.sm),
                     Expanded(
                       child: Text(

@@ -1564,7 +1564,12 @@ class DriverStrings {
   static const String whatReducedMyScore = 'Waardoor daalde mijn score?';
   static const String scoreFactorsDesc =
       'Je score is gebaseerd op passagiersbeoordelingen en je acceptatiegraad. Geweigerde aanvragen en lagere beoordelingen kunnen je score verlagen.';
-  static const String ridesThisWeek = 'Ritten deze week';
+  static String get ridesThisWeek => _t(
+        'Ritten deze week',
+        en: 'Rides this week',
+        es: 'Viajes esta semana',
+        ar: 'رحلات هذا الأسبوع',
+      );
   static const String taxSummary = 'Belastingoverzicht';
   static const String viewDetails = 'Details bekijken';
   static const String goBackOnline = 'Weer online gaan';
@@ -1742,7 +1747,18 @@ class DriverStrings {
   static const String save = 'Opslaan';
 
   // Return trips
-  static const String returnTrips = 'Retourritten';
+  static String get returnTrips => _t(
+        'Retourritten',
+        en: 'Return rides',
+        es: 'Viajes de vuelta',
+        ar: 'رحلات العودة',
+      );
+  static String get returnTripsEmpty => _t(
+        'Geen retourritten beschikbaar.',
+        en: 'No return rides available.',
+        es: 'No hay viajes de vuelta disponibles.',
+        ar: 'لا توجد رحلات عودة متاحة.',
+      );
   static const String yourReturnDiscount = 'Jouw retourkorting';
   static const String returnDiscountSharedCosts =
       'Reiskosten gedeeld met passagier';

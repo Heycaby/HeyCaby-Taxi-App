@@ -17,6 +17,10 @@ void main() {
         File('lib/widgets/driver_brand_moment_body.dart').readAsStringSync();
     final logoSource =
         File('lib/widgets/heycaby_driver_logo.dart').readAsStringSync();
+    final brandAssetsSource =
+        File('lib/constants/driver_brand_assets.dart').readAsStringSync();
+    final brandMarkSource =
+        File('assets/branding/heycaby_mark.svg').readAsStringSync();
     final themeProviderSource = File(
       '../../packages/heycaby_ui/lib/src/theme/theme_provider.dart',
     ).readAsStringSync();
@@ -63,7 +67,12 @@ void main() {
       expect(splashSource, contains('Color(0xFF00A651)'));
       expect(splashSource, isNot(contains('Color(0xFFFFD100)')));
       expect(splashSource, contains('letterSpacing: 0'));
-      expect(logoSource, isNot(contains('yellow text')));
+      expect(logoSource, contains('SvgPicture.asset'));
+      expect(brandAssetsSource, contains('assets/branding/heycaby_mark.svg'));
+      expect(brandAssetsSource, isNot(contains('yellow')));
+      expect(brandAssetsSource, isNot(contains('black_yellow')));
+      expect(brandMarkSource, contains('#00A651'));
+      expect(brandMarkSource, isNot(contains('#F4A800')));
       expect(shellSource, isNot(contains('letterSpacing: -')));
       expect(shellSource, isNot(contains('warmChrome')));
     });

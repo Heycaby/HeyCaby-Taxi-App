@@ -27,6 +27,9 @@ void main() {
     expect(DriverStrings.homeAutoAcceptReturnRides, 'Auto-accept return rides');
     expect(DriverStrings.homeTodayRidesCount(0), 'No rides yet');
     expect(DriverStrings.homeAvailableCount(3), '3 available');
+    expect(DriverStrings.returnTrips, 'Return rides');
+    expect(DriverStrings.returnTripsEmpty, 'No return rides available.');
+    expect(DriverStrings.ridesThisWeek, 'Rides this week');
     expect(DriverStrings.pricingBase, 'Start price');
     expect(DriverStrings.pricingSwitchTariff, 'Switch tariff');
     expect(DriverStrings.announcements, 'Announcements');
@@ -83,6 +86,12 @@ void main() {
     );
     expect(DriverStrings.homeTodayRidesCount(0), 'Aún no hay viajes');
     expect(DriverStrings.homeAvailableCount(3), '3 disponibles');
+    expect(DriverStrings.returnTrips, 'Viajes de vuelta');
+    expect(
+      DriverStrings.returnTripsEmpty,
+      'No hay viajes de vuelta disponibles.',
+    );
+    expect(DriverStrings.ridesThisWeek, 'Viajes esta semana');
     expect(DriverStrings.pricingBase, 'Precio inicial');
     expect(DriverStrings.pricingSwitchTariff, 'Cambiar tarifa');
     expect(DriverStrings.announcements, 'Anuncios');
@@ -140,6 +149,9 @@ void main() {
         DriverStrings.homeAutoAcceptReturnRides, 'قبول رحلات العودة تلقائيا');
     expect(DriverStrings.homeTodayRidesCount(0), 'لا توجد رحلات بعد');
     expect(DriverStrings.homeAvailableCount(3), '3 متاحة');
+    expect(DriverStrings.returnTrips, 'رحلات العودة');
+    expect(DriverStrings.returnTripsEmpty, 'لا توجد رحلات عودة متاحة.');
+    expect(DriverStrings.ridesThisWeek, 'رحلات هذا الأسبوع');
     expect(DriverStrings.pricingBase, 'سعر البداية');
     expect(DriverStrings.pricingSwitchTariff, 'تغيير التعرفة');
     expect(DriverStrings.announcements, 'الإعلانات');

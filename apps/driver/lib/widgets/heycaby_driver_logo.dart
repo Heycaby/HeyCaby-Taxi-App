@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../constants/driver_brand_assets.dart';
 
@@ -22,14 +23,13 @@ class HeyCabyDriverLogo extends StatelessWidget {
     return Semantics(
       label: semanticsLabel,
       image: true,
-      child: Image.asset(
+      child: SvgPicture.asset(
         DriverBrandAssets.logo,
         width: width,
         height: height,
         fit: BoxFit.contain,
-        filterQuality: FilterQuality.high,
-        color: color,
-        colorBlendMode: color == null ? null : BlendMode.srcIn,
+        colorFilter:
+            color == null ? null : ColorFilter.mode(color!, BlendMode.srcIn),
       ),
     );
   }

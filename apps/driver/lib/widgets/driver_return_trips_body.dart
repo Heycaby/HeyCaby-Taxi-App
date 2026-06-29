@@ -80,7 +80,7 @@ class DriverReturnTripsBody extends StatelessWidget {
                 colors: colors,
                 typography: typography,
                 icon: Icons.sync_alt_rounded,
-                title: 'Geen retourritten beschikbaar.',
+                title: DriverStrings.returnTripsEmpty,
               )
             else
               ...List.generate(trips.length, (index) {
