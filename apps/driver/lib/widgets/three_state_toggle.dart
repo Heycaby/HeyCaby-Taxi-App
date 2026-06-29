@@ -140,6 +140,16 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
     };
   }
 
+  String _failureMessageForStatus(DriverAvailabilityStatus status) {
+    return switch (status) {
+      DriverAvailabilityStatus.available => DriverStrings.goOnlineFailed,
+      DriverAvailabilityStatus.onBreak =>
+        'Pauze starten mislukt. Controleer je verbinding en probeer opnieuw.',
+      DriverAvailabilityStatus.offline =>
+        'Offline gaan mislukt. Controleer je verbinding en probeer opnieuw.',
+    };
+  }
+
   Future<void> _onStatusSnapped(DriverAvailabilityStatus newStatus) async {
     if (_isWritingStatus || newStatus == widget.currentStatus) {
       _resetThumbToCurrentStatus();
@@ -269,7 +279,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
       _resetThumbToCurrentStatus();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${DriverStrings.goOnlineFailed} ($e)'),
+          content: Text(_failureMessageForStatus(newStatus)),
           duration: const Duration(seconds: 4),
         ),
       );
