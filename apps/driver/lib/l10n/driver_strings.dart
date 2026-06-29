@@ -2052,7 +2052,39 @@ class DriverStrings {
   static const String yourReturnDiscount = 'Jouw retourkorting';
   static const String returnDiscountSharedCosts =
       'Reiskosten gedeeld met passagier';
-  static const String matchChance = 'Match kans';
+  static String get matchChance => _t(
+        'Match kans',
+        en: 'Match chance',
+        es: 'Probabilidad de match',
+        ar: 'فرصة المطابقة',
+      );
+  static String get matchChanceLow => _t(
+        'laag',
+        en: 'low',
+        es: 'baja',
+        ar: 'منخفضة',
+      );
+  static String get matchChanceMedium => _t(
+        'gemiddeld',
+        en: 'medium',
+        es: 'media',
+        ar: 'متوسطة',
+      );
+  static String get matchChanceHigh => _t(
+        'hoog',
+        en: 'high',
+        es: 'alta',
+        ar: 'مرتفعة',
+      );
+  static String matchChanceSummary(double pct) {
+    final label = pct <= 10
+        ? matchChanceLow
+        : pct <= 25
+            ? matchChanceMedium
+            : matchChanceHigh;
+    return '$matchChance: $label';
+  }
+
   static const String accept = 'Accepteren';
 
   // Status timestamps

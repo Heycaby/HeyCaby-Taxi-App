@@ -43,6 +43,7 @@ void main() {
     );
     expect(DriverStrings.swapOfferDetailHint, 'Details (optional)');
     expect(DriverStrings.supportContactSection, 'Contact');
+    expect(DriverStrings.matchChanceSummary(30), 'Match chance: high');
     expect(DriverStrings.appSuggestion, 'Suggestion for the app');
     expect(DriverStrings.homeAutoAcceptReturnRides, 'Auto-accept return rides');
     expect(DriverStrings.homeTodayRidesCount(0), 'No rides yet');
@@ -161,6 +162,8 @@ void main() {
     );
     expect(DriverStrings.swapOfferConfirm, 'Sí, ofrecer viaje');
     expect(DriverStrings.supportContactSection, 'Contacto');
+    expect(
+        DriverStrings.matchChanceSummary(20), 'Probabilidad de match: media');
     expect(DriverStrings.appSuggestion, 'Sugerencia para la app');
     expect(
       DriverStrings.homeAutoAcceptReturnRides,
@@ -278,6 +281,7 @@ void main() {
     expect(DriverStrings.swapReasonLabel('medical'), 'طبي');
     expect(DriverStrings.swapOfferFailed, 'فشل');
     expect(DriverStrings.supportContactSection, 'التواصل');
+    expect(DriverStrings.matchChanceSummary(8), 'فرصة المطابقة: منخفضة');
     expect(DriverStrings.appSuggestion, 'اقتراح للتطبيق');
     expect(
         DriverStrings.homeAutoAcceptReturnRides, 'قبول رحلات العودة تلقائيا');

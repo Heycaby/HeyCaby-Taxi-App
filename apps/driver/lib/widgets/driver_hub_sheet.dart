@@ -101,7 +101,8 @@ class DriverHubSheet extends ConsumerWidget {
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
                               color: statusColor.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(20),
@@ -136,7 +137,7 @@ class DriverHubSheet extends ConsumerWidget {
               // - Set your tariff (move to Preferences)
               // - Set your driving preference (already in Preferences)
               // - Suggestion for the app (moved to Support section)
-              
+
               // Grouped Quick Access - Settings & Support
               // Documents removed (available in sidebar)
               SliverToBoxAdapter(
@@ -207,6 +208,7 @@ class _HubLiveStripState extends ConsumerState<_HubLiveStrip> {
   bool _didInitPickup = false;
   double _returnDiscountPct = 0;
   double _pickupDistanceKm = 20;
+
   /// Avoid haptic spam: last snapped value we already ticked for.
   double? _lastDiscountSnapHaptic;
   double? _lastPickupSnapHaptic;
@@ -216,12 +218,6 @@ class _HubLiveStripState extends ConsumerState<_HubLiveStrip> {
     _discountDebounce?.cancel();
     _pickupDebounce?.cancel();
     super.dispose();
-  }
-
-  String _chanceLabel(double pct) {
-    if (pct <= 10) return 'low';
-    if (pct <= 25) return 'medium';
-    return 'high';
   }
 
   Color _chanceColor(HeyCabyColorTokens colors, double pct) {
@@ -240,10 +236,11 @@ class _HubLiveStripState extends ConsumerState<_HubLiveStrip> {
     _discountDebounce?.cancel();
     _discountDebounce = Timer(const Duration(milliseconds: 700), () async {
       if (profile == null) return;
-      final ok = await ref.read(driverDataServiceProvider).updateReturnDiscountPct(
-            rateProfileId: profile.id,
-            returnDiscountPct: _returnDiscountPct,
-          );
+      final ok =
+          await ref.read(driverDataServiceProvider).updateReturnDiscountPct(
+                rateProfileId: profile.id,
+                returnDiscountPct: _returnDiscountPct,
+              );
       if (!mounted) return;
       if (ok) {
         HapticService.mediumTap();
@@ -296,8 +293,9 @@ class _HubLiveStripState extends ConsumerState<_HubLiveStrip> {
       _didInitDiscount = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final fromServer =
-            ((activeRate.returnDiscountPct ?? 0).toDouble()).clamp(0, 40).toDouble();
+        final fromServer = ((activeRate.returnDiscountPct ?? 0).toDouble())
+            .clamp(0, 40)
+            .toDouble();
         setState(() {
           _returnDiscountPct = fromServer;
           _lastDiscountSnapHaptic = fromServer;
@@ -308,8 +306,9 @@ class _HubLiveStripState extends ConsumerState<_HubLiveStrip> {
       _didInitPickup = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final fromServer =
-            ((profile.pickupDistanceMaxKm ?? 20).toDouble()).clamp(5, 50).toDouble();
+        final fromServer = ((profile.pickupDistanceMaxKm ?? 20).toDouble())
+            .clamp(5, 50)
+            .toDouble();
         setState(() {
           _pickupDistanceKm = fromServer;
           _lastPickupSnapHaptic = fromServer;
@@ -342,7 +341,9 @@ class _HubLiveStripState extends ConsumerState<_HubLiveStrip> {
                 Row(
                   children: [
                     Icon(
-                      hasHighDemand ? Icons.local_fire_department : Icons.timelapse,
+                      hasHighDemand
+                          ? Icons.local_fire_department
+                          : Icons.timelapse,
                       size: 16,
                       color: hasHighDemand ? colors.warning : colors.textSoft,
                     ),
@@ -363,11 +364,13 @@ class _HubLiveStripState extends ConsumerState<_HubLiveStrip> {
               children: [
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
                       color: colors.card.withValues(alpha: 0.55),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: colors.border.withValues(alpha: 0.75)),
+                      border: Border.all(
+                          color: colors.border.withValues(alpha: 0.75)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,11 +397,13 @@ class _HubLiveStripState extends ConsumerState<_HubLiveStrip> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
                       color: colors.card.withValues(alpha: 0.55),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: colors.border.withValues(alpha: 0.75)),
+                      border: Border.all(
+                          color: colors.border.withValues(alpha: 0.75)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -434,7 +439,9 @@ class _HubLiveStripState extends ConsumerState<_HubLiveStrip> {
               value: pct,
               activeColor: colors.accent,
               inactiveColor: colors.border,
-              onChanged: activeRate == null ? null : (v) => _onDiscountChanged(v, activeRate),
+              onChanged: activeRate == null
+                  ? null
+                  : (v) => _onDiscountChanged(v, activeRate),
             ),
             const SizedBox(height: 4),
             Slider(
@@ -449,14 +456,17 @@ class _HubLiveStripState extends ConsumerState<_HubLiveStrip> {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: _chanceColor(colors, pct).withValues(alpha: 0.13),
                     borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: _chanceColor(colors, pct).withValues(alpha: 0.28)),
+                    border: Border.all(
+                        color:
+                            _chanceColor(colors, pct).withValues(alpha: 0.28)),
                   ),
                   child: Text(
-                    'Match chance: ${_chanceLabel(pct)}',
+                    DriverStrings.matchChanceSummary(pct),
                     style: typo.bodySmall.copyWith(
                       color: _chanceColor(colors, pct),
                       fontWeight: FontWeight.w700,
@@ -466,7 +476,7 @@ class _HubLiveStripState extends ConsumerState<_HubLiveStrip> {
                 const Spacer(),
                 TextButton(
                   onPressed: () => context.push('/driver/return-trips'),
-                  child: Text(DriverStrings.openReturnRides),
+                  child: const Text(DriverStrings.openReturnRides),
                 ),
               ],
             ),

@@ -205,7 +205,10 @@ class DriverSettingsToggleRow extends StatelessWidget {
               Switch.adaptive(
                 value: value,
                 onChanged: onChanged,
-                activeColor: colors.primary,
+                activeThumbColor: colors.primary,
+                activeTrackColor: colors.primary.withValues(alpha: 0.24),
+                inactiveThumbColor: colors.card,
+                inactiveTrackColor: colors.border,
               ),
             ],
           ),
