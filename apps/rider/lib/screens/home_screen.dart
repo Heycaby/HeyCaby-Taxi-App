@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' hide Size;
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_models/heycaby_models.dart';
@@ -129,7 +129,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     await ref.read(activeSearchProvider.notifier).clear();
     unawaited(SoundService().playRideCancelled());
     if (!mounted) return;
-    if (await ref.read(activeSearchProvider.notifier).isGrowthModalDismissed()) {
+    if (await ref
+        .read(activeSearchProvider.notifier)
+        .isGrowthModalDismissed()) {
       return;
     }
     if (!mounted) return;
@@ -160,8 +162,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         final m = Map<String, dynamic>.from(raw as Map);
         final id = m['id'] as String?;
         if (id == null) continue;
-        final created =
-            DateTime.tryParse((m['created_at'] ?? '').toString());
+        final created = DateTime.tryParse((m['created_at'] ?? '').toString());
         if (created == null) continue;
         if (now.difference(created) <= kRiderDriverSearchWindow) continue;
         await cancelExpiredRiderOpenRide(rideId: id, riderToken: token);
@@ -229,7 +230,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ),
     );
 
-    _annotationManager = await _mapboxMap!.annotations.createPointAnnotationManager();
+    _annotationManager =
+        await _mapboxMap!.annotations.createPointAnnotationManager();
   }
 
   Future<void> _onStyleLoaded(StyleLoadedEventData _) async {
@@ -259,7 +261,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ),
         MapAnimationOptions(duration: 800),
       );
-      if (kDebugMode) debugPrint('Location outside Netherlands bounds — not flying to it');
+      if (kDebugMode) {
+        debugPrint('Location outside Netherlands bounds — not flying to it');
+      }
       return;
     }
 
@@ -281,10 +285,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   Future<void> _addNearbyTaxiMarkers(double lat, double lng) async {
     if (_annotationManager == null) return;
-    
+
     // Clear existing annotations
     await _annotationManager!.deleteAll();
-    
+
     // Fetch nearby taxi count and add markers (not the user location - that's handled by the blue GPS dot)
     await _fetchNearbyTaxiCount(lat, lng);
   }
@@ -321,20 +325,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Future<void> _reverseGeocodeLocation(double lat, double lng) async {
     // Guard: Validate coordinates are within Netherlands bounding box
     // Netherlands bounds: lat 50.75–53.55, lng 3.31–7.23
-    final bool isInNetherlands = lat >= 50.75 && lat <= 53.55 &&
-                                 lng >= 3.31  && lng <= 7.23;
+    final bool isInNetherlands =
+        lat >= 50.75 && lat <= 53.55 && lng >= 3.31 && lng <= 7.23;
 
     if (!isInNetherlands) {
       // GPS location outside Netherlands - skip auto-fill
       // This handles simulator fake locations, VPN, or travelers
-      if (kDebugMode) debugPrint('GPS location outside Netherlands bounds — skipping auto-fill');
+      if (kDebugMode) {
+        debugPrint(
+            'GPS location outside Netherlands bounds — skipping auto-fill');
+      }
       return;
     }
 
     try {
       final geo = ref.read(geocodingServiceProvider);
       final address = await geo.reverseGeocode(lat: lat, lng: lng);
-      
+
       if (mounted && address != null) {
         ref.read(bookingProvider.notifier).setPickup(address);
       }
@@ -349,7 +356,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final typo = ref.watch(typographyProvider);
     final l10n = AppLocalizations.of(context);
 
-    ref.listen<AsyncValue<ActiveNotifySearch?>>(activeSearchProvider, (prev, next) {
+    ref.listen<AsyncValue<ActiveNotifySearch?>>(activeSearchProvider,
+        (prev, next) {
       final s = next.valueOrNull;
       if (s != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -374,7 +382,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       }
     });
 
-    final upcoming = ref.watch(ridesTabUpcomingRequestsProvider).valueOrNull ?? const [];
+    final upcoming =
+        ref.watch(ridesTabUpcomingRequestsProvider).valueOrNull ?? const [];
     if (upcoming.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -415,6 +424,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             typo: typo,
             onLocate: () => unawaited(_flyToUserLocation()),
           ),
+          _RiderMapCenterPin(
+            colors: colors,
+            typo: typo,
+            label: l10n.pickup,
+          ),
           HomeBottomSheet(
             colors: colors,
             typo: typo,
@@ -431,5 +445,146 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ],
       ),
     );
+  }
+}
+
+class _RiderMapCenterPin extends StatelessWidget {
+  const _RiderMapCenterPin({
+    required this.colors,
+    required this.typo,
+    required this.label,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomOffset = MediaQuery.sizeOf(context).height * 0.18;
+    return IgnorePointer(
+      child: Center(
+        child: Transform.translate(
+          offset: Offset(0, -bottomOffset),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: colors.card.withValues(alpha: 0.96),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: colors.border.withValues(alpha: 0.75),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.text.withValues(alpha: 0.12),
+                      blurRadius: 16,
+                      offset: const Offset(0, 7),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.my_location_rounded,
+                      color: colors.accent,
+                      size: 15,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      label,
+                      style: typo.labelMedium.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 7),
+              CustomPaint(
+                size: const Size(42, 54),
+                painter: _RiderPinPainter(
+                  fill: colors.accent,
+                  border: colors.onAccent,
+                  shadow: colors.text.withValues(alpha: 0.18),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RiderPinPainter extends CustomPainter {
+  const _RiderPinPainter({
+    required this.fill,
+    required this.border,
+    required this.shadow,
+  });
+
+  final Color fill;
+  final Color border;
+  final Color shadow;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..moveTo(size.width / 2, size.height)
+      ..cubicTo(
+        size.width * 0.20,
+        size.height * 0.68,
+        0,
+        size.height * 0.50,
+        0,
+        size.height * 0.30,
+      )
+      ..cubicTo(0, size.height * 0.12, size.width * 0.17, 0, size.width / 2, 0)
+      ..cubicTo(size.width * 0.83, 0, size.width, size.height * 0.12,
+          size.width, size.height * 0.30)
+      ..cubicTo(
+        size.width,
+        size.height * 0.50,
+        size.width * 0.80,
+        size.height * 0.68,
+        size.width / 2,
+        size.height,
+      )
+      ..close();
+
+    canvas.drawShadow(path, shadow, 8, true);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = fill
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = border
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3,
+    );
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height * 0.31),
+      size.width * 0.17,
+      Paint()..color = border,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _RiderPinPainter oldDelegate) {
+    return fill != oldDelegate.fill ||
+        border != oldDelegate.border ||
+        shadow != oldDelegate.shadow;
   }
 }
