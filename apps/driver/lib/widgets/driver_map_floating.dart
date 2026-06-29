@@ -166,7 +166,7 @@ class DriverMapFloating extends ConsumerWidget {
             left: DriverSpacing.screenEdge,
             right: DriverSpacing.screenEdge,
             bottom: sheetHeight + DriverSpacing.md,
-            child: DriverShiftTimerWidget()
+            child: const DriverShiftTimerWidget()
                 .driverFadeSlideIn(staggerIndex: 0, slideY: 0.12),
           ),
       ],

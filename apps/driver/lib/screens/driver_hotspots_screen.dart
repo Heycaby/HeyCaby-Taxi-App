@@ -45,7 +45,8 @@ class DriverHotspotsScreen extends ConsumerStatefulWidget {
   const DriverHotspotsScreen({super.key});
 
   @override
-  ConsumerState<DriverHotspotsScreen> createState() => _DriverHotspotsScreenState();
+  ConsumerState<DriverHotspotsScreen> createState() =>
+      _DriverHotspotsScreenState();
 }
 
 class _DriverHotspotsScreenState extends ConsumerState<DriverHotspotsScreen> {
@@ -70,7 +71,8 @@ class _DriverHotspotsScreenState extends ConsumerState<DriverHotspotsScreen> {
   }
 
   List<ZoneDemand> get _filtered {
-    return _zones.toList()..sort((a, b) => b.waitingPassengers.compareTo(a.waitingPassengers));
+    return _zones.toList()
+      ..sort((a, b) => b.waitingPassengers.compareTo(a.waitingPassengers));
   }
 
   ZoneDemand? get _bestZone {
@@ -127,7 +129,8 @@ class _DriverHotspotsScreenState extends ConsumerState<DriverHotspotsScreen> {
     if (best?.centerLng != null && best?.centerLat != null) {
       await map.flyTo(
         CameraOptions(
-          center: Point(coordinates: Position(best!.centerLng!, best.centerLat!)),
+          center:
+              Point(coordinates: Position(best!.centerLng!, best.centerLat!)),
           zoom: 11.2,
         ),
         MapAnimationOptions(duration: 900),
@@ -214,9 +217,7 @@ class _DriverHotspotsScreenState extends ConsumerState<DriverHotspotsScreen> {
       );
       bucket.totalDemand += z.waitingPassengers;
     }
-    final out = buckets.values
-        .where((e) => e.totalDemand >= 2)
-        .toList()
+    final out = buckets.values.where((e) => e.totalDemand >= 2).toList()
       ..sort((a, b) => b.totalDemand.compareTo(a.totalDemand));
     if (zoom < 10.4 && out.length > 24) return out.take(24).toList();
     return out;
@@ -244,9 +245,14 @@ class _DriverHotspotsScreenState extends ConsumerState<DriverHotspotsScreen> {
     }
   }
 
-  Future<void> _drawHotspots(List<ZoneDemand> zones, {bool force = false}) async {
+  Future<void> _drawHotspots(List<ZoneDemand> zones,
+      {bool force = false}) async {
     final colors = ref.read(colorsProvider);
-    if (_circleManager == null || _polygonManager == null || _mapboxMap == null) return;
+    if (_circleManager == null ||
+        _polygonManager == null ||
+        _mapboxMap == null) {
+      return;
+    }
     final nextMode = _resolveRenderMode(_currentZoom);
     final modeChanged = nextMode != _renderMode;
     if (modeChanged) {
@@ -329,7 +335,8 @@ class _DriverHotspotsScreenState extends ConsumerState<DriverHotspotsScreen> {
     await _syncScoreLayer(_mapboxMap!, zones, colors);
   }
 
-  Future<void> _syncScoreLayer(MapboxMap map, List<ZoneDemand> zones, HeyCabyColorTokens colors) async {
+  Future<void> _syncScoreLayer(
+      MapboxMap map, List<ZoneDemand> zones, HeyCabyColorTokens colors) async {
     try {
       final features = <Map<String, dynamic>>[];
       for (final z in zones) {
@@ -344,13 +351,17 @@ class _DriverHotspotsScreenState extends ConsumerState<DriverHotspotsScreen> {
           'properties': {'score': z.waitingPassengers.toString()},
         });
       }
-      final geoJson = jsonEncode({'type': 'FeatureCollection', 'features': features});
+      final geoJson =
+          jsonEncode({'type': 'FeatureCollection', 'features': features});
       final exists = await map.style.styleSourceExists(_kHotspotsScoresSource);
       if (exists) {
-        await map.style.setStyleSourceProperty(_kHotspotsScoresSource, 'data', geoJson);
+        await map.style
+            .setStyleSourceProperty(_kHotspotsScoresSource, 'data', geoJson);
       } else if (features.isNotEmpty) {
-        await map.style.addSource(GeoJsonSource(id: _kHotspotsScoresSource, data: geoJson));
-        final halo = (ThemeData.estimateBrightnessForColor(colors.card) == Brightness.dark
+        await map.style.addSource(
+            GeoJsonSource(id: _kHotspotsScoresSource, data: geoJson));
+        final halo = (ThemeData.estimateBrightnessForColor(colors.card) ==
+                    Brightness.dark
                 ? colors.bg
                 : colors.card)
             .withValues(alpha: 0.94)
@@ -368,7 +379,8 @@ class _DriverHotspotsScreenState extends ConsumerState<DriverHotspotsScreen> {
         );
       }
       if (features.isEmpty && exists) {
-        await map.style.setStyleSourceProperty(_kHotspotsScoresSource, 'data', geoJson);
+        await map.style
+            .setStyleSourceProperty(_kHotspotsScoresSource, 'data', geoJson);
       }
     } catch (_) {}
   }
@@ -405,7 +417,8 @@ class _DriverHotspotsScreenState extends ConsumerState<DriverHotspotsScreen> {
             children: [
               Text(
                 zone.zoneName ?? zone.zoneId,
-                style: typo.titleMedium.copyWith(color: colors.text, fontWeight: FontWeight.w800),
+                style: typo.titleMedium
+                    .copyWith(color: colors.text, fontWeight: FontWeight.w800),
               ),
               if ((zone.smartTargetLabel ?? '').isNotEmpty)
                 Padding(
@@ -420,7 +433,8 @@ class _DriverHotspotsScreenState extends ConsumerState<DriverHotspotsScreen> {
                 '${DriverStrings.hotspotsRidersWaitingCaption}: ${zone.waitingPassengers}',
                 style: typo.bodyMedium.copyWith(color: colors.text),
               ),
-              Text(DriverStrings.hotspotsDemandLabel(tierLabel), style: typo.bodyMedium.copyWith(color: colors.text)),
+              Text(DriverStrings.hotspotsDemandLabel(tierLabel),
+                  style: typo.bodyMedium.copyWith(color: colors.text)),
               Text(
                 DriverStrings.hotspotsOnlineDrivers(zone.onlineDriversInZone),
                 style: typo.bodyMedium.copyWith(color: colors.text),
@@ -448,7 +462,7 @@ class _DriverHotspotsScreenState extends ConsumerState<DriverHotspotsScreen> {
                     Navigator.pop(ctx);
                     _openNavigationChooser(zone);
                   },
-                  child: Text(DriverStrings.hotspotsNavigateHere),
+                  child: const Text(DriverStrings.hotspotsNavigateHere),
                 ),
               ),
             ],
@@ -509,8 +523,7 @@ class _DriverHotspotsScreenState extends ConsumerState<DriverHotspotsScreen> {
                 ? '${best.waitingPassengers} riders waiting'
                 : null,
             bestZoneTierColor: tierColor,
-            onBestZoneTap:
-                best != null ? () => _openZoneInsights(best) : null,
+            onBestZoneTap: best != null ? () => _openZoneInsights(best) : null,
           ),
         ],
       ),

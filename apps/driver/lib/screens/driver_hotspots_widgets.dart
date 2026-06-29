@@ -189,7 +189,9 @@ class HotspotsFilterStrip extends StatelessWidget {
             typo: typo,
             onTap: () {
               HapticService.selectionClick();
-              onFilter(filter == HotspotDemandFilter.high ? HotspotDemandFilter.all : HotspotDemandFilter.high);
+              onFilter(filter == HotspotDemandFilter.high
+                  ? HotspotDemandFilter.all
+                  : HotspotDemandFilter.high);
             },
           ),
           const SizedBox(width: 8),
@@ -202,7 +204,9 @@ class HotspotsFilterStrip extends StatelessWidget {
             typo: typo,
             onTap: () {
               HapticService.selectionClick();
-              onFilter(filter == HotspotDemandFilter.medium ? HotspotDemandFilter.all : HotspotDemandFilter.medium);
+              onFilter(filter == HotspotDemandFilter.medium
+                  ? HotspotDemandFilter.all
+                  : HotspotDemandFilter.medium);
             },
           ),
           const SizedBox(width: 8),
@@ -215,7 +219,9 @@ class HotspotsFilterStrip extends StatelessWidget {
             typo: typo,
             onTap: () {
               HapticService.selectionClick();
-              onFilter(filter == HotspotDemandFilter.low ? HotspotDemandFilter.all : HotspotDemandFilter.low);
+              onFilter(filter == HotspotDemandFilter.low
+                  ? HotspotDemandFilter.all
+                  : HotspotDemandFilter.low);
             },
           ),
           const SizedBox(width: 8),
@@ -277,7 +283,8 @@ class _DemandPill extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: border.withValues(alpha: active ? 0.65 : 1)),
+            border:
+                Border.all(color: border.withValues(alpha: active ? 0.65 : 1)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -300,7 +307,8 @@ class _DemandPill extends StatelessWidget {
   }
 }
 
-void showHotspotsLearnSheet(BuildContext context, HeyCabyColorTokens colors, HeyCabyTypography typo) {
+void showHotspotsLearnSheet(
+    BuildContext context, HeyCabyColorTokens colors, HeyCabyTypography typo) {
   showModalBottomSheet<void>(
     context: context,
     shape: const RoundedRectangleBorder(
@@ -316,19 +324,21 @@ void showHotspotsLearnSheet(BuildContext context, HeyCabyColorTokens colors, Hey
           children: [
             Text(
               DriverStrings.hotspotsLearnTitle,
-              style: typo.titleMedium.copyWith(color: colors.text, fontWeight: FontWeight.w800),
+              style: typo.titleMedium
+                  .copyWith(color: colors.text, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 10),
             Text(
               DriverStrings.hotspotsLearnBody,
-              style: typo.bodyMedium.copyWith(color: colors.textMid, height: 1.35),
+              style:
+                  typo.bodyMedium.copyWith(color: colors.textMid, height: 1.35),
             ),
             const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: Text(DriverStrings.hotspotsLearnClose),
+                child: const Text(DriverStrings.hotspotsLearnClose),
               ),
             ),
           ],
