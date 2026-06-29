@@ -68,7 +68,8 @@ Future<void> handleDriverTaxiSessionRevoked({
         ),
         content: Text(
           body,
-          style: typo.bodyMedium.copyWith(color: colors.textSecondary, height: 1.35),
+          style: typo.bodyMedium
+              .copyWith(color: colors.textSecondary, height: 1.35),
           textAlign: TextAlign.center,
         ),
         actions: [
@@ -76,7 +77,7 @@ Future<void> handleDriverTaxiSessionRevoked({
             width: double.infinity,
             child: FilledButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: Text(DriverStrings.taxiSessionRevokedCta),
+              child: const Text(DriverStrings.taxiSessionRevokedCta),
             ),
           ),
         ],

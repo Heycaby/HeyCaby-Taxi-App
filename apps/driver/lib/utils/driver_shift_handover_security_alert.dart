@@ -54,7 +54,9 @@ Future<void> showDriverShiftHandoverSecurityAlert({
                 ),
                 const SizedBox(height: DriverSpacing.sm),
                 Text(
-                  body.isNotEmpty ? body : DriverStrings.shiftHandoverFleetAlertBody,
+                  body.isNotEmpty
+                      ? body
+                      : DriverStrings.shiftHandoverFleetAlertBody,
                   style: typography.bodyMedium.copyWith(
                     color: colors.textSecondary,
                     height: 1.45,
@@ -63,7 +65,7 @@ Future<void> showDriverShiftHandoverSecurityAlert({
                 const SizedBox(height: DriverSpacing.lg),
                 FilledButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: Text(DriverStrings.close),
+                  child: const Text(DriverStrings.close),
                 ),
               ],
             ),

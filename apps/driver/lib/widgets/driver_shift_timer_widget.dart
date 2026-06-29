@@ -26,10 +26,12 @@ class DriverShiftTimerWidget extends ConsumerStatefulWidget {
   const DriverShiftTimerWidget({super.key});
 
   @override
-  ConsumerState<DriverShiftTimerWidget> createState() => _DriverShiftTimerWidgetState();
+  ConsumerState<DriverShiftTimerWidget> createState() =>
+      _DriverShiftTimerWidgetState();
 }
 
-class _DriverShiftTimerWidgetState extends ConsumerState<DriverShiftTimerWidget> {
+class _DriverShiftTimerWidgetState
+    extends ConsumerState<DriverShiftTimerWidget> {
   Timer? _ticker;
   bool _busy = false;
   int _tickCount = 0;
@@ -78,7 +80,7 @@ class _DriverShiftTimerWidgetState extends ConsumerState<DriverShiftTimerWidget>
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(DriverStrings.endShiftDetail)),
+          const SnackBar(content: Text(DriverStrings.endShiftDetail)),
         );
       }
     } finally {
@@ -99,7 +101,8 @@ class _DriverShiftTimerWidgetState extends ConsumerState<DriverShiftTimerWidget>
           title: Text(DriverStrings.endShiftConfirm, style: typo.titleMedium),
           content: Text(
             DriverStrings.endShiftDetail
-                .replaceFirst('X hours', '${onlineMins ~/ 60}h ${onlineMins % 60}m')
+                .replaceFirst(
+                    'X hours', '${onlineMins ~/ 60}h ${onlineMins % 60}m')
                 .replaceFirst('Y rides', '$rides rides'),
             style: typo.bodyMedium.copyWith(color: colors.textMid),
           ),
@@ -114,7 +117,7 @@ class _DriverShiftTimerWidgetState extends ConsumerState<DriverShiftTimerWidget>
                 backgroundColor: colors.error,
                 foregroundColor: colors.card,
               ),
-              child: Text(DriverStrings.endShift),
+              child: const Text(DriverStrings.endShift),
             ),
           ],
         );
@@ -132,14 +135,18 @@ class _DriverShiftTimerWidgetState extends ConsumerState<DriverShiftTimerWidget>
     if (_busy) return;
     setState(() => _busy = true);
     try {
-      final attempt = await attemptDriverGoOnlineWithLocationGuard(context, ref);
+      final attempt =
+          await attemptDriverGoOnlineWithLocationGuard(context, ref);
       if (!mounted) return;
       if (attempt.isBlocked) {
-        await showDriverGoOnlineGuidanceSheet(context, ref, args: attempt.gateArgs!);
+        await showDriverGoOnlineGuidanceSheet(context, ref,
+            args: attempt.gateArgs!);
         return;
       }
       if (!attempt.succeeded) return;
-      ref.read(driverStateProvider.notifier).setStatus(DriverAppState.onlineAvailable);
+      ref
+          .read(driverStateProvider.notifier)
+          .setStatus(DriverAppState.onlineAvailable);
       SoundService().playStatusOnline();
       ref.invalidate(driverShiftStatsProvider);
       ref.invalidate(driverEarningsProvider);
@@ -172,8 +179,9 @@ class _DriverShiftTimerWidgetState extends ConsumerState<DriverShiftTimerWidget>
     final breakMin = _breakMinutesLive(stats, onBreak);
 
     final accent = onBreak ? colors.warning : colors.success;
-    final statusLabel =
-        onBreak ? DriverStrings.shiftBreakActive : DriverStrings.shiftWorkdayActive;
+    final statusLabel = onBreak
+        ? DriverStrings.shiftBreakActive
+        : DriverStrings.shiftWorkdayActive;
 
     return Material(
       color: Colors.transparent,
@@ -225,8 +233,11 @@ class _DriverShiftTimerWidgetState extends ConsumerState<DriverShiftTimerWidget>
                               ),
                             ),
                             Text(
-                              onBreak ? DriverStrings.onBreak : DriverStrings.shiftArcHint,
-                              style: typo.labelSmall.copyWith(color: colors.textSoft),
+                              onBreak
+                                  ? DriverStrings.onBreak
+                                  : DriverStrings.shiftArcHint,
+                              style: typo.labelSmall
+                                  .copyWith(color: colors.textSoft),
                             ),
                           ],
                         ),
@@ -263,13 +274,16 @@ class _DriverShiftTimerWidgetState extends ConsumerState<DriverShiftTimerWidget>
                           children: [
                             Expanded(
                               child: _OutlineBtn(
-                                label: onBreak ? DriverStrings.hervat : DriverStrings.pauze,
+                                label: onBreak
+                                    ? DriverStrings.hervat
+                                    : DriverStrings.pauze,
                                 colors: colors,
                                 typo: typo,
                                 busy: _busy,
                                 onTap: onBreak
                                     ? _resumeFromBreakOnline
-                                    : () => _setStatus('on_break', DriverAppState.onBreak),
+                                    : () => _setStatus(
+                                        'on_break', DriverAppState.onBreak),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -379,13 +393,15 @@ class _PulseDot extends StatefulWidget {
   State<_PulseDot> createState() => _PulseDotState();
 }
 
-class _PulseDotState extends State<_PulseDot> with SingleTickerProviderStateMixin {
+class _PulseDotState extends State<_PulseDot>
+    with SingleTickerProviderStateMixin {
   late AnimationController _c;
 
   @override
   void initState() {
     super.initState();
-    _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))
+    _c = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1200))
       ..repeat(reverse: true);
   }
 
@@ -438,17 +454,20 @@ class _OutlineBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return OutlinedButton(
-      onPressed: busy ? null : () {
-        HapticService.lightTap();
-        onTap();
-      },
+      onPressed: busy
+          ? null
+          : () {
+              HapticService.lightTap();
+              onTap();
+            },
       style: OutlinedButton.styleFrom(
         foregroundColor: colors.text,
         side: BorderSide(color: colors.border),
         padding: const EdgeInsets.symmetric(vertical: 10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-      child: Text(label, style: typo.labelSmall.copyWith(fontWeight: FontWeight.w700)),
+      child: Text(label,
+          style: typo.labelSmall.copyWith(fontWeight: FontWeight.w700)),
     );
   }
 }
@@ -473,12 +492,14 @@ class _StatCell extends StatelessWidget {
         children: [
           Text(
             value,
-            style: typo.labelLarge.copyWith(fontWeight: FontWeight.w800, color: colors.text),
+            style: typo.labelLarge
+                .copyWith(fontWeight: FontWeight.w800, color: colors.text),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: typo.labelSmall.copyWith(color: colors.textSoft, fontSize: 10),
+            style:
+                typo.labelSmall.copyWith(color: colors.textSoft, fontSize: 10),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

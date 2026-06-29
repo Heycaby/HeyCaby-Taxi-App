@@ -55,7 +55,7 @@ Future<void> continueDriverGoOnlineOnboarding({
   context.go('/driver');
   if (resumeGoOnline && context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(DriverStrings.goOnlineOnboardingReadyHint)),
+      const SnackBar(content: Text(DriverStrings.goOnlineOnboardingReadyHint)),
     );
   }
 }

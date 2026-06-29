@@ -133,7 +133,8 @@ class _DriverSmartPingBannerState extends ConsumerState<DriverSmartPingBanner> {
     if (s == null) return const SizedBox.shrink();
 
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
 
     final (title, body) = switch (s) {
       DriverSmartPingSuggestion.onMyWay => (
@@ -159,7 +160,8 @@ class _DriverSmartPingBannerState extends ConsumerState<DriverSmartPingBanner> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.notifications_active_rounded, color: colors.success),
+                  Icon(Icons.notifications_active_rounded,
+                      color: colors.success),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -190,7 +192,7 @@ class _DriverSmartPingBannerState extends ConsumerState<DriverSmartPingBanner> {
                 children: [
                   TextButton(
                     onPressed: _busy ? null : _dismiss,
-                    child: Text(DriverStrings.smartPingDismiss),
+                    child: const Text(DriverStrings.smartPingDismiss),
                   ),
                   const Spacer(),
                   FilledButton(
@@ -204,7 +206,7 @@ class _DriverSmartPingBannerState extends ConsumerState<DriverSmartPingBanner> {
                               color: colors.onPrimary,
                             ),
                           )
-                        : Text(DriverStrings.smartPingSend),
+                        : const Text(DriverStrings.smartPingSend),
                   ),
                 ],
               ),

@@ -140,7 +140,7 @@ class ScheduledPrerideActions extends ConsumerWidget {
                       );
                       if (ok) onInvalidate();
                     },
-                    child: Text(DriverStrings.prerideSendRequest),
+                    child: const Text(DriverStrings.prerideSendRequest),
                   ),
                 ],
               );
@@ -164,11 +164,10 @@ class ScheduledPrerideActions extends ConsumerWidget {
     }
 
     final tier = ride.riderReliabilityTier;
-    final showPreride =
-        ride.canSendPrerideConfirmation ||
-            ride.prerideAwaitingRider ||
-            ride.canReleaseAfterPrerideDeadline ||
-            ride.canMarkCommitmentReceived;
+    final showPreride = ride.canSendPrerideConfirmation ||
+        ride.prerideAwaitingRider ||
+        ride.canReleaseAfterPrerideDeadline ||
+        ride.canMarkCommitmentReceived;
 
     if (!showPreride &&
         tier == null &&
@@ -187,7 +186,8 @@ class ScheduledPrerideActions extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: _tierColor(tier).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: _tierColor(tier).withValues(alpha: 0.35)),
+                border:
+                    Border.all(color: _tierColor(tier).withValues(alpha: 0.35)),
               ),
               child: Text(
                 _tierLabel(tier),
@@ -226,8 +226,7 @@ class ScheduledPrerideActions extends ConsumerWidget {
                         content: Text(
                           ok
                               ? DriverStrings.prerideAwaitingRider
-                              : (res['error']?.toString() ==
-                                      'outside_window'
+                              : (res['error']?.toString() == 'outside_window'
                                   ? DriverStrings.prerideErrorOutsideWindow
                                   : DriverStrings.prerideErrorGeneric),
                         ),
@@ -298,7 +297,7 @@ class ScheduledPrerideActions extends ConsumerWidget {
               );
               if (ok) onInvalidate();
             },
-            child: Text(DriverStrings.prerideMarkTikkieReceived),
+            child: const Text(DriverStrings.prerideMarkTikkieReceived),
           ),
         ],
         if (ride.canReleaseAfterPrerideDeadline) ...[

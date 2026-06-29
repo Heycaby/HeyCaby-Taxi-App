@@ -40,7 +40,7 @@ Future<DriverPingSendResult> sendDriverRiderPing({
     if (!context.mounted) return DriverPingSendResult.success;
     HapticService.success();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(DriverStrings.pingRiderSent)),
+      const SnackBar(content: Text(DriverStrings.pingRiderSent)),
     );
     return DriverPingSendResult.success;
   } on Exception catch (e) {
@@ -61,7 +61,7 @@ Future<DriverPingSendResult> sendDriverRiderPing({
   if (!context.mounted) return DriverPingSendResult.failed;
   HapticService.error();
   ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(DriverStrings.pingRiderFailed)),
+    const SnackBar(content: Text(DriverStrings.pingRiderFailed)),
   );
   return DriverPingSendResult.failed;
 }

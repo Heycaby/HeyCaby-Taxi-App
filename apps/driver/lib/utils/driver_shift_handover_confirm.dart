@@ -7,8 +7,8 @@ import '../l10n/driver_strings.dart';
 Future<bool> confirmShiftHandoverHighRiskAction(BuildContext context) async {
   final localAuth = LocalAuthentication();
   try {
-    final canUseBiometric =
-        await localAuth.canCheckBiometrics && await localAuth.isDeviceSupported();
+    final canUseBiometric = await localAuth.canCheckBiometrics &&
+        await localAuth.isDeviceSupported();
     if (canUseBiometric) {
       return localAuth.authenticate(
         localizedReason: DriverStrings.shiftHandoverEndShiftBiometricReason,
@@ -27,8 +27,8 @@ Future<bool> confirmShiftHandoverHighRiskAction(BuildContext context) async {
     context: context,
     barrierDismissible: false,
     builder: (ctx) => AlertDialog(
-      title: Text(DriverStrings.shiftHandoverEndShiftConfirmTitle),
-      content: Text(DriverStrings.shiftHandoverEndShiftConfirmBody),
+      title: const Text(DriverStrings.shiftHandoverEndShiftConfirmTitle),
+      content: const Text(DriverStrings.shiftHandoverEndShiftConfirmBody),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
@@ -36,7 +36,7 @@ Future<bool> confirmShiftHandoverHighRiskAction(BuildContext context) async {
         ),
         FilledButton(
           onPressed: () => Navigator.of(ctx).pop(true),
-          child: Text(DriverStrings.shiftHandoverEndShift),
+          child: const Text(DriverStrings.shiftHandoverEndShift),
         ),
       ],
     ),

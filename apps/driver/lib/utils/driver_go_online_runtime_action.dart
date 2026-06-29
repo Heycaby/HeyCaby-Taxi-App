@@ -24,11 +24,9 @@ class DriverGoOnlineAttemptResult {
 
   bool get isBlocked => gateArgs != null;
 
-  const DriverGoOnlineAttemptResult.succeeded()
-      : this._(succeeded: true);
+  const DriverGoOnlineAttemptResult.succeeded() : this._(succeeded: true);
 
-  const DriverGoOnlineAttemptResult.stopped()
-      : this._(succeeded: false);
+  const DriverGoOnlineAttemptResult.stopped() : this._(succeeded: false);
 
   const DriverGoOnlineAttemptResult.blocked(DriverRuntimeGateArgs args)
       : this._(succeeded: false, gateArgs: args);
@@ -85,7 +83,7 @@ Future<DriverGoOnlineAttemptResult> attemptDriverGoOnline({
       final runtime = await runtimeService.fetchRuntime();
       skipBillingGate = runtime.config.skipGoOnlineGates;
       if (!skipBillingGate && !runtime.billingAllowed) {
-        return DriverGoOnlineAttemptResult.blocked(
+        return const DriverGoOnlineAttemptResult.blocked(
           DriverRuntimeGateArgs(
             title: DriverStrings.runtimePaymentBlockedTitle,
             body: DriverStrings.runtimePaymentBlockedBody,
@@ -95,9 +93,8 @@ Future<DriverGoOnlineAttemptResult> attemptDriverGoOnline({
         );
       }
     } catch (_) {
-      skipBillingGate = (readiness.statusMessage ?? '')
-          .toLowerCase()
-          .contains('test mode');
+      skipBillingGate =
+          (readiness.statusMessage ?? '').toLowerCase().contains('test mode');
     }
   }
 

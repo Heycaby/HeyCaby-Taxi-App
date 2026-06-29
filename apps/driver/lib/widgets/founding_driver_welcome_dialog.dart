@@ -48,7 +48,8 @@ Future<void> showFoundingDriverWelcomeDialog(
               if (claim.foundingNumber != null) ...[
                 const SizedBox(height: 12),
                 Text(
-                  DriverStrings.foundingDriverWelcomeNumber(claim.foundingNumber!),
+                  DriverStrings.foundingDriverWelcomeNumber(
+                      claim.foundingNumber!),
                   style: typo.bodyMedium.copyWith(color: colors.text),
                 ),
               ],
@@ -64,12 +65,16 @@ Future<void> showFoundingDriverWelcomeDialog(
                   child: FilledButton(
                     onPressed: () {
                       Navigator.of(dialogContext).pop();
-                      ref.read(foundingDriverPostClaimProvider.notifier).state = null;
+                      ref.read(foundingDriverPostClaimProvider.notifier).state =
+                          null;
                       Future.microtask(() {
-                        if (parentContext.mounted) parentContext.push('/driver/me');
+                        if (parentContext.mounted) {
+                          parentContext.push('/driver/me');
+                        }
                       });
                     },
-                    child: Text(DriverStrings.foundingDriverProfilePhotoCta),
+                    child:
+                        const Text(DriverStrings.foundingDriverProfilePhotoCta),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -80,14 +85,16 @@ Future<void> showFoundingDriverWelcomeDialog(
                   child: FilledButton.tonal(
                     onPressed: () {
                       Navigator.of(dialogContext).pop();
-                      ref.read(foundingDriverPostClaimProvider.notifier).state = null;
+                      ref.read(foundingDriverPostClaimProvider.notifier).state =
+                          null;
                       Future.microtask(() {
                         if (parentContext.mounted) {
                           parentContext.push('/driver/documents');
                         }
                       });
                     },
-                    child: Text(DriverStrings.foundingDriverVehiclePhotoCta),
+                    child:
+                        const Text(DriverStrings.foundingDriverVehiclePhotoCta),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -97,9 +104,10 @@ Future<void> showFoundingDriverWelcomeDialog(
                 child: TextButton(
                   onPressed: () {
                     Navigator.of(dialogContext).pop();
-                    ref.read(foundingDriverPostClaimProvider.notifier).state = null;
+                    ref.read(foundingDriverPostClaimProvider.notifier).state =
+                        null;
                   },
-                  child: Text(DriverStrings.foundingDriverClose),
+                  child: const Text(DriverStrings.foundingDriverClose),
                 ),
               ),
             ],
