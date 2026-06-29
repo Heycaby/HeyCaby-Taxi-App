@@ -44,6 +44,14 @@ void main() {
       DriverStrings.acceptRideFailedMessage,
       'Could not accept the ride. The request may have expired.',
     );
+    expect(DriverStrings.preferencesPlayPreviewTooltip, 'Play 10s preview');
+    expect(DriverStrings.insuranceProviderLabel, 'Insurer');
+    expect(DriverStrings.insurancePolicyLabel, 'Policy number');
+    expect(DriverStrings.insuranceExpiryLabel, 'Expiry date');
+    expect(
+      DriverStrings.missingFieldsMessage(['insurer', 'policy number']),
+      'Missing: insurer, policy number.',
+    );
     expect(DriverStrings.faq, 'Frequently asked questions');
     expect(DriverStrings.faqHowGoOnlineQuestion, 'How do I go online?');
     expect(
@@ -85,6 +93,17 @@ void main() {
       DriverStrings.acceptRideFailedMessage,
       'No se pudo aceptar el viaje. Es posible que la solicitud haya caducado.',
     );
+    expect(
+      DriverStrings.preferencesPlayPreviewTooltip,
+      'Reproducir vista previa de 10 s',
+    );
+    expect(DriverStrings.insuranceProviderLabel, 'Aseguradora');
+    expect(DriverStrings.insurancePolicyLabel, 'Número de póliza');
+    expect(DriverStrings.insuranceExpiryLabel, 'Fecha de vencimiento');
+    expect(
+      DriverStrings.missingFieldsMessage(['aseguradora', 'número de póliza']),
+      'Falta: aseguradora, número de póliza.',
+    );
     expect(DriverStrings.faq, 'Preguntas frecuentes');
     expect(DriverStrings.faqHowGoOnlineQuestion, '¿Cómo me conecto?');
     expect(
@@ -122,6 +141,14 @@ void main() {
     expect(
       DriverStrings.acceptRideFailedMessage,
       'تعذر قبول الرحلة. ربما انتهت صلاحية الطلب.',
+    );
+    expect(DriverStrings.preferencesPlayPreviewTooltip, 'تشغيل معاينة 10 ثوان');
+    expect(DriverStrings.insuranceProviderLabel, 'شركة التأمين');
+    expect(DriverStrings.insurancePolicyLabel, 'رقم الوثيقة');
+    expect(DriverStrings.insuranceExpiryLabel, 'تاريخ الانتهاء');
+    expect(
+      DriverStrings.missingFieldsMessage(['شركة التأمين', 'رقم الوثيقة']),
+      'الحقول الناقصة: شركة التأمين, رقم الوثيقة.',
     );
     expect(DriverStrings.faq, 'الأسئلة الشائعة');
     expect(DriverStrings.faqHowGoOnlineQuestion, 'كيف أصبح متصلا؟');

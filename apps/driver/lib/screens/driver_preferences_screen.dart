@@ -368,7 +368,7 @@ class _RideRingtonePreferenceRowState
                     IconButton(
                       icon:
                           Icon(Icons.play_arrow_rounded, color: colors.accent),
-                      tooltip: 'Play 10s preview',
+                      tooltip: DriverStrings.preferencesPlayPreviewTooltip,
                       onPressed: () async {
                         await SoundService()
                             .playRideRequestPreviewByKey(entry.key);

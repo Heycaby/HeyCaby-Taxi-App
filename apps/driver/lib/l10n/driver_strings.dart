@@ -880,6 +880,12 @@ class DriverStrings {
       'Offline-signaal voorbeeld';
   static const String preferencesSoundTestOfflineSubtitle =
       'Speel het geluid voor offline status.';
+  static String get preferencesPlayPreviewTooltip => _t(
+        'Speel voorbeeld van 10 seconden',
+        en: 'Play 10s preview',
+        es: 'Reproducir vista previa de 10 s',
+        ar: 'تشغيل معاينة 10 ثوان',
+      );
   static const String preferencesMolliePreviewTitle =
       'Mollie-checkout voorbeeld';
   static const String preferencesMolliePreviewSubtitle =
@@ -1208,6 +1214,66 @@ class DriverStrings {
   static const String insuranceUseCamera = 'Foto maken';
   static const String insuranceUseGallery = 'Kiezen uit galerij';
   static const String insuranceSave = 'Verzekering opslaan';
+  static String get dateFormatHint => _t(
+        'JJJJ-MM-DD',
+        en: 'YYYY-MM-DD',
+        es: 'AAAA-MM-DD',
+        ar: 'YYYY-MM-DD',
+      );
+  static String get uploadFailed => _t(
+        'Upload mislukt',
+        en: 'Upload failed',
+        es: 'La carga falló',
+        ar: 'فشل الرفع',
+      );
+  static String get insurancePhotoUploadedMessage => _t(
+        'Foto geüpload. Vul verzekeraar, polisnummer en vervaldatum in en tik op Opslaan.',
+        en: 'Photo uploaded. Enter insurer, policy number, and expiry, then tap Save.',
+        es: 'Foto cargada. Introduce aseguradora, número de póliza y vencimiento, y toca Guardar.',
+        ar: 'تم رفع الصورة. أدخل شركة التأمين ورقم الوثيقة وتاريخ الانتهاء، ثم اضغط حفظ.',
+      );
+  static String get insurancePhotoUploadedSnack => _t(
+        'Verzekeringsfoto geüpload.',
+        en: 'Insurance photo uploaded.',
+        es: 'Foto del seguro cargada.',
+        ar: 'تم رفع صورة التأمين.',
+      );
+  static String get insuranceProviderMissingLabel => _t(
+        'verzekeraar',
+        en: 'insurer',
+        es: 'aseguradora',
+        ar: 'شركة التأمين',
+      );
+  static String get insuranceProviderLabel => _t(
+        'Verzekeraar',
+        en: 'Insurer',
+        es: 'Aseguradora',
+        ar: 'شركة التأمين',
+      );
+  static String get insurancePolicyLabel => _t(
+        'Polisnummer',
+        en: 'Policy number',
+        es: 'Número de póliza',
+        ar: 'رقم الوثيقة',
+      );
+  static String get insuranceExpiryLabel => _t(
+        'Vervaldatum',
+        en: 'Expiry date',
+        es: 'Fecha de vencimiento',
+        ar: 'تاريخ الانتهاء',
+      );
+  static String get insurancePhotoMissingLabel => _t(
+        'verzekeringsfoto',
+        en: 'insurance photo',
+        es: 'foto del seguro',
+        ar: 'صورة التأمين',
+      );
+  static String missingFieldsMessage(List<String> fields) => _t(
+        'Ontbreekt: ${fields.join(', ')}.',
+        en: 'Missing: ${fields.join(', ')}.',
+        es: 'Falta: ${fields.join(', ')}.',
+        ar: 'الحقول الناقصة: ${fields.join(', ')}.',
+      );
   static const String paymentMethodRequired =
       'Houd minimaal één betaalmethode ingeschakeld.';
   static const String onlineBlockedCompliance =
