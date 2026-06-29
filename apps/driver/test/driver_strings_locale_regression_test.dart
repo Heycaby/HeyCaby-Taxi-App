@@ -55,6 +55,14 @@ void main() {
     expect(DriverStrings.homeAutoAcceptReturnRides, 'Auto-accept return rides');
     expect(DriverStrings.homeTodayRidesCount(0), 'No rides yet');
     expect(DriverStrings.homeAvailableCount(3), '3 available');
+    expect(DriverStrings.profilePhotoConfirmTitle, 'Use this photo?');
+    expect(DriverStrings.profilePhotoConfirmYes, 'Yes, save');
+    expect(DriverStrings.profileNameSaved, 'Name saved.');
+    expect(DriverStrings.profilePhotoAddHint,
+        'Tap the photo to choose from gallery');
+    expect(DriverStrings.addVehiclePhoto, 'Add vehicle photo');
+    expect(DriverStrings.vehiclePhotoUploadFailed,
+        'Vehicle photo upload failed. Try again.');
     expect(DriverStrings.returnTrips, 'Return rides');
     expect(DriverStrings.returnTripsEmpty, 'No return rides available.');
     expect(DriverStrings.ridesThisWeek, 'Rides this week');
@@ -185,6 +193,14 @@ void main() {
     );
     expect(DriverStrings.homeTodayRidesCount(0), 'Aún no hay viajes');
     expect(DriverStrings.homeAvailableCount(3), '3 disponibles');
+    expect(DriverStrings.profilePhotoConfirmTitle, '¿Usar esta foto?');
+    expect(DriverStrings.profilePhotoConfirmYes, 'Sí, guardar');
+    expect(DriverStrings.profileNameSaved, 'Nombre guardado.');
+    expect(DriverStrings.profilePhotoAddHint,
+        'Toca la foto para elegir desde la galería');
+    expect(DriverStrings.addVehiclePhoto, 'Añadir foto del vehículo');
+    expect(DriverStrings.vehiclePhotoUploadFailed,
+        'No se pudo subir la foto del vehículo. Inténtalo de nuevo.');
     expect(DriverStrings.returnTrips, 'Viajes de vuelta');
     expect(
       DriverStrings.returnTripsEmpty,
@@ -308,6 +324,14 @@ void main() {
         DriverStrings.homeAutoAcceptReturnRides, 'قبول رحلات العودة تلقائيا');
     expect(DriverStrings.homeTodayRidesCount(0), 'لا توجد رحلات بعد');
     expect(DriverStrings.homeAvailableCount(3), '3 متاحة');
+    expect(DriverStrings.profilePhotoConfirmTitle, 'استخدام هذه الصورة؟');
+    expect(DriverStrings.profilePhotoConfirmYes, 'نعم، حفظ');
+    expect(DriverStrings.profileNameSaved, 'تم حفظ الاسم.');
+    expect(DriverStrings.profilePhotoAddHint,
+        'اضغط على الصورة للاختيار من المعرض');
+    expect(DriverStrings.addVehiclePhoto, 'إضافة صورة للمركبة');
+    expect(DriverStrings.vehiclePhotoUploadFailed,
+        'فشل تحميل صورة المركبة. حاول مرة أخرى.');
     expect(DriverStrings.returnTrips, 'رحلات العودة');
     expect(DriverStrings.returnTripsEmpty, 'لا توجد رحلات عودة متاحة.');
     expect(DriverStrings.ridesThisWeek, 'رحلات هذا الأسبوع');

@@ -308,32 +308,111 @@ class DriverStrings {
       );
 
   /// One-time profile photo confirmation (shown before upload).
-  static const String profilePhotoConfirmTitle = 'Deze foto gebruiken?';
-  static const String profilePhotoConfirmBody =
-      'Zorg dat dit een echte, duidelijke foto van jou is — je kunt hem maximaal 2 keer in de app wijzigen. '
-      'Passagiers zien hem bij het boeken van een taxi.\n\n'
-      'Weet je zeker dat dit is wat passagiers moeten zien?';
-  static const String profilePhotoConfirmYes = 'Ja, opslaan';
-  static const String profilePhotoLockedMessage =
-      'Je hebt de limiet van 2 wijzigingen voor profielfoto’s bereikt. Neem contact op met de ondersteuning voor een nieuwe wijziging.';
+  static String get profilePhotoConfirmTitle => _t(
+        'Deze foto gebruiken?',
+        en: 'Use this photo?',
+        es: '¿Usar esta foto?',
+        ar: 'استخدام هذه الصورة؟',
+      );
+  static String get profilePhotoConfirmBody => _t(
+        'Zorg dat dit een echte, duidelijke foto van jou is — je kunt hem maximaal 2 keer in de app wijzigen. '
+        'Passagiers zien hem bij het boeken van een taxi.\n\n'
+        'Weet je zeker dat dit is wat passagiers moeten zien?',
+        en: 'Make sure this is a real, clear photo of you. You can change it in the app up to 2 times. '
+            'Riders see it when booking a taxi.\n\n'
+            'Are you sure this is what riders should see?',
+        es: 'Asegúrate de que sea una foto real y clara de ti. Puedes cambiarla en la app hasta 2 veces. '
+            'Los pasajeros la ven al reservar un taxi.\n\n'
+            '¿Seguro que esto es lo que deben ver los pasajeros?',
+        ar: 'تأكد أنها صورة حقيقية وواضحة لك. يمكنك تغييرها داخل التطبيق حتى مرتين. '
+            'يراها الركاب عند حجز سيارة أجرة.\n\n'
+            'هل أنت متأكد أن هذه هي الصورة التي يجب أن يراها الركاب؟',
+      );
+  static String get profilePhotoConfirmYes => _t(
+        'Ja, opslaan',
+        en: 'Yes, save',
+        es: 'Sí, guardar',
+        ar: 'نعم، حفظ',
+      );
+  static String get profilePhotoLockedMessage => _t(
+        'Je hebt de limiet van 2 wijzigingen voor profielfoto’s bereikt. Neem contact op met de ondersteuning voor een nieuwe wijziging.',
+        en: 'You have reached the limit of 2 profile photo changes. Contact support for another change.',
+        es: 'Has alcanzado el límite de 2 cambios de foto de perfil. Contacta con soporte para otro cambio.',
+        ar: 'وصلت إلى حد تغيير صورة الملف الشخصي مرتين. تواصل مع الدعم لتغيير آخر.',
+      );
   static String profilePhotoChangesRemaining(int remaining) => remaining <= 0
-      ? 'Profielfoto-wijzigingen gebruikt (2/2). Volgende wijziging via de ondersteuning.'
-      : 'Je kunt je profielfoto nog $remaining keer wijzigen.';
-  static const String profilePhotoUploadFailed =
-      'Foto uploaden mislukt. Probeer opnieuw.';
-  static const String profilePhotoUploadConnectionError =
-      'Verbindingsfout bij uploaden. Controleer uw WiFi of schakel over naar mobiele data en probeer opnieuw.';
-  static const String profileNameSaved = 'Naam opgeslagen.';
-  static const String profileNameSaveFailed = 'Naam opslaan mislukt.';
-  static const String profilePhotoSaved = 'Profielfoto opgeslagen.';
-  static const String profileDriverSetupFailed =
-      'Chauffeursprofiel aanmaken mislukt. Controleer je verbinding of probeer opnieuw.';
-  static const String profileEditSheetTitle = 'Je profiel';
-  static const String profileEditSheetSubtitle =
-      'Passagiers zien je naam en foto bij het boeken.';
-  static const String profileTapHint = 'Tik om naam en foto toe te voegen';
-  static const String profilePhotoAddHint =
-      'Tik op de foto om uit de galerij te kiezen';
+      ? _t(
+          'Profielfoto-wijzigingen gebruikt (2/2). Volgende wijziging via de ondersteuning.',
+          en: 'Profile photo changes used (2/2). Next change through support.',
+          es: 'Cambios de foto de perfil usados (2/2). El siguiente cambio será por soporte.',
+          ar: 'تم استخدام تغييرات صورة الملف الشخصي (2/2). التغيير التالي عبر الدعم.',
+        )
+      : _t(
+          'Je kunt je profielfoto nog $remaining keer wijzigen.',
+          en: 'You can change your profile photo $remaining more time(s).',
+          es: 'Puedes cambiar tu foto de perfil $remaining vez/veces más.',
+          ar: 'يمكنك تغيير صورة ملفك الشخصي $remaining مرة أخرى.',
+        );
+  static String get profilePhotoUploadFailed => _t(
+        'Foto uploaden mislukt. Probeer opnieuw.',
+        en: 'Photo upload failed. Try again.',
+        es: 'No se pudo subir la foto. Inténtalo de nuevo.',
+        ar: 'فشل تحميل الصورة. حاول مرة أخرى.',
+      );
+  static String get profilePhotoUploadConnectionError => _t(
+        'Verbindingsfout bij uploaden. Controleer uw WiFi of schakel over naar mobiele data en probeer opnieuw.',
+        en: 'Connection error during upload. Check Wi-Fi or switch to mobile data and try again.',
+        es: 'Error de conexión al subir. Revisa el Wi-Fi o cambia a datos móviles e inténtalo de nuevo.',
+        ar: 'خطأ في الاتصال أثناء التحميل. تحقق من Wi-Fi أو انتقل إلى بيانات الهاتف وحاول مرة أخرى.',
+      );
+  static String get profileNameSaved => _t(
+        'Naam opgeslagen.',
+        en: 'Name saved.',
+        es: 'Nombre guardado.',
+        ar: 'تم حفظ الاسم.',
+      );
+  static String get profileNameSaveFailed => _t(
+        'Naam opslaan mislukt.',
+        en: 'Could not save name.',
+        es: 'No se pudo guardar el nombre.',
+        ar: 'تعذر حفظ الاسم.',
+      );
+  static String get profilePhotoSaved => _t(
+        'Profielfoto opgeslagen.',
+        en: 'Profile photo saved.',
+        es: 'Foto de perfil guardada.',
+        ar: 'تم حفظ صورة الملف الشخصي.',
+      );
+  static String get profileDriverSetupFailed => _t(
+        'Chauffeursprofiel aanmaken mislukt. Controleer je verbinding of probeer opnieuw.',
+        en: 'Could not create driver profile. Check your connection or try again.',
+        es: 'No se pudo crear el perfil de conductor. Revisa tu conexión o inténtalo de nuevo.',
+        ar: 'تعذر إنشاء ملف السائق. تحقق من اتصالك أو حاول مرة أخرى.',
+      );
+  static String get profileEditSheetTitle => _t(
+        'Je profiel',
+        en: 'Your profile',
+        es: 'Tu perfil',
+        ar: 'ملفك الشخصي',
+      );
+  static String get profileEditSheetSubtitle => _t(
+        'Passagiers zien je naam en foto bij het boeken.',
+        en: 'Riders see your name and photo when booking.',
+        es: 'Los pasajeros ven tu nombre y foto al reservar.',
+        ar: 'يرى الركاب اسمك وصورتك عند الحجز.',
+      );
+  static String get profileTapHint => _t(
+        'Tik om naam en foto toe te voegen',
+        en: 'Tap to add name and photo',
+        es: 'Toca para añadir nombre y foto',
+        ar: 'اضغط لإضافة الاسم والصورة',
+      );
+  static String get profilePhotoAddHint => _t(
+        'Tik op de foto om uit de galerij te kiezen',
+        en: 'Tap the photo to choose from gallery',
+        es: 'Toca la foto para elegir desde la galería',
+        ar: 'اضغط على الصورة للاختيار من المعرض',
+      );
   static String get profileRatingHint => _t(
         'Alle chauffeurs beginnen op 5,0 sterren; je score daalt als klachten worden bevestigd.',
         en: 'All drivers start at 5.0 stars; your score only drops when complaints are confirmed.',
@@ -352,13 +431,36 @@ class DriverStrings {
         es: 'La matrícula y fotos son visibles antes de la recogida.',
         ar: 'تظهر اللوحة والصور للركاب قبل الوصول.',
       );
-  static const String vehiclePhotosLimitHint =
-      'Upload maximaal 2 voertuigfoto’s. Extra wijzigingen via de ondersteuning.';
-  static const String vehiclePhotoLimitReached =
-      'Je hebt al 2 voertuigfoto’s geüpload. Neem contact op met de ondersteuning om ze te wijzigen.';
-  static const String addVehiclePhoto = 'Voertuigfoto toevoegen';
-  static const String vehiclePhotoUploadFailed =
-      'Voertuigfoto uploaden mislukt. Probeer opnieuw.';
+  static String get vehiclePhotosLimitHint => _t(
+        'Upload maximaal 2 voertuigfoto’s. Extra wijzigingen via de ondersteuning.',
+        en: 'Upload up to 2 vehicle photos. Extra changes through support.',
+        es: 'Sube hasta 2 fotos del vehículo. Cambios extra por soporte.',
+        ar: 'حمّل حتى صورتين للمركبة. التغييرات الإضافية عبر الدعم.',
+      );
+  static String get vehiclePhotoLimitReached => _t(
+        'Je hebt al 2 voertuigfoto’s geüpload. Neem contact op met de ondersteuning om ze te wijzigen.',
+        en: 'You have already uploaded 2 vehicle photos. Contact support to change them.',
+        es: 'Ya subiste 2 fotos del vehículo. Contacta con soporte para cambiarlas.',
+        ar: 'لقد حمّلت صورتين للمركبة بالفعل. تواصل مع الدعم لتغييرهما.',
+      );
+  static String get addVehiclePhoto => _t(
+        'Voertuigfoto toevoegen',
+        en: 'Add vehicle photo',
+        es: 'Añadir foto del vehículo',
+        ar: 'إضافة صورة للمركبة',
+      );
+  static String get vehiclePhotoUploadFailed => _t(
+        'Voertuigfoto uploaden mislukt. Probeer opnieuw.',
+        en: 'Vehicle photo upload failed. Try again.',
+        es: 'No se pudo subir la foto del vehículo. Inténtalo de nuevo.',
+        ar: 'فشل تحميل صورة المركبة. حاول مرة أخرى.',
+      );
+  static String vehicleApkExpiryLine(String value) => _t(
+        'APK · $value',
+        en: 'APK · $value',
+        es: 'APK · $value',
+        ar: 'APK · $value',
+      );
 
   /// Web founding-driver flow — welcome after `claim-founding-driver` Edge Function.
   static const String foundingDriverWelcomeTitle = 'Founding Driver';

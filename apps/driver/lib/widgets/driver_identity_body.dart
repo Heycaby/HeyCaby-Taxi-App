@@ -443,7 +443,7 @@ class _VehicleSummaryCard extends StatelessWidget {
           if (model.apkExpiryLabel != null) ...[
             const SizedBox(height: DriverSpacing.sm),
             Text(
-              'APK · ${model.apkExpiryLabel}',
+              DriverStrings.vehicleApkExpiryLine(model.apkExpiryLabel!),
               style: typography.labelSmall.copyWith(color: colors.textMuted),
             ),
           ],

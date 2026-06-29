@@ -76,7 +76,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
     }
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.profileDriverSetupFailed)),
+        SnackBar(content: Text(DriverStrings.profileDriverSetupFailed)),
       );
     }
     return null;
@@ -111,7 +111,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
     if (remaining <= 0) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.profilePhotoLockedMessage)),
+        SnackBar(content: Text(DriverStrings.profilePhotoLockedMessage)),
       );
       return;
     }
@@ -141,8 +141,8 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text(DriverStrings.profilePhotoConfirmTitle),
-          content: const SingleChildScrollView(
+          title: Text(DriverStrings.profilePhotoConfirmTitle),
+          content: SingleChildScrollView(
             child: Text(DriverStrings.profilePhotoConfirmBody),
           ),
           actions: [
@@ -152,7 +152,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text(DriverStrings.profilePhotoConfirmYes),
+              child: Text(DriverStrings.profilePhotoConfirmYes),
             ),
           ],
         );
@@ -176,14 +176,14 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.profilePhotoLockedMessage)),
+        SnackBar(content: Text(DriverStrings.profilePhotoLockedMessage)),
       );
       return;
     } on ProfilePhotoConnectionException {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(DriverStrings.profilePhotoUploadConnectionError),
         ),
       );
@@ -202,11 +202,11 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
       _refreshDriverProfileAfterMutation();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.profilePhotoSaved)),
+        SnackBar(content: Text(DriverStrings.profilePhotoSaved)),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.profilePhotoUploadFailed)),
+        SnackBar(content: Text(DriverStrings.profilePhotoUploadFailed)),
       );
     }
   }
@@ -223,11 +223,11 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
     if (okSave) {
       _refreshDriverProfileAfterMutation();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.profileNameSaved)),
+        SnackBar(content: Text(DriverStrings.profileNameSaved)),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.profileNameSaveFailed)),
+        SnackBar(content: Text(DriverStrings.profileNameSaveFailed)),
       );
     }
   }
