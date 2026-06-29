@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/driver_strings.dart';
 import '../providers/driver_connectivity_provider.dart';
-import '../services/driver_connectivity_status.dart';
 
 /// Blocks actions that require network when offline (Program 3E).
 Future<bool> ensureDriverNetworkForAction(
@@ -14,7 +13,8 @@ Future<bool> ensureDriverNetworkForAction(
   if (isDriverNetworkOnline(status)) return true;
   if (!context.mounted) return false;
   ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text(DriverStrings.connectivityOfflineActionBlocked)),
+    const SnackBar(
+        content: Text(DriverStrings.connectivityOfflineActionBlocked)),
   );
   return false;
 }

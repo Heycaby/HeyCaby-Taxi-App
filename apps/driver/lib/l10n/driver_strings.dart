@@ -1879,7 +1879,12 @@ class DriverStrings {
   static const String recenterMap = 'Naar mijn locatie';
   static const String mapDemandHigh = 'Hoge vraag';
   static const String mapDemandActive = 'Actieve vraag';
-  static String mapDemandWaiting(int n) => '$n wachtend';
+  static String mapDemandWaiting(int n) => _t(
+        '$n wachtend',
+        en: '$n waiting',
+        es: '$n esperando',
+        ar: '$n ينتظرون',
+      );
   static String mapEtaMinutes(int min) => '$min min';
   static const String mapEtaPickup = 'Ophalen';
   static const String driverHubSubtitle =
@@ -2834,6 +2839,12 @@ class DriverStrings {
         en: 'No posts yet',
         es: 'Aún no hay publicaciones',
         ar: 'لا توجد منشورات بعد',
+      );
+  static String get communityCategoryEmptyPosts => _t(
+        'Geen berichten in deze categorie.',
+        en: 'No posts for this category.',
+        es: 'No hay publicaciones en esta categoría.',
+        ar: 'لا توجد منشورات في هذه الفئة.',
       );
   static const String communityNewPost = 'Nieuw bericht';
   static const String communityWelcomeDisclaimerTitle =

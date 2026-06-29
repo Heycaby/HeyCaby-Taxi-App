@@ -146,12 +146,13 @@ class _DriverCommunityHubScreenState
             .toList();
         _refreshReactions(posts, myDriverId);
         if (parsed.isEmpty) {
-          if (!isCategoryBlock)
+          if (!isCategoryBlock) {
             return const SliverToBoxAdapter(child: SizedBox());
+          }
           return SliverToBoxAdapter(
             child: EmptyBlock(
               icon: Icons.forum_outlined,
-              text: 'No posts for this category.',
+              text: DriverStrings.communityCategoryEmptyPosts,
               colors: colors,
               typo: typo,
             ),
@@ -233,7 +234,9 @@ class _DriverCommunityHubScreenState
 
   Future<void> _voteOnPoll(String pollId, String optionId) async {
     final driverId = await ref.read(driverIdProvider.future);
-    if (driverId == null || !mounted) return;
+    if (driverId == null || !mounted) {
+      return;
+    }
     final ok =
         await ref.read(driverDataServiceProvider).upsertCommunityPollVote(
               pollId: pollId,
@@ -242,7 +245,7 @@ class _DriverCommunityHubScreenState
             );
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.communityPollVoteFailed)),
+        const SnackBar(content: Text(DriverStrings.communityPollVoteFailed)),
       );
       return;
     }
@@ -272,12 +275,14 @@ class _DriverCommunityHubScreenState
   }
 
   Future<void> _editPost(CommunityPost post) async {
-    if (post.poll != null) return;
+    if (post.poll != null) {
+      return;
+    }
     final controller = TextEditingController(text: post.body ?? '');
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(DriverStrings.communityEditPostTitle),
+        title: const Text(DriverStrings.communityEditPostTitle),
         content: TextField(
           controller: controller,
           maxLines: 4,
@@ -291,11 +296,13 @@ class _DriverCommunityHubScreenState
               child: Text(DriverStrings.cancel)),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text(DriverStrings.save)),
+              child: const Text(DriverStrings.save)),
         ],
       ),
     );
-    if (ok != true) return;
+    if (ok != true) {
+      return;
+    }
     await ref.read(driverDataServiceProvider).updateCommunityPost(
           postId: post.id,
           content: controller.text,
@@ -310,19 +317,21 @@ class _DriverCommunityHubScreenState
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(DriverStrings.communityDeletePostTitle),
-        content: Text(DriverStrings.communityDeletePostBody),
+        title: const Text(DriverStrings.communityDeletePostTitle),
+        content: const Text(DriverStrings.communityDeletePostBody),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: Text(DriverStrings.cancel)),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text(DriverStrings.communityDeleteAction)),
+              child: const Text(DriverStrings.communityDeleteAction)),
         ],
       ),
     );
-    if (ok != true) return;
+    if (ok != true) {
+      return;
+    }
     await ref.read(driverDataServiceProvider).deleteCommunityPost(post.id);
     _reactionRequestKey = '';
     final ch = post.channel ?? 'general';

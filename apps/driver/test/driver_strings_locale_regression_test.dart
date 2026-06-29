@@ -15,6 +15,7 @@ void main() {
       DriverStrings.statusControlOfflineHint,
       'Ga online om live ritaanvragen in jouw zone te zien.',
     );
+    expect(DriverStrings.mapDemandWaiting(12), '12 wachtend');
 
     DriverStrings.useLocale(const Locale('fr'));
     expect(DriverStrings.home, 'Start');
@@ -54,6 +55,11 @@ void main() {
     expect(
       DriverStrings.statusControlOnlineHint,
       'You are live in your zone.',
+    );
+    expect(DriverStrings.mapDemandWaiting(12), '12 waiting');
+    expect(
+      DriverStrings.communityCategoryEmptyPosts,
+      'No posts for this category.',
     );
     expect(
       DriverStrings.goOfflineFailed,
@@ -162,6 +168,7 @@ void main() {
       DriverStrings.statusControlBreakHint,
       'Tu descanso está activo. Conéctate para ver viajes.',
     );
+    expect(DriverStrings.mapDemandWaiting(12), '12 esperando');
     expect(
       DriverStrings.goBreakFailed,
       'No se pudo iniciar el descanso. Revisa tu conexión e inténtalo de nuevo.',
@@ -266,6 +273,7 @@ void main() {
       DriverStrings.statusControlOnlineHint,
       'أنت نشط في منطقتك.',
     );
+    expect(DriverStrings.mapDemandWaiting(12), '12 ينتظرون');
     expect(
       DriverStrings.goOfflineFailed,
       'تعذر عدم الاتصال. تحقق من اتصالك وحاول مرة أخرى.',

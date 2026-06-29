@@ -2,7 +2,6 @@ import 'dart:async' show unawaited;
 import 'dart:convert' show jsonDecode;
 import 'dart:io' show TlsException;
 
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'

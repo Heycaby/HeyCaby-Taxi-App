@@ -4,7 +4,6 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
 import '../providers/driver_nav_app_pref_provider.dart';
-import '../services/driver_nav_app_pref.dart';
 import '../services/driver_navigation_launcher.dart';
 
 /// Opens external navigation using the driver's preferred app (Program 3D).
@@ -23,7 +22,8 @@ Future<void> launchDriverNavigation({
     return;
   }
 
-  final pref = ref.read(driverNavAppPrefProvider).valueOrNull ?? DriverNavApp.waze;
+  final pref =
+      ref.read(driverNavAppPrefProvider).valueOrNull ?? DriverNavApp.waze;
   HapticService.selectionClick();
   final opened = await DriverNavigationLauncher.launchPreferred(
     lat: lat,

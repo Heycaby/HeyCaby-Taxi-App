@@ -272,8 +272,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       final isCurrentZone = currentZoneId != null && z.zoneId == currentZoneId;
       options.add(CircleAnnotationOptions(
         geometry: Point(coordinates: Position(z.centerLng!, z.centerLat!)),
-        circleColor:
-            (zoneAccent & 0xFFFFFF) | ((opacity * 255).round() << 24),
+        circleColor: (zoneAccent & 0xFFFFFF) | ((opacity * 255).round() << 24),
         circleRadius: radiusPx,
         circleStrokeColor: isCurrentZone ? zoneAccent : 0,
         circleStrokeWidth: isCurrentZone ? 3.0 : 0,
@@ -289,9 +288,12 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       for (final z in zones) {
         if (z.centerLat == null ||
             z.centerLng == null ||
-            z.waitingPassengers < 4) continue;
+            z.waitingPassengers < 4) {
+          continue;
+        }
         final label = z.waitingPassengers >= 10
-            ? '${z.zoneName ?? z.zoneId}\n${z.waitingPassengers} waiting'
+            ? '${z.zoneName ?? z.zoneId}\n'
+                '${DriverStrings.mapDemandWaiting(z.waitingPassengers)}'
             : (z.zoneName ?? z.zoneId);
         features.add({
           'type': 'Feature',
