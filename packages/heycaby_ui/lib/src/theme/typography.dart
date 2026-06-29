@@ -16,41 +16,41 @@ TextTheme buildHeyCabyRobotoMaterialTextTheme() {
   return const TextTheme(
     displayLarge: TextStyle(
       fontFamily: family,
-      fontSize: 40,
-      fontWeight: FontWeight.w800,
-      letterSpacing: -0.5,
-      height: 1.1,
+      fontSize: 32,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0,
+      height: 1.16,
     ),
     displayMedium: TextStyle(
       fontFamily: family,
-      fontSize: 32,
-      fontWeight: FontWeight.w800,
-      letterSpacing: -0.3,
+      fontSize: 28,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0,
       height: 1.2,
     ),
     displaySmall: TextStyle(
       fontFamily: family,
-      fontSize: 26,
+      fontSize: 24,
       fontWeight: FontWeight.w700,
-      letterSpacing: -0.2,
+      letterSpacing: 0,
       height: 1.2,
     ),
     headlineLarge: TextStyle(
       fontFamily: family,
       fontSize: 24,
-      fontWeight: FontWeight.w700,
+      fontWeight: FontWeight.w600,
       height: 1.3,
     ),
     headlineMedium: TextStyle(
       fontFamily: family,
       fontSize: 20,
-      fontWeight: FontWeight.w700,
+      fontWeight: FontWeight.w600,
       height: 1.3,
     ),
     headlineSmall: TextStyle(
       fontFamily: family,
       fontSize: 18,
-      fontWeight: FontWeight.w700,
+      fontWeight: FontWeight.w600,
       height: 1.4,
     ),
     titleLarge: TextStyle(
@@ -113,44 +113,46 @@ TextTheme buildHeyCabyRobotoMaterialTextTheme() {
   );
 }
 
-/// Full Material [TextTheme] for HeyCaby: **Syne** (display + headlines) +
-/// **Plus Jakarta Sans** (titles, body, labels). Use with [buildHeyCabyMaterialTheme].
+/// Full Material [TextTheme] for HeyCaby.
+///
+/// Plus Jakarta Sans is the single brand family across display, body, labels,
+/// and numbers. Keep the scale disciplined: 400, 500, 600, and 700 only.
 TextTheme buildHeyCabyBrandMaterialTextTheme() {
   if (_useRobotoTypography) {
     return buildHeyCabyRobotoMaterialTextTheme();
   }
   return TextTheme(
-    displayLarge: GoogleFonts.syne(
-      fontSize: 40,
-      fontWeight: FontWeight.w800,
-      letterSpacing: -0.5,
-      height: 1.1,
-    ),
-    displayMedium: GoogleFonts.syne(
+    displayLarge: GoogleFonts.plusJakartaSans(
       fontSize: 32,
-      fontWeight: FontWeight.w800,
-      letterSpacing: -0.3,
-      height: 1.2,
-    ),
-    displaySmall: GoogleFonts.syne(
-      fontSize: 26,
       fontWeight: FontWeight.w700,
-      letterSpacing: -0.2,
+      letterSpacing: 0,
+      height: 1.16,
+    ),
+    displayMedium: GoogleFonts.plusJakartaSans(
+      fontSize: 28,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0,
       height: 1.2,
     ),
-    headlineLarge: GoogleFonts.syne(
+    displaySmall: GoogleFonts.plusJakartaSans(
       fontSize: 24,
       fontWeight: FontWeight.w700,
+      letterSpacing: 0,
+      height: 1.2,
+    ),
+    headlineLarge: GoogleFonts.plusJakartaSans(
+      fontSize: 24,
+      fontWeight: FontWeight.w600,
       height: 1.3,
     ),
-    headlineMedium: GoogleFonts.syne(
+    headlineMedium: GoogleFonts.plusJakartaSans(
       fontSize: 20,
-      fontWeight: FontWeight.w700,
+      fontWeight: FontWeight.w600,
       height: 1.3,
     ),
-    headlineSmall: GoogleFonts.syne(
+    headlineSmall: GoogleFonts.plusJakartaSans(
       fontSize: 18,
-      fontWeight: FontWeight.w700,
+      fontWeight: FontWeight.w600,
       height: 1.4,
     ),
     titleLarge: GoogleFonts.plusJakartaSans(
@@ -268,7 +270,7 @@ HeyCabyTypography buildTypographyForTheme(String themeId) {
         : GoogleFonts.plusJakartaSans(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            letterSpacing: -0.2,
+            letterSpacing: 0,
           ),
   );
 }

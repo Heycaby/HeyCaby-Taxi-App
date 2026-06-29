@@ -95,9 +95,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
       final status = activeRide['status'] as String;
       final createdRaw = activeRide['created_at'];
-      final createdAt = createdRaw == null
-          ? null
-          : DateTime.tryParse(createdRaw.toString());
+      final createdAt =
+          createdRaw == null ? null : DateTime.tryParse(createdRaw.toString());
 
       // Do not reopen Searching for hours-old open requests — same 30 min window as notify-me.
       if ((status == 'pending' || status == 'bidding') &&
@@ -168,9 +167,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                     child: Center(
                       child: Text(
                         'C',
-                        style: GoogleFonts.syne(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 40,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           color: deep,
                           height: 1.0,
                         ),
@@ -186,18 +185,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                           text: 'hey',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 32,
-                            fontWeight: FontWeight.w300,
+                            fontWeight: FontWeight.w500,
                             color: colors.text.withValues(alpha: 0.9),
-                            letterSpacing: -0.5,
+                            letterSpacing: 0,
                           ),
                         ),
                         TextSpan(
                           text: 'caby',
-                          style: GoogleFonts.syne(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 32,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w700,
                             color: amber,
-                            letterSpacing: -0.5,
+                            letterSpacing: 0,
                           ),
                         ),
                       ],

@@ -86,8 +86,10 @@ class VehicleCategorySupplyCard extends StatelessWidget {
     final isDark = _isDarkSurface(colors);
     final team = _teamPalette(category, isDark);
     final accent = team.primary;
-    final fillTop = Color.lerp(colors.card, team.soft, _isSelected ? 0.72 : 0.38)!;
-    final fillBottom = Color.lerp(colors.card, team.soft, _isSelected ? 0.28 : 0.08)!;
+    final fillTop =
+        Color.lerp(colors.card, team.soft, _isSelected ? 0.72 : 0.38)!;
+    final fillBottom =
+        Color.lerp(colors.card, team.soft, _isSelected ? 0.28 : 0.08)!;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 240),
@@ -148,7 +150,8 @@ class VehicleCategorySupplyCard extends StatelessWidget {
                       onTap: onSelect,
                       borderRadius: BorderRadius.circular(18),
                       child: Padding(
-                        padding: const EdgeInsetsDirectional.fromSTEB(0, 2, 4, 4),
+                        padding:
+                            const EdgeInsetsDirectional.fromSTEB(0, 2, 4, 4),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -201,14 +204,18 @@ class VehicleCategorySupplyCard extends StatelessWidget {
                             ),
                             const SizedBox(height: 10),
                             const SizedBox(height: 12),
-                            // Driver count: same font family as caption (Plus Jakarta), not display Syne.
+                            // Driver count stays in the brand body family for scanability.
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsetsDirectional.fromSTEB(
-                                12, 10, 12, 10,
+                                12,
+                                10,
+                                12,
+                                10,
                               ),
                               decoration: BoxDecoration(
-                                color: accent.withValues(alpha: isDark ? 0.16 : 0.11),
+                                color: accent.withValues(
+                                    alpha: isDark ? 0.16 : 0.11),
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
                                   color: accent.withValues(alpha: 0.22),
@@ -228,7 +235,8 @@ class VehicleCategorySupplyCard extends StatelessWidget {
                                         children: [
                                           TextSpan(
                                             text: '${snapshot.driverCount}',
-                                            style: typography.titleLarge.copyWith(
+                                            style:
+                                                typography.titleLarge.copyWith(
                                               fontWeight: FontWeight.w800,
                                               color: accent,
                                               height: 1.25,
@@ -237,7 +245,8 @@ class VehicleCategorySupplyCard extends StatelessWidget {
                                           TextSpan(
                                             text:
                                                 ' ${l10n.vehicleSupplyCountCaption}',
-                                            style: typography.bodyMedium.copyWith(
+                                            style:
+                                                typography.bodyMedium.copyWith(
                                               color: colors.textMid,
                                               fontWeight: FontWeight.w600,
                                               height: 1.25,
@@ -288,7 +297,8 @@ class VehicleCategorySupplyCard extends StatelessWidget {
                                 l10n.vehicleSupplyFromPrice(
                                   snapshot.fromPriceEuro!.toStringAsFixed(
                                     snapshot.fromPriceEuro! ==
-                                            snapshot.fromPriceEuro!.roundToDouble()
+                                            snapshot.fromPriceEuro!
+                                                .roundToDouble()
                                         ? 0
                                         : 1,
                                   ),
@@ -324,7 +334,10 @@ class VehicleCategorySupplyCard extends StatelessWidget {
 
             // ── Expanded driver list ────────────────────────────────────────
             if (isExpanded) ...[
-              Divider(height: 1, thickness: 1, color: accent.withValues(alpha: 0.18)),
+              Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: accent.withValues(alpha: 0.18)),
               Padding(
                 padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 16, 16),
                 child: snapshot.drivers.isEmpty
@@ -358,8 +371,8 @@ class VehicleCategorySupplyCard extends StatelessWidget {
                             if (i > 0) const SizedBox(height: 10),
                             _DriverOfferCard(
                               driver: snapshot.drivers[i],
-                              isSelected:
-                                  selectedDriverId == snapshot.drivers[i].driverId,
+                              isSelected: selectedDriverId ==
+                                  snapshot.drivers[i].driverId,
                               colors: colors,
                               typo: typography,
                               accentColor: accent,
@@ -410,7 +423,9 @@ class _DriverOfferCard extends StatelessWidget {
   String get _initials {
     final parts = driver.driverName.trim().split(' ');
     if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    return driver.driverName.isNotEmpty ? driver.driverName[0].toUpperCase() : '?';
+    return driver.driverName.isNotEmpty
+        ? driver.driverName[0].toUpperCase()
+        : '?';
   }
 
   @override
@@ -453,8 +468,7 @@ class _DriverOfferCard extends StatelessWidget {
                       errorBuilder: (_, __, ___) => Center(
                         child: Text(_initials,
                             style: typo.labelLarge.copyWith(
-                              color:
-                                  isSelected ? accentColor : colors.textMid,
+                              color: isSelected ? accentColor : colors.textMid,
                               fontWeight: FontWeight.w700,
                             )),
                       ),
@@ -507,11 +521,13 @@ class _DriverOfferCard extends StatelessWidget {
                   Align(
                     alignment: AlignmentDirectional.centerStart,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: colors.success.withValues(alpha: 0.14),
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: colors.success.withValues(alpha: 0.35)),
+                        border: Border.all(
+                            color: colors.success.withValues(alpha: 0.35)),
                       ),
                       child: Text(
                         AppLocalizations.of(context).driverReturnTripDiscount(
@@ -536,7 +552,8 @@ class _DriverOfferCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                driver.estimatedFareEuro == driver.estimatedFareEuro.roundToDouble()
+                driver.estimatedFareEuro ==
+                        driver.estimatedFareEuro.roundToDouble()
                     ? '€${driver.estimatedFareEuro.toStringAsFixed(0)}'
                     : '€${driver.estimatedFareEuro.toStringAsFixed(1)}',
                 style: typo.headingMedium.copyWith(
@@ -549,7 +566,8 @@ class _DriverOfferCard extends StatelessWidget {
                 onTap: onSelect,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
                     color: isSelected ? accentColor : colors.card,
                     borderRadius: BorderRadius.circular(20),
