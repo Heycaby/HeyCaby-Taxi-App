@@ -520,28 +520,28 @@ class _TariffDetailsSheetState extends State<_TariffDetailsSheet> {
             child: Column(
               children: [
                 _RateRow(
-                  label: 'Start price',
+                  label: DriverStrings.pricingBase,
                   value: '€${base.toStringAsFixed(2)}',
                   colors: widget.colors,
                   typo: widget.typo,
                 ),
                 const SizedBox(height: 12),
                 _RateRow(
-                  label: 'Per kilometer',
+                  label: DriverStrings.pricingPerKm,
                   value: '€${perKm.toStringAsFixed(2)}',
                   colors: widget.colors,
                   typo: widget.typo,
                 ),
                 const SizedBox(height: 12),
                 _RateRow(
-                  label: 'Per minute',
+                  label: DriverStrings.pricingPerMin,
                   value: '€${perMin.toStringAsFixed(2)}',
                   colors: widget.colors,
                   typo: widget.typo,
                 ),
                 const SizedBox(height: 12),
                 _RateRow(
-                  label: 'Wait time / min',
+                  label: DriverStrings.pricingWaitPerMin,
                   value: '€${perMinWait.toStringAsFixed(2)}',
                   colors: widget.colors,
                   typo: widget.typo,
@@ -549,7 +549,7 @@ class _TariffDetailsSheetState extends State<_TariffDetailsSheet> {
                 if (returnDiscount > 0) ...[
                   const SizedBox(height: 12),
                   _RateRow(
-                    label: 'Return trip discount',
+                    label: DriverStrings.pricingReturnTripDiscount,
                     value: '$returnDiscount%',
                     colors: widget.colors,
                     typo: widget.typo,
@@ -574,7 +574,7 @@ class _TariffDetailsSheetState extends State<_TariffDetailsSheet> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Switch Tariff',
+                    DriverStrings.pricingSwitchTariff,
                     style: widget.typo.labelSmall.copyWith(
                       color: widget.colors.textSoft,
                       fontWeight: FontWeight.w600,
@@ -656,7 +656,7 @@ class _TariffDetailsSheetState extends State<_TariffDetailsSheet> {
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  'Active',
+                                  DriverStrings.active,
                                   style: widget.typo.labelSmall.copyWith(
                                     color: widget.colors.accent,
                                     fontWeight: FontWeight.w600,
@@ -683,7 +683,7 @@ class _TariffDetailsSheetState extends State<_TariffDetailsSheet> {
               onPressed: _switching ? null : widget.onEdit,
               icon: const Icon(Icons.edit_outlined, size: 18),
               label: Text(
-                'Edit This Tariff',
+                DriverStrings.pricingEditThisTariff,
                 style: widget.typo.bodyMedium.copyWith(
                   fontWeight: FontWeight.w600,
                 ),

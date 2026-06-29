@@ -27,6 +27,8 @@ void main() {
     expect(DriverStrings.homeAutoAcceptReturnRides, 'Auto-accept return rides');
     expect(DriverStrings.homeTodayRidesCount(0), 'No rides yet');
     expect(DriverStrings.homeAvailableCount(3), '3 available');
+    expect(DriverStrings.pricingBase, 'Start price');
+    expect(DriverStrings.pricingSwitchTariff, 'Switch tariff');
 
     DriverStrings.useLocale(const Locale('es'));
     expect(DriverStrings.home, 'Inicio');
@@ -40,6 +42,8 @@ void main() {
     );
     expect(DriverStrings.homeTodayRidesCount(0), 'Aún no hay viajes');
     expect(DriverStrings.homeAvailableCount(3), '3 disponibles');
+    expect(DriverStrings.pricingBase, 'Precio inicial');
+    expect(DriverStrings.pricingSwitchTariff, 'Cambiar tarifa');
 
     DriverStrings.useLocale(const Locale('ar'));
     expect(DriverStrings.home, 'الرئيسية');
@@ -51,5 +55,7 @@ void main() {
         DriverStrings.homeAutoAcceptReturnRides, 'قبول رحلات العودة تلقائيا');
     expect(DriverStrings.homeTodayRidesCount(0), 'لا توجد رحلات بعد');
     expect(DriverStrings.homeAvailableCount(3), '3 متاحة');
+    expect(DriverStrings.pricingBase, 'سعر البداية');
+    expect(DriverStrings.pricingSwitchTariff, 'تغيير التعرفة');
   });
 }

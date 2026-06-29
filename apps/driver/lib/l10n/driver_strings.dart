@@ -1447,7 +1447,12 @@ class DriverStrings {
   static const String editTariffs = 'Tarieven bewerken';
   static const String editTariffsHint =
       'Volledig scherm voor alle tariefprijzen.';
-  static const String active = 'Actief';
+  static String get active => _t(
+        'Actief',
+        en: 'Active',
+        es: 'Activo',
+        ar: 'نشط',
+      );
   static const String notSet = 'Niet ingesteld';
   static const String rateProfileHint =
       'Kies het profiel dat je nu wilt gebruiken.';
@@ -1477,7 +1482,12 @@ class DriverStrings {
       'Je mist nog profielen voor ochtend, avond en/of nacht. Tik op de knop hieronder om die toe te voegen met voorstellen op basis van je standaardtarief. Pas daarna gerust elk bedrag aan.';
   static const String tariffSuggestionCardButton =
       'Voorgestelde tarieven toevoegen';
-  static const String activeTariffPricing = 'Actieve tariefprijzen';
+  static String get activeTariffPricing => _t(
+        'Actieve tariefprijzen',
+        en: 'Active tariff pricing',
+        es: 'Precios de la tarifa activa',
+        ar: 'أسعار التعرفة النشطة',
+      );
   static const String waitPerMin = 'Wacht / min';
   static const String saveAllTariffs = 'Alle tarieven opslaan';
   static const String savingTariffs = 'Tarieven opslaan…';
@@ -1679,7 +1689,12 @@ class DriverStrings {
   static const String batteryOptimizationLater = 'Later';
   static const String navigate = 'Navigeren';
   static const String avgPerRide = 'Gemiddeld per rit';
-  static const String activeTariff = 'Actief tarief';
+  static String get activeTariff => _t(
+        'Actief tarief',
+        en: 'Active tariff',
+        es: 'Tarifa activa',
+        ar: 'التعرفة النشطة',
+      );
   static const String atPickup = 'Bij ophaalpunt';
   static const String waiting = 'Wachten';
   static const String riderDidNotShow = 'Reiziger niet verschenen';
@@ -1757,11 +1772,54 @@ class DriverStrings {
   static const String statusNotTaxiVehicle = 'Niet-taxi voertuig';
   static const String statusManualReview = 'Handmatige beoordeling';
   static const String statusChecking = 'Controleren...';
-  static const String pricingEditorActiveProfile = 'Actieve profielprijzen';
-  static const String pricingBase = 'Starttarief';
-  static const String pricingPerKm = 'Per km';
-  static const String pricingPerMin = 'Per min';
-  static const String pricingWaitPerMin = 'Wachten / min';
+  static String get pricingEditorActiveProfile => _t(
+        'Actieve profielprijzen',
+        en: 'Active profile pricing',
+        es: 'Precios del perfil activo',
+        ar: 'أسعار الملف النشط',
+      );
+  static String get pricingBase => _t(
+        'Starttarief',
+        en: 'Start price',
+        es: 'Precio inicial',
+        ar: 'سعر البداية',
+      );
+  static String get pricingPerKm => _t(
+        'Per km',
+        en: 'Per kilometer',
+        es: 'Por kilómetro',
+        ar: 'لكل كيلومتر',
+      );
+  static String get pricingPerMin => _t(
+        'Per min',
+        en: 'Per minute',
+        es: 'Por minuto',
+        ar: 'لكل دقيقة',
+      );
+  static String get pricingWaitPerMin => _t(
+        'Wachten / min',
+        en: 'Wait time / min',
+        es: 'Espera / min',
+        ar: 'الانتظار / دقيقة',
+      );
+  static String get pricingReturnTripDiscount => _t(
+        'Retourritkorting',
+        en: 'Return trip discount',
+        es: 'Descuento de viaje de vuelta',
+        ar: 'خصم رحلة العودة',
+      );
+  static String get pricingSwitchTariff => _t(
+        'Tarief wisselen',
+        en: 'Switch tariff',
+        es: 'Cambiar tarifa',
+        ar: 'تغيير التعرفة',
+      );
+  static String get pricingEditThisTariff => _t(
+        'Dit tarief bewerken',
+        en: 'Edit this tariff',
+        es: 'Editar esta tarifa',
+        ar: 'تعديل هذه التعرفة',
+      );
   static const String pricingSaving = 'Opslaan...';
   static const String pricingSaveRates = 'Tarieven opslaan';
   static String get loginEnterValidEmail => _t(

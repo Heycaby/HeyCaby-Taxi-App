@@ -27,9 +27,7 @@ class DriverMoneyDashboardHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ridesLabel = todayRides == 1
-        ? '1 rit'
-        : '$todayRides ${DriverStrings.rides}';
+    final ridesLabel = DriverStrings.homeTodayRidesCount(todayRides);
 
     return Container(
       margin: const EdgeInsets.only(bottom: DriverSpacing.lg),
