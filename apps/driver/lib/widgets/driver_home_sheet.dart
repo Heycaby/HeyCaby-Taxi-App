@@ -209,8 +209,8 @@ class _RidesActionGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheduledSubtitle = feasibleCount != null
-        ? '$feasibleCount passend'
-        : '$scheduledCount gepland';
+        ? DriverStrings.homeMatchingScheduledCount(feasibleCount!)
+        : DriverStrings.homePlannedScheduledCount(scheduledCount);
     return Column(
       children: [
         Row(
@@ -234,8 +234,7 @@ class _RidesActionGrid extends StatelessWidget {
                 typo: typo,
                 icon: AppIcons.carFront,
                 title: DriverStrings.today,
-                subtitle:
-                    todayRides == 0 ? 'Nog geen ritten' : '$todayRides ritten',
+                subtitle: DriverStrings.homeTodayRidesCount(todayRides),
                 onTap: onTodayTap,
               ),
             ),
@@ -252,7 +251,7 @@ class _RidesActionGrid extends StatelessWidget {
                 icon: AppIcons.swapHorizontal,
                 title: DriverStrings.rideSwap,
                 subtitle: openSwapsCount == null
-                    ? 'Laden...'
+                    ? DriverStrings.loading
                     : DriverStrings.rideSwapOpenCount(openSwapsCount!),
                 onTap: onRideSwapTap,
               ),
@@ -266,10 +265,10 @@ class _RidesActionGrid extends StatelessWidget {
                 icon: AppIcons.arrowBack,
                 title: DriverStrings.returnTrips,
                 subtitle: returnTripsCount == null
-                    ? 'Laden...'
+                    ? DriverStrings.loading
                     : returnTripsCount == 0
-                        ? 'Uit'
-                        : '$returnTripsCount beschikbaar',
+                        ? DriverStrings.off
+                        : DriverStrings.homeAvailableCount(returnTripsCount!),
                 onTap: onReturnTripsTap,
               ),
             ),

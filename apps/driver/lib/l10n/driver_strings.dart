@@ -587,6 +587,49 @@ class DriverStrings {
         es: 'Mostrar los viajes de hoy en el mapa',
         ar: 'عرض رحلات اليوم على الخريطة',
       );
+  static String homeMatchingScheduledCount(int count) => _t(
+        '$count passend',
+        en: '$count matching',
+        es: '$count compatibles',
+        ar: '$count مناسبة',
+      );
+  static String homePlannedScheduledCount(int count) => _t(
+        '$count gepland',
+        en: '$count planned',
+        es: '$count programados',
+        ar: '$count مجدولة',
+      );
+  static String homeTodayRidesCount(int count) => count == 0
+      ? _t(
+          'Nog geen ritten',
+          en: 'No rides yet',
+          es: 'Aún no hay viajes',
+          ar: 'لا توجد رحلات بعد',
+        )
+      : _t(
+          '$count ritten',
+          en: '$count rides',
+          es: '$count viajes',
+          ar: '$count رحلات',
+        );
+  static String get loading => _t(
+        'Laden...',
+        en: 'Loading...',
+        es: 'Cargando...',
+        ar: 'جار التحميل...',
+      );
+  static String get off => _t(
+        'Uit',
+        en: 'Off',
+        es: 'Desactivado',
+        ar: 'متوقف',
+      );
+  static String homeAvailableCount(int count) => _t(
+        '$count beschikbaar',
+        en: '$count available',
+        es: '$count disponibles',
+        ar: '$count متاحة',
+      );
   static const String scheduled = 'Gepland';
   static const String requests = 'Aanvragen';
   static const String confirmed = 'Bevestigd';

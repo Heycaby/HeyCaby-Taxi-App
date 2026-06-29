@@ -25,6 +25,8 @@ void main() {
     expect(DriverStrings.loginFormTitle, 'Welcome back');
     expect(DriverStrings.appSuggestion, 'Suggestion for the app');
     expect(DriverStrings.homeAutoAcceptReturnRides, 'Auto-accept return rides');
+    expect(DriverStrings.homeTodayRidesCount(0), 'No rides yet');
+    expect(DriverStrings.homeAvailableCount(3), '3 available');
 
     DriverStrings.useLocale(const Locale('es'));
     expect(DriverStrings.home, 'Inicio');
@@ -36,6 +38,8 @@ void main() {
       DriverStrings.homeAutoAcceptReturnRides,
       'Aceptar viajes de vuelta automáticamente',
     );
+    expect(DriverStrings.homeTodayRidesCount(0), 'Aún no hay viajes');
+    expect(DriverStrings.homeAvailableCount(3), '3 disponibles');
 
     DriverStrings.useLocale(const Locale('ar'));
     expect(DriverStrings.home, 'الرئيسية');
@@ -45,5 +49,7 @@ void main() {
     expect(DriverStrings.appSuggestion, 'اقتراح للتطبيق');
     expect(
         DriverStrings.homeAutoAcceptReturnRides, 'قبول رحلات العودة تلقائيا');
+    expect(DriverStrings.homeTodayRidesCount(0), 'لا توجد رحلات بعد');
+    expect(DriverStrings.homeAvailableCount(3), '3 متاحة');
   });
 }
