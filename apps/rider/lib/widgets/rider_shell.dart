@@ -136,17 +136,29 @@ class _NavItem extends StatelessWidget {
           onTap();
         },
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                height: 3,
+                width: isActive ? 28 : 0,
+                margin: const EdgeInsets.only(bottom: 6),
+                decoration: BoxDecoration(
+                  color: colors.accent,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              if (!isActive) const SizedBox(height: 9),
               Icon(isActive ? activeIcon : icon, color: color, size: 24),
               const SizedBox(height: 4),
               Text(
                 label,
                 style: typo.labelSmall.copyWith(
                   color: color,
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
                 ),
                 maxLines: 2,
                 textAlign: TextAlign.center,

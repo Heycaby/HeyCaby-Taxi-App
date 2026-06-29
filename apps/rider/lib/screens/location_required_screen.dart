@@ -69,9 +69,16 @@ class _LocationRequiredBottomSheet extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: Container(
           decoration: BoxDecoration(
-            color: colors.surface,
+            color: colors.card,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             border: Border.all(color: colors.border),
+            boxShadow: [
+              BoxShadow(
+                color: colors.text.withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, -4),
+              ),
+            ],
           ),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
@@ -102,7 +109,7 @@ class _LocationRequiredBottomSheet extends ConsumerWidget {
                 Icon(
                   Icons.location_off_outlined,
                   size: 54,
-                  color: colors.textSoft,
+                  color: colors.accent,
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -177,10 +184,19 @@ class _LocationRequiredFullScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.location_off_outlined,
-                size: 72,
-                color: colors.textSoft,
+              Container(
+                width: 88,
+                height: 88,
+                decoration: BoxDecoration(
+                  color: colors.accentL,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: colors.accent.withValues(alpha: 0.25)),
+                ),
+                child: Icon(
+                  Icons.location_off_outlined,
+                  size: 44,
+                  color: colors.accent,
+                ),
               ),
               const SizedBox(height: 32),
               Text(

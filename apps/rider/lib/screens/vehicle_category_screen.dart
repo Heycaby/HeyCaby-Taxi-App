@@ -13,6 +13,7 @@ import '../providers/nearby_category_supply_provider.dart';
 import '../providers/trip_category_estimates_provider.dart';
 import '../services/booking_flow_navigation.dart';
 import '../services/nearby_supply_service.dart';
+import '../widgets/booking/booking_flow_screen_header.dart';
 import '../widgets/booking/smart_vehicle_bundle_card.dart';
 import '../widgets/primary_cancel_row.dart';
 import '../widgets/vehicle_category_supply_card.dart';
@@ -306,46 +307,16 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
 
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: true,
-        shadowColor: Colors.transparent,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Divider(height: 1, thickness: 1, color: colors.border),
-        ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: colors.text),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          'What kind of ride do you want?',
-          style: typo.headingSmall.copyWith(
-            color: colors.text,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.15,
-          ),
-        ),
-      ),
-      body: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              colors.bg,
-              Color.lerp(colors.bg, colors.accent, 0.045)!,
-            ],
-          ),
-        ),
-        child: SafeArea(
-        top: false,
+      body: SafeArea(
         child: Column(
           children: [
+            BookingFlowScreenHeader(
+              colors: colors,
+              typo: typo,
+              title: l10n.vehicleCategoryTitle,
+              icon: Icons.directions_car_rounded,
+              onBack: () => context.pop(),
+            ),
             if (booking.pickup == null)
               Material(
                 color: colors.warning.withValues(alpha: 0.12),
@@ -503,28 +474,28 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                     buildCategoryCard(
                       RiderVehicleCategory.standard,
                       l10n.vehicleStandard,
-                      'Everyday rides - Up to 4 passengers',
+                      l10n.vehicleStandardDesc,
                       Icons.directions_car_outlined,
                     ),
                     SizedBox(height: HeyCabySpacing.componentSmall),
                     buildCategoryCard(
                       RiderVehicleCategory.comfort,
                       l10n.vehicleComfort,
-                      'More comfort and space - Up to 4 passengers',
+                      l10n.vehicleComfortDesc,
                       Icons.airline_seat_recline_extra,
                     ),
                     SizedBox(height: HeyCabySpacing.componentSmall),
                     buildCategoryCard(
                       RiderVehicleCategory.taxibus,
-                      'Taxi Bus',
-                      'Larger vehicle - Up to 8-9 passengers',
+                      l10n.vehicleTaxibus,
+                      l10n.vehicleTaxibusDesc,
                       Icons.airport_shuttle_outlined,
                     ),
                     SizedBox(height: HeyCabySpacing.componentSmall),
                     buildCategoryCard(
                       RiderVehicleCategory.wheelchair,
                       l10n.vehicleWheelchair,
-                      'Accessible vehicle',
+                      l10n.vehicleWheelchairDesc,
                       Icons.accessible,
                     ),
                     SizedBox(height: HeyCabySpacing.sectionMedium),
@@ -574,7 +545,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Preferences (optional)',
+                                l10n.favoriteDriversFirstTripDetail,
                                 style: typo.titleSmall.copyWith(
                                   color: colors.text,
                                   fontWeight: FontWeight.w700,
@@ -582,7 +553,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'Favorite drivers first',
+                                l10n.myDriversHomeSubtitle,
                                 style: typo.bodySmall.copyWith(
                                   color: colors.textSoft,
                                   height: 1.3,
@@ -650,7 +621,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Pet-friendly ride',
+                                l10n.petFriendly,
                                 style: typo.titleSmall.copyWith(
                                   color: colors.text,
                                   fontWeight: FontWeight.w700,
@@ -922,7 +893,6 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
               ),
             ),
           ],
-        ),
         ),
       ),
     );

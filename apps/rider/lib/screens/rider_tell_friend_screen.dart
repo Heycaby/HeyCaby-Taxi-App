@@ -7,6 +7,7 @@ import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_rider/models/rider_community_growth_models.dart';
 import 'package:heycaby_rider/providers/rider_invite_impact_provider.dart';
 import 'package:heycaby_rider/providers/rider_invite_url_provider.dart';
+import 'package:heycaby_rider/widgets/community/tell_friend_screen_header.dart';
 import 'package:heycaby_rider/widgets/rider_grow_city_milestone_celebration.dart';
 import 'package:heycaby_rider/widgets/rider_grow_city_parts.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
@@ -31,27 +32,8 @@ class RiderTellFriendScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        shadowColor: Colors.transparent,
-        centerTitle: true,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Divider(height: 1, thickness: 1, color: colors.border),
-        ),
-        title: Text(
-          l10n.tellAFriendScreenTitle,
-          style: typo.headingSmall.copyWith(
-            color: colors.text,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.15,
-          ),
-        ),
-      ),
-      body: identityAsync.when(
+      body: SafeArea(
+        child: identityAsync.when(
         data: (identity) {
           final id = identity.identityId;
           final hasRef = id != null && id.isNotEmpty;
@@ -59,7 +41,12 @@ class RiderTellFriendScreen extends ConsumerWidget {
               ? ref.watch(riderInviteImpactProvider)
               : const AsyncValue.data(RiderInviteImpact.empty);
 
-          final content = SingleChildScrollView(
+          final content = Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TellFriendScreenHeader(colors: colors, typo: typo, l10n: l10n),
+              Expanded(
+                child: SingleChildScrollView(
             padding: EdgeInsetsDirectional.fromSTEB(
               HeyCabySpacing.screenEdge,
               HeyCabySpacing.component,
@@ -297,6 +284,9 @@ class RiderTellFriendScreen extends ConsumerWidget {
                 ),
               ],
             ),
+                ),
+              ),
+            ],
           );
 
           return cityStatsAsync.when(
@@ -311,18 +301,33 @@ class RiderTellFriendScreen extends ConsumerWidget {
             error: (_, __) => content,
           );
         },
-        loading: () => Center(
-          child: CircularProgressIndicator(color: colors.accent),
-        ),
-        error: (_, __) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              l10n.tellAFriendLinkUnavailableHint,
-              textAlign: TextAlign.center,
-              style: typo.bodyMedium.copyWith(color: colors.textMid),
+        loading: () => Column(
+          children: [
+            TellFriendScreenHeader(colors: colors, typo: typo, l10n: l10n),
+            const Expanded(
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
             ),
-          ),
+          ],
+        ),
+        error: (_, __) => Column(
+          children: [
+            TellFriendScreenHeader(colors: colors, typo: typo, l10n: l10n),
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    l10n.tellAFriendLinkUnavailableHint,
+                    textAlign: TextAlign.center,
+                    style: typo.bodyMedium.copyWith(color: colors.textMid),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
         ),
       ),
     );

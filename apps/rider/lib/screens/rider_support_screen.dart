@@ -5,6 +5,8 @@ import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../widgets/booking/booking_flow_screen_header.dart';
+
 class RiderSupportScreen extends ConsumerWidget {
   const RiderSupportScreen({super.key});
 
@@ -16,26 +18,30 @@ class RiderSupportScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.card,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colors.text),
-          onPressed: () => context.pop(),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            BookingFlowScreenHeader(
+              colors: colors,
+              typo: typo,
+              title: l10n.support,
+              subtitle: l10n.supportSubtitle,
+              icon: Icons.support_agent_rounded,
+              onBack: () => context.pop(),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 24),
+                children: [
+                  _RecentTicketsSection(colors: colors, typo: typo, l10n: l10n),
+                  const SizedBox(height: 16),
+                  _ContactSection(colors: colors, typo: typo, l10n: l10n),
+                ],
+              ),
+            ),
+          ],
         ),
-        title: Text(
-          l10n.support,
-          style: typo.headingLarge.copyWith(color: colors.text),
-        ),
-        centerTitle: true,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _RecentTicketsSection(colors: colors, typo: typo, l10n: l10n),
-          const SizedBox(height: 16),
-          _ContactSection(colors: colors, typo: typo, l10n: l10n),
-        ],
       ),
     );
   }

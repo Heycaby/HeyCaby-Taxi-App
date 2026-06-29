@@ -147,9 +147,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                   Container(
                     width: 72,
                     height: 72,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: amber,
                       shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: amber.withValues(alpha: 0.35),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
                     child: Center(
                       child: Text(

@@ -87,6 +87,54 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeRecentTrips => 'رحلات حديثة';
 
   @override
+  String get homeGreetingMorning => 'صباح الخير،';
+
+  @override
+  String get homeGreetingAfternoon => 'مساء الخير،';
+
+  @override
+  String get homeGreetingEvening => 'مساء الخير،';
+
+  @override
+  String get homeEnterDestination => 'أدخل وجهتك';
+
+  @override
+  String get homeNoTaxisNearbySubtitle =>
+      'يمكنك طلب رحلة — سنُعلمك عند توفر سائق.';
+
+  @override
+  String get homeRideAgainTitle => 'اركب مجدداً';
+
+  @override
+  String get homeRideAgainViewAll => 'عرض الكل';
+
+  @override
+  String get homeRideAgainBookAgain => 'احجز مجدداً';
+
+  @override
+  String get homeRideAgainUsuallyAvailable => 'متاح عادةً';
+
+  @override
+  String get homeRideAgainAvailableNow => 'متاح الآن';
+
+  @override
+  String homeRideAgainDriverStats(String rating, int count) {
+    return '$rating ★ • $count رحلة';
+  }
+
+  @override
+  String get homeRecentPlacesTitle => 'أماكن حديثة';
+
+  @override
+  String get homeRecentPlacesEdit => 'تعديل';
+
+  @override
+  String get homeCompleteProfile => 'أكمل الملف';
+
+  @override
+  String get vehicleCategoryTitle => 'أي نوع رحلة تريد؟';
+
+  @override
   String get homeAirportChipSchiphol => 'Schiphol';
 
   @override

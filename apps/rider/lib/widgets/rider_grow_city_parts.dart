@@ -32,6 +32,13 @@ class RiderGrowCityHero extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: colors.border.withValues(alpha: 0.7)),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Padding(
         padding: const EdgeInsetsDirectional.fromSTEB(18, 18, 18, 16),
@@ -109,6 +116,13 @@ class RiderCommunityProgressCard extends StatelessWidget {
         color: colors.card,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: colors.border.withValues(alpha: 0.85)),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Padding(
         padding: const EdgeInsetsDirectional.all(16),

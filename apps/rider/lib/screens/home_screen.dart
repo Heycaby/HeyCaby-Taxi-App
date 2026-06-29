@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
@@ -13,9 +12,7 @@ import 'package:heycaby_map/heycaby_map.dart';
 import '../providers/active_search_provider.dart';
 import '../providers/location_provider.dart';
 import '../providers/booking_provider.dart';
-import '../providers/recent_destinations_provider.dart';
 import '../providers/near_term_ride_request_provider.dart';
-import '../services/booking_flow_navigation.dart';
 import '../services/heycaby_widget_sync.dart';
 import '../services/rider_notify_search_notifications.dart';
 import '../services/location_service.dart';
@@ -25,16 +22,10 @@ import '../services/sound_service.dart';
 import '../services/stale_ride_cleanup.dart';
 import '../utils/map_style_helper.dart';
 import '../constants/rider_search_window.dart';
-import '../widgets/active_notify_search_card.dart';
-import '../widgets/active_search_stop_dialog.dart';
-import '../widgets/booking_draft_resume_card.dart';
-import '../widgets/near_term_ride_home_banner.dart';
-import '../widgets/rider_preride_home_banner.dart';
 import '../widgets/driver_search_expired_dialog.dart';
-import '../widgets/home/home_destination_section.dart';
-import '../widgets/home/home_popular_airports_section.dart';
-import '../widgets/home/home_smart_options_section.dart';
-import '../widgets/rider_profile_home_nudge.dart';
+import '../widgets/home/home_bottom_sheet.dart';
+import '../widgets/home/home_map_overlay.dart';
+import '../widgets/rider_preride_home_banner.dart';
 import '../widgets/welcome_profile_modals.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -49,7 +40,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   MapboxMap? _mapboxMap;
   PointAnnotationManager? _annotationManager;
   int _nearbyTaxiCount = 0;
-  String? _currentAddress;
   late final DraggableScrollableController _sheetController;
   Timer? _notifyExpiryTimer;
   DateTime? _notifyExpiryScheduledFor;
@@ -248,10 +238,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     await _mapboxMap!.location.updateSettings(LocationComponentSettings(
       enabled: true,
       pulsingEnabled: true,
-      pulsingColor: 0xFF4285F4,
+      pulsingColor: 0xFF00A651,
       pulsingMaxRadius: 40.0,
       showAccuracyRing: true,
-      accuracyRingColor: 0x224285F4,
+      accuracyRingColor: 0x2200A651,
     ));
 
     await _flyToUserLocation();
@@ -346,11 +336,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       final address = await geo.reverseGeocode(lat: lat, lng: lng);
       
       if (mounted && address != null) {
-        setState(() {
-          _currentAddress = address.displayName;
-        });
-        
-        // Auto-fill pickup address
         ref.read(bookingProvider.notifier).setPickup(address);
       }
     } catch (e) {
@@ -425,76 +410,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             onMapCreated: _onMapCreated,
             onStyleLoadedListener: _onStyleLoaded,
           ),
-          // Centered user pin + zone card
-          Align(
-            alignment: Alignment.center,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (_currentAddress != null)
-                  GestureDetector(
-                    onTap: () => context.go('/search'),
-                    child: GlassPanel(
-                      colors: colors,
-                      typography: typo,
-                      borderRadius: BorderRadius.circular(999),
-                      padding: const EdgeInsetsDirectional.symmetric(
-                        horizontal: 18,
-                        vertical: 10,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.local_taxi,
-                            color: colors.text,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            _nearbyTaxiCount == 0
-                                ? l10n.noTaxisInZone
-                                : _nearbyTaxiCount == 1
-                                    ? l10n.oneTaxiInZone
-                                    : l10n.taxisInZone(_nearbyTaxiCount),
-                            style: typo.bodyMedium.copyWith(
-                              color: colors.text,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 12),
-                Container(
-                  width: 16,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: colors.accent,
-                    border: Border.all(
-                      color: colors.card,
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colors.accent.withValues(alpha: 0.4),
-                        blurRadius: 8,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+          HomeMapOverlay(
+            colors: colors,
+            typo: typo,
+            onLocate: () => unawaited(_flyToUserLocation()),
           ),
-          _BottomSheet(
+          HomeBottomSheet(
             colors: colors,
             typo: typo,
             l10n: l10n,
-            currentAddress: _currentAddress,
             sheetController: _sheetController,
+            nearbyTaxiCount: _nearbyTaxiCount,
           ),
           Positioned(
             top: MediaQuery.paddingOf(context).top + 8,
@@ -503,318 +429,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             child: const RiderPrerideHomeBanner(),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _BottomSheet extends ConsumerWidget {
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final AppLocalizations l10n;
-  final String? currentAddress;
-  final DraggableScrollableController sheetController;
-
-  const _BottomSheet({
-    required this.colors,
-    required this.typo,
-    required this.l10n,
-    required this.sheetController,
-    this.currentAddress,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final active = ref.watch(activeSearchProvider).valueOrNull;
-
-    return DraggableScrollableSheet(
-      controller: sheetController,
-      initialChildSize: 0.55,
-      minChildSize: 0.30,
-      maxChildSize: 0.85,
-      snap: true,
-      snapSizes: const [0.30, 0.55, 0.85],
-      builder: (_, controller) => GlassPanel(
-        colors: colors,
-        typography: typo,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        padding: EdgeInsets.zero,
-        child: ListView(
-          controller: controller,
-          padding: EdgeInsets.zero,
-          children: [
-            _DragHandle(colors: colors),
-            if (active != null)
-              Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 12),
-                child: ActiveNotifySearchCard(
-                  colors: colors,
-                  typo: typo,
-                  l10n: l10n,
-                  startedAt: active.startedAt,
-                  bookingMode: active.bookingMode,
-                  pickupSummary: active.pickupSummary,
-                  destinationSummary: active.destinationSummary,
-                  onClosePressed: () async {
-                    final stop = await showActiveSearchStopDialog(
-                      context: context,
-                      colors: colors,
-                      typo: typo,
-                      l10n: l10n,
-                    );
-                    if (!context.mounted) return;
-                    if (stop) {
-                      await ref
-                          .read(activeSearchProvider.notifier)
-                          .stopSearchAndCancelRide();
-                    }
-                  },
-                ),
-              ),
-            const BookingDraftResumeCard(),
-            if (active == null) const NearTermRideHomeBanner(),
-            HomeDestinationSection(colors: colors, typo: typo, l10n: l10n),
-            HomeSmartOptionsSection(colors: colors, typo: typo, l10n: l10n),
-            HomePopularAirportsSection(colors: colors, typo: typo, l10n: l10n),
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(16, 20, 16, 0),
-              child: _RecentDestinationsSection(
-                colors: colors,
-                typo: typo,
-                l10n: l10n,
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(16, 0, 16, 8),
-              child: RiderProfileHomeNudge(),
-            ),
-            // Keep the last card fully above RiderShell bottom navigation.
-            SizedBox(
-              height: kBottomNavigationBarHeight +
-                  MediaQuery.paddingOf(context).bottom +
-                  16,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DragHandle extends StatelessWidget {
-  final HeyCabyColorTokens colors;
-
-  const _DragHandle({required this.colors});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 40,
-        height: 4,
-        margin: const EdgeInsets.only(top: 12, bottom: 8),
-        decoration: BoxDecoration(
-          color: colors.border,
-          borderRadius: BorderRadius.circular(2),
-        ),
-      ),
-    );
-  }
-}
-
-const int _kRecentDestinationsCollapsedCount = 2;
-
-class _RecentDestinationsSection extends ConsumerStatefulWidget {
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final AppLocalizations l10n;
-
-  const _RecentDestinationsSection({
-    required this.colors,
-    required this.typo,
-    required this.l10n,
-  });
-
-  @override
-  ConsumerState<_RecentDestinationsSection> createState() =>
-      _RecentDestinationsSectionState();
-}
-
-class _RecentDestinationsSectionState
-    extends ConsumerState<_RecentDestinationsSection> {
-  bool _expanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final recentAsync = ref.watch(recentDestinationsProvider);
-    final colors = widget.colors;
-    final typo = widget.typo;
-    final l10n = widget.l10n;
-
-    return recentAsync.when(
-      data: (destinations) {
-        if (destinations.isEmpty) return const SizedBox.shrink();
-
-        final total = destinations.length;
-        final hasMore = total > _kRecentDestinationsCollapsedCount;
-        final visibleCount =
-            !hasMore || _expanded ? total : _kRecentDestinationsCollapsedCount;
-        final visible = destinations.take(visibleCount).toList();
-        final hiddenCount = total - _kRecentDestinationsCollapsedCount;
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsetsDirectional.only(start: 4, bottom: 12),
-              child: Text(
-                l10n.homeRecentTrips,
-                style: typo.bodySmall.copyWith(
-                  color: colors.textSoft,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            ...visible.map((dest) => _RecentDestinationTile(
-                  destination: dest,
-                  colors: colors,
-                  typo: typo,
-                  l10n: l10n,
-                  onTap: () async {
-                    ref.read(bookingProvider.notifier).setDestination(
-                          AddressResult(
-                            displayName:
-                                dest.fullAddress.split(',').first,
-                            fullAddress: dest.fullAddress,
-                            lat: dest.lat,
-                            lng: dest.lng,
-                          ),
-                        );
-                    await BookingFlowNavigation.prefillBookingFromIdentity(
-                        ref);
-                    if (!context.mounted) return;
-                    final next =
-                        BookingFlowNavigation.routeAfterAddressesComplete(
-                      ref.read(bookingProvider),
-                    );
-                    context.push(next);
-                  },
-                )),
-            if (hasMore)
-              Padding(
-                padding: const EdgeInsetsDirectional.only(top: 4, start: 2),
-                child: TextButton.icon(
-                  onPressed: () =>
-                      setState(() => _expanded = !_expanded),
-                  icon: Icon(
-                    _expanded
-                        ? Icons.expand_less_rounded
-                        : Icons.expand_more_rounded,
-                    size: 22,
-                    color: colors.accent,
-                  ),
-                  label: Text(
-                    _expanded
-                        ? l10n.recentDestinationsShowLess
-                        : l10n.recentDestinationsShowMore(hiddenCount),
-                    style: typo.labelLarge.copyWith(
-                      color: colors.accent,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    alignment: AlignmentDirectional.centerStart,
-                  ),
-                ),
-              ),
-          ],
-        );
-      },
-      loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
-    );
-  }
-}
-
-class _RecentDestinationTile extends ConsumerWidget {
-  final RecentDestination destination;
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final AppLocalizations l10n;
-  final VoidCallback onTap;
-
-  const _RecentDestinationTile({
-    required this.destination,
-    required this.colors,
-    required this.typo,
-    required this.l10n,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Dismissible(
-      key: ValueKey<String>('recent_dest_${destination.id}'),
-      direction: DismissDirection.endToStart,
-      dismissThresholds: const {
-        DismissDirection.endToStart: 0.35,
-      },
-      confirmDismiss: (direction) async {
-        final ok = await ref
-            .read(recentDestinationsProvider.notifier)
-            .removeDestination(destination.id);
-        if (!ok && context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.recentDestinationRemoveFailed)),
-          );
-        }
-        return ok;
-      },
-      background: Container(
-        margin: const EdgeInsetsDirectional.only(bottom: 8),
-        alignment: AlignmentDirectional.centerEnd,
-        padding: const EdgeInsetsDirectional.only(end: 20),
-        decoration: BoxDecoration(
-          color: colors.error,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Semantics(
-          label: l10n.recentDestinationRemoveHint,
-          child: Icon(Icons.delete_outline_rounded, color: colors.onError, size: 26),
-        ),
-      ),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          margin: const EdgeInsetsDirectional.only(bottom: 8),
-          padding: const EdgeInsetsDirectional.all(12),
-          decoration: BoxDecoration(
-            color: colors.card,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colors.border),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.history, color: colors.textSoft, size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  destination.fullAddress,
-                  style: typo.bodyMedium.copyWith(color: colors.text),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Icon(Icons.chevron_right, color: colors.textSoft, size: 20),
-            ],
-          ),
-        ),
       ),
     );
   }

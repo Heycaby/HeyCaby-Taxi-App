@@ -9,6 +9,7 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../providers/booking_provider.dart';
 import '../providers/settings_provider.dart';
+import '../widgets/booking/booking_flow_screen_header.dart';
 import '../widgets/primary_cancel_row.dart';
 
 class PaymentMethod {
@@ -144,55 +145,25 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        shadowColor: Colors.transparent,
-        centerTitle: true,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Divider(height: 1, thickness: 1, color: colors.border),
-        ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: colors.text),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          l10n.howWillYouPay,
-          style: typo.headingSmall.copyWith(
-            color: colors.text,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.15,
-          ),
-        ),
-      ),
-      body: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              colors.bg,
-              Color.lerp(colors.bg, colors.accent, 0.04)!,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            children: [
-              Expanded(
-                child: ListView(
-                  padding: EdgeInsetsDirectional.fromSTEB(
-                    HeyCabySpacing.screenEdge,
-                    HeyCabySpacing.sectionMedium,
-                    HeyCabySpacing.screenEdge,
-                    HeyCabySpacing.sectionMedium + footerReserve,
-                  ),
-                  children: [
+      body: SafeArea(
+        child: Column(
+          children: [
+            BookingFlowScreenHeader(
+              colors: colors,
+              typo: typo,
+              title: l10n.howWillYouPay,
+              icon: Icons.payments_outlined,
+              onBack: () => context.pop(),
+            ),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsetsDirectional.fromSTEB(
+                  HeyCabySpacing.screenEdge,
+                  4,
+                  HeyCabySpacing.screenEdge,
+                  HeyCabySpacing.sectionMedium + footerReserve,
+                ),
+                children: [
                     Text(
                       l10n.namePlaceholder,
                       style: typo.titleLarge.copyWith(
@@ -359,7 +330,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   math.max(HeyCabySpacing.screenEdge, mq.padding.bottom),
                 ),
                 decoration: BoxDecoration(
-                  color: colors.surface,
+                  color: colors.card,
                   border: Border(
                     top: BorderSide(
                       color: colors.border.withValues(alpha: 0.65),
@@ -419,7 +390,6 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               ),
             ),
           ],
-        ),
         ),
       ),
     );

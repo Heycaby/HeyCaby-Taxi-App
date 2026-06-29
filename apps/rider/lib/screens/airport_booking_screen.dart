@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../widgets/booking/booking_flow_screen_header.dart';
 import '../constants/benelux_airports.dart';
 import '../services/booking_airport_selection.dart';
 
@@ -70,35 +71,13 @@ class _AirportBookingScreenState extends ConsumerState<AirportBookingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(8, 4, 8, 0),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => context.pop(),
-                    icon: Icon(Icons.arrow_back_rounded, color: colors.text),
-                  ),
-                  Expanded(
-                    child: Text(
-                      l10n.airportBookingScreenTitle,
-                      style: typo.titleLarge.copyWith(
-                        color: colors.text,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(20, 8, 20, 8),
-              child: Text(
-                l10n.airportBookingScreenSubtitle,
-                style: typo.bodyMedium.copyWith(
-                  color: colors.textMid,
-                  height: 1.4,
-                ),
-              ),
+            BookingFlowScreenHeader(
+              colors: colors,
+              typo: typo,
+              title: l10n.airportBookingScreenTitle,
+              subtitle: l10n.airportBookingScreenSubtitle,
+              icon: Icons.flight_takeoff_rounded,
+              onBack: () => context.pop(),
             ),
             Padding(
               padding: const EdgeInsetsDirectional.fromSTEB(20, 0, 20, 12),
@@ -215,6 +194,13 @@ class _AirportTile extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: colors.border.withValues(alpha: 0.8)),
+            boxShadow: [
+              BoxShadow(
+                color: colors.text.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             children: [

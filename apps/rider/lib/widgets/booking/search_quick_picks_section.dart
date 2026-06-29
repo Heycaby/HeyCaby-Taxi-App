@@ -164,34 +164,23 @@ class SearchQuickPicksSection extends ConsumerWidget {
             ),
             const SizedBox(height: 10),
             SizedBox(
-              height: 40,
+              height: 88,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: pinned.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                separatorBuilder: (_, __) => const SizedBox(width: 10),
                 itemBuilder: (_, i) {
                   final s = pinned[i];
-                  return ActionChip(
-                    avatar: Icon(
-                      s.type == 'home'
-                          ? Icons.home_outlined
-                          : s.type == 'work'
-                              ? Icons.work_outline_rounded
-                              : Icons.place_outlined,
-                      size: 18,
-                      color: colors.accent,
-                    ),
-                    label: Text(
-                      _savedLabel(s, l10n),
-                      style: typo.labelLarge.copyWith(
-                        color: colors.text,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    backgroundColor: colors.card,
-                    side: BorderSide(color: colors.border),
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    onPressed: () => onPick(_fromSaved(s)),
+                  return _QuickPickPlaceCard(
+                    colors: colors,
+                    typo: typo,
+                    icon: s.type == 'home'
+                        ? Icons.home_outlined
+                        : s.type == 'work'
+                            ? Icons.work_outline_rounded
+                            : Icons.place_outlined,
+                    title: _savedLabel(s, l10n),
+                    onTap: () => onPick(_fromSaved(s)),
                   );
                 },
               ),
@@ -258,6 +247,58 @@ class SearchQuickPicksSection extends ConsumerWidget {
             style: typo.bodySmall.copyWith(color: colors.textSoft, height: 1.45),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _QuickPickPlaceCard extends StatelessWidget {
+  const _QuickPickPlaceCard({
+    required this.colors,
+    required this.typo,
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: colors.card,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Ink(
+          width: 120,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: colors.border),
+          ),
+          padding: const EdgeInsetsDirectional.fromSTEB(12, 10, 12, 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: colors.accent, size: 18),
+              const Spacer(),
+              Text(
+                title,
+                style: typo.labelLarge.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w700,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

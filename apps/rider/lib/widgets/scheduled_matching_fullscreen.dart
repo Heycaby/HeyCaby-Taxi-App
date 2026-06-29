@@ -133,16 +133,9 @@ class _PremiumHeader extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(8, top + 4, 8, 16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            colors.card,
-            colors.bg,
-          ],
-        ),
+        color: colors.bg,
         border: Border(
-          bottom: BorderSide(color: colors.border.withValues(alpha: 0.35)),
+          bottom: BorderSide(color: colors.border.withValues(alpha: 0.5)),
         ),
       ),
       child: Column(

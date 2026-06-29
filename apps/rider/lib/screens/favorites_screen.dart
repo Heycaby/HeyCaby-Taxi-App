@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../widgets/booking/booking_flow_screen_header.dart';
 import '../providers/favorites_provider.dart';
 import 'location_required_screen.dart';
 
@@ -28,32 +29,23 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
 
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colors.text),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          l10n.myDrivers,
-          style: typo.headingLarge.copyWith(
-            color: colors.text,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        centerTitle: true,
-      ),
       body: SafeArea(
-        top: false,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            favoritesAsync.when(
+            BookingFlowScreenHeader(
+              colors: colors,
+              typo: typo,
+              title: l10n.myDrivers,
+              subtitle: l10n.favoritesSaveTrustedDriversBody,
+              icon: Icons.star_rounded,
+              onBack: () => context.pop(),
+            ),
+            Expanded(
+              child: favoritesAsync.when(
               data: (drivers) {
                 if (drivers.isEmpty) {
-                  return Expanded(
-                    child: _EmptyState(colors: colors, typo: typo, l10n: l10n),
-                  );
+                  return _EmptyState(colors: colors, typo: typo, l10n: l10n);
                 }
                 return _FavoritesList(
                   drivers: drivers,
@@ -92,14 +84,11 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                   },
                 );
               },
-              loading: () => Expanded(
-                child: Center(
-                  child: CircularProgressIndicator(color: colors.accent),
-                ),
+              loading: () => Center(
+                child: CircularProgressIndicator(color: colors.accent),
               ),
-              error: (_, __) => Expanded(
-                child: _EmptyState(colors: colors, typo: typo, l10n: l10n),
-              ),
+              error: (_, __) => _EmptyState(colors: colors, typo: typo, l10n: l10n),
+            ),
             ),
           ],
         ),
@@ -133,9 +122,8 @@ class _FavoritesList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        children: [
+    return Column(
+      children: [
           _SelectAllBar(
             selectAll: selectAll,
             selectedCount: selectedDrivers.length,
@@ -172,7 +160,6 @@ class _FavoritesList extends StatelessWidget {
               onTap: onPostRide,
             ),
         ],
-      ),
     );
   }
 }

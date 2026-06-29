@@ -44,12 +44,12 @@ class DriverRewardScreenBody extends StatelessWidget {
   final VoidCallback onSkip;
   final VoidCallback onBack;
 
-  static const _methods = [
-    ('cash', DriverStrings.cash),
-    ('card', DriverStrings.card),
-    ('tikkie', 'Tikkie'),
-    ('other', DriverStrings.other),
-  ];
+  List<(String, String)> _paymentMethods() => [
+        ('cash', DriverStrings.cash),
+        ('card', DriverStrings.card),
+        ('tikkie', 'Tikkie'),
+        ('other', DriverStrings.other),
+      ];
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +120,7 @@ class DriverRewardScreenBody extends StatelessWidget {
                   spacing: DriverSpacing.sm,
                   runSpacing: DriverSpacing.sm,
                   children: [
-                    for (final (value, label) in _methods)
+                    for (final (value, label) in _paymentMethods())
                       DriverChip(
                         label: label,
                         colors: colors,

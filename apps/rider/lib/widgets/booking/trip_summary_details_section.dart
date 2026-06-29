@@ -405,24 +405,29 @@ class _TripSummaryFindDriverFooterState extends State<TripSummaryFindDriverFoote
         MediaQuery.paddingOf(context).bottom + 20,
       ),
       decoration: BoxDecoration(
-        color: widget.colors.bg,
+        color: widget.colors.card,
         border: Border(
           top: BorderSide(color: widget.colors.border.withValues(alpha: 0.5)),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: widget.colors.text.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
       child: SizedBox(
         width: double.infinity,
         height: 58,
-        child: ElevatedButton(
+        child: FilledButton(
           onPressed: isDisabled
               ? null
               : () {
                   setState(() => _tapped = true);
                   widget.onConfirm();
                 },
-          style: ElevatedButton.styleFrom(
-            disabledBackgroundColor: widget.colors.border,
-            disabledForegroundColor: widget.colors.textMid,
+          style: FilledButton.styleFrom(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),

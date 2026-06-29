@@ -8,6 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 
 import '../providers/booking_provider.dart';
+import '../providers/rider_profile_completeness_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/rider_device_permission_snapshot.dart';
 import '../services/rider_permission_backend_sync.dart';
@@ -558,15 +559,56 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
   }
 
   Widget _buildHeader(HeyCabyColorTokens colors, HeyCabyTypography typo, AppLocalizations l10n) {
+    final completeness = ref.watch(riderProfileCompletenessProvider);
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.account, style: typo.displayMedium.copyWith(color: colors.text, fontWeight: FontWeight.w900)),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.account,
+                style: typo.displayMedium.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              if (!completeness.isComplete) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsetsDirectional.fromSTEB(10, 6, 10, 6),
+                  decoration: BoxDecoration(
+                    color: colors.accentL,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: colors.accent.withValues(alpha: 0.25)),
+                  ),
+                  child: Text(
+                    '${completeness.percent}% · ${l10n.homeCompleteProfile}',
+                    style: typo.labelMedium.copyWith(
+                      color: colors.accent,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
         IconButton(
           onPressed: () {
-            if (context.canPop()) { context.pop(); } else { context.go('/home'); }
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/home');
+            }
           },
-          icon: Icon(Icons.close, color: colors.text, size: 24),
+          style: IconButton.styleFrom(
+            backgroundColor: colors.card,
+            foregroundColor: colors.text,
+          ),
+          icon: const Icon(Icons.close_rounded, size: 22),
         ),
       ],
     );

@@ -25,6 +25,27 @@
   "homeScheduleLaterSubtitle": "Pick a pickup time that works for you.",
   "homePopularAirportsTitle": "Popular",
   "homeRecentTrips": "Recent trips",
+  "homeGreetingMorning": "Good morning,",
+  "homeGreetingAfternoon": "Good afternoon,",
+  "homeGreetingEvening": "Good evening,",
+  "homeEnterDestination": "Enter your destination",
+  "homeNoTaxisNearbySubtitle": "You can request and we'll notify you when a driver is available.",
+  "homeRideAgainTitle": "Ride again",
+  "homeRideAgainViewAll": "View all",
+  "homeRideAgainBookAgain": "Book again",
+  "homeRideAgainUsuallyAvailable": "Usually available",
+  "homeRideAgainAvailableNow": "Available now",
+  "homeRideAgainDriverStats": "{rating} ★ • {count} rides",
+  "@homeRideAgainDriverStats": {
+    "placeholders": {
+      "rating": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "homeRecentPlacesTitle": "Recent places",
+  "homeRecentPlacesEdit": "Edit",
+  "homeCompleteProfile": "Complete profile",
+  "vehicleCategoryTitle": "What kind of ride do you want?",
   "homeAirportChipSchiphol": "Schiphol",
   "homeAirportChipRotterdam": "Rotterdam Airport",
   "homeAirportChipEindhoven": "Eindhoven",

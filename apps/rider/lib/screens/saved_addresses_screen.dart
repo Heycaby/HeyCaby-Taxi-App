@@ -4,6 +4,7 @@ import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 
+import '../widgets/booking/booking_flow_screen_header.dart';
 import '../providers/saved_addresses_provider.dart';
 import '../widgets/saved_addresses_add_sheet.dart';
 
@@ -20,31 +21,32 @@ class SavedAddressesScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.bg,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colors.text),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          l10n.savedAddresses,
-          style: typo.headingMedium.copyWith(
-            color: colors.text,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        actions: [
-          identityAsync.whenData((identity) {
-            if (identity.identityId == null) return const SizedBox.shrink();
-            return IconButton(
-              icon: Icon(Icons.add, color: colors.accent),
-              onPressed: () => _showAdd(context, identity.identityId!, colors, typo, l10n),
-            );
-          }).valueOrNull ?? const SizedBox.shrink(),
-        ],
-      ),
-      body: addressesAsync.when(
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            BookingFlowScreenHeader(
+              colors: colors,
+              typo: typo,
+              title: l10n.savedAddresses,
+              subtitle: l10n.savedAddressesSubtitle,
+              icon: Icons.bookmark_rounded,
+              onBack: () => Navigator.of(context).pop(),
+              trailing: identityAsync.whenData((identity) {
+                if (identity.identityId == null) return const SizedBox.shrink();
+                return IconButton(
+                  onPressed: () =>
+                      _showAdd(context, identity.identityId!, colors, typo, l10n),
+                  style: IconButton.styleFrom(
+                    backgroundColor: colors.accentL,
+                    foregroundColor: colors.accent,
+                  ),
+                  icon: const Icon(Icons.add_rounded, size: 22),
+                );
+              }).valueOrNull,
+            ),
+            Expanded(
+              child: addressesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, __) => Center(
           child: Text(l10n.error, style: typo.bodyMedium),
@@ -145,6 +147,10 @@ class SavedAddressesScreen extends ConsumerWidget {
             },
           );
         },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

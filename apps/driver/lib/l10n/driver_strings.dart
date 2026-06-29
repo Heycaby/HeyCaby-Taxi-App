@@ -1779,26 +1779,124 @@ class DriverStrings {
   static const String legalChecklistAllVerified = 'Alle 3 gecontroleerd';
   static String legalChecklistProgress(int done, int total) =>
       '$done/$total afgerond';
-  static const String addManualRideTitle = 'Passagier toevoegen';
-  static const String addManualRideCardSubtitle =
-      'Straatrit vastleggen voor administratie en belasting';
-  static const String addManualRideExplainer =
-      'Voeg een passagier toe die je persoonlijk of op straat hebt opgepikt. De rit wordt in HeyCaby vastgelegd voor je administratie. Jij houdt 100% van dit tarief.';
-  static const String manualRidePickupLabel = 'Ophaaladres (optioneel)';
-  static const String manualRideDropoffLabel = 'Afzetadres';
-  static const String manualRideFareLabel = 'Door passagier betaald tarief';
-  static const String manualRidePassengerLabel = 'Naam passagier (optioneel)';
-  static const String manualRidePaymentMethodLabel = 'Betaalmethode';
-  static const String manualRideSaveCta = 'Rit opslaan';
-  static const String manualRideDropoffRequired = 'Afzetadres is verplicht.';
-  static const String manualRideFareRequired =
-      'Vul een geldig tarief in groter dan 0.';
-  static const String manualRideSaveFailed =
-      'Deze rit opslaan mislukt. Probeer opnieuw.';
-  static const String manualRideSuccessTitle = 'Rit vastgelegd';
-  static String manualRideSuccessBody(String fareLabel) =>
-      'Passagiersrit opgeslagen (${fareLabel.isEmpty ? 'bedrag vastgelegd' : 'EUR $fareLabel'}).';
-  static const String done = 'Klaar';
+  static String get addManualRideTitle => _t(
+        'Passagier toevoegen',
+        en: 'Add passenger',
+        es: 'Añadir pasajero',
+        ar: 'إضافة راكب',
+      );
+  static String get addManualRideCardSubtitle => _t(
+        'Straatrit vastleggen voor administratie en belasting',
+        en: 'Log a street ride for records and tax',
+        es: 'Registra un viaje de calle para administración e impuestos',
+        ar: 'سجّل رحلة مباشرة للسجلات والضرائب',
+      );
+  static String get addManualRideExplainer => _t(
+        'Voeg een passagier toe die je persoonlijk of op straat hebt opgepikt. De rit wordt in HeyCaby vastgelegd voor je administratie. Jij houdt 100% van dit tarief.',
+        en: 'Add a passenger you picked up directly or on the street. The ride is logged in HeyCaby for your records. You keep 100% of this fare.',
+        es: 'Añade un pasajero que recogiste directamente o en la calle. El viaje se guarda en HeyCaby para tu administración. Conservas el 100% de esta tarifa.',
+        ar: 'أضف راكبا أقلته مباشرة أو من الشارع. يتم تسجيل الرحلة في HeyCaby لسجلاتك. تحتفظ بنسبة 100% من هذه الأجرة.',
+      );
+  static String get manualRideRouteSection => _t(
+        'Route',
+        en: 'Route',
+        es: 'Ruta',
+        ar: 'المسار',
+      );
+  static String get manualRideDetailsSection => _t(
+        'Ritdetails',
+        en: 'Trip details',
+        es: 'Detalles del viaje',
+        ar: 'تفاصيل الرحلة',
+      );
+  static String get manualRidePickupLabel => _t(
+        'Ophaaladres (optioneel)',
+        en: 'Pickup address (optional)',
+        es: 'Dirección de recogida (opcional)',
+        ar: 'عنوان الالتقاط (اختياري)',
+      );
+  static String get manualRideDropoffLabel => _t(
+        'Afzetadres',
+        en: 'Dropoff address',
+        es: 'Dirección de destino',
+        ar: 'عنوان الوصول',
+      );
+  static String get manualRideFareLabel => _t(
+        'Door passagier betaald tarief',
+        en: 'Fare paid by passenger',
+        es: 'Tarifa pagada por el pasajero',
+        ar: 'الأجرة التي دفعها الراكب',
+      );
+  static String get manualRidePassengerLabel => _t(
+        'Naam passagier (optioneel)',
+        en: 'Passenger name (optional)',
+        es: 'Nombre del pasajero (opcional)',
+        ar: 'اسم الراكب (اختياري)',
+      );
+  static String get manualRidePaymentMethodLabel => _t(
+        'Betaalmethode',
+        en: 'Payment method',
+        es: 'Método de pago',
+        ar: 'طريقة الدفع',
+      );
+  static String get manualRideSaveCta => _t(
+        'Rit opslaan',
+        en: 'Save ride',
+        es: 'Guardar viaje',
+        ar: 'حفظ الرحلة',
+      );
+  static String get manualRideDropoffRequired => _t(
+        'Afzetadres is verplicht.',
+        en: 'Dropoff address is required.',
+        es: 'La dirección de destino es obligatoria.',
+        ar: 'عنوان الوصول مطلوب.',
+      );
+  static String get manualRideFareRequired => _t(
+        'Vul een geldig tarief in groter dan 0.',
+        en: 'Enter a valid fare greater than 0.',
+        es: 'Introduce una tarifa válida mayor que 0.',
+        ar: 'أدخل أجرة صحيحة أكبر من 0.',
+      );
+  static String get manualRideSaveFailed => _t(
+        'Deze rit opslaan mislukt. Probeer opnieuw.',
+        en: 'Could not save this ride. Try again.',
+        es: 'No se pudo guardar este viaje. Inténtalo de nuevo.',
+        ar: 'تعذر حفظ هذه الرحلة. حاول مرة أخرى.',
+      );
+  static String get manualRideSuccessTitle => _t(
+        'Rit vastgelegd',
+        en: 'Ride logged',
+        es: 'Viaje registrado',
+        ar: 'تم تسجيل الرحلة',
+      );
+  static String manualRideSuccessBody(String fareLabel) {
+    final amount = fareLabel.isEmpty ? null : 'EUR $fareLabel';
+    return _t(
+      'Passagiersrit opgeslagen (${amount ?? 'bedrag vastgelegd'}).',
+      en: 'Passenger ride saved (${amount ?? 'amount recorded'}).',
+      es: 'Viaje de pasajero guardado (${amount ?? 'importe registrado'}).',
+      ar: 'تم حفظ رحلة الراكب (${amount ?? 'تم تسجيل المبلغ'}).',
+    );
+  }
+
+  static String get manualRideFarePreviewEmpty => _t(
+        'Vul een tarief in om de samenvatting te bekijken',
+        en: 'Set fare to preview trip summary',
+        es: 'Introduce la tarifa para ver el resumen',
+        ar: 'أدخل الأجرة لمعاينة ملخص الرحلة',
+      );
+  static String manualRideFarePreview(String amount, String method) => _t(
+        'Jij houdt 100%: EUR $amount • $method',
+        en: 'You keep 100%: EUR $amount • $method',
+        es: 'Conservas el 100%: EUR $amount • $method',
+        ar: 'تحتفظ بنسبة 100%: EUR $amount • $method',
+      );
+  static String get done => _t(
+        'Klaar',
+        en: 'Done',
+        es: 'Listo',
+        ar: 'تم',
+      );
   static const String indemnificationReadRequired =
       'Bevestig eerst dat je het vrijwaringsdocument hebt gelezen.';
   static const String indemnificationOpenDoc = 'Vrijwaringsdocument openen';
@@ -2932,8 +3030,18 @@ class DriverStrings {
         es: 'Neerlandés',
         ar: 'الهولندية',
       );
-  static const String cash = 'Contant';
-  static const String card = 'Kaart';
+  static String get cash => _t(
+        'Contant',
+        en: 'Cash',
+        es: 'Efectivo',
+        ar: 'نقدا',
+      );
+  static String get card => _t(
+        'Kaart',
+        en: 'Card',
+        es: 'Tarjeta',
+        ar: 'بطاقة',
+      );
   static const String other = 'Overig';
   static const String report = 'Melden';
   static const String dismiss = 'Sluiten';

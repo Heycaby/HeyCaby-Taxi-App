@@ -5,6 +5,7 @@ import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../widgets/booking/booking_flow_screen_header.dart';
 import '../providers/ride_history_provider.dart';
 import 'report_screen.dart';
 
@@ -76,21 +77,20 @@ class RideDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colors.text),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          l10n.myRides,
-          style: typo.titleMedium.copyWith(color: colors.text),
-        ),
-      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            BookingFlowScreenHeader(
+              colors: colors,
+              typo: typo,
+              title: l10n.rideDetails,
+              icon: Icons.receipt_long_rounded,
+              onBack: () => context.pop(),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsetsDirectional.fromSTEB(20, 4, 20, 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -401,6 +401,9 @@ class RideDetailScreen extends ConsumerWidget {
               ],
             ],
           ),
+        ),
+      ),
+          ],
         ),
       ),
     );

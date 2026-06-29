@@ -8,6 +8,7 @@ import '../providers/booking_provider.dart';
 import '../providers/marketplace_pricing_provider.dart';
 import '../services/booking_flow_navigation.dart';
 import '../widgets/address_search_modal.dart';
+import '../widgets/marketplace/marketplace_screen_header.dart';
 import '../widgets/marketplace/marketplace_driver_scope_picker.dart';
 import '../widgets/marketplace/marketplace_offer_footer.dart';
 import '../widgets/marketplace/marketplace_offer_price_panel.dart';
@@ -106,34 +107,11 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(8, 8, 16, 4),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: _close,
-                    icon: Icon(Icons.arrow_back_ios_new, color: colors.text),
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.marketplace,
-                          style: typo.titleLarge.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: colors.text,
-                          ),
-                        ),
-                        Text(
-                          l10n.marketplaceTagline,
-                          style: typo.bodySmall.copyWith(color: colors.textMid),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+            MarketplaceScreenHeader(
+              colors: colors,
+              typo: typo,
+              l10n: l10n,
+              onClose: _close,
             ),
             Expanded(
               child: ListView(

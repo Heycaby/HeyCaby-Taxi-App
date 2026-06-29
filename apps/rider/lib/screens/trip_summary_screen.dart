@@ -51,7 +51,7 @@ class _TripSummaryScreenState extends ConsumerState<TripSummaryScreen> {
     final minutes = _etaMinutes % 60;
     final etaText = hours > 0 ? '${hours}h ${minutes}min' : '${minutes}min';
 
-    final mapH = screenH * 0.30;
+    final mapH = screenH * 0.34;
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -85,35 +85,32 @@ class _TripSummaryScreenState extends ConsumerState<TripSummaryScreen> {
           Positioned(
             top: MediaQuery.paddingOf(context).top + 12,
             left: 16,
-            child: GestureDetector(
-              onTap: () async {
-                HapticService.lightTap();
-                final shouldCancel = await showCancelBookingDialog(
-                  context,
-                  colors: colors,
-                  typography: typo,
-                );
-                if (!context.mounted || !shouldCancel) return;
-                ref.read(bookingProvider.notifier).reset();
-                ref.read(rideRequestProvider.notifier).reset();
-                context.go('/home');
-              },
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: colors.card.withValues(alpha: 0.92),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.text.withValues(alpha: 0.15),
-                      blurRadius: 10,
-                    ),
-                  ],
+              child: Material(
+                color: colors.card,
+                elevation: 2,
+                shadowColor: colors.text.withValues(alpha: 0.12),
+                shape: const CircleBorder(),
+                child: InkWell(
+                  onTap: () async {
+                    HapticService.lightTap();
+                    final shouldCancel = await showCancelBookingDialog(
+                      context,
+                      colors: colors,
+                      typography: typo,
+                    );
+                    if (!context.mounted || !shouldCancel) return;
+                    ref.read(bookingProvider.notifier).reset();
+                    ref.read(rideRequestProvider.notifier).reset();
+                    context.go('/home');
+                  },
+                  customBorder: const CircleBorder(),
+                  child: SizedBox(
+                    width: 44,
+                    height: 44,
+                    child: Icon(Icons.close_rounded, color: colors.text, size: 22),
+                  ),
                 ),
-                child: Icon(Icons.close, color: colors.text, size: 20),
               ),
-            ),
           ),
           Positioned(
             top: mapH - 28,

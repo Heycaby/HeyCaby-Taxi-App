@@ -25,6 +25,27 @@
   "homeScheduleLaterSubtitle": "Kies een ophaaltijd die voor jou werkt.",
   "homePopularAirportsTitle": "Populair",
   "homeRecentTrips": "Recente ritten",
+  "homeGreetingMorning": "Goedemorgen,",
+  "homeGreetingAfternoon": "Goedemiddag,",
+  "homeGreetingEvening": "Goedenavond,",
+  "homeEnterDestination": "Voer je bestemming in",
+  "homeNoTaxisNearbySubtitle": "Je kunt een rit aanvragen — we laten het weten zodra er een chauffeur beschikbaar is.",
+  "homeRideAgainTitle": "Opnieuw rijden",
+  "homeRideAgainViewAll": "Alles bekijken",
+  "homeRideAgainBookAgain": "Opnieuw boeken",
+  "homeRideAgainUsuallyAvailable": "Meestal beschikbaar",
+  "homeRideAgainAvailableNow": "Nu beschikbaar",
+  "homeRideAgainDriverStats": "{rating} ★ • {count} ritten",
+  "@homeRideAgainDriverStats": {
+    "placeholders": {
+      "rating": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "homeRecentPlacesTitle": "Recente plaatsen",
+  "homeRecentPlacesEdit": "Bewerken",
+  "homeCompleteProfile": "Profiel aanvullen",
+  "vehicleCategoryTitle": "Welk type rit wil je?",
   "homeAirportChipSchiphol": "Schiphol",
   "homeAirportChipRotterdam": "Rotterdam Airport",
   "homeAirportChipEindhoven": "Eindhoven",

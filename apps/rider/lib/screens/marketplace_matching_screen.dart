@@ -376,14 +376,35 @@ class _MarketplaceMatchingScreenState
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(8, 8, 16, 0),
+                padding: const EdgeInsetsDirectional.fromSTEB(12, 8, 16, 0),
                 child: Row(
                   children: [
-                    IconButton(
-                      onPressed:
-                          _isCancelling ? null : _confirmCancelRequest,
-                      icon: Icon(Icons.close, color: colors.text),
+                    Material(
+                      color: colors.card,
+                      elevation: 2,
+                      shadowColor: colors.text.withValues(alpha: 0.12),
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        onTap: _isCancelling ? null : _confirmCancelRequest,
+                        customBorder: const CircleBorder(),
+                        child: SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: Icon(Icons.close_rounded, color: colors.text, size: 22),
+                        ),
+                      ),
                     ),
+                    const SizedBox(width: 12),
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: colors.accentL,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(Icons.storefront_rounded, color: colors.accent, size: 24),
+                    ),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -393,6 +414,7 @@ class _MarketplaceMatchingScreenState
                             style: typo.titleLarge.copyWith(
                               fontWeight: FontWeight.w800,
                               color: colors.text,
+                              letterSpacing: -0.3,
                             ),
                           ),
                           Text(
@@ -536,8 +558,15 @@ class _StatusCard extends StatelessWidget {
       padding: const EdgeInsetsDirectional.all(16),
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: colors.border),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -593,8 +622,16 @@ class _ExpiryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsetsDirectional.all(16),
       decoration: BoxDecoration(
-        color: colors.accent.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
+        color: colors.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colors.accent.withValues(alpha: 0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [

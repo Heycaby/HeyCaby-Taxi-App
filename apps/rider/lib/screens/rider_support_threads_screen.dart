@@ -6,6 +6,8 @@ import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../widgets/booking/booking_flow_screen_header.dart';
+
 String _supportMessagePreview(dynamic raw) {
   if (raw is! Map) return '';
   final m = Map<String, dynamic>.from(raw);
@@ -124,20 +126,19 @@ class _RiderSupportThreadsScreenState
 
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.card,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colors.text),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          l10n.supportThreadsTitle,
-          style: typo.headingLarge.copyWith(color: colors.text),
-        ),
-        centerTitle: true,
-      ),
-      body: _loading
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            BookingFlowScreenHeader(
+              colors: colors,
+              typo: typo,
+              title: l10n.supportThreadsTitle,
+              icon: Icons.forum_outlined,
+              onBack: () => context.pop(),
+            ),
+            Expanded(
+              child: _loading
           ? const Center(child: CircularProgressIndicator())
           : _loadError != null
               ? ListView(
@@ -235,6 +236,10 @@ class _RiderSupportThreadsScreenState
                       ],
                     ),
             ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

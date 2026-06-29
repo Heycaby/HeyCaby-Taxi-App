@@ -250,6 +250,96 @@ abstract class AppLocalizations {
   /// **'Recent trips'**
   String get homeRecentTrips;
 
+  /// No description provided for @homeGreetingMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning,'**
+  String get homeGreetingMorning;
+
+  /// No description provided for @homeGreetingAfternoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon,'**
+  String get homeGreetingAfternoon;
+
+  /// No description provided for @homeGreetingEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening,'**
+  String get homeGreetingEvening;
+
+  /// No description provided for @homeEnterDestination.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your destination'**
+  String get homeEnterDestination;
+
+  /// No description provided for @homeNoTaxisNearbySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You can request and we\'ll notify you when a driver is available.'**
+  String get homeNoTaxisNearbySubtitle;
+
+  /// No description provided for @homeRideAgainTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride again'**
+  String get homeRideAgainTitle;
+
+  /// No description provided for @homeRideAgainViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get homeRideAgainViewAll;
+
+  /// No description provided for @homeRideAgainBookAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Book again'**
+  String get homeRideAgainBookAgain;
+
+  /// No description provided for @homeRideAgainUsuallyAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Usually available'**
+  String get homeRideAgainUsuallyAvailable;
+
+  /// No description provided for @homeRideAgainAvailableNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Available now'**
+  String get homeRideAgainAvailableNow;
+
+  /// No description provided for @homeRideAgainDriverStats.
+  ///
+  /// In en, this message translates to:
+  /// **'{rating} ★ • {count} rides'**
+  String homeRideAgainDriverStats(String rating, int count);
+
+  /// No description provided for @homeRecentPlacesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent places'**
+  String get homeRecentPlacesTitle;
+
+  /// No description provided for @homeRecentPlacesEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get homeRecentPlacesEdit;
+
+  /// No description provided for @homeCompleteProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete profile'**
+  String get homeCompleteProfile;
+
+  /// No description provided for @vehicleCategoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What kind of ride do you want?'**
+  String get vehicleCategoryTitle;
+
   /// No description provided for @homeAirportChipSchiphol.
   ///
   /// In en, this message translates to:

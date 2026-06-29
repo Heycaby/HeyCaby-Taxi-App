@@ -7,6 +7,8 @@ import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../widgets/booking/booking_flow_screen_header.dart';
+
 import '../services/rider_support_chat_service.dart';
 
 class RiderSupportYazScreen extends ConsumerStatefulWidget {
@@ -206,18 +208,18 @@ class _RiderSupportYazScreenState extends ConsumerState<RiderSupportYazScreen> {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.card,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: Icon(Icons.arrow_back, color: colors.text),
-        ),
-        title: Text(l10n.supportChatWithYaz),
-      ),
-      body: Column(
-        children: [
-          if (_blockingError != null)
+      body: SafeArea(
+        child: Column(
+          children: [
+            BookingFlowScreenHeader(
+              colors: colors,
+              typo: typo,
+              title: l10n.supportChatWithYaz,
+              subtitle: l10n.supportYazAssistantSubtitle,
+              icon: Icons.smart_toy_outlined,
+              onBack: () => context.pop(),
+            ),
+            if (_blockingError != null)
             Container(
               width: double.infinity,
               margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -338,6 +340,7 @@ class _RiderSupportYazScreenState extends ConsumerState<RiderSupportYazScreen> {
             ),
           ),
         ],
+        ),
       ),
     );
   }

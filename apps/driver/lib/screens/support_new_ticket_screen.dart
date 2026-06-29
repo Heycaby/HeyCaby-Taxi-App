@@ -54,7 +54,7 @@ class _SupportNewTicketScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text(DriverStrings.done),
+            child: Text(DriverStrings.done),
           ),
           FilledButton(
             onPressed: () {

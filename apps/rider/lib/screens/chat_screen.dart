@@ -6,6 +6,8 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 
 import 'package:heycaby_api/heycaby_api.dart';
 
+import '../widgets/booking/booking_flow_screen_header.dart';
+
 import '../providers/chat_provider.dart';
 import '../providers/ride_request_provider.dart';
 
@@ -89,167 +91,155 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colors.text),
-          onPressed: () => context.pop(),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        child: Column(
           children: [
-            Text(
-              l10n.chat,
-              style: typo.titleMedium.copyWith(color: colors.text),
-            ),
-            Text(
-              AppLocalizations.of(context).driver,
-              style: typo.bodySmall.copyWith(color: colors.textSoft),
-            ),
-          ],
-        ),
-        actions: [
-          chatState.maybeWhen(
-            data: (state) {
-              String? peerDriverId() {
-                for (final m in state.messages) {
-                  if (m.senderType == 'driver') return m.senderId;
-                }
-                return null;
-              }
+            BookingFlowScreenHeader(
+              colors: colors,
+              typo: typo,
+              title: l10n.chat,
+              subtitle: l10n.driver,
+              icon: Icons.chat_bubble_rounded,
+              onBack: () => context.pop(),
+              trailing: chatState.maybeWhen(
+                data: (state) {
+                  String? peerDriverId() {
+                    for (final m in state.messages) {
+                      if (m.senderType == 'driver') return m.senderId;
+                    }
+                    return null;
+                  }
 
-              final peer = peerDriverId();
-              if (peer == null) return const SizedBox.shrink();
-              return PopupMenuButton<String>(
-                icon: Icon(Icons.more_vert, color: colors.text),
-                onSelected: (v) async {
-                  final rideId = ref.read(rideRequestProvider).rideRequestId;
-                  if (rideId == null) return;
+                  final peer = peerDriverId();
+                  if (peer == null) return const SizedBox.shrink();
+                  return PopupMenuButton<String>(
+                    icon: Icon(Icons.more_vert_rounded, color: colors.text),
+                    onSelected: (v) async {
+                      final rideId = ref.read(rideRequestProvider).rideRequestId;
+                      if (rideId == null) return;
 
-                  if (v == 'report') {
-                    final reason = TextEditingController();
-                    final submit = await showDialog<bool>(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        backgroundColor: colors.card,
-                        title: Text(
-                          l10n.reportDriverTitle,
-                          style: typo.titleMedium.copyWith(color: colors.text),
-                        ),
-                        content: SingleChildScrollView(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Text(
-                                l10n.reportDriverBody,
-                                style: typo.bodyMedium
-                                    .copyWith(color: colors.textMid),
+                      if (v == 'report') {
+                        final reason = TextEditingController();
+                        final submit = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            backgroundColor: colors.card,
+                            title: Text(
+                              l10n.reportDriverTitle,
+                              style: typo.titleMedium.copyWith(color: colors.text),
+                            ),
+                            content: SingleChildScrollView(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Text(
+                                    l10n.reportDriverBody,
+                                    style: typo.bodyMedium
+                                        .copyWith(color: colors.textMid),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  TextField(
+                                    controller: reason,
+                                    maxLines: 3,
+                                    style: typo.bodyMedium
+                                        .copyWith(color: colors.text),
+                                    decoration: InputDecoration(
+                                      hintText: l10n.reportReasonHint,
+                                      hintStyle: typo.bodySmall
+                                          .copyWith(color: colors.textSoft),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 12),
-                              TextField(
-                                controller: reason,
-                                maxLines: 3,
-                                style: typo.bodyMedium
-                                    .copyWith(color: colors.text),
-                                decoration: InputDecoration(
-                                  hintText: l10n.reportReasonHint,
-                                  hintStyle: typo.bodySmall
-                                      .copyWith(color: colors.textSoft),
-                                ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: Text(l10n.cancel,
+                                    style: TextStyle(color: colors.accent)),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: Text(l10n.reportDriver,
+                                    style: TextStyle(color: colors.error)),
                               ),
                             ],
                           ),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
-                            child: Text(l10n.cancel,
-                                style: TextStyle(color: colors.accent)),
+                        );
+                        if (submit != true || !context.mounted) return;
+                        final sent =
+                            await ref.read(chatProvider.notifier).reportDriver(
+                                  rideId: rideId,
+                                  driverSenderId: peer,
+                                  reason: reason.text.trim().isEmpty
+                                      ? null
+                                      : reason.text.trim(),
+                                );
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              sent
+                                  ? l10n.chatReportSubmitted
+                                  : l10n.chatReportFailed,
+                            ),
                           ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, true),
-                            child: Text(l10n.reportDriver,
-                                style: TextStyle(color: colors.error)),
-                          ),
-                        ],
-                      ),
-                    );
-                    if (submit != true || !context.mounted) return;
-                    final sent =
-                        await ref.read(chatProvider.notifier).reportDriver(
-                              rideId: rideId,
-                              driverSenderId: peer,
-                              reason: reason.text.trim().isEmpty
-                                  ? null
-                                  : reason.text.trim(),
-                            );
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          sent
-                              ? l10n.chatReportSubmitted
-                              : l10n.chatReportFailed,
-                        ),
-                      ),
-                    );
-                    return;
-                  }
+                        );
+                        return;
+                      }
 
-                  if (v != 'block') return;
-                  final ok = await showDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: Text(l10n.blockDriver,
-                          style: typo.titleMedium.copyWith(color: colors.text)),
-                      content: Text(
-                        l10n.blockDriverConfirm,
-                        style: typo.bodyMedium.copyWith(color: colors.textMid),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx, false),
-                          child: Text(l10n.cancel,
-                              style: TextStyle(color: colors.accent)),
+                      if (v != 'block') return;
+                      final ok = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: Text(l10n.blockDriver,
+                              style: typo.titleMedium.copyWith(color: colors.text)),
+                          content: Text(
+                            l10n.blockDriverConfirm,
+                            style: typo.bodyMedium.copyWith(color: colors.textMid),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: Text(l10n.cancel,
+                                  style: TextStyle(color: colors.accent)),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, true),
+                              child: Text(l10n.blockDriver,
+                                  style: TextStyle(color: colors.error)),
+                            ),
+                          ],
                         ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx, true),
-                          child: Text(l10n.blockDriver,
-                              style: TextStyle(color: colors.error)),
+                      );
+                      if (ok != true || !context.mounted) return;
+                      final blocked =
+                          await ref.read(chatProvider.notifier).blockDriver(
+                                rideId: rideId,
+                                driverSenderId: peer,
+                              );
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            blocked ? l10n.blockDriver : l10n.chatBlockFailed,
+                          ),
                         ),
-                      ],
-                    ),
-                  );
-                  if (ok != true || !context.mounted) return;
-                  final blocked =
-                      await ref.read(chatProvider.notifier).blockDriver(
-                            rideId: rideId,
-                            driverSenderId: peer,
-                          );
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        blocked ? l10n.blockDriver : l10n.chatBlockFailed,
-                      ),
-                    ),
+                      );
+                    },
+                    itemBuilder: (_) => [
+                      PopupMenuItem(
+                          value: 'report', child: Text(l10n.reportDriver)),
+                      PopupMenuItem(value: 'block', child: Text(l10n.blockDriver)),
+                    ],
                   );
                 },
-                itemBuilder: (_) => [
-                  PopupMenuItem(
-                      value: 'report', child: Text(l10n.reportDriver)),
-                  PopupMenuItem(value: 'block', child: Text(l10n.blockDriver)),
-                ],
-              );
-            },
-            orElse: () => const SizedBox.shrink(),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: !chatAllowed
+                orElse: () => const SizedBox.shrink(),
+              ),
+            ),
+            Expanded(
+              child: !chatAllowed
             ? Center(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -314,6 +304,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
                 ],
               ),
+            ),
+          ],
+        ),
       ),
     );
   }

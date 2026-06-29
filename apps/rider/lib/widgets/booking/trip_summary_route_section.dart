@@ -21,27 +21,32 @@ class TripSummaryStatChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
         decoration: BoxDecoration(
-          color: colors.accentL,
+          color: colors.card,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: colors.accent.withValues(alpha: 0.25)),
+          border: Border.all(color: colors.border),
+          boxShadow: [
+            BoxShadow(
+              color: colors.text.withValues(alpha: 0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: colors.accent, size: 18),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: typo.bodyMedium.copyWith(
-                  color: colors.accent,
-                  fontWeight: FontWeight.w700,
-                ),
+            Icon(icon, color: colors.accent, size: 20),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: typo.labelLarge.copyWith(
+                color: colors.text,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ],

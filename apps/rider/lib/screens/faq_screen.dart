@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../widgets/booking/booking_flow_screen_header.dart';
+
 class FaqScreen extends ConsumerWidget {
   const FaqScreen({super.key});
 
@@ -48,25 +50,16 @@ class FaqScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 8),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => context.pop(),
-                    child: Icon(Icons.arrow_back, color: colors.text, size: 24),
-                  ),
-                  const SizedBox(width: 16),
-                  Text(
-                    l10n.faq,
-                    style: typo.headingLarge.copyWith(color: colors.text),
-                  ),
-                ],
-              ),
+            BookingFlowScreenHeader(
+              colors: colors,
+              typo: typo,
+              title: l10n.faq,
+              icon: Icons.help_outline_rounded,
+              onBack: () => context.pop(),
             ),
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 16, 32),
+                padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 32),
                 itemCount: sections.length,
                 itemBuilder: (context, i) => _FaqSectionWidget(
                   section: sections[i],
@@ -124,13 +117,13 @@ class _FaqSectionWidget extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             color: colors.card,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: colors.border, width: 0.5),
             boxShadow: [
               BoxShadow(
-                color: colors.text.withValues(alpha: 0.06),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+                color: colors.text.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),

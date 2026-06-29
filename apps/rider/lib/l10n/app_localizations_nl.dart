@@ -88,6 +88,54 @@ class AppLocalizationsNl extends AppLocalizations {
   String get homeRecentTrips => 'Recente ritten';
 
   @override
+  String get homeGreetingMorning => 'Goedemorgen,';
+
+  @override
+  String get homeGreetingAfternoon => 'Goedemiddag,';
+
+  @override
+  String get homeGreetingEvening => 'Goedenavond,';
+
+  @override
+  String get homeEnterDestination => 'Voer je bestemming in';
+
+  @override
+  String get homeNoTaxisNearbySubtitle =>
+      'Je kunt een rit aanvragen — we laten het weten zodra er een chauffeur beschikbaar is.';
+
+  @override
+  String get homeRideAgainTitle => 'Opnieuw rijden';
+
+  @override
+  String get homeRideAgainViewAll => 'Alles bekijken';
+
+  @override
+  String get homeRideAgainBookAgain => 'Opnieuw boeken';
+
+  @override
+  String get homeRideAgainUsuallyAvailable => 'Meestal beschikbaar';
+
+  @override
+  String get homeRideAgainAvailableNow => 'Nu beschikbaar';
+
+  @override
+  String homeRideAgainDriverStats(String rating, int count) {
+    return '$rating ★ • $count ritten';
+  }
+
+  @override
+  String get homeRecentPlacesTitle => 'Recente plaatsen';
+
+  @override
+  String get homeRecentPlacesEdit => 'Bewerken';
+
+  @override
+  String get homeCompleteProfile => 'Profiel aanvullen';
+
+  @override
+  String get vehicleCategoryTitle => 'Welk type rit wil je?';
+
+  @override
   String get homeAirportChipSchiphol => 'Schiphol';
 
   @override

@@ -6,6 +6,7 @@ import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:intl/intl.dart';
 
+import '../widgets/rides/rides_screen_header.dart';
 import '../providers/near_term_ride_request_provider.dart';
 import 'report_screen.dart';
 import '../providers/ride_history_provider.dart';
@@ -57,32 +58,9 @@ class _RidesScreenState extends ConsumerState<RidesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            RidesScreenHeader(colors: colors, typo: typo, l10n: l10n),
             Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 6),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.rides,
-                    style: typo.displaySmall.copyWith(
-                      color: colors.text,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.8,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    l10n.ridesScreenSubtitle,
-                    style: typo.bodyMedium.copyWith(
-                      color: colors.textMid,
-                      height: 1.35,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(20, 12, 20, 0),
+              padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 0),
               child: _RidesSegmentBar(
                 colors: colors,
                 typo: typo,
@@ -215,12 +193,15 @@ class _SegmentCell extends StatelessWidget {
         onTap: onTap,
         child: Ink(
           decoration: BoxDecoration(
-            color: selected ? colors.card : Colors.transparent,
+            color: selected ? colors.accentL : Colors.transparent,
             borderRadius: BorderRadius.circular(11),
+            border: selected
+                ? Border.all(color: colors.accent.withValues(alpha: 0.25))
+                : null,
             boxShadow: selected
                 ? [
                     BoxShadow(
-                      color: colors.text.withValues(alpha: 0.06),
+                      color: colors.text.withValues(alpha: 0.04),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -233,7 +214,7 @@ class _SegmentCell extends StatelessWidget {
               child: Text(
                 label,
                 style: typo.labelLarge.copyWith(
-                  color: selected ? colors.text : colors.textMid,
+                  color: selected ? colors.accent : colors.textMid,
                   fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                 ),
               ),
@@ -734,15 +715,16 @@ class _EmptyState extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsetsDirectional.all(24),
+            padding: const EdgeInsetsDirectional.all(22),
             decoration: BoxDecoration(
-              color: colors.bgAlt,
+              color: colors.accentL,
               shape: BoxShape.circle,
+              border: Border.all(color: colors.accent.withValues(alpha: 0.2)),
             ),
             child: Icon(
-              Icons.location_on_outlined,
-              size: 48,
-              color: colors.textSoft,
+              Icons.receipt_long_outlined,
+              size: 44,
+              color: colors.accent,
             ),
           ),
           const SizedBox(height: 20),
@@ -822,8 +804,15 @@ class _RideCard extends StatelessWidget {
       margin: const EdgeInsetsDirectional.only(bottom: 12),
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: colors.border, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -625,12 +625,12 @@ class _ActiveRideSheet extends StatelessWidget {
     return Container(
       height: sheetHeight,
       decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        color: colors.card,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         boxShadow: [
           BoxShadow(
-            color: colors.text.withValues(alpha: 0.08),
-            blurRadius: 20,
+            color: colors.text.withValues(alpha: 0.1),
+            blurRadius: 24,
             offset: const Offset(0, -6),
           ),
         ],
@@ -918,8 +918,16 @@ class _SectionCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
-        color: colors.bgAlt,
+        color: colors.card,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.border),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

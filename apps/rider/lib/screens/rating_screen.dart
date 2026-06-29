@@ -7,6 +7,7 @@ import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 
+import '../widgets/booking/booking_flow_screen_header.dart';
 import '../providers/ride_request_provider.dart';
 
 class RatingScreen extends ConsumerStatefulWidget {
@@ -162,9 +163,19 @@ class _RatingScreenState extends ConsumerState<RatingScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            BookingFlowScreenHeader(
+              colors: colors,
+              typo: typo,
+              title: l10n.rateYourDriver,
+              subtitle: l10n.howWasYourRide,
+              icon: Icons.star_rounded,
+              onBack: () {
+                if (!_isSubmitting) context.go('/home');
+              },
+            ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsetsDirectional.fromSTEB(20, 32, 20, 24),
+                padding: const EdgeInsetsDirectional.fromSTEB(20, 8, 20, 24),
                 children: [
                   Center(
                     child: Container(
@@ -173,41 +184,54 @@ class _RatingScreenState extends ConsumerState<RatingScreen> {
                       decoration: BoxDecoration(
                         color: colors.accentL,
                         shape: BoxShape.circle,
+                        border: Border.all(
+                          color: colors.accent.withValues(alpha: 0.25),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colors.text.withValues(alpha: 0.06),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
                       ),
                       child: Icon(
-                        Icons.person,
+                        Icons.person_rounded,
                         color: colors.accent,
                         size: 40,
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Text(
-                    l10n.rateYourDriver,
-                    style: typo.headingLarge.copyWith(
-                      color: colors.text,
-                      fontWeight: FontWeight.w900,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.howWasYourRide,
-                    style: typo.bodyLarge.copyWith(color: colors.textMid),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
                   _StarRating(
                     rating: _rating,
                     colors: colors,
                     onRatingChanged: _onOverallRatingChanged,
                   ),
                   const SizedBox(height: 28),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsetsDirectional.all(16),
+                    decoration: BoxDecoration(
+                      color: colors.card,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: colors.border),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.text.withValues(alpha: 0.04),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                   Text(
                     l10n.ratingCategorySectionTitle,
                     style: typo.titleMedium.copyWith(
                       color: colors.text,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -250,6 +274,9 @@ class _RatingScreenState extends ConsumerState<RatingScreen> {
                     colors: colors,
                     typo: typo,
                     onChanged: (v) => setState(() => _communication = v),
+                  ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
                   Text(
@@ -323,12 +350,12 @@ class _RatingScreenState extends ConsumerState<RatingScreen> {
             Container(
               padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 20),
               decoration: BoxDecoration(
-                color: colors.surface,
+                color: colors.card,
                 boxShadow: [
                   BoxShadow(
                     color: colors.text.withValues(alpha: 0.08),
-                    blurRadius: 16,
-                    offset: const Offset(0, -4),
+                    blurRadius: 20,
+                    offset: const Offset(0, -6),
                   ),
                 ],
               ),
@@ -337,20 +364,8 @@ class _RatingScreenState extends ConsumerState<RatingScreen> {
                   SizedBox(
                     width: double.infinity,
                     height: 56,
-                    child: ElevatedButton(
+                    child: FilledButton(
                       onPressed: !_canSubmit || _isSubmitting ? null : _submitRating,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: !_canSubmit ? colors.border : colors.accent,
-                        foregroundColor: !_canSubmit
-                            ? colors.textMid
-                            : colors.onAccent,
-                        elevation: 0,
-                        disabledBackgroundColor: colors.border,
-                        disabledForegroundColor: colors.textMid,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
                       child: _isSubmitting
                           ? SizedBox(
                               width: 20,
@@ -363,10 +378,7 @@ class _RatingScreenState extends ConsumerState<RatingScreen> {
                           : Text(
                               l10n.submitRating,
                               style: typo.labelLarge.copyWith(
-                                color: !_canSubmit
-                                    ? colors.textMid
-                                    : colors.onAccent,
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
                     ),

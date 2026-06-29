@@ -34,8 +34,15 @@ class MarketplaceOfferFooter extends StatelessWidget {
         MediaQuery.paddingOf(context).bottom + 16,
       ),
       decoration: BoxDecoration(
-        color: colors.surface,
+        color: colors.card,
         border: Border(top: BorderSide(color: colors.border, width: 0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
       child: Row(
         children: [

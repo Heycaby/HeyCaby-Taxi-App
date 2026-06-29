@@ -63,6 +63,18 @@ void main() {
     expect(DriverStrings.addVehiclePhoto, 'Add vehicle photo');
     expect(DriverStrings.vehiclePhotoUploadFailed,
         'Vehicle photo upload failed. Try again.');
+    expect(DriverStrings.addManualRideTitle, 'Add passenger');
+    expect(DriverStrings.manualRideRouteSection, 'Route');
+    expect(DriverStrings.manualRideDetailsSection, 'Trip details');
+    expect(DriverStrings.manualRideDropoffRequired,
+        'Dropoff address is required.');
+    expect(DriverStrings.manualRideFarePreviewEmpty,
+        'Set fare to preview trip summary');
+    expect(DriverStrings.manualRideFarePreview('42.50', 'CASH'),
+        'You keep 100%: EUR 42.50 • CASH');
+    expect(DriverStrings.cash, 'Cash');
+    expect(DriverStrings.card, 'Card');
+    expect(DriverStrings.done, 'Done');
     expect(DriverStrings.returnTrips, 'Return rides');
     expect(DriverStrings.returnTripsEmpty, 'No return rides available.');
     expect(DriverStrings.ridesThisWeek, 'Rides this week');
@@ -201,6 +213,18 @@ void main() {
     expect(DriverStrings.addVehiclePhoto, 'Añadir foto del vehículo');
     expect(DriverStrings.vehiclePhotoUploadFailed,
         'No se pudo subir la foto del vehículo. Inténtalo de nuevo.');
+    expect(DriverStrings.addManualRideTitle, 'Añadir pasajero');
+    expect(DriverStrings.manualRideRouteSection, 'Ruta');
+    expect(DriverStrings.manualRideDetailsSection, 'Detalles del viaje');
+    expect(DriverStrings.manualRideDropoffRequired,
+        'La dirección de destino es obligatoria.');
+    expect(DriverStrings.manualRideFarePreviewEmpty,
+        'Introduce la tarifa para ver el resumen');
+    expect(DriverStrings.manualRideFarePreview('42.50', 'CASH'),
+        'Conservas el 100%: EUR 42.50 • CASH');
+    expect(DriverStrings.cash, 'Efectivo');
+    expect(DriverStrings.card, 'Tarjeta');
+    expect(DriverStrings.done, 'Listo');
     expect(DriverStrings.returnTrips, 'Viajes de vuelta');
     expect(
       DriverStrings.returnTripsEmpty,
@@ -332,6 +356,17 @@ void main() {
     expect(DriverStrings.addVehiclePhoto, 'إضافة صورة للمركبة');
     expect(DriverStrings.vehiclePhotoUploadFailed,
         'فشل تحميل صورة المركبة. حاول مرة أخرى.');
+    expect(DriverStrings.addManualRideTitle, 'إضافة راكب');
+    expect(DriverStrings.manualRideRouteSection, 'المسار');
+    expect(DriverStrings.manualRideDetailsSection, 'تفاصيل الرحلة');
+    expect(DriverStrings.manualRideDropoffRequired, 'عنوان الوصول مطلوب.');
+    expect(DriverStrings.manualRideFarePreviewEmpty,
+        'أدخل الأجرة لمعاينة ملخص الرحلة');
+    expect(DriverStrings.manualRideFarePreview('42.50', 'CASH'),
+        'تحتفظ بنسبة 100%: EUR 42.50 • CASH');
+    expect(DriverStrings.cash, 'نقدا');
+    expect(DriverStrings.card, 'بطاقة');
+    expect(DriverStrings.done, 'تم');
     expect(DriverStrings.returnTrips, 'رحلات العودة');
     expect(DriverStrings.returnTripsEmpty, 'لا توجد رحلات عودة متاحة.');
     expect(DriverStrings.ridesThisWeek, 'رحلات هذا الأسبوع');

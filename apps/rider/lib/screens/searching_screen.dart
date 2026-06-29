@@ -672,20 +672,22 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsetsDirectional.only(start: 16, top: 12),
+              padding: const EdgeInsetsDirectional.only(start: 12, top: 8),
               child: Align(
                 alignment: AlignmentDirectional.centerStart,
-                child: GestureDetector(
-                  onTap: () => _showCancelDialog(context, colors, typo, l10n),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: colors.bgAlt,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: colors.border),
+                child: Material(
+                  color: colors.card,
+                  elevation: 2,
+                  shadowColor: colors.text.withValues(alpha: 0.12),
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    onTap: () => _showCancelDialog(context, colors, typo, l10n),
+                    customBorder: const CircleBorder(),
+                    child: SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: Icon(Icons.close_rounded, color: colors.text, size: 22),
                     ),
-                    child: Icon(Icons.close, color: colors.text, size: 20),
                   ),
                 ),
               ),
@@ -708,7 +710,11 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
                   const SizedBox(height: 28),
                   Text(
                     _matchingTitle(l10n),
-                    style: typo.headingMedium.copyWith(color: colors.text),
+                    style: typo.headingMedium.copyWith(
+                      color: colors.text,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
@@ -768,8 +774,16 @@ class _DidYouKnowCard extends StatelessWidget {
       margin: const EdgeInsetsDirectional.symmetric(horizontal: 24),
       padding: const EdgeInsetsDirectional.all(20),
       decoration: BoxDecoration(
-        color: colors.accentL,
-        borderRadius: BorderRadius.circular(14),
+        color: colors.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colors.border),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

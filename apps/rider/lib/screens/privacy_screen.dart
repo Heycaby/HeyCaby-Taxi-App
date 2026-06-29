@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../widgets/booking/booking_flow_screen_header.dart';
+
 class PrivacyScreen extends ConsumerWidget {
   const PrivacyScreen({super.key});
 
@@ -28,25 +30,16 @@ class PrivacyScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 8),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => context.pop(),
-                    child: Icon(Icons.arrow_back, color: colors.text, size: 24),
-                  ),
-                  const SizedBox(width: 16),
-                  Text(
-                    l10n.privacyTitle,
-                    style: typo.headingLarge.copyWith(color: colors.text),
-                  ),
-                ],
-              ),
+            BookingFlowScreenHeader(
+              colors: colors,
+              typo: typo,
+              title: l10n.privacyTitle,
+              icon: Icons.privacy_tip_outlined,
+              onBack: () => context.pop(),
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsetsDirectional.fromSTEB(20, 8, 20, 32),
+                padding: const EdgeInsetsDirectional.fromSTEB(20, 4, 20, 32),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: sections
@@ -85,8 +78,22 @@ class _LegalSectionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(bottom: 24),
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsetsDirectional.only(bottom: 12),
+      padding: const EdgeInsetsDirectional.all(16),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.border),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -94,7 +101,7 @@ class _LegalSectionWidget extends StatelessWidget {
             section.title,
             style: typo.titleMedium.copyWith(
               color: colors.text,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 8),

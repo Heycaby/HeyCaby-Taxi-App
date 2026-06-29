@@ -5,6 +5,8 @@ import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../widgets/booking/booking_flow_screen_header.dart';
+
 /// Aligns with driver support categories (stored on `tickets.category`).
 class RiderSupportNewTicketScreen extends ConsumerStatefulWidget {
   const RiderSupportNewTicketScreen({super.key});
@@ -160,29 +162,24 @@ class _RiderSupportNewTicketScreenState
 
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.card,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colors.text),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          l10n.supportNewThread,
-          style: typo.headingLarge.copyWith(color: colors.text),
-        ),
-        centerTitle: true,
-      ),
-      body: Padding(
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            BookingFlowScreenHeader(
+              colors: colors,
+              typo: typo,
+              title: l10n.supportNewThread,
+              subtitle: l10n.supportPickCategory,
+              icon: Icons.edit_outlined,
+              onBack: () => context.pop(),
+            ),
+            Expanded(
+              child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              l10n.supportPickCategory,
-              style: typo.titleMedium.copyWith(color: colors.text),
-            ),
-            const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               children: _categories.map((cat) {
@@ -240,6 +237,10 @@ class _RiderSupportNewTicketScreenState
                         ),
                       )
                     : Text(l10n.supportSendMessageButton),
+              ),
+            ),
+          ],
+        ),
               ),
             ),
           ],

@@ -200,9 +200,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       await BookingFlowNavigation.prefillBookingFromIdentity(ref);
       if (!mounted) return;
       setState(() {});
+      await _maybeAdvanceAfterAddresses();
     } else if (_activeFocus == SearchAddressFocus.destination) {
       _pickupFocus.requestFocus();
     }
+  }
+
+  Future<void> _maybeAdvanceAfterAddresses() async {
+    final booking = ref.read(bookingProvider);
+    if (booking.pickup == null || booking.destination == null) return;
+    if (!mounted) return;
+    HapticService.lightTap();
+    context.push(BookingFlowNavigation.routeAfterAddressesComplete(booking));
   }
 
   Future<void> _onSuggestionTap(AddressResult suggestion) async {
@@ -378,12 +387,23 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
             ),
             if (canContinue)
-              Padding(
+              Container(
                 padding: EdgeInsetsDirectional.fromSTEB(
                   HeyCabySpacing.screenEdge,
-                  0,
+                  12,
                   HeyCabySpacing.screenEdge,
-                  HeyCabySpacing.component,
+                  HeyCabySpacing.component +
+                      MediaQuery.paddingOf(context).bottom,
+                ),
+                decoration: BoxDecoration(
+                  color: colors.bg,
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.text.withValues(alpha: 0.06),
+                      blurRadius: 16,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
                 ),
                 child: SizedBox(
                   width: double.infinity,
@@ -398,7 +418,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     ),
                     child: Text(
                       l10n.searchAddressesContinue,
-                      style: typo.labelLarge.copyWith(color: colors.onAccent),
+                      style: typo.labelLarge.copyWith(
+                        color: colors.onAccent,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),

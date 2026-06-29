@@ -88,6 +88,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeRecentTrips => 'Recent trips';
 
   @override
+  String get homeGreetingMorning => 'Good morning,';
+
+  @override
+  String get homeGreetingAfternoon => 'Good afternoon,';
+
+  @override
+  String get homeGreetingEvening => 'Good evening,';
+
+  @override
+  String get homeEnterDestination => 'Enter your destination';
+
+  @override
+  String get homeNoTaxisNearbySubtitle =>
+      'You can request and we\'ll notify you when a driver is available.';
+
+  @override
+  String get homeRideAgainTitle => 'Ride again';
+
+  @override
+  String get homeRideAgainViewAll => 'View all';
+
+  @override
+  String get homeRideAgainBookAgain => 'Book again';
+
+  @override
+  String get homeRideAgainUsuallyAvailable => 'Usually available';
+
+  @override
+  String get homeRideAgainAvailableNow => 'Available now';
+
+  @override
+  String homeRideAgainDriverStats(String rating, int count) {
+    return '$rating ★ • $count rides';
+  }
+
+  @override
+  String get homeRecentPlacesTitle => 'Recent places';
+
+  @override
+  String get homeRecentPlacesEdit => 'Edit';
+
+  @override
+  String get homeCompleteProfile => 'Complete profile';
+
+  @override
+  String get vehicleCategoryTitle => 'What kind of ride do you want?';
+
+  @override
   String get homeAirportChipSchiphol => 'Schiphol';
 
   @override

@@ -144,7 +144,7 @@ class DriverManualRideEntryBody extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Route',
+                        DriverStrings.manualRideRouteSection,
                         style: typography.titleSmall.copyWith(
                           color: colors.text,
                           fontWeight: FontWeight.w700,
@@ -223,7 +223,7 @@ class DriverManualRideEntryBody extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Trip details',
+                        DriverStrings.manualRideDetailsSection,
                         style: typography.titleSmall.copyWith(
                           color: colors.text,
                           fontWeight: FontWeight.w700,
@@ -275,7 +275,7 @@ class DriverManualRideEntryBody extends StatelessWidget {
                       ),
                       const SizedBox(height: DriverSpacing.md),
                       SegmentedButton<String>(
-                        segments: const [
+                        segments: [
                           ButtonSegment(
                             value: 'cash',
                             label: Text(DriverStrings.cash),
@@ -284,7 +284,7 @@ class DriverManualRideEntryBody extends StatelessWidget {
                             value: 'card',
                             label: Text(DriverStrings.card),
                           ),
-                          ButtonSegment(
+                          const ButtonSegment(
                             value: 'tikkie',
                             label: Text('Tikkie'),
                           ),

@@ -158,8 +158,8 @@ class _DriverAddManualRideScreenState
     if (!mounted) return;
     final merged = <AddressResult>[
       ...recentHits,
-      ...apiHits.where((api) => recentHits.every((r) =>
-          r.fullAddress.toLowerCase() != api.fullAddress.toLowerCase())),
+      ...apiHits.where((api) => recentHits.every(
+          (r) => r.fullAddress.toLowerCase() != api.fullAddress.toLowerCase())),
     ];
     setState(() {
       _dropoffSuggestions = merged.take(6).toList();
@@ -224,12 +224,13 @@ class _DriverAddManualRideScreenState
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
-          title: const Text(DriverStrings.manualRideSuccessTitle),
-          content: Text(DriverStrings.manualRideSuccessBody(_fareCtrl.text.trim())),
+          title: Text(DriverStrings.manualRideSuccessTitle),
+          content:
+              Text(DriverStrings.manualRideSuccessBody(_fareCtrl.text.trim())),
           actions: [
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text(DriverStrings.done),
+              child: Text(DriverStrings.done),
             ),
           ],
         ),
@@ -256,7 +257,7 @@ class _DriverAddManualRideScreenState
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(DriverStrings.manualRideSaveFailed),
         ),
       );
@@ -266,11 +267,15 @@ class _DriverAddManualRideScreenState
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
     final farePreview = _fareToCents(_fareCtrl.text);
     final farePreviewText = farePreview == null
-        ? 'Set fare to preview trip summary'
-        : 'You keep 100%: EUR ${(farePreview / 100).toStringAsFixed(2)} • ${_paymentMethod.toUpperCase()}';
+        ? DriverStrings.manualRideFarePreviewEmpty
+        : DriverStrings.manualRideFarePreview(
+            (farePreview / 100).toStringAsFixed(2),
+            _paymentMethod.toUpperCase(),
+          );
 
     return DriverManualRideEntryBody(
       colors: colors,
@@ -307,8 +312,9 @@ class _DriverAddManualRideScreenState
       validateDropoff: (v) => (v == null || v.trim().isEmpty)
           ? DriverStrings.manualRideDropoffRequired
           : null,
-      validateFare: (v) =>
-          _fareToCents(v ?? '') == null ? DriverStrings.manualRideFareRequired : null,
+      validateFare: (v) => _fareToCents(v ?? '') == null
+          ? DriverStrings.manualRideFareRequired
+          : null,
     );
   }
 }

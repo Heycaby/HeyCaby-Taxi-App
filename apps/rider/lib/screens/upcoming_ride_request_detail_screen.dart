@@ -7,6 +7,7 @@ import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../widgets/booking/booking_flow_screen_header.dart';
 import '../models/ride_matching_variant.dart';
 import '../providers/active_search_provider.dart';
 import '../providers/near_term_ride_request_provider.dart';
@@ -226,15 +227,22 @@ class _UpcomingRideRequestDetailScreenState
     if (row == null) {
       return Scaffold(
         backgroundColor: colors.bg,
-        appBar: AppBar(
-          backgroundColor: colors.bg,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: colors.text),
-            onPressed: () => context.pop(),
+        body: SafeArea(
+          child: Column(
+            children: [
+              BookingFlowScreenHeader(
+                colors: colors,
+                typo: typo,
+                title: l10n.upcomingRideDetailTitle,
+                icon: Icons.schedule_rounded,
+                onBack: () => context.pop(),
+              ),
+              const Expanded(
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ],
           ),
         ),
-        body: Center(child: CircularProgressIndicator(color: colors.accent)),
       );
     }
 
@@ -251,37 +259,39 @@ class _UpcomingRideRequestDetailScreenState
 
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.bg,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colors.text),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          l10n.upcomingRideDetailTitle,
-          style: typo.titleMedium.copyWith(
-            color: colors.text,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: RefreshIndicator(
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            BookingFlowScreenHeader(
+              colors: colors,
+              typo: typo,
+              title: l10n.upcomingRideDetailTitle,
+              icon: Icons.schedule_rounded,
+              onBack: () => context.pop(),
+            ),
+            Expanded(
+              child: RefreshIndicator(
         color: colors.accent,
         onRefresh: _refresh,
         child: ListView(
-          padding: const EdgeInsetsDirectional.fromSTEB(20, 8, 20, 32),
+          padding: const EdgeInsetsDirectional.fromSTEB(20, 4, 20, 32),
           children: [
             if (isMatching) ...[
               Container(
                 width: double.infinity,
                 padding: const EdgeInsetsDirectional.all(16),
                 decoration: BoxDecoration(
-                  color: colors.accentL.withValues(alpha: 0.35),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: colors.accent.withValues(alpha: 0.25)),
+                  color: colors.card,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: colors.border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.text.withValues(alpha: 0.05),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -443,6 +453,10 @@ class _UpcomingRideRequestDetailScreenState
           ],
         ),
       ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -469,6 +483,13 @@ class _AddressCard extends StatelessWidget {
         color: colors.card,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: colors.border),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

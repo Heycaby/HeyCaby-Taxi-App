@@ -7,6 +7,7 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:intl/intl.dart';
 
+import '../widgets/booking/booking_flow_screen_header.dart';
 import '../providers/ride_history_provider.dart';
 import '../providers/ride_request_provider.dart';
 
@@ -228,24 +229,20 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
 
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colors.text),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          l10n.reportIssue,
-          style: typo.titleMedium.copyWith(color: colors.text),
-        ),
-      ),
       body: SafeArea(
         child: Column(
           children: [
+            BookingFlowScreenHeader(
+              colors: colors,
+              typo: typo,
+              title: l10n.reportIssue,
+              subtitle: l10n.helpUsUnderstand,
+              icon: Icons.flag_outlined,
+              onBack: () => context.pop(),
+            ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsetsDirectional.fromSTEB(20, 24, 20, 24),
+                padding: const EdgeInsetsDirectional.fromSTEB(20, 4, 20, 24),
                 children: [
                   Text(
                     l10n.reportSelectRideTitle,
@@ -400,12 +397,12 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
             Container(
               padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 20),
               decoration: BoxDecoration(
-                color: colors.surface,
+                color: colors.card,
                 boxShadow: [
                   BoxShadow(
                     color: colors.text.withValues(alpha: 0.08),
-                    blurRadius: 16,
-                    offset: const Offset(0, -4),
+                    blurRadius: 20,
+                    offset: const Offset(0, -6),
                   ),
                 ],
               ),
@@ -471,9 +468,16 @@ class _ActiveRideReportBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsetsDirectional.all(16),
       decoration: BoxDecoration(
-        color: colors.accentL,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colors.accent.withValues(alpha: 0.28)),
+        color: colors.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colors.border),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -680,11 +684,20 @@ class _ReasonCard extends StatelessWidget {
         padding: const EdgeInsetsDirectional.all(16),
         decoration: BoxDecoration(
           color: isSelected ? colors.error.withValues(alpha: 0.1) : colors.card,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? colors.error : colors.border,
             width: isSelected ? 2 : 1,
           ),
+          boxShadow: isSelected
+              ? null
+              : [
+                  BoxShadow(
+                    color: colors.text.withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Row(
           children: [

@@ -11,6 +11,7 @@ import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../widgets/booking/booking_flow_screen_header.dart';
 import '../services/rider_support_chat_service.dart';
 
 class RiderSupportChatScreen extends ConsumerStatefulWidget {
@@ -334,48 +335,39 @@ class _RiderSupportChatScreenState extends ConsumerState<RiderSupportChatScreen>
     final isClosed = _isClosedStatus(_status);
     return Scaffold(
       backgroundColor: colors.bg,
-      appBar: AppBar(
-        backgroundColor: colors.card,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colors.text),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          _category.isNotEmpty ? _category : l10n.support,
-          style: typo.headingMedium.copyWith(color: colors.text),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Center(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      body: SafeArea(
+        child: Column(
+          children: [
+            BookingFlowScreenHeader(
+              colors: colors,
+              typo: typo,
+              title: _category.isNotEmpty ? _category : l10n.support,
+              icon: Icons.support_agent_rounded,
+              onBack: () => context.pop(),
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: isClosed
-                      ? colors.success.withValues(alpha: 0.1)
-                      : colors.warning.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                      ? colors.success.withValues(alpha: 0.12)
+                      : colors.warning.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isClosed
+                        ? colors.success.withValues(alpha: 0.3)
+                        : colors.warning.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Text(
-                  isClosed
-                      ? l10n.supportTicketResolved
-                      : l10n.supportTicketOpen,
+                  isClosed ? l10n.supportTicketResolved : l10n.supportTicketOpen,
                   style: typo.labelSmall.copyWith(
                     color: isClosed ? colors.success : colors.warning,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: _loading
+            Expanded(
+              child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : ListView.builder(
                     controller: _scrollController,
@@ -476,6 +468,7 @@ class _RiderSupportChatScreenState extends ConsumerState<RiderSupportChatScreen>
             ),
           ),
         ],
+        ),
       ),
     );
   }
