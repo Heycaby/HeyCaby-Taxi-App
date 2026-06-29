@@ -90,6 +90,18 @@ void main() {
       'Security and third-party responsibility',
     );
     expect(DriverStrings.veriffTermsLegalDisclosureTitle, 'Legal disclosure');
+    expect(
+      DriverStrings.indemnificationQuizQuestion1,
+      '1) Who is responsible for transport obligations during rides?',
+    );
+    expect(
+      DriverStrings.indemnificationQuizQuestion1Options[1],
+      'The Driver',
+    );
+    expect(
+      DriverStrings.indemnificationQuizQuestion5Options[1],
+      'Licences/permits/insurance and legal compliance',
+    );
 
     DriverStrings.useLocale(const Locale('es'));
     expect(DriverStrings.home, 'Inicio');
@@ -173,6 +185,18 @@ void main() {
       'Seguridad y responsabilidad de terceros',
     );
     expect(DriverStrings.veriffTermsLegalDisclosureTitle, 'Divulgación legal');
+    expect(
+      DriverStrings.indemnificationQuizQuestion1,
+      '1) ¿Quién es responsable de las obligaciones de transporte durante los viajes?',
+    );
+    expect(
+      DriverStrings.indemnificationQuizQuestion1Options[1],
+      'El conductor',
+    );
+    expect(
+      DriverStrings.indemnificationQuizQuestion5Options[1],
+      'Licencias, permisos, seguro y cumplimiento legal',
+    );
 
     DriverStrings.useLocale(const Locale('ar'));
     expect(DriverStrings.home, 'الرئيسية');
@@ -247,5 +271,17 @@ void main() {
       'الأمان ومسؤولية الطرف الثالث',
     );
     expect(DriverStrings.veriffTermsLegalDisclosureTitle, 'الإفصاح القانوني');
+    expect(
+      DriverStrings.indemnificationQuizQuestion1,
+      '1) من المسؤول عن التزامات النقل أثناء الرحلات؟',
+    );
+    expect(
+      DriverStrings.indemnificationQuizQuestion1Options[1],
+      'السائق',
+    );
+    expect(
+      DriverStrings.indemnificationQuizQuestion5Options[1],
+      'التراخيص والتصاريح والتأمين والامتثال القانوني',
+    );
   });
 }

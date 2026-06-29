@@ -1577,6 +1577,126 @@ class DriverStrings {
   static const String indemnificationQuizPassBody =
       'Goed gedaan. Je juridische quiz staat nu als afgerond.';
   static const String indemnificationQuizPassCta = 'Doorgaan';
+  static String get indemnificationQuizQuestion1 => _t(
+        '1) Wie is verantwoordelijk voor vervoersverplichtingen tijdens ritten?',
+        en: '1) Who is responsible for transport obligations during rides?',
+        es: '1) ¿Quién es responsable de las obligaciones de transporte durante los viajes?',
+        ar: '1) من المسؤول عن التزامات النقل أثناء الرحلات؟',
+      );
+  static List<String> get indemnificationQuizQuestion1Options => [
+        'HeyCaby',
+        _t(
+          'De chauffeur',
+          en: 'The Driver',
+          es: 'El conductor',
+          ar: 'السائق',
+        ),
+        _t(
+          'Beiden evenveel',
+          en: 'Both equally',
+          es: 'Ambos por igual',
+          ar: 'كلاهما بالتساوي',
+        ),
+      ];
+  static String get indemnificationQuizQuestion2 => _t(
+        '2) Als een chauffeur met verlopen verzekering rijdt, wie is aansprakelijk?',
+        en: '2) If a driver has expired insurance, who is liable?',
+        es: '2) Si un conductor tiene el seguro vencido, ¿quién es responsable?',
+        ar: '2) إذا كان تأمين السائق منتهي الصلاحية، فمن المسؤول؟',
+      );
+  static List<String> get indemnificationQuizQuestion2Options => [
+        'HeyCaby',
+        _t(
+          'De chauffeur',
+          en: 'The Driver',
+          es: 'El conductor',
+          ar: 'السائق',
+        ),
+        _t(
+          'Niemand',
+          en: 'No one',
+          es: 'Nadie',
+          ar: 'لا أحد',
+        ),
+      ];
+  static String get indemnificationQuizQuestion3 => _t(
+        '3) Verwijdert niet lezen van de vrijwaring je aansprakelijkheid?',
+        en: '3) Does not reading the indemnification remove your liability?',
+        es: '3) ¿No leer la indemnización elimina tu responsabilidad?',
+        ar: '3) هل عدم قراءة إقرار الإعفاء يزيل مسؤوليتك؟',
+      );
+  static List<String> get indemnificationQuizQuestion3Options => [
+        _t(
+          'Ja',
+          en: 'Yes',
+          es: 'Sí',
+          ar: 'نعم',
+        ),
+        _t(
+          'Nee',
+          en: 'No',
+          es: 'No',
+          ar: 'لا',
+        ),
+        _t(
+          'Alleen gedeeltelijk',
+          en: 'Only partially',
+          es: 'Solo parcialmente',
+          ar: 'جزئيا فقط',
+        ),
+      ];
+  static String get indemnificationQuizQuestion4 => _t(
+        '4) Is HeyCaby partij bij de vervoersovereenkomst tussen chauffeur en passagier?',
+        en: '4) Is HeyCaby a party to the Driver-Rider transport agreement?',
+        es: '4) ¿HeyCaby es parte del acuerdo de transporte entre conductor y pasajero?',
+        ar: '4) هل HeyCaby طرف في اتفاق النقل بين السائق والراكب؟',
+      );
+  static List<String> get indemnificationQuizQuestion4Options => [
+        _t(
+          'Ja',
+          en: 'Yes',
+          es: 'Sí',
+          ar: 'نعم',
+        ),
+        _t(
+          'Nee',
+          en: 'No',
+          es: 'No',
+          ar: 'لا',
+        ),
+        _t(
+          'Alleen bij geschillen',
+          en: 'Only for disputes',
+          es: 'Solo en disputas',
+          ar: 'فقط في النزاعات',
+        ),
+      ];
+  static String get indemnificationQuizQuestion5 => _t(
+        '5) Wat moet geldig zijn voordat je gaat rijden?',
+        en: '5) What must be valid before operating?',
+        es: '5) ¿Qué debe estar vigente antes de operar?',
+        ar: '5) ما الذي يجب أن يكون ساريا قبل العمل؟',
+      );
+  static List<String> get indemnificationQuizQuestion5Options => [
+        _t(
+          'Alleen app-login',
+          en: 'Only app login',
+          es: 'Solo iniciar sesión en la app',
+          ar: 'تسجيل الدخول إلى التطبيق فقط',
+        ),
+        _t(
+          'Vergunningen, verzekeringen en wettelijke naleving',
+          en: 'Licences/permits/insurance and legal compliance',
+          es: 'Licencias, permisos, seguro y cumplimiento legal',
+          ar: 'التراخيص والتصاريح والتأمين والامتثال القانوني',
+        ),
+        _t(
+          'Alleen voertuigfoto',
+          en: 'Only vehicle photo',
+          es: 'Solo foto del vehículo',
+          ar: 'صورة المركبة فقط',
+        ),
+      ];
   static const String vehiclePlateRdwOpenSource =
       'APK- en taxistatus worden gecontroleerd via RDW-open data. We hebben alleen je kenteken nodig.';
 
