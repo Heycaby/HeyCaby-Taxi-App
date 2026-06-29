@@ -196,7 +196,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
         if (position == null) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text(DriverStrings.locationRequiredMessage),
             ),
           );

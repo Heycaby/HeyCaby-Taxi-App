@@ -1,27 +1,134 @@
+import 'dart:ui';
+
 /// Driver app strings (standaardtaal: Nederlands – Nederland).
 /// Migrate to flutter gen-l10n when driver l10n is set up.
 class DriverStrings {
-  static const String goOnline = 'Ga online';
-  static const String goOnlineTitle = 'Ga online';
-  static const String goOnlineChangeStatus = 'Wijzig je status';
-  static const String goOnlineCardGoOnline = 'Ga online';
-  static const String goOnlineCardGoOnlineSubtitle = 'Ontvang ritaanvragen';
-  static const String goOnlineCardBreak = 'Neem pauze';
-  static const String goOnlineCardBreakSubtitle = 'Pauzeer aanvragen';
-  static const String goOnlineCardOffline = 'Dienst stoppen';
-  static const String goOnlineCardOfflineSubtitle = 'Ga offline';
-  static const String slideToGoOnline = 'Schuif om online te gaan';
-  static const String offline = 'Offline';
-  static const String online = 'Online';
-  static const String youAreOnline = 'Je bent online!';
-  static const String onBreak = 'Pauze';
-  static const String resume = 'Hervatten';
-  static const String today = 'Vandaag';
-  static const String thisWeek = 'Deze week';
+  static String _languageCode = 'nl';
+
+  static void useLocale(Locale? locale) {
+    final code = locale?.languageCode.toLowerCase();
+    _languageCode = switch (code) {
+      'en' || 'es' || 'ar' => code!,
+      _ => 'nl',
+    };
+  }
+
+  static String _t(
+    String nl, {
+    required String en,
+    required String es,
+    required String ar,
+  }) {
+    return switch (_languageCode) {
+      'en' => en,
+      'es' => es,
+      'ar' => ar,
+      _ => nl,
+    };
+  }
+
+  static String get goOnline => _t(
+        'Ga online',
+        en: 'Go online',
+        es: 'Conectarse',
+        ar: 'الاتصال',
+      );
+  static String get goOnlineTitle => goOnline;
+  static String get goOnlineChangeStatus => _t(
+        'Wijzig je status',
+        en: 'Change your status',
+        es: 'Cambia tu estado',
+        ar: 'غيّر حالتك',
+      );
+  static String get goOnlineCardGoOnline => goOnline;
+  static String get goOnlineCardGoOnlineSubtitle => _t(
+        'Ontvang ritaanvragen',
+        en: 'Receive ride requests',
+        es: 'Recibe solicitudes de viaje',
+        ar: 'استقبل طلبات الرحلات',
+      );
+  static String get goOnlineCardBreak => takeABreak;
+  static String get goOnlineCardBreakSubtitle => _t(
+        'Pauzeer aanvragen',
+        en: 'Pause requests',
+        es: 'Pausar solicitudes',
+        ar: 'إيقاف الطلبات مؤقتا',
+      );
+  static String get goOnlineCardOffline => _t(
+        'Dienst stoppen',
+        en: 'End shift',
+        es: 'Terminar turno',
+        ar: 'إنهاء الوردية',
+      );
+  static String get goOnlineCardOfflineSubtitle => _t(
+        'Ga offline',
+        en: 'Go offline',
+        es: 'Desconectarse',
+        ar: 'عدم الاتصال',
+      );
+  static String get slideToGoOnline => _t(
+        'Schuif om online te gaan',
+        en: 'Slide to go online',
+        es: 'Desliza para conectarte',
+        ar: 'مرر للاتصال',
+      );
+  static String get offline => _t(
+        'Offline',
+        en: 'Offline',
+        es: 'Sin conexión',
+        ar: 'غير متصل',
+      );
+  static String get online => _t(
+        'Online',
+        en: 'Online',
+        es: 'En línea',
+        ar: 'متصل',
+      );
+  static String get youAreOnline => _t(
+        'Je bent online!',
+        en: 'You are online!',
+        es: '¡Estás en línea!',
+        ar: 'أنت متصل!',
+      );
+  static String get onBreak => _t(
+        'Pauze',
+        en: 'Break',
+        es: 'Descanso',
+        ar: 'استراحة',
+      );
+  static String get resume => _t(
+        'Hervatten',
+        en: 'Resume',
+        es: 'Reanudar',
+        ar: 'استئناف',
+      );
+  static String get today => _t(
+        'Vandaag',
+        en: 'Today',
+        es: 'Hoy',
+        ar: 'اليوم',
+      );
+  static String get thisWeek => _t(
+        'Deze week',
+        en: 'This week',
+        es: 'Esta semana',
+        ar: 'هذا الأسبوع',
+      );
   static const String acceptanceRate = 'Acceptatiegraad';
-  static const String scheduledRides = 'Geplande ritten';
-  static const String scheduledRidesSubtitle = 'ritten beschikbaar in jouw regio';
+  static String get scheduledRides => _t(
+        'Geplande ritten',
+        en: 'Scheduled rides',
+        es: 'Viajes programados',
+        ar: 'الرحلات المجدولة',
+      );
+  static String get scheduledRidesSubtitle => _t(
+        'ritten beschikbaar in jouw regio',
+        en: 'rides available in your area',
+        es: 'viajes disponibles en tu zona',
+        ar: 'رحلات متاحة في منطقتك',
+      );
   static const String driverRating = 'Chauffeursscore';
+
   /// Migration 040 — shown on score screen when `drivers.avg_*` columns exist.
   static const String ratingBreakdownTitle = 'Jouw gemiddelden per gebied';
   static const String ratingPunctuality = 'Stiptheid';
@@ -35,17 +142,28 @@ class DriverStrings {
   static const String reviewFlagTitle = 'Beoordeling aangevraagd';
   static const String reviewFlagBody =
       'Ons team kan recente beoordelingen bekijken. Je hoeft niets te doen tenzij wij contact met je opnemen.';
-  static const String newDriverShieldActive = 'Bescherming nieuwe chauffeur actief';
+  static const String newDriverShieldActive =
+      'Bescherming nieuwe chauffeur actief';
   static const String newDriverShieldBody =
       'Eerste beoordelingen krijgen extra bescherming zodat één moeilijke rit je niet definieert.';
   static const String ratingBadges = 'Prestaties';
   static const String ratingsInScore = 'beoordelingen in je score';
-  static const String todaysRides = 'Ritten vandaag';
+  static String get todaysRides => _t(
+        'Ritten vandaag',
+        en: 'Today’s rides',
+        es: 'Viajes de hoy',
+        ar: 'رحلات اليوم',
+      );
   static const String driverTalk = 'Chauffeurpraat';
-  static const String takeABreak = 'Neem pauze';
+  static String get takeABreak => _t(
+        'Neem pauze',
+        en: 'Take a break',
+        es: 'Tomar descanso',
+        ar: 'خذ استراحة',
+      );
   static const String shiftWorkdayActive = 'Werkdag actief';
   static const String shiftBreakActive = 'Pauze actief';
-  static const String shiftTodaySummary = 'Vandaag';
+  static String get shiftTodaySummary => today;
   static const String shiftStatDriving = 'Rijden';
   static const String shiftStatBreak = 'Pauze';
   static const String shiftStatRides = 'Ritten';
@@ -54,6 +172,7 @@ class DriverStrings {
   static const String shiftBreakReminderTitle = 'Tijd voor een pauze!';
   static const String shiftBreakReminderBody =
       'Je rijdt al lang genoeg achter elkaar. Neem even rust.';
+
   /// Shown on the warm break banner (continuous driving ≥ reminder interval).
   static String shiftBreakReminderBodyHours(int hours) =>
       'Je rijdt al $hours uur. Neem even rust.';
@@ -72,19 +191,40 @@ class DriverStrings {
   static const String demandZonesDesc =
       'Zie gouden cirkels met het aantal passagiers.';
   static const String clearMap = 'Kaart wissen';
-  static const String clearMapDesc = 'Verberg zone-overlays voor een rustig beeld.';
+  static const String clearMapDesc =
+      'Verberg zone-overlays voor een rustig beeld.';
   static const String dutchBreakNotice =
       'Je rijdt al X uur. Nederlandse regels vereisen een pauze van 30 minuten na 4,5 uur rijden.';
   static const String breakRecommended = 'Pauze aanbevolen over X minuten';
   static const String breakRequired = 'Wettelijke pauze vereist';
   static const String setUpRates = 'Stel je tarieven in →';
-  static const String home = 'Start';
+  static String get home => _t(
+        'Start',
+        en: 'Home',
+        es: 'Inicio',
+        ar: 'الرئيسية',
+      );
   static const String work = 'Werk';
-  static const String myRides = 'Mijn ritten';
-  static const String me = 'Ik';
+  static String get myRides => _t(
+        'Mijn ritten',
+        en: 'My rides',
+        es: 'Mis viajes',
+        ar: 'رحلاتي',
+      );
+  static String get me => _t(
+        'Ik',
+        en: 'Me',
+        es: 'Yo',
+        ar: 'أنا',
+      );
   static const String rideDetails = 'Ritdetails';
   static const String rideDetailsNotFound = 'Rit niet gevonden.';
-  static const String noRidesYet = 'Nog geen ritten.';
+  static String get noRidesYet => _t(
+        'Nog geen ritten.',
+        en: 'No rides yet.',
+        es: 'Aún no hay viajes.',
+        ar: 'لا توجد رحلات بعد.',
+      );
   static const String myRidesLoadFailed = 'Ritten laden mislukt.';
   static const String manualRideTag = 'Handmatige rit';
   static const String standardRideTag = 'Standaardrit';
@@ -97,14 +237,46 @@ class DriverStrings {
   static const String paymentMethod = 'Betaalmethode';
   static const String driverEarnings = 'Jouw verdiensten';
   static const String platformFee = 'Platformfee';
-  static const String earnings = 'Verdiensten';
+  static String get earnings => _t(
+        'Verdiensten',
+        en: 'Earnings',
+        es: 'Ganancias',
+        ar: 'الأرباح',
+      );
   static const String availableRides = 'Beschikbare ritten';
-  static const String community = 'Gemeenschap';
-  static const String profile = 'Profiel';
+  static String get community => _t(
+        'Gemeenschap',
+        en: 'Community',
+        es: 'Comunidad',
+        ar: 'المجتمع',
+      );
+  static String get profile => _t(
+        'Profiel',
+        en: 'Profile',
+        es: 'Perfil',
+        ar: 'الملف الشخصي',
+      );
+
   /// Profile header when `drivers.full_name` is empty.
-  static const String profileNamePlaceholder = 'Voeg je naam toe';
-  static const String profileEditNameTitle = 'Je naam';
-  static const String profileEditNameSubtitle = 'Zichtbaar voor passagiers bij het boeken.';
+  static String get profileNamePlaceholder => _t(
+        'Voeg je naam toe',
+        en: 'Add your name',
+        es: 'Añade tu nombre',
+        ar: 'أضف اسمك',
+      );
+  static String get profileEditNameTitle => _t(
+        'Je naam',
+        en: 'Your name',
+        es: 'Tu nombre',
+        ar: 'اسمك',
+      );
+  static String get profileEditNameSubtitle => _t(
+        'Zichtbaar voor passagiers bij het boeken.',
+        en: 'Visible to riders when they book.',
+        es: 'Visible para pasajeros al reservar.',
+        ar: 'يظهر للركاب عند الحجز.',
+      );
+
   /// One-time profile photo confirmation (shown before upload).
   static const String profilePhotoConfirmTitle = 'Deze foto gebruiken?';
   static const String profilePhotoConfirmBody =
@@ -114,10 +286,9 @@ class DriverStrings {
   static const String profilePhotoConfirmYes = 'Ja, opslaan';
   static const String profilePhotoLockedMessage =
       'Je hebt de limiet van 2 wijzigingen voor profielfoto’s bereikt. Neem contact op met de ondersteuning voor een nieuwe wijziging.';
-  static String profilePhotoChangesRemaining(int remaining) =>
-      remaining <= 0
-          ? 'Profielfoto-wijzigingen gebruikt (2/2). Volgende wijziging via de ondersteuning.'
-          : 'Je kunt je profielfoto nog $remaining keer wijzigen.';
+  static String profilePhotoChangesRemaining(int remaining) => remaining <= 0
+      ? 'Profielfoto-wijzigingen gebruikt (2/2). Volgende wijziging via de ondersteuning.'
+      : 'Je kunt je profielfoto nog $remaining keer wijzigen.';
   static const String profilePhotoUploadFailed =
       'Foto uploaden mislukt. Probeer opnieuw.';
   static const String profilePhotoUploadConnectionError =
@@ -133,11 +304,24 @@ class DriverStrings {
   static const String profileTapHint = 'Tik om naam en foto toe te voegen';
   static const String profilePhotoAddHint =
       'Tik op de foto om uit de galerij te kiezen';
-  static const String profileRatingHint =
-      'Alle chauffeurs beginnen op 5,0 sterren; je score daalt als klachten worden bevestigd.';
-  static const String vehicleCardTitle = 'Voertuig dat passagiers zien';
-  static const String vehicleCardSubtitle =
-      'Kenteken + foto’s zichtbaar voor passagiers vóór ophalen.';
+  static String get profileRatingHint => _t(
+        'Alle chauffeurs beginnen op 5,0 sterren; je score daalt als klachten worden bevestigd.',
+        en: 'All drivers start at 5.0 stars; your score only drops when complaints are confirmed.',
+        es: 'Todos los conductores empiezan con 5,0 estrellas; tu puntuación baja solo si se confirman quejas.',
+        ar: 'يبدأ كل السائقين بتقييم 5.0 نجوم؛ ينخفض تقييمك فقط عند تأكيد الشكاوى.',
+      );
+  static String get vehicleCardTitle => _t(
+        'Voertuig dat passagiers zien',
+        en: 'Vehicle riders see',
+        es: 'Vehículo que ven los pasajeros',
+        ar: 'المركبة التي يراها الركاب',
+      );
+  static String get vehicleCardSubtitle => _t(
+        'Kenteken + foto’s zichtbaar voor passagiers vóór ophalen.',
+        en: 'Plate and photos are visible to riders before pickup.',
+        es: 'La matrícula y fotos son visibles antes de la recogida.',
+        ar: 'تظهر اللوحة والصور للركاب قبل الوصول.',
+      );
   static const String vehiclePhotosLimitHint =
       'Upload maximaal 2 voertuigfoto’s. Extra wijzigingen via de ondersteuning.';
   static const String vehiclePhotoLimitReached =
@@ -145,6 +329,7 @@ class DriverStrings {
   static const String addVehiclePhoto = 'Voertuigfoto toevoegen';
   static const String vehiclePhotoUploadFailed =
       'Voertuigfoto uploaden mislukt. Probeer opnieuw.';
+
   /// Web founding-driver flow — welcome after `claim-founding-driver` Edge Function.
   static const String foundingDriverWelcomeTitle = 'Founding Driver';
   static const String foundingDriverWelcomeBody =
@@ -171,7 +356,8 @@ class DriverStrings {
       'De Nederlandse taxiwet (Wpv 2000) vereist deze documenten. Nummers en uploads worden door ons team beoordeeld; RDW wordt automatisch gecontroleerd voor je voertuig.';
   static const String complianceFooterV2 =
       'VOG en taxidiploma zijn in deze app niet meer vereist. APK volgt uit je kenteken (RDW).';
-  static const String chauffeurspasHintV2 = 'Chauffeurspasnummer (8–12 cijfers)';
+  static const String chauffeurspasHintV2 =
+      'Chauffeurspasnummer (8–12 cijfers)';
   static const String insurancePhotoOnFile = 'Verzekeringsdocument aanwezig';
   static const String insurancePhotoTapToView =
       'Verzekeringsdocument aanwezig · Tik om te bekijken';
@@ -223,17 +409,24 @@ class DriverStrings {
   static const String complianceSuspended = 'Geschorst';
   static const String complianceRejected = 'Afgewezen';
   static const String support = 'Ondersteuning';
-  static const String settings = 'Instellingen';
+  static String get settings => _t(
+        'Instellingen',
+        en: 'Settings',
+        es: 'Ajustes',
+        ar: 'الإعدادات',
+      );
   static const String billing = 'Facturatie';
   static const String instellingen = 'Instellingen';
   static const String tarieven = 'Tarieven';
   static const String uitloggen = 'Uitloggen';
   static const String logout = 'Uitloggen';
   static const String deleteAccount = 'Account verwijderen';
-  static const String deleteAccountConfirmTitle = 'Account permanent verwijderen?';
+  static const String deleteAccountConfirmTitle =
+      'Account permanent verwijderen?';
   static const String deleteAccountConfirmBody =
       'Hiermee worden je chauffeursprofiel en inlog bij HeyCaby verwijderd. Dit kan niet ongedaan worden gemaakt.';
-  static const String deleteAccountTypeDeleteHint = 'Typ DELETE om te bevestigen';
+  static const String deleteAccountTypeDeleteHint =
+      'Typ DELETE om te bevestigen';
   static const String deleteAccountTypeDeleteError =
       'Typ het woord DELETE (hoofdletters maakt niet uit) en tik daarna opnieuw op Account verwijderen.';
   static const String deleteAccountFailed =
@@ -252,9 +445,11 @@ class DriverStrings {
   static const String reportRiderBody =
       'HeyCaby beoordeelt deze rit-chat. Je kunt hieronder details toevoegen (optioneel).';
   static const String reportReasonHint = 'Wat is er gebeurd? (optioneel)';
-  static const String reportSubmitted = 'Bedankt — we hebben je melding ontvangen.';
+  static const String reportSubmitted =
+      'Bedankt — we hebben je melding ontvangen.';
   static const String chatBlockFailed = 'Blokkeerlijst bijwerken mislukt.';
-  static const String chatReportFailed = 'Melding versturen mislukt. Probeer opnieuw.';
+  static const String chatReportFailed =
+      'Melding versturen mislukt. Probeer opnieuw.';
   static const String chatOnlyDuringActiveRideTitle =
       'Chat beschikbaar tijdens actieve ritten';
   static const String chatOnlyDuringActiveRideBody =
@@ -312,28 +507,67 @@ class DriverStrings {
   static const String expectedFareLabel = 'Verwacht tarief';
   static const String paidAmountLabel = 'Betaald bedrag';
   static const String paymentMethodLabel = 'Betaalmethode';
-  static const String accountingNoteLabel = 'Administratieve notitie (optioneel)';
+  static const String accountingNoteLabel =
+      'Administratieve notitie (optioneel)';
   static const String sendReceipt = 'Bon versturen';
   static const String sendingReceipt = 'Versturen…';
   static const String receiptSent = 'Bon verstuurd.';
   static const String receiptSendFailed = 'Bon versturen mislukt.';
   static const String logoutConfirm = 'Weet u zeker dat u wilt uitloggen?';
+
   /// Destructive confirm in logout dialog.
   static const String logoutConfirmAction = 'Uitloggen';
   static const String menu = 'Menu';
   static const String ride = 'rit';
-  static const String rides = 'ritten';
+  static String get rides => _t(
+        'ritten',
+        en: 'rides',
+        es: 'viajes',
+        ar: 'رحلات',
+      );
   static const String now = 'Nu';
-  static const String homeLiveRidesTitle = 'Live ritten';
-  static const String homeActiveRideTitle = 'Actieve rit';
-  static const String homeIncomingRides = 'Binnenkomende ritten';
-  static const String homeNoLiveRidesOffline =
-      'Ga online om live ritaanvragen in jouw zone te zien.';
-  static const String homeNoLiveRidesOnline =
-      'Geen open ritaanvragen — we laten het weten zodra er iets binnenkomt.';
-  static const String homeLiveRidesOnBreak =
-      'Hervat dienst om nieuwe aanvragen te ontvangen.';
-  static const String homeViewAllRides = 'Alle beschikbare ritten';
+  static String get homeLiveRidesTitle => _t(
+        'Live ritten',
+        en: 'Live rides',
+        es: 'Viajes en vivo',
+        ar: 'رحلات مباشرة',
+      );
+  static String get homeActiveRideTitle => _t(
+        'Actieve rit',
+        en: 'Active ride',
+        es: 'Viaje activo',
+        ar: 'رحلة نشطة',
+      );
+  static String get homeIncomingRides => _t(
+        'Binnenkomende ritten',
+        en: 'Incoming rides',
+        es: 'Viajes entrantes',
+        ar: 'رحلات واردة',
+      );
+  static String get homeNoLiveRidesOffline => _t(
+        'Ga online om live ritaanvragen in jouw zone te zien.',
+        en: 'Go online to see live ride requests in your zone.',
+        es: 'Conéctate para ver solicitudes de viaje en tu zona.',
+        ar: 'اتصل لرؤية طلبات الرحلات المباشرة في منطقتك.',
+      );
+  static String get homeNoLiveRidesOnline => _t(
+        'Geen open ritaanvragen — we laten het weten zodra er iets binnenkomt.',
+        en: 'No open ride requests — we’ll let you know when one arrives.',
+        es: 'No hay solicitudes abiertas; te avisaremos cuando llegue una.',
+        ar: 'لا توجد طلبات مفتوحة، سنخبرك عند وصول طلب.',
+      );
+  static String get homeLiveRidesOnBreak => _t(
+        'Hervat dienst om nieuwe aanvragen te ontvangen.',
+        en: 'Resume your shift to receive new requests.',
+        es: 'Reanuda tu turno para recibir nuevas solicitudes.',
+        ar: 'استأنف ورديتك لاستقبال طلبات جديدة.',
+      );
+  static String get homeViewAllRides => _t(
+        'Alle beschikbare ritten',
+        en: 'All available rides',
+        es: 'Todos los viajes disponibles',
+        ar: 'كل الرحلات المتاحة',
+      );
   static const String scheduled = 'Gepland';
   static const String requests = 'Aanvragen';
   static const String confirmed = 'Bevestigd';
@@ -367,10 +601,9 @@ class DriverStrings {
   static const String rideSwapHowButton = rideSwapHowTitle;
   static const String swapFeedLoadFailed = 'Kon wisselritten niet laden';
   static const String swapDetailPickupPrefix = 'Ophaal:';
-  static String rideSwapOpenCount(int n) =>
-      n == 0
-          ? 'Geen open wissels'
-          : (n == 1 ? '1 open wissel' : '$n open wissels');
+  static String rideSwapOpenCount(int n) => n == 0
+      ? 'Geen open wissels'
+      : (n == 1 ? '1 open wissel' : '$n open wissels');
   static const String swapOfferTitle = 'Rit aanbieden voor wissel';
   static const String swapOfferBullet1 =
       'Deze rit wordt zichtbaar voor andere chauffeurs in jouw netwerk.';
@@ -411,7 +644,8 @@ class DriverStrings {
       'Door te bevestigen neem jij deze rit volledig over. De rit staat meteen in jouw agenda.';
   static const String swapConfirmCta = 'Bevestigen';
   static const String swapCancelOffer = 'Annuleer wissel';
-  static const String swapCancelledOk = 'Wissel ingetrokken. De rit blijft bij jou.';
+  static const String swapCancelledOk =
+      'Wissel ingetrokken. De rit blijft bij jou.';
   static const String swapCancelConfirmTitle = 'Wissel intrekken?';
   static const String swapCancelConfirmBody =
       'De rit verdwijnt uit de wissellijst. Je houdt de rit zelf.';
@@ -419,8 +653,10 @@ class DriverStrings {
   static const String swapErrorNotCompliant =
       'Je profiel moet compliant zijn om een wisselrit over te nemen.';
   static const String swapErrorExpired = 'Deze wissel is verlopen.';
-  static const String swapErrorNotAvailable = 'Deze wissel is niet meer beschikbaar.';
-  static const String swapErrorOwnSwap = 'Je kunt je eigen aanbod niet overnemen.';
+  static const String swapErrorNotAvailable =
+      'Deze wissel is niet meer beschikbaar.';
+  static const String swapErrorOwnSwap =
+      'Je kunt je eigen aanbod niet overnemen.';
   static const String swapClaimSuccess = 'Rit overgenomen';
   static const String claimRide = 'Rit overnemen';
   static const String vehicle = 'Voertuig';
@@ -431,11 +667,25 @@ class DriverStrings {
   static const String acceptsTikkie = 'Tikkie geaccepteerd';
   static const String petFriendly = 'Huisdiervriendelijk';
   static const String wheelchairAccessible = 'Rolstoeltoegankelijk';
-  static const String language = 'Taal';
+  static String get language => _t(
+        'Taal',
+        en: 'Language',
+        es: 'Idioma',
+        ar: 'اللغة',
+      );
   static const String theme = 'Thema';
-  static const String preferences = 'Voorkeuren';
-  static const String preferencesSubtitle =
-      'Voertuig, betalingen en hoe je in de app verschijnt.';
+  static String get preferences => _t(
+        'Voorkeuren',
+        en: 'Preferences',
+        es: 'Preferencias',
+        ar: 'التفضيلات',
+      );
+  static String get preferencesSubtitle => _t(
+        'Voertuig, betalingen en hoe je in de app verschijnt.',
+        en: 'Vehicle, payments, and how you appear in the app.',
+        es: 'Vehículo, pagos y cómo apareces en la app.',
+        ar: 'المركبة والمدفوعات وكيف تظهر في التطبيق.',
+      );
   static const String hotspots = 'Hotspots';
   static const String hotspotsSubtitle =
       'Open Chauffeursradar en navigeer naar drukke zones';
@@ -454,11 +704,9 @@ class DriverStrings {
   static const String hotspotsSublineHighDemand =
       'Sterke vraag • Goede kans op ritten';
   static const String hotspotsSublineSteady = 'Gemiddelde activiteit';
-  static const String hotspotsSublineQuiet =
-      'Lage vraag • Rustiger tempo';
+  static const String hotspotsSublineQuiet = 'Lage vraag • Rustiger tempo';
   static String hotspotsOnlineDrivers(int n) => 'Chauffeurs online hier: $n';
-  static String hotspotsRecentRides120m(int n) =>
-      'Ritaanvragen (2 u): $n';
+  static String hotspotsRecentRides120m(int n) => 'Ritaanvragen (2 u): $n';
   static String hotspotsAvgOfferedFare(double v) =>
       'Gem. aangeboden tarief (2 u): €${v.toStringAsFixed(2)}';
   static const String hotspotsAvgFareUnavailable =
@@ -489,23 +737,46 @@ class DriverStrings {
   static const String appSuggestion = 'Suggestie voor de app';
   static const String appSuggestionSubtitle =
       'Vertel ons welke functies je wilt zien';
-  static const String preferencesSectionVehicle = 'Voertuig & bereik';
-  static const String preferencesSectionPayments = 'Betalingen & toegankelijkheid';
-  static const String preferencesSectionAppearance = 'Weergave';
-  static const String preferencesSectionNavigation = 'Navigatie';
+  static String get preferencesSectionVehicle => _t(
+        'Voertuig & bereik',
+        en: 'Vehicle & reach',
+        es: 'Vehículo y alcance',
+        ar: 'المركبة والنطاق',
+      );
+  static String get preferencesSectionPayments => _t(
+        'Betalingen & toegankelijkheid',
+        en: 'Payments & accessibility',
+        es: 'Pagos y accesibilidad',
+        ar: 'المدفوعات وإمكانية الوصول',
+      );
+  static String get preferencesSectionAppearance => _t(
+        'Weergave',
+        en: 'Appearance',
+        es: 'Apariencia',
+        ar: 'المظهر',
+      );
+  static String get preferencesSectionNavigation => _t(
+        'Navigatie',
+        en: 'Navigation',
+        es: 'Navegación',
+        ar: 'الملاحة',
+      );
   static const String preferencesSectionSoundTest = 'Geluid testen';
   static const String preferencesSectionDebug = 'Debug (tijdelijk)';
-  static const String preferencesSoundTestOnlineTitle = 'Online-signaal voorbeeld';
+  static const String preferencesSoundTestOnlineTitle =
+      'Online-signaal voorbeeld';
   static const String preferencesSoundTestOnlineSubtitle =
       'Speel het geluid voor online status.';
-  static const String preferencesSoundTestBreakTitle = 'Pauze-signaal voorbeeld';
+  static const String preferencesSoundTestBreakTitle =
+      'Pauze-signaal voorbeeld';
   static const String preferencesSoundTestBreakSubtitle =
       'Speel het geluid voor pauze-status.';
   static const String preferencesSoundTestOfflineTitle =
       'Offline-signaal voorbeeld';
   static const String preferencesSoundTestOfflineSubtitle =
       'Speel het geluid voor offline status.';
-  static const String preferencesMolliePreviewTitle = 'Mollie-checkout voorbeeld';
+  static const String preferencesMolliePreviewTitle =
+      'Mollie-checkout voorbeeld';
   static const String preferencesMolliePreviewSubtitle =
       'Open tijdelijk voorbeeldscherm voor checkout in de app.';
   static const String saveAction = 'Opslaan';
@@ -536,15 +807,13 @@ class DriverStrings {
       'De huidige chauffeur krijgt tijd om te reageren. Daarna kun jij verder.';
 
   static const String shiftHandoverBrandName = 'Secure Shift Handover™';
-  static const String shiftHandoverWaitingTitle =
-      'Secure Shift Handover™';
+  static const String shiftHandoverWaitingTitle = 'Secure Shift Handover™';
   static const String shiftHandoverWaitingBody =
       'De huidige chauffeur is op de hoogte gebracht. '
       'Je dienst start automatisch zodra de wachttijd voorbij is, '
       'tenzij hij of zij nog rijdt.';
   static const String shiftHandoverWaitingEta = 'Maximale wachttijd';
-  static const String shiftHandoverQueuedRideTitle =
-      'Je aanvraag staat klaar';
+  static const String shiftHandoverQueuedRideTitle = 'Je aanvraag staat klaar';
   static const String shiftHandoverQueuedRideBody =
       'De taxi is bezig met een rit. Je dienst start automatisch zodra die rit is afgerond.';
   static const String shiftHandoverQueuedRideSubtitle =
@@ -625,24 +894,23 @@ class DriverStrings {
       'Kon de chauffeurslijst niet bijwerken. Probeer het opnieuw.';
   static const String shiftHandoverWaitingSubtitle =
       'Geschatte dienstwissel — meestal 10–30 seconden';
-  static const String shiftHandoverAuditTitle =
-      'Secure Shift Handover — audit';
+  static const String shiftHandoverAuditTitle = 'Secure Shift Handover — audit';
   static const String shiftHandoverAuditEmpty =
       'Nog geen dienstwissel-aanvragen geregistreerd.';
   static const String shiftHandoverAuditForbidden =
       'Geen toegang. Alleen HeyCaby staff kan dit auditlog bekijken.';
   static const String taxiSessionRevokedTitle =
       'Taxi toegewezen aan andere chauffeur';
-  static String taxiSessionRevokedBody(String plate) =>
-      plate.trim().isEmpty
-          ? 'Je taxi-sessie is beëindigd. Een andere geverifieerde chauffeur neemt het over.'
-          : 'Je taxi $plate is toegewezen aan een andere geverifieerde chauffeur. '
-              'Je bent offline gezet.';
+  static String taxiSessionRevokedBody(String plate) => plate.trim().isEmpty
+      ? 'Je taxi-sessie is beëindigd. Een andere geverifieerde chauffeur neemt het over.'
+      : 'Je taxi $plate is toegewezen aan een andere geverifieerde chauffeur. '
+          'Je bent offline gezet.';
   static const String taxiSessionRevokedVoluntaryTitle = 'Dienst beëindigd';
-  static String taxiSessionRevokedVoluntaryBody(String plate) =>
-      plate.trim().isEmpty
-          ? 'Je dienst is beëindigd. Een collega neemt de taxi over.'
-          : 'Je dienst op taxi $plate is beëindigd. Een collega neemt de taxi over.';
+  static String taxiSessionRevokedVoluntaryBody(String plate) => plate
+          .trim()
+          .isEmpty
+      ? 'Je dienst is beëindigd. Een collega neemt de taxi over.'
+      : 'Je dienst op taxi $plate is beëindigd. Een collega neemt de taxi over.';
   static const String taxiSessionRevokedCta = 'Naar home';
   static const String startShiftPrimary = 'Start mijn dienst';
 
@@ -660,7 +928,8 @@ class DriverStrings {
       progressiveVerificationMilestone10Hint;
   static const String progressiveVerificationMilestone50Hint =
       'Na 50 ritten: volledige taxidocumentatie moet up-to-date blijven.';
-  static const String progressiveVerificationCompleteDocs = 'Documenten afronden';
+  static const String progressiveVerificationCompleteDocs =
+      'Documenten afronden';
   static const String runtimeGoOnlineEarlyOnboardingBody =
       'Rond je kenteken en voorwaarden af om online te gaan. Extra documenten komen pas na 10 ritten.';
   static const String lookupPlate = 'Kenteken opzoeken';
@@ -669,6 +938,7 @@ class DriverStrings {
   static const String vehicleNotTaxiRdw =
       'Dit voertuig staat in RDW maar niet als taxi geregistreerd. Neem contact op met RDW of de ondersteuning.';
   static const String vehicleVerifiedTaxi = 'Voertuig geverifieerd als taxi';
+
   /// Shown when `drivers_vehicle_plate_unique` fires — plate exists on another driver row.
   static const String vehiclePlateDuplicate =
       'Dit kenteken is al geregistreerd. Als dit jouw taxi is, kan een ander account het hebben — neem contact op met de ondersteuning.';
@@ -688,8 +958,7 @@ class DriverStrings {
       'Neem contact op met de ondersteuning voor voertuigwijziging';
   static const String apkExpiringSoon = 'Verloopt binnenkort';
   static const String apkExpired = 'Verlopen';
-  static const String vehiclePassengersSeeThis =
-      'PASSAGIERS ZIEN DIT VOERTUIG';
+  static const String vehiclePassengersSeeThis = 'PASSAGIERS ZIEN DIT VOERTUIG';
   static const String vehicleNoPhoto = 'Geen voertuigfoto';
   static String vehiclePhotoNumber(int current, int total) =>
       'Foto $current/$total';
@@ -704,11 +973,13 @@ class DriverStrings {
   static const String chauffeurspasExpiryInvalid =
       'Gebruik een geldige vervaldatum in formaat JJJJ-MM-DD.';
   static const String veriffStart = 'Rijbewijs verifiëren met Veriff';
+
   /// Full-screen Veriff entry (`/driver/veriff`).
   static const String veriffScreenTitle = 'Rijbewijsverificatie';
   static const String veriffScreenIntro =
       'Je bekijkt eerst de chauffeurvoorwaarden en opent daarna Veriff in je browser '
       'om je rijbewijs en identiteit te verifiëren.';
+
   /// Large callout on `/driver/veriff` — drivers must switch back manually from Safari/Chrome.
   static const String veriffScreenComeBackTitle = 'Kom terug naar HeyCaby';
   static const String veriffScreenComeBackBody =
@@ -719,8 +990,10 @@ class DriverStrings {
       'Veriff kon niet worden geopend. Controleer je verbinding en probeer het opnieuw.';
   static const String veriffProcessingHint =
       'Rond verificatie in de browser af. Status wordt hier bijgewerkt als je klaar bent.';
+
   /// Bottom sheet before opening Veriff (hosted flow + chauffeur terms art. 3).
-  static const String veriffTermsGateTitle = 'Voorwaarden & identiteitscontrole';
+  static const String veriffTermsGateTitle =
+      'Voorwaarden & identiteitscontrole';
   static const String veriffTermsGateBody =
       'Verificatie gebeurt door Veriff (zie chauffeurvoorwaarden, sectie 3). '
       'Lees de voorwaarden voordat je doorgaat.';
@@ -737,7 +1010,8 @@ class DriverStrings {
       'HeyCaby kan niet garanderen dat Veriff altijd beschikbaar is en is niet aansprakelijk voor storingen, vertraging of incidenten bij derden buiten onze controle.';
   static const String veriffTermsLegalDisclosureBody =
       'Waar de wet of bevoegde autoriteit dit vereist, kunnen relevante verificatiegegevens worden verstrekt conform wettelijke verplichtingen.';
-  static const String veriffTermsReadFull = 'Volledige chauffeurvoorwaarden lezen';
+  static const String veriffTermsReadFull =
+      'Volledige chauffeurvoorwaarden lezen';
   static const String veriffTermsReadVeriffOnly = 'Alleen Veriff-sectie openen';
   static const String veriffTermsCheckbox =
       'Ik heb de HeyCaby-chauffeurvoorwaarden en het Veriff-verificatieproces gelezen en ga ermee akkoord.';
@@ -745,6 +1019,7 @@ class DriverStrings {
       'Ik begrijp dat mijn verificatiegegevens door Veriff als verwerker worden verwerkt en dat HeyCaby alleen minimale compliance-metadata bewaart.';
   static const String veriffTermsContinue = 'Doorgaan naar Veriff';
   static const String veriffTermsCancel = 'Annuleren';
+
   /// After terms: explicit consent before opening Veriff in Safari/Chrome (App Review / transparency).
   static const String veriffExternalBrowserTitle = 'Verificatie buiten de app';
   static const String veriffExternalBrowserBody =
@@ -763,8 +1038,8 @@ class DriverStrings {
       'Houd minimaal één betaalmethode ingeschakeld.';
   static const String onlineBlockedCompliance =
       'Je kunt pas online als alle verplichte documenten zijn afgerond (chauffeurspas, verzekering, KvK, kenteken, akkoord met de voorwaarden, vrijwaring en korte quiz) en je rijbewijs handmatig is goedgekeurd.';
-  static const String onlineBlockedPending =
-      'Je profiel wordt beoordeeld…';
+  static const String onlineBlockedPending = 'Je profiel wordt beoordeeld…';
+
   /// Veriff done; waiting for ops to set `rijbewijs_verified` in Supabase.
   static const String onlineBlockedLicenseReview =
       'Je rijbewijscontrole wordt door ons team afgerond. Je kunt online na bevestiging (meestal kort na Veriff).';
@@ -776,8 +1051,7 @@ class DriverStrings {
   static const String onlineChecklistChauffeurCard = 'Chauffeurspasnummer';
   static const String onlineChecklistChauffeurExpiry =
       'Vervaldatum chauffeurspas';
-  static const String onlineChecklistInsuranceProvider =
-      'Taxiverzekeraar';
+  static const String onlineChecklistInsuranceProvider = 'Taxiverzekeraar';
   static const String onlineChecklistInsurancePolicy =
       'Polisnummer taxiverzekering';
   static const String onlineChecklistInsuranceExpiry =
@@ -787,14 +1061,13 @@ class DriverStrings {
   static const String onlineChecklistKvkNumber = 'KvK-nummer';
   static const String onlineChecklistKvkAddress = 'KvK-bedrijfsadres';
   static const String onlineChecklistVehiclePlate = 'Kenteken';
-  static const String onlineChecklistTerms =
-      'Gebruiksvoorwaarden accepteren';
-  static const String onlineChecklistShortQuiz =
-      'Korte juridische quiz halen';
+  static const String onlineChecklistTerms = 'Gebruiksvoorwaarden accepteren';
+  static const String onlineChecklistShortQuiz = 'Korte juridische quiz halen';
   static const String onlineChecklistIndemnification =
       'Vrijwaring lezen en bevestigen';
   static const String onlineChecklistLicenceApproval =
       'Handmatige goedkeuring rijbewijs (na Veriff)';
+
   /// Weekly HeyCaby driver platform fee (after free starter rides).
   static const String platformFeeTitle = 'Platformfee';
   static String platformFeeBody(String euros) =>
@@ -803,12 +1076,18 @@ class DriverStrings {
   static const String platformFeeCheckoutTitle = 'Betaling';
   static const String platformFeeStartingCheckout = 'Betaling voorbereiden…';
   static const String platformFeeStartingAppleIap = 'Verbinden met App Store…';
-  static const String platformFeeInvalidUrl = 'Ongeldige betaallink. Probeer opnieuw.';
+  static const String platformFeeInvalidUrl =
+      'Ongeldige betaallink. Probeer opnieuw.';
   static const String platformFeeStatusError =
       'Kon je status niet ophalen. Controleer je verbinding.';
-  static const String platformFeeStartError = 'Betaling starten mislukt. Probeer opnieuw.';
-  static const String goOnlineFailed =
-      'Online gaan mislukt. Controleer je verbinding en probeer opnieuw.';
+  static const String platformFeeStartError =
+      'Betaling starten mislukt. Probeer opnieuw.';
+  static String get goOnlineFailed => _t(
+        'Online gaan mislukt. Controleer je verbinding en probeer opnieuw.',
+        en: 'Could not go online. Check your connection and try again.',
+        es: 'No se pudo conectar. Revisa tu conexión e inténtalo de nuevo.',
+        ar: 'تعذر الاتصال. تحقق من اتصالك وحاول مرة أخرى.',
+      );
   static const String platformFeeStillPending =
       'Betaling nog niet bevestigd. Wacht even of probeer opnieuw.';
   static const String billingTitle = 'Facturatie';
@@ -829,6 +1108,7 @@ class DriverStrings {
   static const String billingChoosePlanTitle = 'Kies een abonnement';
   static const String billingPlanUnknown = 'Abonnement';
   static const String billingUseSelectedPlan = 'Doorgaan met dit abonnement';
+
   /// Shown when `/api/driver/status` returns no usable `plans` (strict server pricing).
   static const String billingPlansUnavailable =
       'Prijzen zijn nu niet beschikbaar. Vernieuw of probeer het later opnieuw.';
@@ -852,8 +1132,7 @@ class DriverStrings {
   static const String billingSubscriptionTitle = 'Weekabonnement';
   static const String billingSubscriptionPause = 'Pauzeren';
   static const String billingSubscriptionResume = 'Hervatten';
-  static const String billingSubscriptionCancel =
-      'Stoppen na deze periode';
+  static const String billingSubscriptionCancel = 'Stoppen na deze periode';
   static const String billingSubscriptionCancelConfirmTitle =
       'Weekfacturatie stoppen?';
   static const String billingSubscriptionCancelConfirmBody =
@@ -890,11 +1169,13 @@ class DriverStrings {
   static String drawerFoundingMemberLine(int? n) =>
       n == null ? billingFoundingMember : '$billingFoundingMember #$n';
 
-  static const String drawerBillingStatusUnavailable = 'Weekstatus niet beschikbaar';
+  static const String drawerBillingStatusUnavailable =
+      'Weekstatus niet beschikbaar';
   static const String drawerBillingWeeklyPassActive = 'Weekpas actief';
   static const String drawerBillingWaitingLiveStatus =
       'Wachten op live status van de server';
-  static const String drawerBillingPaidSubscriptionActive = 'Betaald abonnement actief';
+  static const String drawerBillingPaidSubscriptionActive =
+      'Betaald abonnement actief';
   static String drawerBillingEuroPaid(String euro) => '€$euro betaald';
   static const String drawerBillingPayWeeklyGeneric =
       'Betaal de weekprijs voor 7 dagen';
@@ -931,8 +1212,7 @@ class DriverStrings {
   static const String indemnificationReadLabel =
       'Ik heb het vrijwaringsdocument gelezen en aanvaard verantwoordelijkheid.';
   static const String legalChecklistTitle = 'Verplichte juridische checks (3)';
-  static const String legalChecklistOpenTerms =
-      'Gebruiksvoorwaarden openen';
+  static const String legalChecklistOpenTerms = 'Gebruiksvoorwaarden openen';
   static const String legalChecklistOpenIndemnification =
       'Vrijwaringsverklaring openen';
   static const String legalChecklistTermsCheck =
@@ -941,7 +1221,8 @@ class DriverStrings {
       'Vink aan na het lezen van de vrijwaringsverklaring';
   static const String legalChecklistQuizCheck =
       'Vink aan door de korte juridische quiz te halen';
-  static const String legalChecklistSaved = 'Juridische bevestiging opgeslagen.';
+  static const String legalChecklistSaved =
+      'Juridische bevestiging opgeslagen.';
   static const String legalChecklistSaveFailed =
       'Juridische bevestiging opslaan mislukt. Probeer opnieuw.';
   static const String legalChecklistAllVerified = 'Alle 3 gecontroleerd';
@@ -976,8 +1257,7 @@ class DriverStrings {
   static const String indemnificationBadgePassed = 'Gehaald';
   static const String indemnificationSaveFailed =
       'Vrijwaring opslaan mislukt. Probeer opnieuw.';
-  static const String indemnificationQuizTitle =
-      'Begripsquiz vrijwaring';
+  static const String indemnificationQuizTitle = 'Begripsquiz vrijwaring';
   static const String indemnificationQuizFail =
       'Quiz niet gehaald. Lees opnieuw en probeer nog eens.';
   static const String indemnificationQuizPassTitle =
@@ -987,6 +1267,7 @@ class DriverStrings {
   static const String indemnificationQuizPassCta = 'Doorgaan';
   static const String vehiclePlateRdwOpenSource =
       'APK- en taxistatus worden gecontroleerd via RDW-open data. We hebben alleen je kenteken nodig.';
+
   /// Home banner when `profile_status` is pending admin review.
   static const String verificationPendingTitle = 'Documenten in beoordeling';
   static const String verificationPendingBody =
@@ -1007,10 +1288,22 @@ class DriverStrings {
   static const String taxSummary = 'Belastingoverzicht';
   static const String viewDetails = 'Details bekijken';
   static const String goBackOnline = 'Weer online gaan';
-  static const String locationRequired = 'Locatie vereist';
-  static const String locationRequiredMessage =
-      'HeyCaby heeft je locatie nodig voor de kaart, het vinden van ritten en navigatie. '
-      'Zonder locatie kun je de chauffeursapp niet gebruiken.';
+  static String get locationRequired => _t(
+        'Locatie vereist',
+        en: 'Location required',
+        es: 'Ubicación requerida',
+        ar: 'الموقع مطلوب',
+      );
+  static String get locationRequiredMessage => _t(
+        'HeyCaby heeft je locatie nodig voor de kaart, het vinden van ritten en navigatie. '
+        'Zonder locatie kun je de chauffeursapp niet gebruiken.',
+        en: 'HeyCaby needs your location for the map, ride matching, and navigation. '
+            'Without location, you cannot use the driver app.',
+        es: 'HeyCaby necesita tu ubicación para el mapa, encontrar viajes y navegar. '
+            'Sin ubicación no puedes usar la app de conductor.',
+        ar: 'يحتاج HeyCaby إلى موقعك للخريطة ومطابقة الرحلات والملاحة. '
+            'بدون الموقع لا يمكنك استخدام تطبيق السائق.',
+      );
   static const String connectivityOfflineBanner =
       'Geen internet. Acties wachten tot je weer online bent.';
   static const String connectivityRetry = 'Opnieuw';
@@ -1047,8 +1340,7 @@ class DriverStrings {
   static const String runtimeOpenBilling = 'Facturatie openen';
   static const String goOnlineGuidanceSubtitle =
       'Rond elke stap hieronder af en probeer daarna opnieuw online te gaan.';
-  static String goOnlineGuidanceProgress(int pct) =>
-      'Je bent $pct% onderweg';
+  static String goOnlineGuidanceProgress(int pct) => 'Je bent $pct% onderweg';
   static const String goOnlineGuidanceOpenAction = 'Oplossen';
   static const String goOnlineGuidanceViewAll = 'Alle vereisten bekijken';
   static const String goOnlineGuidanceClose = 'Begrepen';
@@ -1228,7 +1520,8 @@ class DriverStrings {
   static const String actionFailedPrefix = 'Mislukt:';
   static const String requestsResumed = 'Nieuwe aanvragen hervat.';
   static const String requestsPaused = 'Nieuwe aanvragen gepauzeerd.';
-  static const String requestStatusUpdateFailed = 'Aanvraagstatus bijwerken mislukt:';
+  static const String requestStatusUpdateFailed =
+      'Aanvraagstatus bijwerken mislukt:';
   static const String cancelOrder = 'Rit annuleren';
   static const String optionalReason = 'Optionele reden';
   static const String back = 'Terug';
@@ -1239,16 +1532,19 @@ class DriverStrings {
       'De reiziger heeft deze rit geannuleerd. Je bent weer beschikbaar voor nieuwe ritten.';
   static const String riderCancelledCta = 'Terug naar home';
   static const String rideCancelFailed = 'Rit annuleren mislukt:';
-  static const String pickupCoordinatesUnavailable = 'Ophaalcoördinaten niet beschikbaar.';
+  static const String pickupCoordinatesUnavailable =
+      'Ophaalcoördinaten niet beschikbaar.';
   static const String destinationCoordinatesUnavailable =
       'Bestemmingscoördinaten niet beschikbaar.';
-  static const String noNavigationAppAvailable = 'Geen navigatie-app beschikbaar.';
+  static const String noNavigationAppAvailable =
+      'Geen navigatie-app beschikbaar.';
   static const String noShowReported = 'No-show gemeld.';
   static const String selectRatingPrompt = 'Selecteer een beoordeling.';
   static const String thanksForRating = 'Bedankt voor je beoordeling!';
   static const String acceptRideFailedCode = 'Accepteren mislukt:';
   static const String acceptRideFailed = 'Rit accepteren mislukt:';
-  static const String enterValidPaidAmount = 'Voer een geldig betaald bedrag in.';
+  static const String enterValidPaidAmount =
+      'Voer een geldig betaald bedrag in.';
   static const String appSuggestionTooShort =
       'Voeg meer details toe (minimaal 10 tekens).';
   static const String appSuggestionReceived =
@@ -1338,50 +1634,150 @@ class DriverStrings {
   static const String pricingWaitPerMin = 'Wachten / min';
   static const String pricingSaving = 'Opslaan...';
   static const String pricingSaveRates = 'Tarieven opslaan';
-  static const String loginEnterValidEmail = 'Voer een geldig e-mailadres in.';
-  static const String loginEnterSixDigitCode = 'Voer de 6-cijferige code in.';
+  static String get loginEnterValidEmail => _t(
+        'Voer een geldig e-mailadres in.',
+        en: 'Enter a valid email address.',
+        es: 'Introduce un correo electrónico válido.',
+        ar: 'أدخل بريدا إلكترونيا صالحا.',
+      );
+  static String get loginEnterSixDigitCode => _t(
+        'Voer de 6-cijferige code in.',
+        en: 'Enter the 6-digit code.',
+        es: 'Introduce el código de 6 dígitos.',
+        ar: 'أدخل الرمز المكون من 6 أرقام.',
+      );
   static const String loginBrandLabel = 'HeyCaby Driver';
-  static const String loginTrustTagline =
-      'Veilig inloggen voor professionele chauffeurs.';
-  static const String loginFormTitle = 'Welkom terug';
-  static const String loginFormTitleOtp = 'Code';
-  static const String loginEmailSubtitle =
-      'We sturen een veilige code naar je e-mail.';
-  static const String loginOtpSubtitle = '6 cijfers uit je e-mail.';
-  static const String loginEmailHint = 'E-mailadres';
-  static const String loginCtaStart = 'Doorgaan';
-  static const String loginCtaConfirm = 'Bevestigen';
-  static const String loginNewHere = 'Nieuw? Verificatie volgt na je eerste login.';
-  static const String loginOtpCheckEmail =
-      'Controleer je e-mail voor de 6-cijferige code';
-  static const String loginResendCode = 'Opnieuw';
-  static const String loginChangeEmail = 'Ander e-mailadres';
-  static const String loginPasteCode = 'Plakken';
-  static const String loginOtpExpired =
-      'Deze code is verlopen. Vraag een nieuwe 6-cijferige code aan.';
-  static const String loginFailed = 'Inloggen mislukt. Probeer opnieuw.';
-  static const String loginInvalidEmailFirst =
-      'Vul eerst een geldig e-mailadres in.';
-  static const String loginNewCodeSent =
-      'Nieuwe code verstuurd. Gebruik de nieuwste e-mailcode.';
+  static String get loginTrustTagline => _t(
+        'Veilig inloggen voor professionele chauffeurs.',
+        en: 'Secure sign-in for professional drivers.',
+        es: 'Inicio de sesión seguro para conductores profesionales.',
+        ar: 'تسجيل دخول آمن للسائقين المحترفين.',
+      );
+  static String get loginFormTitle => _t(
+        'Welkom terug',
+        en: 'Welcome back',
+        es: 'Bienvenido de nuevo',
+        ar: 'مرحبا بعودتك',
+      );
+  static String get loginFormTitleOtp => _t(
+        'Code',
+        en: 'Code',
+        es: 'Código',
+        ar: 'الرمز',
+      );
+  static String get loginEmailSubtitle => _t(
+        'We sturen een veilige code naar je e-mail.',
+        en: 'We’ll send a secure code to your email.',
+        es: 'Te enviaremos un código seguro por correo.',
+        ar: 'سنرسل رمزا آمنا إلى بريدك الإلكتروني.',
+      );
+  static String get loginOtpSubtitle => _t(
+        '6 cijfers uit je e-mail.',
+        en: '6 digits from your email.',
+        es: '6 dígitos de tu correo.',
+        ar: '6 أرقام من بريدك الإلكتروني.',
+      );
+  static String get loginEmailHint => _t(
+        'E-mailadres',
+        en: 'Email address',
+        es: 'Correo electrónico',
+        ar: 'البريد الإلكتروني',
+      );
+  static String get loginCtaStart => _t(
+        'Doorgaan',
+        en: 'Continue',
+        es: 'Continuar',
+        ar: 'متابعة',
+      );
+  static String get loginCtaConfirm => _t(
+        'Bevestigen',
+        en: 'Confirm',
+        es: 'Confirmar',
+        ar: 'تأكيد',
+      );
+  static String get loginNewHere => _t(
+        'Nieuw? Verificatie volgt na je eerste login.',
+        en: 'New here? Verification follows after your first sign-in.',
+        es: '¿Nuevo aquí? La verificación sigue tras tu primer inicio.',
+        ar: 'جديد هنا؟ يتم التحقق بعد أول تسجيل دخول.',
+      );
+  static String get loginOtpCheckEmail => _t(
+        'Controleer je e-mail voor de 6-cijferige code',
+        en: 'Check your email for the 6-digit code',
+        es: 'Revisa tu correo para el código de 6 dígitos',
+        ar: 'تحقق من بريدك للرمز المكون من 6 أرقام',
+      );
+  static String get loginResendCode => _t(
+        'Opnieuw',
+        en: 'Resend',
+        es: 'Reenviar',
+        ar: 'إعادة الإرسال',
+      );
+  static String get loginChangeEmail => _t(
+        'Ander e-mailadres',
+        en: 'Change email',
+        es: 'Cambiar correo',
+        ar: 'تغيير البريد',
+      );
+  static String get loginPasteCode => _t(
+        'Plakken',
+        en: 'Paste',
+        es: 'Pegar',
+        ar: 'لصق',
+      );
+  static String get loginOtpExpired => _t(
+        'Deze code is verlopen. Vraag een nieuwe 6-cijferige code aan.',
+        en: 'This code expired. Request a new 6-digit code.',
+        es: 'Este código caducó. Solicita uno nuevo de 6 dígitos.',
+        ar: 'انتهت صلاحية هذا الرمز. اطلب رمزا جديدا من 6 أرقام.',
+      );
+  static String get loginFailed => _t(
+        'Inloggen mislukt. Probeer opnieuw.',
+        en: 'Sign-in failed. Try again.',
+        es: 'No se pudo iniciar sesión. Inténtalo de nuevo.',
+        ar: 'فشل تسجيل الدخول. حاول مرة أخرى.',
+      );
+  static String get loginInvalidEmailFirst => _t(
+        'Vul eerst een geldig e-mailadres in.',
+        en: 'Enter a valid email address first.',
+        es: 'Primero introduce un correo válido.',
+        ar: 'أدخل بريدا إلكترونيا صالحا أولا.',
+      );
+  static String get loginNewCodeSent => _t(
+        'Nieuwe code verstuurd. Gebruik de nieuwste e-mailcode.',
+        en: 'New code sent. Use the latest email code.',
+        es: 'Nuevo código enviado. Usa el último correo.',
+        ar: 'تم إرسال رمز جديد. استخدم أحدث رمز في البريد.',
+      );
   static const String loginConfigError =
       'Supabase-sleutel ontbreekt of is ongeldig. Stop de app volledig en start opnieuw via ./scripts/run_driver_ios_debug.sh (of flutter run --dart-define-from-file=ios/.ipa_dart_defines.json).';
   static const String reactionFailedMigration =
       'Reactie mislukt. Controleer of de nieuwste database-migratie is toegepast.';
   static const String couldNotLoadEarnings = 'Verdiensten laden mislukt.';
   static const String couldNotLoadRides = 'Ritten laden mislukt.';
-  static const String failedToUpdateStatus = 'Status bijwerken mislukt. Probeer opnieuw.';
-  static const String failedToGoOnline = 'Online gaan mislukt. Probeer opnieuw.';
+  static const String failedToUpdateStatus =
+      'Status bijwerken mislukt. Probeer opnieuw.';
+  static const String failedToGoOnline =
+      'Online gaan mislukt. Probeer opnieuw.';
   static const String couldNotReportComment =
       'Opmerking melden mislukt. Probeer opnieuw.';
-  static const String announcementsLoadFailed =
-      'Aankondigingen laden mislukt.';
+  static const String announcementsLoadFailed = 'Aankondigingen laden mislukt.';
   static const String newRiderDemandNearby =
       'Nieuwe vraag van reizigers in de buurt. Goede kans om nu te verdienen.';
   static const String chatWithLee = 'Chat met Lee';
   static const String preferencesSounds = 'Geluid';
-  static const String english = 'Engels';
-  static const String dutch = 'Nederlands';
+  static String get english => _t(
+        'Engels',
+        en: 'English',
+        es: 'Inglés',
+        ar: 'الإنجليزية',
+      );
+  static String get dutch => _t(
+        'Nederlands',
+        en: 'Dutch',
+        es: 'Neerlandés',
+        ar: 'الهولندية',
+      );
   static const String cash = 'Contant';
   static const String card = 'Kaart';
   static const String other = 'Overig';
@@ -1418,7 +1814,8 @@ class DriverStrings {
   static const String prerideTikkieLinkCopied = 'Tikkie-link gekopieerd';
   static const String prerideSendRequest = 'Stuur bevestigingsverzoek';
   static const String prerideFeeLabel = 'Bijdrage (max €5)';
-  static const String prerideErrorGeneric = 'Kon actie niet uitvoeren. Probeer opnieuw.';
+  static const String prerideErrorGeneric =
+      'Kon actie niet uitvoeren. Probeer opnieuw.';
   static const String prerideErrorOutsideWindow =
       'Alleen ongeveer 16–40 minuten voor de rit kun je dit versturen.';
   static const String prerideErrorDeadlineNotPassed =
@@ -1446,7 +1843,8 @@ class DriverStrings {
   static const String financeRangeThisYear = 'Dit jaar';
   static const String financeRangeCustom = 'Aangepast';
 
-  static const String financeReportTitle = 'HeyCaby — chauffeur financieel overzicht';
+  static const String financeReportTitle =
+      'HeyCaby — chauffeur financieel overzicht';
   static const String financeReportPeriodHeading = 'Weergave';
   static const String financeReportDatesHeading = 'Datumbereik';
   static const String financeReportGenerated = 'Aangemaakt';
@@ -1463,7 +1861,8 @@ class DriverStrings {
   static const String financeReportFooter =
       'Bron: HeyCaby Driver-app. Controleer de bedragen in je eigen administratie.';
 
-  static const String financeEmailSubject = 'HeyCaby financieel overzicht chauffeur';
+  static const String financeEmailSubject =
+      'HeyCaby financieel overzicht chauffeur';
   static const String financePdfShareCaption = 'Financieel overzicht (PDF)';
 
   static const String financeMetricsTotalEarnings = 'Totale inkomsten';
@@ -1479,9 +1878,11 @@ class DriverStrings {
   static const String financeBreakdownCancelFees = 'Annuleringsvergoedingen';
   static const String financeViewAllRides = 'Alle ritten bekijken';
 
-  static const String financePaymentReconciliationTitle = 'Betalingen en afstemming';
+  static const String financePaymentReconciliationTitle =
+      'Betalingen en afstemming';
   static const String financeNoPaymentRecords = 'Nog geen betalingsregels.';
-  static const String financePaymentRecordsError = 'Betalingsregels laden mislukt.';
+  static const String financePaymentRecordsError =
+      'Betalingsregels laden mislukt.';
 
   static const String financeDataUnavailable =
       'Financiële gegevens tijdelijk niet beschikbaar. Getoond: nulwaarden.';
@@ -1514,8 +1915,10 @@ class DriverStrings {
 
   // Community hub (NL default)
   static const String communityNewPost = 'Nieuw bericht';
-  static const String communityWelcomeDisclaimerTitle = 'Welkom bij de gemeenschap';
-  static const String communityWelcomeDisclaimerSubtitle = 'Lees dit voordat je deelneemt';
+  static const String communityWelcomeDisclaimerTitle =
+      'Welkom bij de gemeenschap';
+  static const String communityWelcomeDisclaimerSubtitle =
+      'Lees dit voordat je deelneemt';
   static const String communityDisclaimerChannelsTitle = 'Kanalen';
   static const String communityDisclaimerChannelsItem1 =
       'Aankondigingen: officiële HeyCaby-updates';
@@ -1556,11 +1959,14 @@ class DriverStrings {
   static const String communityClose = 'Sluiten';
   static const String communityViewAll = 'Bekijk alles';
   static const String communityFeedLoadFailed = 'Berichten laden mislukt.';
-  static const String communityFeedEmptyAnnouncements = 'Nog geen aankondigingen.';
-  static const String communityFeedEmptyTalk = 'Nog geen berichten in Chauffeurpraat.';
+  static const String communityFeedEmptyAnnouncements =
+      'Nog geen aankondigingen.';
+  static const String communityFeedEmptyTalk =
+      'Nog geen berichten in Chauffeurpraat.';
   static const String communityNotificationsLoadFailed =
       'Meldingen laden mislukt.';
   static const String communityPostButton = 'Plaatsen';
+
   /// Create-post sheet chips (also used as card heading for compact posts).
   static const String communityPostChipTraffic = 'Verkeer melden';
   static const String communityPostChipTip = 'Tip delen';
@@ -1668,7 +2074,8 @@ class DriverStrings {
   static const String featureTour5Body =
       'Founding-lidmaatschap is beperkt. Activeer je account, vul je profiel aan en claim vroegtijdig je plek.';
   static const String featureTour6Kicker = 'Belangrijk';
-  static const String featureTour6Heading = 'Lees eerst de voorwaarden en privacy';
+  static const String featureTour6Heading =
+      'Lees eerst de voorwaarden en privacy';
   static const String featureTour6Body =
       'Lees en begrijp alle algemene voorwaarden en privacyteksten voordat je het platform gebruikt. '
       'Verifieer daarna je documenten en ga online.';

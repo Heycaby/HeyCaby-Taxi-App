@@ -40,7 +40,7 @@ class DriverRuntimeDecisionMapper {
   }
 
   static DriverRuntimeGateArgs complianceFallback() {
-    return const DriverRuntimeGateArgs(
+    return DriverRuntimeGateArgs(
       title: DriverStrings.runtimeComplianceBlockedTitle,
       body: DriverStrings.runtimeComplianceBlockedBody,
       ctaLabel: DriverStrings.runtimeOpenDocuments,

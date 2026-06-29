@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
+import 'l10n/driver_strings.dart';
 import 'providers/driver_data_providers.dart';
 import 'providers/driver_locale_provider.dart';
 import 'providers/driver_state_provider.dart';
@@ -69,6 +70,7 @@ class _HeyCabyDriverAppState extends ConsumerState<HeyCabyDriverApp> {
     final colors = ref.watch(colorsProvider);
     final themeId = ref.watch(themeProvider).id;
     final locale = ref.watch(localeProvider);
+    DriverStrings.useLocale(locale);
 
     return DriverFcmScope(
       child: _GlobalTapHaptics(
