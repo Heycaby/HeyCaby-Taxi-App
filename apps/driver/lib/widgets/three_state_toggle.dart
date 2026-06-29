@@ -125,7 +125,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
   ) {
     return switch (status) {
       DriverAvailabilityStatus.available => colors.success,
-      DriverAvailabilityStatus.onBreak => colors.warning,
+      DriverAvailabilityStatus.onBreak => colors.accent,
       DriverAvailabilityStatus.offline => colors.textSoft,
     };
   }
@@ -380,11 +380,15 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
 
         final thumbDx = positionToDx(_thumbPosition);
 
-        final labelStyle =
-            typo.bodyMedium.copyWith(fontSize: 15, letterSpacing: 0);
+        final labelStyle = typo.bodyMedium.copyWith(
+          fontSize: 15,
+          letterSpacing: 0,
+          height: 1,
+        );
         final dragStatus = _positionToStatus(_thumbPosition);
         final confirmedStatus = widget.currentStatus;
         final activeColor = _colorForStatus(colors, dragStatus);
+        final confirmedColor = _colorForStatus(colors, confirmedStatus);
         final enabled = !_isWritingStatus;
 
         Future<void> submitStatus(DriverAvailabilityStatus status) async {
@@ -426,20 +430,30 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      curve: Curves.easeOut,
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: colors.success.withValues(alpha: 0.18),
+                        color: confirmedColor.withValues(alpha: 0.14),
                         border: Border.all(
-                          color: colors.success.withValues(alpha: 0.20),
+                          color: confirmedColor.withValues(alpha: 0.22),
                           width: 1.2,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: confirmedColor.withValues(alpha: 0.12),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
+                            spreadRadius: -8,
+                          ),
+                        ],
                       ),
                       child: Icon(
                         AppIcons.navHome,
-                        color: colors.success,
+                        color: confirmedColor,
                         size: 24,
                       ),
                     ),
@@ -497,20 +511,28 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                     _animateToPosition(_statusToPosition(snappedStatus));
                     await _onStatusSnapped(snappedStatus);
                   },
-                  child: Container(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOut,
                     height: 58,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(29),
-                      color: colors.surface.withValues(alpha: 0.74),
+                      gradient: LinearGradient(
+                        colors: [
+                          activeColor.withValues(alpha: 0.08),
+                          colors.surface.withValues(alpha: 0.88),
+                          colors.card.withValues(alpha: 0.96),
+                        ],
+                      ),
                       border: Border.all(
-                        color: colors.border.withValues(alpha: 0.95),
+                        color: activeColor.withValues(alpha: 0.20),
                         width: 1.1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: colors.text.withValues(alpha: 0.05),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+                          color: activeColor.withValues(alpha: 0.12),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
                           spreadRadius: -8,
                         ),
                       ],
@@ -534,16 +556,24 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                               width: width / 3,
                               margin: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
-                                color: colors.card.withValues(alpha: 0.88),
+                                color: Color.alphaBlend(
+                                  activeColor.withValues(alpha: 0.10),
+                                  colors.card,
+                                ),
                                 borderRadius: BorderRadius.circular(999),
                                 border: Border.all(
-                                  color: activeColor.withValues(alpha: 0.30),
+                                  color: activeColor.withValues(alpha: 0.34),
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: activeColor.withValues(alpha: 0.16),
-                                    blurRadius: 14,
-                                    offset: const Offset(0, 4),
+                                    color: colors.card.withValues(alpha: 0.92),
+                                    blurRadius: 1,
+                                    offset: const Offset(0, -1),
+                                  ),
+                                  BoxShadow(
+                                    color: activeColor.withValues(alpha: 0.18),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 6),
                                   ),
                                 ],
                               ),
@@ -559,6 +589,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                                   DriverAvailabilityStatus.offline,
                               activeColor: activeColor,
                               inactiveColor: colors.textMid,
+                              dotColor: colors.textSoft,
                               style: labelStyle,
                             ),
                             _SegmentButton(
@@ -568,6 +599,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                                   DriverAvailabilityStatus.onBreak,
                               activeColor: activeColor,
                               inactiveColor: colors.textMid,
+                              dotColor: colors.accent,
                               style: labelStyle,
                             ),
                             _SegmentButton(
@@ -577,6 +609,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                                   DriverAvailabilityStatus.available,
                               activeColor: activeColor,
                               inactiveColor: colors.textMid,
+                              dotColor: colors.success,
                               style: labelStyle,
                             ),
                           ],
@@ -618,6 +651,7 @@ class _SegmentButton extends StatelessWidget {
     required this.active,
     required this.activeColor,
     required this.inactiveColor,
+    required this.dotColor,
     required this.style,
   });
 
@@ -626,6 +660,7 @@ class _SegmentButton extends StatelessWidget {
   final bool active;
   final Color activeColor;
   final Color inactiveColor;
+  final Color dotColor;
   final TextStyle style;
 
   @override
@@ -636,17 +671,49 @@ class _SegmentButton extends StatelessWidget {
         selected: active,
         button: true,
         child: Center(
-          child: AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 160),
-            curve: Curves.easeOut,
-            style: style.copyWith(
-              color: active ? activeColor : inactiveColor,
-              fontWeight: active ? FontWeight.w800 : FontWeight.w700,
-            ),
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  curve: Curves.easeOut,
+                  width: active ? 6 : 0,
+                  height: active ? 6 : 0,
+                  margin: EdgeInsets.only(right: active ? 5 : 0),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: dotColor,
+                    boxShadow: active
+                        ? [
+                            BoxShadow(
+                              color: dotColor.withValues(alpha: 0.26),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            ),
+                          ]
+                        : null,
+                  ),
+                ),
+                Flexible(
+                  child: AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 160),
+                    curve: Curves.easeOut,
+                    style: style.copyWith(
+                      color: active ? activeColor : inactiveColor,
+                      fontWeight: active ? FontWeight.w800 : FontWeight.w700,
+                    ),
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
