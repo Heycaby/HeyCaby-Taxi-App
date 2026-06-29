@@ -27,6 +27,12 @@ void main() {
     final themeRegistrySource = File(
       '../../packages/heycaby_ui/lib/src/theme/theme_registry.dart',
     ).readAsStringSync();
+    final driverLibSources = Directory('lib')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'))
+        .map((file) => MapEntry(file.path, file.readAsStringSync()))
+        .toList();
 
     test('locks driver app to the single green theme', () {
       expect(
@@ -46,6 +52,15 @@ void main() {
       expect(themeRegistrySource, isNot(contains('kHeyCabyDriverWarmThemeId')));
       expect(themeRegistrySource, isNot(contains('Soft Warm White')));
       expect(themeRegistrySource, isNot(contains('kHeyCabyDriverWarm,')));
+    });
+
+    test('keeps driver text spacing readable across screens', () {
+      final offenders = driverLibSources
+          .where((entry) => RegExp(r'letterSpacing:\s*-').hasMatch(entry.value))
+          .map((entry) => entry.key)
+          .toList();
+
+      expect(offenders, isEmpty);
     });
 
     test('supports only Dutch, English, Spanish, and Arabic for driver app',
@@ -73,7 +88,6 @@ void main() {
       expect(brandAssetsSource, isNot(contains('black_yellow')));
       expect(brandMarkSource, contains('#00A651'));
       expect(brandMarkSource, isNot(contains('#F4A800')));
-      expect(shellSource, isNot(contains('letterSpacing: -')));
       expect(shellSource, isNot(contains('warmChrome')));
     });
   });

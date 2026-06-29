@@ -248,7 +248,7 @@ class _EarningsHero extends StatelessWidget {
               color: colors.text,
               fontWeight: FontWeight.w800,
               fontFeatures: const [FontFeature.tabularFigures()],
-              letterSpacing: -0.8,
+              letterSpacing: 0,
               height: 1.05,
             ),
           ),
@@ -490,7 +490,8 @@ class _AccountantCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.person_outline_rounded, color: colors.primary, size: 20),
+              Icon(Icons.person_outline_rounded,
+                  color: colors.primary, size: 20),
               const SizedBox(width: DriverSpacing.sm),
               Text(
                 DriverStrings.financeAccountantTitle,
@@ -576,8 +577,12 @@ class DriverAccountantEmailDialog extends StatelessWidget {
         keyboardType: TextInputType.emailAddress,
       ),
       actions: [
-        TextButton(onPressed: onCancel, child: Text(DriverStrings.financeAccountantDialogCancel)),
-        FilledButton(onPressed: onSave, child: Text(DriverStrings.financeAccountantDialogSave)),
+        TextButton(
+            onPressed: onCancel,
+            child: const Text(DriverStrings.financeAccountantDialogCancel)),
+        FilledButton(
+            onPressed: onSave,
+            child: const Text(DriverStrings.financeAccountantDialogSave)),
       ],
     );
   }

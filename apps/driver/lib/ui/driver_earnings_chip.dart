@@ -65,7 +65,7 @@ class DriverEarningsChip extends StatelessWidget {
                     color: colors.primary,
                     fontWeight: FontWeight.w800,
                     fontFeatures: const [FontFeature.tabularFigures()],
-                    letterSpacing: -0.4,
+                    letterSpacing: 0,
                   ),
                 ),
                 const SizedBox(width: DriverSpacing.sm),

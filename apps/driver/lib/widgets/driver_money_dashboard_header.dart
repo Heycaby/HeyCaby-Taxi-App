@@ -90,7 +90,7 @@ class DriverMoneyDashboardHeader extends StatelessWidget {
                             color: colors.text,
                             fontWeight: FontWeight.w900,
                             fontFeatures: const [FontFeature.tabularFigures()],
-                            letterSpacing: -1.2,
+                            letterSpacing: 0,
                             height: 1.0,
                             fontSize: 40,
                           ),

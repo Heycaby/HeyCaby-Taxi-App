@@ -244,7 +244,7 @@ class _DriverStartShiftScreenState
                       style: typography.headlineSmall.copyWith(
                         color: colors.text,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: -0.35,
+                        letterSpacing: 0,
                       ),
                     ),
                     const SizedBox(height: DriverSpacing.md),

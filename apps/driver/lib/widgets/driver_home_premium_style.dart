@@ -170,7 +170,7 @@ class DriverHomeMetricText extends StatelessWidget {
         style: typography.displaySmall.copyWith(
           fontWeight: FontWeight.w800,
           fontSize: 32,
-          letterSpacing: -1,
+          letterSpacing: 0,
           height: 1,
           fontFeatures: const [FontFeature.tabularFigures()],
         ),

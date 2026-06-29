@@ -156,7 +156,7 @@ class _AccountDeletionSuccessDialog extends StatelessWidget {
                 style: typo.titleLarge.copyWith(
                   color: colors.text,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: -0.3,
+                  letterSpacing: 0,
                   height: 1.2,
                 ),
               ),

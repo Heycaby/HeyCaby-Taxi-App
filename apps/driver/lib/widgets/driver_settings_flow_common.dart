@@ -78,7 +78,7 @@ class DriverSettingsHeader extends StatelessWidget {
             style: typography.headlineSmall.copyWith(
               color: colors.text,
               fontWeight: FontWeight.w800,
-              letterSpacing: -0.35,
+              letterSpacing: 0,
             ),
           ).driverFadeSlideIn(staggerIndex: 0),
           if (subtitle != null) ...[

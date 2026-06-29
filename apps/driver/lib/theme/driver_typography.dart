@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
@@ -39,7 +38,7 @@ class DriverTypography {
       displayMedium.copyWith(
         color: colors.text,
         fontFeatures: const [FontFeature.tabularFigures()],
-        letterSpacing: -0.5,
+        letterSpacing: 0,
       );
 
   TextStyle numberMedium(DriverColors colors) => titleLarge.copyWith(

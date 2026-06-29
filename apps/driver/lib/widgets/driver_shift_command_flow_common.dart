@@ -85,7 +85,7 @@ class DriverShiftCommandEarningsPreview extends StatelessWidget {
                         style: typography.displaySmall.copyWith(
                           color: colors.text,
                           fontWeight: FontWeight.w800,
-                          letterSpacing: -0.35,
+                          letterSpacing: 0,
                         ),
                       ),
                     ],

@@ -56,7 +56,8 @@ Future<void> showDriverGoOnlineGuidanceSheet(
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: colors.card,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(22)),
               border: Border.all(color: colors.border),
               boxShadow: [
                 BoxShadow(
@@ -88,7 +89,7 @@ Future<void> showDriverGoOnlineGuidanceSheet(
                         style: typo.titleLarge.copyWith(
                           color: colors.text,
                           fontWeight: FontWeight.w800,
-                          letterSpacing: -0.35,
+                          letterSpacing: 0,
                         ),
                       ),
                       if (total > 0) ...[
@@ -98,7 +99,8 @@ Future<void> showDriverGoOnlineGuidanceSheet(
                           child: LinearProgressIndicator(
                             value: progress.clamp(0.0, 1.0),
                             minHeight: 8,
-                            backgroundColor: colors.border.withValues(alpha: 0.55),
+                            backgroundColor:
+                                colors.border.withValues(alpha: 0.55),
                             color: colors.accent,
                           ),
                         ),
@@ -148,16 +150,17 @@ Future<void> showDriverGoOnlineGuidanceSheet(
                           borderRadius: BorderRadius.circular(16),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(16),
-                            onTap: route == null
-                                ? null
-                                : () => openRoute(route),
+                            onTap:
+                                route == null ? null : () => openRoute(route),
                             child: Padding(
-                              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                              padding:
+                                  const EdgeInsets.fromLTRB(14, 12, 14, 12),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Icon(
                                         Icons.radio_button_unchecked,
@@ -177,7 +180,8 @@ Future<void> showDriverGoOnlineGuidanceSheet(
                                       ),
                                     ],
                                   ),
-                                  if (item.note != null && item.note!.trim().isNotEmpty) ...[
+                                  if (item.note != null &&
+                                      item.note!.trim().isNotEmpty) ...[
                                     const SizedBox(height: 6),
                                     Padding(
                                       padding: const EdgeInsets.only(left: 30),
@@ -196,7 +200,8 @@ Future<void> showDriverGoOnlineGuidanceSheet(
                                       alignment: Alignment.centerRight,
                                       child: FilledButton.tonal(
                                         onPressed: () => openRoute(route),
-                                        child: Text(DriverStrings.goOnlineGuidanceOpenAction),
+                                        child: const Text(DriverStrings
+                                            .goOnlineGuidanceOpenAction),
                                       ),
                                     ),
                                   ],
@@ -231,13 +236,14 @@ Future<void> showDriverGoOnlineGuidanceSheet(
                               }
                             });
                           },
-                          child: Text(DriverStrings.goOnlineGuidanceViewAll),
+                          child:
+                              const Text(DriverStrings.goOnlineGuidanceViewAll),
                         ),
                       ),
                       const SizedBox(width: 10),
                       TextButton(
                         onPressed: () => Navigator.of(ctx).pop(),
-                        child: Text(DriverStrings.goOnlineGuidanceClose),
+                        child: const Text(DriverStrings.goOnlineGuidanceClose),
                       ),
                     ],
                   ),

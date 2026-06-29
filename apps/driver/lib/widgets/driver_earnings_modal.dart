@@ -162,7 +162,7 @@ class _DriverEarningsModalState extends ConsumerState<DriverEarningsModal> {
                             color: colors.text,
                             fontSize: 52,
                             fontWeight: FontWeight.w700,
-                            letterSpacing: -1.5,
+                            letterSpacing: 0,
                           ),
                         ),
                       ),

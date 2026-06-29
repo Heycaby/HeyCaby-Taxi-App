@@ -96,7 +96,7 @@ class DriverCommunityHubHeader extends StatelessWidget {
                   style: typography.titleLarge.copyWith(
                     color: colors.text,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: -0.4,
+                    letterSpacing: 0,
                   ),
                 ),
               ),

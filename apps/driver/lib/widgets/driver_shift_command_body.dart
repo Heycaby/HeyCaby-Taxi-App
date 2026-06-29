@@ -15,6 +15,7 @@ import '../ui/driver_app_bar.dart';
 import 'scheduled_preride_actions.dart';
 
 enum WorkSubTab { earnings, availableRides }
+
 enum RideFilter { now, scheduled, marketplace }
 
 /// **Shift Command** — earnings + available rides without leaving map mental model.
@@ -188,13 +189,11 @@ class _EarningsContent extends ConsumerWidget {
 
     return earningsAsync.when(
       data: (summary) {
-        final todayStr = summary != null
-            ? summary.formatEuros(summary.todayEuros)
-            : '€0.00';
+        final todayStr =
+            summary != null ? summary.formatEuros(summary.todayEuros) : '€0.00';
         final weekRides = summary?.weekRides ?? 0;
-        final weekStr = summary != null
-            ? summary.formatEuros(summary.weekEuros)
-            : '€0.00';
+        final weekStr =
+            summary != null ? summary.formatEuros(summary.weekEuros) : '€0.00';
         final avgPerRide = (summary != null && weekRides > 0)
             ? summary.weekEuros / weekRides
             : 0.0;
@@ -216,7 +215,8 @@ class _EarningsContent extends ConsumerWidget {
                     ],
                   ),
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: colors.accent.withValues(alpha: 0.25)),
+                  border:
+                      Border.all(color: colors.accent.withValues(alpha: 0.25)),
                   boxShadow: [
                     BoxShadow(
                       color: colors.accent.withValues(alpha: 0.08),
@@ -234,7 +234,8 @@ class _EarningsContent extends ConsumerWidget {
                         color: colors.accent.withValues(alpha: 0.14),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(Icons.payments_outlined, color: colors.accent),
+                      child:
+                          Icon(Icons.payments_outlined, color: colors.accent),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -254,7 +255,7 @@ class _EarningsContent extends ConsumerWidget {
                             style: typo.displayMedium.copyWith(
                               color: colors.text,
                               fontWeight: FontWeight.w800,
-                              letterSpacing: -0.35,
+                              letterSpacing: 0,
                             ),
                           ),
                         ],
@@ -332,15 +333,18 @@ class _EarningsContent extends ConsumerWidget {
               const SizedBox(height: 10),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
                   color: colors.surface,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: colors.border.withValues(alpha: 0.9)),
+                  border:
+                      Border.all(color: colors.border.withValues(alpha: 0.9)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.trending_up_rounded, color: colors.success, size: 18),
+                    Icon(Icons.trending_up_rounded,
+                        color: colors.success, size: 18),
                     const SizedBox(width: 8),
                     Text(
                       '${DriverStrings.avgPerRide}: €${avgPerRide.toStringAsFixed(2)}',
@@ -388,7 +392,8 @@ class _EarningsContent extends ConsumerWidget {
                   }
                   return Column(
                     children: rides
-                        .map((r) => _TodayRideTile(ride: r, colors: colors, typo: typo))
+                        .map((r) =>
+                            _TodayRideTile(ride: r, colors: colors, typo: typo))
                         .toList(),
                   );
                 },
@@ -427,13 +432,20 @@ class _WeeklyEarningsChart extends ConsumerWidget {
     final dailyAsync = ref.watch(weeklyDailyEarningsProvider);
     return dailyAsync.when(
       data: (daily) {
-        final maxVal = daily.isEmpty ? 1.0 : daily.reduce((a, b) => a > b ? a : b);
+        final maxVal =
+            daily.isEmpty ? 1.0 : daily.reduce((a, b) => a > b ? a : b);
         final maxY = maxVal > 0 ? maxVal * 1.2 : 10.0;
         final dayLabels = [
           for (var i = -6; i <= 0; i++)
-            DateFormat('E').format(DateTime.now().add(Duration(days: i))).substring(0, 1),
+            DateFormat('E')
+                .format(DateTime.now().add(Duration(days: i)))
+                .substring(0, 1),
         ];
-        final spots = daily.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList();
+        final spots = daily
+            .asMap()
+            .entries
+            .map((e) => FlSpot(e.key.toDouble(), e.value))
+            .toList();
         return Container(
           height: 186,
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
@@ -490,28 +502,34 @@ class _WeeklyEarningsChart extends ConsumerWidget {
                           interval: maxY / 4,
                         ),
                       ),
-                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
                     ),
                     gridData: FlGridData(
                       show: true,
                       drawVerticalLine: false,
                       horizontalInterval: maxY / 4,
-                      getDrawingHorizontalLine: (_) => FlLine(color: colors.border.withValues(alpha: 0.3)),
+                      getDrawingHorizontalLine: (_) =>
+                          FlLine(color: colors.border.withValues(alpha: 0.3)),
                     ),
                     borderData: FlBorderData(show: false),
-                    barGroups: spots.map((s) => BarChartGroupData(
-                      x: s.x.toInt(),
-                      barRods: [
-                        BarChartRodData(
-                          toY: s.y,
-                          color: colors.accent,
-                          width: 16,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-                        ),
-                      ],
-                      showingTooltipIndicators: [],
-                    )).toList(),
+                    barGroups: spots
+                        .map((s) => BarChartGroupData(
+                              x: s.x.toInt(),
+                              barRods: [
+                                BarChartRodData(
+                                  toY: s.y,
+                                  color: colors.accent,
+                                  width: 16,
+                                  borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(4)),
+                                ),
+                              ],
+                              showingTooltipIndicators: [],
+                            ))
+                        .toList(),
                   ),
                 ),
               ),
@@ -561,7 +579,8 @@ class _TodayRideTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fareStr = ride.fare != null ? '€${ride.fare!.toStringAsFixed(2)}' : '—';
+    final fareStr =
+        ride.fare != null ? '€${ride.fare!.toStringAsFixed(2)}' : '—';
     final timeStr = ride.completedAt != null
         ? DateFormat('HH:mm').format(ride.completedAt!)
         : '—';
@@ -584,7 +603,8 @@ class _TodayRideTile extends StatelessWidget {
               color: colors.accent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(Icons.local_taxi_outlined, color: colors.accent, size: 18),
+            child:
+                Icon(Icons.local_taxi_outlined, color: colors.accent, size: 18),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -665,7 +685,8 @@ class _AvailableRidesContent extends ConsumerWidget {
                       return Center(
                         child: Text(
                           'No immediate rides',
-                          style: typo.bodyMedium.copyWith(color: colors.textSoft),
+                          style:
+                              typo.bodyMedium.copyWith(color: colors.textSoft),
                         ),
                       );
                     }
@@ -679,7 +700,8 @@ class _AvailableRidesContent extends ConsumerWidget {
                       ),
                     );
                   },
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (_, __) => Center(
                     child: Text(
                       DriverStrings.couldNotLoadRides,
@@ -695,8 +717,8 @@ class _AvailableRidesContent extends ConsumerWidget {
                           return Center(
                             child: Text(
                               'No marketplace rides',
-                              style: typo.bodyMedium.copyWith(
-                                  color: colors.textSoft),
+                              style: typo.bodyMedium
+                                  .copyWith(color: colors.textSoft),
                             ),
                           );
                         }
@@ -715,8 +737,8 @@ class _AvailableRidesContent extends ConsumerWidget {
                       error: (_, __) => Center(
                         child: Text(
                           DriverStrings.couldNotLoadRides,
-                          style: typo.bodyMedium
-                              .copyWith(color: colors.textSoft),
+                          style:
+                              typo.bodyMedium.copyWith(color: colors.textSoft),
                         ),
                       ),
                     ),
