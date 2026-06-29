@@ -36,7 +36,7 @@ In these Terms of Service, the following definitions apply:
 
 "Driver Profile" means the publicly visible profile a Driver creates on the Platform containing information about their vehicle, service area, rates, and availability.
 
-"Chauffeurskaart" means the taxi driver\'s card (chauffeursbevoegdheid) issued by Kiwa Register on behalf of the Dutch government, as required under the Wet personenvervoer 2000 (WP2000).
+"Chauffeurskaart" means the taxi driver's card (chauffeursbevoegdheid) issued by Kiwa Register on behalf of the Dutch government, as required under the Wet personenvervoer 2000 (WP2000).
 
 "Taxivergunning" means the taxi transport licence (vergunning voor taxivervoer) issued by Kiwa Register on behalf of the Dutch government, as required under Article 76 of the Wet personenvervoer 2000.
 
@@ -59,7 +59,7 @@ ARTICLE 2 — NATURE OF THE PLATFORM
 
 2.3 Platform as Passive Directory. In accordance with Article 6:196c of the Dutch Burgerlijk Wetboek (Civil Code) and the relevant provisions of the Digital Services Act (EU) 2022/2065, HeyCaby functions as a passive information society service provider. HeyCaby transmits and stores information provided by Drivers and Riders but does not initiate the transmission, select the receivers, or select or modify the information transmitted.
 
-2.4 Driver Verification and Limitations. HeyCaby operates as a technology platform that facilitates connections between riders and independent drivers. While HeyCaby does not guarantee the validity, authenticity, or continued compliance of any driver\'s credentials, the platform implements reasonable verification measures to enhance safety and trust.
+2.4 Driver Verification and Limitations. HeyCaby operates as a technology platform that facilitates connections between riders and independent drivers. While HeyCaby does not guarantee the validity, authenticity, or continued compliance of any driver's credentials, the platform implements reasonable verification measures to enhance safety and trust.
 
 2.4.1 No Guarantee of Credentials. HeyCaby does not verify, authenticate, or guarantee the validity, currency, or authenticity of any licence, permit, certificate, insurance policy, or credential presented or declared by any Driver. This includes, without limitation, the Chauffeurskaart, Taxivergunning, P-nummer, vehicle insurance, and any other authorisation required under Dutch law. Drivers remain fully and solely responsible for obtaining, maintaining, and complying with all applicable legal and regulatory requirements at all times.
 
@@ -67,7 +67,7 @@ ARTICLE 2 — NATURE OF THE PLATFORM
 
 (a) Vehicle Verification (RDW). HeyCaby uses publicly available data from the RDW (Rijksdienst voor het Wegverkeer) to verify vehicle registration details. This includes license plate validation, vehicle make and registration status, and confirmation that the vehicle is registered as a taxi (including blue license plate where applicable). Only vehicles that meet these criteria may be allowed to operate on the platform.
 
-(b) Identity Verification (Veriff). HeyCaby uses a third-party identity verification provider, Veriff, to verify driver identity, validate driver\'s licence authenticity, and confirm that drivers are who they claim to be. This process is conducted through secure third-party systems.
+(b) Identity Verification (Veriff). HeyCaby uses a third-party identity verification provider, Veriff, to verify driver identity, validate driver's licence authenticity, and confirm that drivers are who they claim to be. This process is conducted through secure third-party systems.
 
 (c) Chauffeurskaart Checks. HeyCaby may perform periodic manual checks of submitted Chauffeurskaart documents to assess validity. However, HeyCaby does not guarantee ongoing validity or compliance.
 
@@ -124,7 +124,7 @@ ARTICLE 4 — DRIVER OBLIGATIONS
 
 4.5 Anti-Discrimination. Drivers must not refuse to provide services to any Rider on the basis of race, ethnicity, nationality, religion, gender, disability, sexual orientation, age, or any other characteristic protected under Dutch law, including the Algemene wet gelijke behandeling.
 
-4.6 Non-Solicitation. Drivers may not use contact information or personal data obtained through the Platform to solicit Riders for services outside the Platform in a manner that undermines the Platform\'s purpose or violates applicable law.
+4.6 Non-Solicitation. Drivers may not use contact information or personal data obtained through the Platform to solicit Riders for services outside the Platform in a manner that undermines the Platform's purpose or violates applicable law.
 
 4.7 Prohibited Conduct. Drivers must not:
 
@@ -150,13 +150,13 @@ ARTICLE 6 — CONTENT AND INTELLECTUAL PROPERTY
 6.2 Content Standards. You must not upload Content that:
 
 (a) Is false, misleading, or deceptive;
-(b) Infringes any third party\'s intellectual property rights;
+(b) Infringes any third party's intellectual property rights;
 (c) Contains personal data of third parties without their consent;
 (d) Is defamatory, harassing, discriminatory, or obscene;
 (e) Promotes illegal activities;
 (f) Contains malware, viruses, or other harmful code.
 
-6.3 HeyCaby Intellectual Property. The Platform, including all software, design, trademarks, logos, and content created by HeyCaby, is protected by intellectual property law. You may not use, copy, modify, or distribute HeyCaby\'s intellectual property without express written consent.
+6.3 HeyCaby Intellectual Property. The Platform, including all software, design, trademarks, logos, and content created by HeyCaby, is protected by intellectual property law. You may not use, copy, modify, or distribute HeyCaby's intellectual property without express written consent.
 
 6.4 Content Removal. HeyCaby reserves the right to remove any Content that violates these Terms or applicable law, in accordance with its obligations under the Digital Services Act.
 
@@ -165,12 +165,12 @@ ARTICLE 7 — PLATFORM AVAILABILITY AND MODIFICATIONS
 
 7.2 Maintenance. HeyCaby may take the Platform offline for maintenance. HeyCaby will endeavour to provide advance notice of planned maintenance but is not obligated to do so.
 
-7.3 Modifications to the Platform. HeyCaby may add, modify, or remove features from the Platform at any time. Material changes that affect Driver Access Fees will be communicated with at least 30 days\' notice.
+7.3 Modifications to the Platform. HeyCaby may add, modify, or remove features from the Platform at any time. Material changes that affect Driver Access Fees will be communicated with at least 30 days' notice.
 
 ARTICLE 8 — TRIAL ACCESS, FOUNDING MEMBER ACCESS, PAYMENT AND CANCELLATION
 8.1 Trial Access. Drivers can start using HeyCaby without paying upfront. The free trial is based on real platform usage, not days. The trial ends when the first of these two events occurs: (a) 5 accepted rides; or (b) €100 in ride value recorded on the Platform, whether from completed rides or accepted ride requests. An accepted ride counts immediately when the Driver taps Accept, even if the Rider later cancels. This model is designed to be fair. One long ride may earn around €100, while five smaller rides may also reach around the same value.
 
-8.2 Founding Member Offer. HeyCaby offers a limited Founding Member plan for the first 200 approved drivers. Founding Members pay €30 per 7 days, excluding 21% VAT. This price is locked for Founding Members for as long as: (a) HeyCaby continues operating as a software platform; (b) the driver keeps their account active; (c) the driver complies with HeyCaby\'s terms and driver agreement; and (d) the driver maintains all required legal documents and permissions. After the first 200 Founding Member spots are filled, HeyCaby reserves the right to increase prices for new drivers.
+8.2 Founding Member Offer. HeyCaby offers a limited Founding Member plan for the first 200 approved drivers. Founding Members pay €30 per 7 days, excluding 21% VAT. This price is locked for Founding Members for as long as: (a) HeyCaby continues operating as a software platform; (b) the driver keeps their account active; (c) the driver complies with HeyCaby's terms and driver agreement; and (d) the driver maintains all required legal documents and permissions. After the first 200 Founding Member spots are filled, HeyCaby reserves the right to increase prices for new drivers.
 
 8.3 When Payment Starts. A Founding Member does not pay immediately. Payment starts only after the trial ends. The trial ends when the first of these two events occurs: (a) 5 accepted rides; or (b) €100 in ride value recorded on the Platform, whether from completed rides or accepted ride requests. An accepted ride counts immediately when the Driver taps Accept, even if the Rider later cancels. After that, the driver must pay €30 plus 21% VAT per 7 days to continue receiving ride requests.
 
@@ -182,54 +182,54 @@ ARTICLE 8 — TRIAL ACCESS, FOUNDING MEMBER ACCESS, PAYMENT AND CANCELLATION
 
 8.7 Future Pricing. The Founding Member price applies only to the first 200 approved drivers. HeyCaby may introduce higher prices, new plans, or different access fees for drivers who join after the first 200 Founding Member spots are taken.
 
-8.8 Payment Processing. Payments are processed by Mollie B.V., a third-party payment service provider based in the Netherlands. By making a payment, you agree to be bound by Mollie\'s applicable terms and conditions. Mollie may process payment-related data as an independent data controller in accordance with its own privacy policy. HeyCaby does not store or process payment card details on its own servers.
+8.8 Payment Processing. Payments are processed by Mollie B.V., a third-party payment service provider based in the Netherlands. By making a payment, you agree to be bound by Mollie's applicable terms and conditions. Mollie may process payment-related data as an independent data controller in accordance with its own privacy policy. HeyCaby does not store or process payment card details on its own servers.
 
 8.9 Rider Services. Rider access to the Platform is free of charge. HeyCaby does not process payments for taxi journeys. Payment for taxi services is made directly between the Rider and the Driver.
 
 8.10 VAT and Tax. Drivers are solely responsible for all tax obligations arising from their use of the Platform and from the taxi services they provide. HeyCaby may issue VAT invoices for Driver Access Fees where required by law. The Driver Access Fee does not constitute income of the Driver; it is a business tool cost which may be tax-deductible for ZZP drivers. Drivers should consult a tax adviser regarding their specific situation.
 
 ARTICLE 9 — LIMITATION OF LIABILITY
-9.1 HeyCaby\'s Exclusion of Liability for Transport Services. To the maximum extent permitted by mandatory applicable law:
+9.1 HeyCaby's Exclusion of Liability for Transport Services. To the maximum extent permitted by mandatory applicable law:
 
 (a) HeyCaby is not liable for any loss, damage, injury, death, delay, or other harm arising from or in connection with any taxi journey arranged through the Platform. All liability for transport services rests exclusively with the Driver who provides those services;
-(b) HeyCaby is not liable for any Driver\'s failure to hold valid credentials, insurance, or any required licence or permit;
-(c) HeyCaby is not liable for any Driver\'s conduct during a taxi journey, including but not limited to negligent driving, accidents, theft, or personal injury;
-(d) HeyCaby is not liable for any Rider\'s conduct towards a Driver;
+(b) HeyCaby is not liable for any Driver's failure to hold valid credentials, insurance, or any required licence or permit;
+(c) HeyCaby is not liable for any Driver's conduct during a taxi journey, including but not limited to negligent driving, accidents, theft, or personal injury;
+(d) HeyCaby is not liable for any Rider's conduct towards a Driver;
 (e) HeyCaby is not liable for the accuracy or completeness of information provided by Drivers or Riders on the Platform.
 
-9.2 Platform Liability Limitation. To the maximum extent permitted by mandatory applicable law, HeyCaby\'s total aggregate liability to any User for any claims arising from or in connection with the Platform Services (as distinct from transport services) shall not exceed the total Driver Access Fees paid by that User in the three months preceding the claim.
+9.2 Platform Liability Limitation. To the maximum extent permitted by mandatory applicable law, HeyCaby's total aggregate liability to any User for any claims arising from or in connection with the Platform Services (as distinct from transport services) shall not exceed the total Driver Access Fees paid by that User in the three months preceding the claim.
 
 9.3 Exclusion of Consequential Damages. To the maximum extent permitted by mandatory applicable law, HeyCaby is not liable for any indirect, incidental, special, consequential, or punitive damages, including loss of profits, loss of data, loss of goodwill, or business interruption, arising from or in connection with the Platform or these Terms.
 
-9.4 Mandatory Consumer Rights. Nothing in these Terms limits or excludes any liability that cannot be limited or excluded under mandatory Dutch law, including liability for death or personal injury caused by HeyCaby\'s own gross negligence or wilful misconduct, or any rights that consumers cannot be deprived of under Dutch consumer protection law.
+9.4 Mandatory Consumer Rights. Nothing in these Terms limits or excludes any liability that cannot be limited or excluded under mandatory Dutch law, including liability for death or personal injury caused by HeyCaby's own gross negligence or wilful misconduct, or any rights that consumers cannot be deprived of under Dutch consumer protection law.
 
 9.5 Force Majeure. HeyCaby is not liable for any failure or delay in performance caused by circumstances beyond its reasonable control, including but not limited to acts of God, war, terrorism, pandemics, governmental actions, power failures, or telecommunications failures.
 
 ARTICLE 10 — INDEMNIFICATION BY DRIVERS
 10.1 Driver Indemnification Obligation. Drivers agree to indemnify, defend, and hold harmless HeyCaby, its directors, officers, employees, contractors, and agents ("HeyCaby Parties") from and against any and all claims, damages, losses, liabilities, costs, and expenses (including reasonable legal fees) arising out of or in connection with:
 
-(a) Any Driver\'s provision of taxi services, including any accident, injury, death, or property damage occurring during or in connection with a taxi journey;
-(b) Any Driver\'s failure to hold, maintain, or comply with any required licence, permit, insurance, or credential, including but not limited to the Chauffeurskaart, Taxivergunning, or WAM insurance;
-(c) Any Driver\'s violation of these Terms of Service;
-(d) Any Driver\'s violation of any applicable law or regulation;
+(a) Any Driver's provision of taxi services, including any accident, injury, death, or property damage occurring during or in connection with a taxi journey;
+(b) Any Driver's failure to hold, maintain, or comply with any required licence, permit, insurance, or credential, including but not limited to the Chauffeurskaart, Taxivergunning, or WAM insurance;
+(c) Any Driver's violation of these Terms of Service;
+(d) Any Driver's violation of any applicable law or regulation;
 (e) Any Content uploaded by a Driver that infringes any third party right or violates any applicable law;
-(f) Any claim by a Rider or any third party arising from a Driver\'s conduct.
+(f) Any claim by a Rider or any third party arising from a Driver's conduct.
 
 Note: The standalone Indemnification and Liability Declaration document, which Drivers sign separately at registration, sets out the full terms of this indemnification obligation.
 
 ARTICLE 11 — SUSPENSION AND TERMINATION
-11.1 HeyCaby\'s Right to Suspend or Terminate. HeyCaby may suspend or permanently terminate any User account, with or without prior notice, if:
+11.1 HeyCaby's Right to Suspend or Terminate. HeyCaby may suspend or permanently terminate any User account, with or without prior notice, if:
 
 (a) The User violates these Terms of Service;
 (b) HeyCaby receives credible evidence that a Driver is operating without valid required credentials;
 (c) HeyCaby receives credible evidence of fraudulent, deceptive, dangerous, or illegal conduct;
-(d) A Driver\'s 7-day access fee payment fails and is not remedied within 7 days;
+(d) A Driver's 7-day access fee payment fails and is not remedied within 7 days;
 (e) HeyCaby is required to do so by applicable law or court order;
-(f) HeyCaby determines, in its reasonable discretion, that the User\'s presence on the Platform poses a risk to other Users or to HeyCaby.
+(f) HeyCaby determines, in its reasonable discretion, that the User's presence on the Platform poses a risk to other Users or to HeyCaby.
 
 11.2 Notice of Suspension. Where feasible and not precluded by law enforcement considerations, HeyCaby will notify a Driver before suspending their account and will provide a reasonable opportunity to respond. This obligation does not apply in cases of immediate safety risk or legal obligation.
 
-11.3 User\'s Right to Terminate. You may terminate your account at any time through the Platform settings. Driver Access Fees already paid are non-refundable as provided in Article 8.5.
+11.3 User's Right to Terminate. You may terminate your account at any time through the Platform settings. Driver Access Fees already paid are non-refundable as provided in Article 8.5.
 
 11.4 Effect of Termination. Upon termination of your account, your right to access the Platform ceases immediately. HeyCaby will retain and process your personal data in accordance with its Privacy Policy and applicable law.
 
@@ -281,9 +281,9 @@ ARTICLE 15 — GENERAL PROVISIONS
 
 15.2 Severability. If any provision of these Terms is found to be invalid, illegal, or unenforceable under applicable law, that provision shall be modified to the minimum extent necessary to make it valid, legal, and enforceable. All other provisions remain in full force and effect.
 
-15.3 No Waiver. HeyCaby\'s failure to enforce any right or provision of these Terms does not constitute a waiver of that right or provision.
+15.3 No Waiver. HeyCaby's failure to enforce any right or provision of these Terms does not constitute a waiver of that right or provision.
 
-15.4 Assignment. HeyCaby may assign its rights and obligations under these Terms to a successor entity without your consent. You may not assign your rights or obligations under these Terms without HeyCaby\'s prior written consent.
+15.4 Assignment. HeyCaby may assign its rights and obligations under these Terms to a successor entity without your consent. You may not assign your rights or obligations under these Terms without HeyCaby's prior written consent.
 
 15.5 Amendments. HeyCaby may amend these Terms at any time. Amended Terms will be communicated to Users by in-app notification and email (where available) at least 14 days before the amendments take effect. Continued use of the Platform after the effective date constitutes acceptance of the amended Terms. If you do not accept the amendments, you must stop using the Platform and terminate your account before the effective date.
 
@@ -451,7 +451,7 @@ ARTIKEL 6 — CONTENT EN INTELLECTUELE EIGENDOM
 (e) Illegale activiteiten promoot;
 (f) Malware, virussen of andere schadelijke code bevat.
 
-6.3 HeyCaby Intellectuele Eigendom. Het Platform, inclusief alle software, ontwerp, handelsmerken, logo\'s en content gemaakt door HeyCaby, is beschermd door intellectuele eigendomsrecht. U mag het intellectuele eigendom van HeyCaby niet gebruiken, kopiëren, wijzigen of distribueren zonder uitdrukkelijke schriftelijke toestemming.
+6.3 HeyCaby Intellectuele Eigendom. Het Platform, inclusief alle software, ontwerp, handelsmerken, logo's en content gemaakt door HeyCaby, is beschermd door intellectuele eigendomsrecht. U mag het intellectuele eigendom van HeyCaby niet gebruiken, kopiëren, wijzigen of distribueren zonder uitdrukkelijke schriftelijke toestemming.
 
 6.4 Contentverwijdering. HeyCaby behoudt zich het recht voor om enige Content te verwijderen die deze Voorwaarden of toepasselijke wetgeving schendt, in overeenstemming met haar verplichtingen onder de Digital Services Act.
 
@@ -484,7 +484,7 @@ ARTIKEL 8 — PROEFTOEGANG, GRONDLEGGERSTOEGANG, BETALING EN ANNULERING
 8.10 BTW en Belasting. Chauffeurs zijn uitsluitend verantwoordelijk voor alle belastingverplichtingen voortvloeiend uit hun gebruik van het Platform en uit de taxidiensten die zij verlenen. HeyCaby kan BTW-facturen uitreiken voor Chauffeurstoegangstarieven waar vereist door wetgeving. Het Chauffeurstoegangstarief vormt geen inkomen van de Chauffeur; het is een zakelijke toolkost die aftrekbaar kan zijn voor ZZP-chauffeurs. Chauffeurs dienen een belastingadviseur te raadplegen met betrekking tot hun specifieke situatie.
 
 ARTIKEL 9 — BEPERKING VAN AANSPRAKELIJKHEID
-9.1 HeyCaby\'s Uitsluiting van Aansprakelijkheid voor Vervoersdiensten. Voor zover maximaal toegestaan door dwingend toepasselijk recht:
+9.1 HeyCaby's Uitsluiting van Aansprakelijkheid voor Vervoersdiensten. Voor zover maximaal toegestaan door dwingend toepasselijk recht:
 
 (a) HeyCaby is niet aansprakelijk voor enig verlies, schade, letsel, overlijden, vertraging, of andere schade voortvloeiend uit of in verband met enige taxirit georganiseerd via het Platform. Alle aansprakelijkheid voor vervoersdiensten rust uitsluitend bij de Chauffeur die deze diensten verleent;
 (b) HeyCaby is niet aansprakelijk voor het falen van enige Chauffeur om geldige credentials, verzekering, of enig vereist rijbewijs of vergunning te bezitten;

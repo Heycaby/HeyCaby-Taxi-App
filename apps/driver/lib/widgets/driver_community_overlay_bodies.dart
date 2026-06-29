@@ -740,7 +740,7 @@ class DriverCommunityDisclaimerBody extends StatelessWidget {
                   DriverCommunityDisclaimerRuleSection(
                     icon: Icons.campaign_rounded,
                     title: DriverStrings.communityDisclaimerChannelsTitle,
-                    items: [
+                    items: const [
                       DriverStrings.communityDisclaimerChannelsItem1,
                       DriverStrings.communityDisclaimerChannelsItem2,
                     ],
@@ -751,7 +751,7 @@ class DriverCommunityDisclaimerBody extends StatelessWidget {
                   DriverCommunityDisclaimerRuleSection(
                     icon: Icons.visibility_rounded,
                     title: DriverStrings.communityDisclaimerVisibilityTitle,
-                    items: [
+                    items: const [
                       DriverStrings.communityDisclaimerVisibilityItem1,
                       DriverStrings.communityDisclaimerVisibilityItem2,
                       DriverStrings.communityDisclaimerVisibilityItem3,
@@ -763,7 +763,7 @@ class DriverCommunityDisclaimerBody extends StatelessWidget {
                   DriverCommunityDisclaimerRuleSection(
                     icon: Icons.lock_rounded,
                     title: DriverStrings.communityDisclaimerDataTitle,
-                    items: [
+                    items: const [
                       DriverStrings.communityDisclaimerDataItem1,
                       DriverStrings.communityDisclaimerDataItem2,
                       DriverStrings.communityDisclaimerDataItem3,
@@ -775,7 +775,7 @@ class DriverCommunityDisclaimerBody extends StatelessWidget {
                   DriverCommunityDisclaimerRuleSection(
                     icon: Icons.shield_rounded,
                     title: DriverStrings.communityDisclaimerConductTitle,
-                    items: [
+                    items: const [
                       DriverStrings.communityDisclaimerConductItem1,
                       DriverStrings.communityDisclaimerConductItem2,
                       DriverStrings.communityDisclaimerConductItem3,
