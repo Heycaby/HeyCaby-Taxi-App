@@ -11,6 +11,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/rider_search_window.dart';
 import '../models/ride_matching_variant.dart';
 import '../providers/location_provider.dart';
+import '../providers/rider_locale_provider.dart';
+import '../services/rider_home_banners_service.dart';
 import '../services/rider_runtime_config_service.dart';
 import '../services/stale_ride_cleanup.dart';
 
@@ -47,10 +49,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     // Never trigger an OS permission prompt from splash. We only prewarm location
     // if permission was already granted before.
     await ref.read(locationProvider.notifier).refreshIfPermitted();
+    final localeTag = ref.read(riderAppLocaleTagProvider);
     try {
       await Future.wait([
         riderRuntimeConfig.refresh(force: true),
         appPublicLinks.refresh(force: true),
+        riderHomeBannersService.refresh(
+          locale: localeTag,
+          force: true,
+        ),
       ]);
     } catch (_) {
       // Keep startup resilient; app falls back to local defaults.

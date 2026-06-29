@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
-import 'dart:ui';
+
+import '../utils/rider_locale_utils.dart';
 
 class SettingsState {
-  static const supportedLanguageCodes = <String>{'nl', 'en', 'ar'};
+  static const supportedLanguageCodes = kRiderSupportedLanguageCodes;
+  final bool languageFollowsDevice;
   final String language;
   final String theme;
   final bool locationEnabled;
@@ -12,7 +14,8 @@ class SettingsState {
   final String? userName;
 
   const SettingsState({
-    this.language = 'nl',
+    this.languageFollowsDevice = true,
+    this.language = 'en',
     this.theme = kRiderDefaultTheme,
     this.locationEnabled = true,
     this.notificationsEnabled = false,
@@ -20,6 +23,7 @@ class SettingsState {
   });
 
   SettingsState copyWith({
+    bool? languageFollowsDevice,
     String? language,
     String? theme,
     bool? locationEnabled,
@@ -27,6 +31,8 @@ class SettingsState {
     String? userName,
   }) =>
       SettingsState(
+        languageFollowsDevice:
+            languageFollowsDevice ?? this.languageFollowsDevice,
         language: language ?? this.language,
         theme: theme ?? this.theme,
         locationEnabled: locationEnabled ?? this.locationEnabled,
@@ -44,14 +50,26 @@ class SettingsNotifier extends AsyncNotifier<SettingsState> {
   }
 
   Future<SettingsState> _loadSettings() async {
+    final followsRaw = await _storage.read(key: 'language_follows_device');
     final savedLanguage = await _storage.read(key: 'language');
-    final deviceLanguage = PlatformDispatcher.instance.locale.languageCode.toLowerCase();
+    final deviceLanguage = resolveRiderDeviceLocale().languageCode;
+
+    final bool followsDevice;
+    if (followsRaw != null) {
+      followsDevice = followsRaw != 'false';
+    } else if (savedLanguage != null && savedLanguage.trim().isNotEmpty) {
+      // Existing installs: keep explicit language until user picks "device".
+      followsDevice = false;
+    } else {
+      followsDevice = true;
+    }
+
     final normalizedSaved = (savedLanguage ?? '').trim().toLowerCase();
-    final language = SettingsState.supportedLanguageCodes.contains(normalizedSaved)
-        ? normalizedSaved
-        : (SettingsState.supportedLanguageCodes.contains(deviceLanguage)
-            ? deviceLanguage
-            : 'nl');
+    final overrideLanguage =
+        SettingsState.supportedLanguageCodes.contains(normalizedSaved)
+            ? normalizedSaved
+            : deviceLanguage;
+    final language = followsDevice ? deviceLanguage : overrideLanguage;
     var theme = await _storage.read(key: 'theme') ?? kRiderDefaultTheme;
     theme = migrateThemeId(theme);
     if (!kThemes.containsKey(theme)) theme = kRiderDefaultTheme;
@@ -61,6 +79,7 @@ class SettingsNotifier extends AsyncNotifier<SettingsState> {
     final userName = await _storage.read(key: 'user_name');
 
     return SettingsState(
+      languageFollowsDevice: followsDevice,
       language: language,
       theme: theme,
       locationEnabled: locationEnabled,
@@ -70,8 +89,27 @@ class SettingsNotifier extends AsyncNotifier<SettingsState> {
   }
 
   Future<void> setLanguage(String language) async {
-    await _storage.write(key: 'language', value: language);
-    state = AsyncData(state.value!.copyWith(language: language));
+    final code = language.trim().toLowerCase();
+    if (!SettingsState.supportedLanguageCodes.contains(code)) return;
+    await _storage.write(key: 'language', value: code);
+    await _storage.write(key: 'language_follows_device', value: 'false');
+    state = AsyncData(
+      state.value!.copyWith(
+        languageFollowsDevice: false,
+        language: code,
+      ),
+    );
+  }
+
+  Future<void> setFollowDeviceLanguage() async {
+    final deviceLanguage = resolveRiderDeviceLocale().languageCode;
+    await _storage.write(key: 'language_follows_device', value: 'true');
+    state = AsyncData(
+      state.value!.copyWith(
+        languageFollowsDevice: true,
+        language: deviceLanguage,
+      ),
+    );
   }
 
   Future<void> setTheme(String theme) async {

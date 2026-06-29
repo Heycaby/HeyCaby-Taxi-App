@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../constants/rider_search_window.dart';
+import '../utils/rider_effective_locale_bridge.dart';
 
 /// Ongoing local notification so riders see “still searching” on the lock screen
 /// and in the shade after **Notify me** (home_widget alone does not run when the app is suspended).
@@ -24,7 +25,7 @@ class RiderNotifySearchNotifications {
   static bool _initialized = false;
 
   static String get _lang {
-    final code = PlatformDispatcher.instance.locale.languageCode.toLowerCase();
+    final code = RiderEffectiveLocaleBridge.languageCode;
     if (code == 'ar') return 'ar';
     if (code == 'en') return 'en';
     return 'nl';

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
+import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../services/sound_service.dart';
@@ -139,6 +140,7 @@ Future<void> dispatchRiderNotification({
 
   final messenger = ScaffoldMessenger.maybeOf(context);
   if (messenger == null) return;
+  final l10n = AppLocalizations.of(context);
 
   messenger.showSnackBar(
     SnackBar(
@@ -149,7 +151,7 @@ Future<void> dispatchRiderNotification({
       ),
       duration: const Duration(seconds: 6),
       action: SnackBarAction(
-        label: 'Open',
+        label: l10n.openAction,
         onPressed: () {
           if (context.mounted) {
             context.go(riderDeepLinkForBehavior(behavior));

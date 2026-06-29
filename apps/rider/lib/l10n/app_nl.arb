@@ -207,6 +207,38 @@
   "growCityWhyHelpBullet2": "Meer werk voor lokale taxichauffeurs",
   "growCityWhyHelpBullet3": "Kortere wachttijden",
   "growCityWhyHelpBullet4": "Sterkere taxigemeenschap",
+  "growCityPitchLine": "Nodig mensen uit die taxi nodig hebben in jouw stad.",
+  "growCityPitchBenefit": "Meer passagiers in de buurt → meer chauffeurs en kortere wachttijden.",
+  "growCityProgressHeader": "{region} · {current} / {milestone} maandelijkse passagiers",
+  "@growCityProgressHeader": {
+    "placeholders": {
+      "region": { "type": "String" },
+      "current": { "type": "String" },
+      "milestone": { "type": "String" }
+    }
+  },
+  "growCityCompactDrivers": "{count} chauffeurs",
+  "@growCityCompactDrivers": {
+    "placeholders": {
+      "count": { "type": "String" }
+    }
+  },
+  "growCityCompactRiders": "{count} passagiers",
+  "@growCityCompactRiders": {
+    "placeholders": {
+      "count": { "type": "String" }
+    }
+  },
+  "growCityLearnMore": "Waarom dit helpt",
+  "growCityImpactCompact": "{invited} uitgenodigd · {joined} aangemeld",
+  "@growCityImpactCompact": {
+    "placeholders": {
+      "invited": { "type": "int" },
+      "joined": { "type": "int" }
+    }
+  },
+  "growCityWhySheetDone": "Begrepen",
+  "growCityRegionNetherlands": "Nederland",
   "iosUpdateRequiredTitle": "Werk iOS bij",
   "iosUpdateRequiredBody": "HeyCaby vereist iOS {minimumVersion} of nieuwer. Deze iPhone draait iOS {currentVersion}. Ga naar Instellingen → Algemeen → Software-update om de nieuwste iOS voor je toestel te installeren.",
   "@iosUpdateRequiredBody": {
@@ -374,6 +406,11 @@
   "support": "Ondersteuning",
   "settings": "Instellingen",
   "language": "Taal",
+  "languageFollowDevice": "Taal van apparaat",
+  "languageFollowDeviceSubtitle": "Volgt de instellingen van je telefoon",
+  "languageEnglish": "English",
+  "languageDutch": "Nederlands",
+  "languageArabic": "العربية",
   "theme": "Thema",
   "homeAddress": "Thuisadres",
   "savedAddresses": "Opgeslagen plaatsen",
@@ -1057,6 +1094,7 @@
   "activeRideFoundingMember": "Founding Member",
   "activeRideVerifyPlate": "Controleer dit kenteken voordat je instapt.",
   "openAction": "Openen",
+  "openLinkAction": "Link openen",
   "rideReceiptTitle": "Ritbon",
   "rideReceiptUnavailable": "Bon is nog niet beschikbaar.",
   "rideReceiptSettlement": "Afrekening",

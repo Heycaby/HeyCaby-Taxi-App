@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_rider/models/rider_community_growth_models.dart';
+import 'package:heycaby_rider/utils/rider_grow_city_l10n.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
-class RiderGrowCityHero extends StatelessWidget {
-  const RiderGrowCityHero({
+/// One-line pitch above the share CTA.
+class RiderGrowCityPitch extends StatelessWidget {
+  const RiderGrowCityPitch({
     super.key,
-    required this.regionName,
     required this.colors,
     required this.typo,
     required this.l10n,
   });
 
-  final String regionName;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
   final AppLocalizations l10n;
@@ -26,64 +26,32 @@ class RiderGrowCityHero extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            colors.accentL.withValues(alpha: 0.45),
+            colors.accentL.withValues(alpha: 0.4),
             colors.card,
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: colors.border.withValues(alpha: 0.7)),
-        boxShadow: [
-          BoxShadow(
-            color: colors.text.withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
       ),
       child: Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(18, 18, 18, 16),
+        padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(Icons.public_rounded, color: colors.accent, size: 22),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    l10n.growCityHeroTitle(regionName),
-                    style: typo.titleMedium.copyWith(
-                      color: colors.text,
-                      fontWeight: FontWeight.w800,
-                      height: 1.25,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
             Text(
-              l10n.growCityHeroBody1,
-              style: typo.bodyMedium.copyWith(
-                color: colors.textMid,
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.growCityHeroBody2,
-              style: typo.bodyMedium.copyWith(
-                color: colors.textMid,
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              l10n.growCityHeroMission,
-              style: typo.bodySmall.copyWith(
+              l10n.growCityPitchLine,
+              style: typo.titleSmall.copyWith(
                 color: colors.text,
-                fontWeight: FontWeight.w700,
-                height: 1.4,
+                fontWeight: FontWeight.w800,
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              l10n.growCityPitchBenefit,
+              style: typo.bodyMedium.copyWith(
+                color: colors.textMid,
+                height: 1.35,
               ),
             ),
           ],
@@ -93,8 +61,9 @@ class RiderGrowCityHero extends StatelessWidget {
   }
 }
 
-class RiderCommunityProgressCard extends StatelessWidget {
-  const RiderCommunityProgressCard({
+/// Slim community milestone — bar + one label + optional driver/rider chips.
+class RiderGrowCityMilestoneStrip extends StatelessWidget {
+  const RiderGrowCityMilestoneStrip({
     super.key,
     required this.stats,
     required this.colors,
@@ -114,92 +83,38 @@ class RiderCommunityProgressCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: colors.border.withValues(alpha: 0.85)),
-        boxShadow: [
-          BoxShadow(
-            color: colors.text.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Padding(
-        padding: const EdgeInsetsDirectional.all(16),
+        padding: const EdgeInsetsDirectional.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              l10n.growCityCommunityTitle(stats.regionName),
-              style: typo.titleSmall.copyWith(
+              l10n.growCityProgressHeader(
+                localizeGrowCityRegion(l10n, stats.regionName),
+                formatCommunityCount(stats.monthlyRiderCount),
+                formatCommunityCount(stats.nextMilestone),
+              ),
+              style: typo.labelLarge.copyWith(
                 color: colors.text,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
+                height: 1.3,
               ),
             ),
-            const SizedBox(height: 14),
-            _StatRow(
-              emoji: '🚖',
-              label: l10n.growCityDriversLabel,
-              value:
-                  '${formatCommunityCount(stats.driverCount)} / ${formatCommunityCount(stats.driverCap)}',
-              colors: colors,
-              typo: typo,
-            ),
-            const SizedBox(height: 8),
-            _StatRow(
-              emoji: '🚶',
-              label: l10n.growCityRidersLabel,
-              value: formatCommunityCount(stats.riderCount),
-              colors: colors,
-              typo: typo,
-            ),
-            const SizedBox(height: 8),
-            _StatRow(
-              emoji: '📅',
-              label: l10n.growCityMonthlyRidersLabel,
-              value: formatCommunityCount(stats.monthlyRiderCount),
-              colors: colors,
-              typo: typo,
-            ),
-            const SizedBox(height: 8),
-            _StatRow(
-              emoji: '🛞',
-              label: l10n.growCityMonthlyDriversLabel,
-              value: formatCommunityCount(stats.monthlyDriverCount),
-              colors: colors,
-              typo: typo,
-            ),
-            const SizedBox(height: 8),
-            _StatRow(
-              emoji: '🎯',
-              label: l10n.growCityMilestoneLabel,
-              value: formatCommunityCount(stats.nextMilestone),
-              colors: colors,
-              typo: typo,
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(6),
               child: LinearProgressIndicator(
                 value: progress,
-                minHeight: 10,
+                minHeight: 8,
                 backgroundColor: colors.border.withValues(alpha: 0.35),
                 color: colors.accent,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.growCityProgressCount(
-                formatCommunityCount(stats.monthlyRiderCount),
-                formatCommunityCount(stats.nextMilestone),
-              ),
-              style: typo.labelMedium.copyWith(
-                color: colors.text,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
             if (stats.finalGoalReached) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Text(
                 l10n.growCityFinalGoalReached,
                 style: typo.bodySmall.copyWith(
@@ -207,36 +122,28 @@ class RiderCommunityProgressCard extends StatelessWidget {
                   height: 1.35,
                 ),
               ),
-            ] else if (stats.remainingToMilestone > 0) ...[
-              const SizedBox(height: 6),
-              Text(
-                l10n.growCityMilestoneHint(
-                  formatCommunityCount(stats.remainingToMilestone),
-                  formatCommunityCount(stats.nextMilestone),
-                ),
-                style: typo.bodySmall.copyWith(
-                  color: colors.textMid,
-                  height: 1.35,
-                ),
-              ),
             ],
-            if (stats.achievedMilestones.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: stats.achievedMilestones
-                    .map(
-                      (m) => Chip(
-                        label: Text(formatCommunityCount(m)),
-                        visualDensity: VisualDensity.compact,
-                        backgroundColor:
-                            colors.accentL.withValues(alpha: 0.35),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ],
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                _CompactChip(
+                  label: l10n.growCityCompactDrivers(
+                    formatCommunityCount(stats.driverCount),
+                  ),
+                  colors: colors,
+                  typo: typo,
+                ),
+                _CompactChip(
+                  label: l10n.growCityCompactRiders(
+                    formatCommunityCount(stats.riderCount),
+                  ),
+                  colors: colors,
+                  typo: typo,
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -244,57 +151,48 @@ class RiderCommunityProgressCard extends StatelessWidget {
   }
 }
 
-class _StatRow extends StatelessWidget {
-  const _StatRow({
-    required this.emoji,
+class _CompactChip extends StatelessWidget {
+  const _CompactChip({
     required this.label,
-    required this.value,
     required this.colors,
     required this.typo,
   });
 
-  final String emoji;
   final String label;
-  final String value;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(emoji, style: const TextStyle(fontSize: 18)),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            label,
-            style: typo.bodyMedium.copyWith(color: colors.textMid),
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: colors.border.withValues(alpha: 0.75)),
+      ),
+      child: Text(
+        label,
+        style: typo.labelSmall.copyWith(
+          color: colors.textMid,
+          fontWeight: FontWeight.w600,
         ),
-        Text(
-          value,
-          style: typo.titleSmall.copyWith(
-            color: colors.text,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
 
-class RiderYourImpactCard extends StatelessWidget {
-  const RiderYourImpactCard({
+/// Single-line personal impact — shown only when the user has invite activity.
+class RiderGrowCityImpactCompact extends StatelessWidget {
+  const RiderGrowCityImpactCompact({
     super.key,
     required this.impact,
-    required this.loading,
     required this.colors,
     required this.typo,
     required this.l10n,
   });
 
   final RiderInviteImpact impact;
-  final bool loading;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
   final AppLocalizations l10n;
@@ -304,104 +202,40 @@ class RiderYourImpactCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.surface.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: colors.border.withValues(alpha: 0.75)),
       ),
       child: Padding(
-        padding: const EdgeInsetsDirectional.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsetsDirectional.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
+        child: Row(
           children: [
+            Icon(Icons.favorite_rounded, size: 20, color: colors.accent),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                l10n.growCityImpactTitle,
+                style: typo.labelLarge.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
             Text(
-              l10n.growCityImpactTitle,
-              style: typo.titleSmall.copyWith(
-                color: colors.text,
+              l10n.growCityImpactCompact(
+                impact.peopleInvited,
+                impact.joined,
+              ),
+              style: typo.labelMedium.copyWith(
+                color: colors.accent,
                 fontWeight: FontWeight.w800,
               ),
             ),
-            const SizedBox(height: 12),
-            if (loading)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: colors.accent,
-                  ),
-                ),
-              )
-            else
-              Row(
-                children: [
-                  Expanded(
-                    child: _ImpactStat(
-                      label: l10n.growCityPeopleInvited,
-                      value: '${impact.peopleInvited}',
-                      colors: colors,
-                      typo: typo,
-                    ),
-                  ),
-                  Expanded(
-                    child: _ImpactStat(
-                      label: l10n.growCityJoined,
-                      value: '${impact.joined}',
-                      colors: colors,
-                      typo: typo,
-                    ),
-                  ),
-                  Expanded(
-                    child: _ImpactStat(
-                      label: l10n.growCityCompletedRides,
-                      value: '${impact.completedRides}',
-                      colors: colors,
-                      typo: typo,
-                    ),
-                  ),
-                ],
-              ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _ImpactStat extends StatelessWidget {
-  const _ImpactStat({
-    required this.label,
-    required this.value,
-    required this.colors,
-    required this.typo,
-  });
-
-  final String label;
-  final String value;
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: typo.headingSmall.copyWith(
-            color: colors.accent,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: typo.labelSmall.copyWith(
-            color: colors.textMid,
-            height: 1.2,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -423,19 +257,21 @@ class RiderCommunityBadgesRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final earned = RiderCommunityBadgeTierX.earnedForJoined(joined);
-    final all = RiderCommunityBadgeTier.values;
+    if (earned.isEmpty) return const SizedBox.shrink();
+
+    const all = RiderCommunityBadgeTier.values;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           l10n.growCityBadgesTitle,
-          style: typo.titleSmall.copyWith(
+          style: typo.labelLarge.copyWith(
             color: colors.text,
             fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -533,86 +369,29 @@ class _BadgeChip extends StatelessWidget {
   }
 }
 
-class RiderGrowCityWhyHelpCard extends StatelessWidget {
-  const RiderGrowCityWhyHelpCard({
+class RiderGrowCityLearnMoreButton extends StatelessWidget {
+  const RiderGrowCityLearnMoreButton({
     super.key,
     required this.colors,
     required this.typo,
     required this.l10n,
+    required this.onPressed,
   });
 
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
   final AppLocalizations l10n;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.surface.withValues(alpha: 0.75),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.border.withValues(alpha: 0.65)),
-      ),
-      child: Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 14, 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.growCityWhyHelpTitle,
-              style: typo.titleSmall.copyWith(
-                color: colors.text,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            for (final bullet in [
-              l10n.growCityWhyHelpBullet1,
-              l10n.growCityWhyHelpBullet2,
-              l10n.growCityWhyHelpBullet3,
-              l10n.growCityWhyHelpBullet4,
-            ])
-              _WhyRow(text: bullet, colors: colors, typo: typo),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _WhyRow extends StatelessWidget {
-  const _WhyRow({
-    required this.text,
-    required this.colors,
-    required this.typo,
-  });
-
-  final String text;
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsetsDirectional.only(top: 3),
-            child: Icon(Icons.check_rounded, size: 18, color: colors.accent),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: typo.bodySmall.copyWith(
-                color: colors.textMid,
-                height: 1.35,
-              ),
-            ),
-          ),
-        ],
+    return TextButton.icon(
+      onPressed: onPressed,
+      icon: Icon(Icons.info_outline_rounded, size: 20, color: colors.accent),
+      label: Text(l10n.growCityLearnMore),
+      style: TextButton.styleFrom(
+        foregroundColor: colors.accent,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       ),
     );
   }

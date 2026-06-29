@@ -36,6 +36,8 @@ import 'screens/location_required_screen.dart';
 import 'screens/faq_screen.dart';
 import 'screens/terms_screen.dart';
 import 'screens/privacy_screen.dart';
+import 'screens/rider_announcement_web_screen.dart';
+import 'utils/rider_home_banner_actions.dart';
 import 'screens/rider_support_screen.dart';
 import 'screens/rider_support_threads_screen.dart';
 import 'screens/rider_support_new_ticket_screen.dart';
@@ -319,6 +321,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/privacy',
         pageBuilder: (_, state) => _page(state, const PrivacyScreen()),
+      ),
+      GoRoute(
+        path: '/announcement-web',
+        pageBuilder: (_, state) {
+          final extra = state.extra;
+          if (extra is! RiderAnnouncementWebRouteArgs) {
+            return _page(state, const Scaffold());
+          }
+          return _page(
+            state,
+            RiderAnnouncementWebScreen(url: extra.url, title: extra.title),
+          );
+        },
       ),
       GoRoute(
         path: '/support',

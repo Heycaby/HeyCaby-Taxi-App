@@ -38,15 +38,19 @@
   "homeRideAgainDriverStats": "{rating} ★ • {count} رحلة",
   "@homeRideAgainDriverStats": {
     "placeholders": {
-      "rating": { "type": "String" },
-      "count": { "type": "int" }
+      "rating": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
     }
   },
   "homeRecentPlacesTitle": "أماكن حديثة",
   "homeRecentPlacesEdit": "تعديل",
   "homeCompleteProfile": "أكمل الملف",
   "vehicleCategoryTitle": "أي نوع رحلة تريد؟",
-  "homeAirportChipSchiphol": "Schiphol",
+  "homeAirportChipSchiphol": "سخيبول",
   "homeAirportChipRotterdam": "مطار روتردام",
   "homeAirportChipEindhoven": "آيندهوفن",
   "homeAirportChipBrussels": "مطار بروكسل",
@@ -86,7 +90,9 @@
   "recentDestinationsShowMore": "عرض {count} إضافية",
   "@recentDestinationsShowMore": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "recentDestinationsShowLess": "عرض أقل",
@@ -103,7 +109,9 @@
   "scheduledFor": "مجدول في {date}",
   "@scheduledFor": {
     "placeholders": {
-      "date": { "type": "String" }
+      "date": {
+        "type": "String"
+      }
     }
   },
   "noDriversNearby": "لا يوجد سائقون قريبون",
@@ -118,9 +126,9 @@
   "home": "الرئيسية",
   "rides": "الرحلات",
   "account": "الحساب",
-  "tellAFriendNavLabel": "Community",
+  "tellAFriendNavLabel": "المجتمع",
   "tellAFriendNavSemanticLabel": "نمِّ مدينتك — ابنِ مجتمع HeyCaby",
-  "tellAFriendScreenTitle": "Grow Your City",
+  "tellAFriendScreenTitle": "نمِّ مدينتك",
   "tellAFriendSharePrompt": "شارك HeyCaby مع من يحتاجون رحلات موثوقة في مدينتك. كل راكب جديد يساعد سائقي التaxi المحليين.",
   "tellAFriendHeroTitle": "ادعُ الأصدقاء",
   "tellAFriendHeroSubtitle": "شارك الرابط بلمسة واحدة.",
@@ -137,8 +145,8 @@
   "tellAFriendWebsiteLinkLabel": "رابط المشاركة",
   "tellAFriendLinkResolving": "جاري إعداد رابط الدعوة القصير…",
   "tellAFriendCopyLink": "نسخ الرابط",
-  "tellAFriendShareLink": "Share HeyCaby",
-  "tellAFriendShowQr": "QR code",
+  "tellAFriendShareLink": "شارك HeyCaby",
+  "tellAFriendShowQr": "رمز QR",
   "tellAFriendQrTitle": "امسح لتحميل HeyCaby",
   "tellAFriendQrHint": "يفتح المسح تطبيق HeyCaby Rider في App Store. استخدم مشاركة أو نسخ لإرسال رابط التحميل.",
   "tellAFriendSocialProof": "شكرًا لمساعدتك في بناء أكبر شبكة تaxi مستقلة في هولندا.",
@@ -148,77 +156,142 @@
   "tellAFriendShareMessage": "حمّل HeyCaby Rider — تطبيق التaxi المستقل في هولندا:",
   "tellAFriendLinkUnavailable": "رابط App Store غير مُعدّ",
   "tellAFriendLinkUnavailableHint": "أضف RIDER_IOS_APP_STORE_URL إلى بيئة البناء ثم أعد بناء التطبيق.",
-  "growCityHeroTitle": "Grow HeyCaby in {cityName}",
+  "growCityHeroTitle": "انمُ HeyCaby في {cityName}",
   "@growCityHeroTitle": {
     "placeholders": {
-      "cityName": { "type": "String" }
+      "cityName": {
+        "type": "String"
+      }
     }
   },
   "growCityHeroBody1": "ادعُ الأصدقاء والعائلة ممن يحتاجون تaxi موثوقًا في مدينتك.",
   "growCityHeroBody2": "المزيد من الركاب قربك يعني المزيد من طلبات الرحلات للسائقين المحليين وأوقات انتظار أقصر للجميع.",
-  "growCityHeroMission": "Help us build the largest independent taxi network in the Netherlands.",
-  "growCityCommunityTitle": "{cityName} community",
+  "growCityHeroMission": "ساعدنا في بناء أكبر شبكة تaxi مستقلة في هولندا.",
+  "growCityCommunityTitle": "مجتمع {cityName}",
   "@growCityCommunityTitle": {
     "placeholders": {
-      "cityName": { "type": "String" }
+      "cityName": {
+        "type": "String"
+      }
     }
   },
-  "growCityDriversLabel": "Drivers",
-  "growCityRidersLabel": "Riders",
-  "growCityMonthlyRidersLabel": "Monthly riders",
-  "growCityMonthlyDriversLabel": "Monthly drivers",
-  "growCityMilestoneLabel": "Next milestone",
-  "growCityDriverCapLabel": "Driver network cap",
-  "growCityRiderCapLabel": "Monthly rider vision",
+  "growCityDriversLabel": "السائقون",
+  "growCityRidersLabel": "الركاب",
+  "growCityMonthlyRidersLabel": "الركاب الشهريون",
+  "growCityMonthlyDriversLabel": "السائقون الشهريون",
+  "growCityMilestoneLabel": "المحطة التالية",
+  "growCityDriverCapLabel": "حد شبكة السائقين",
+  "growCityRiderCapLabel": "هدف الركاب الشهري",
   "growCityProgressCount": "{current} / {milestone}",
   "@growCityProgressCount": {
     "placeholders": {
-      "current": { "type": "String" },
-      "milestone": { "type": "String" }
+      "current": {
+        "type": "String"
+      },
+      "milestone": {
+        "type": "String"
+      }
     }
   },
-  "growCityMilestoneHint": "{remaining} monthly riders until we celebrate {milestone}.",
+  "growCityMilestoneHint": "متبقٍ {remaining} راكب شهريًا حتى نحتفل بـ {milestone}.",
   "@growCityMilestoneHint": {
     "placeholders": {
-      "remaining": { "type": "String" },
-      "milestone": { "type": "String" }
+      "remaining": {
+        "type": "String"
+      },
+      "milestone": {
+        "type": "String"
+      }
     }
   },
-  "growCityFinalGoalReached": "We reached 1 million monthly riders in the Netherlands. Thank you for growing HeyCaby with us.",
-  "growCityMilestoneCelebrationTitle": "Milestone reached!",
-  "growCityMilestoneCelebrationBody": "The HeyCaby community just hit {milestone} monthly riders in the Netherlands. Thank you for helping us grow — on to the next milestone!",
+  "growCityFinalGoalReached": "وصلنا إلى مليون راكب شهري في هولندا. شكرًا لمساعدتنا في نمو HeyCaby.",
+  "growCityMilestoneCelebrationTitle": "تم بلوغ المحطة!",
+  "growCityMilestoneCelebrationBody": "وصل مجتمع HeyCaby إلى {milestone} راكب شهري في هولندا. شكرًا لمساعدتك — نحو المحطة التالية!",
   "@growCityMilestoneCelebrationBody": {
     "placeholders": {
-      "milestone": { "type": "String" }
+      "milestone": {
+        "type": "String"
+      }
     }
   },
-  "growCityMilestoneCelebrationCta": "Let's keep growing",
-  "growCityImpactTitle": "Your impact",
+  "growCityMilestoneCelebrationCta": "لنواصل النمو",
+  "growCityImpactTitle": "أثرك",
   "growCityPeopleInvited": "الركاب المدعوون",
-  "growCityJoined": "Joined",
-  "growCityCompletedRides": "Completed rides",
-  "growCityBadgesTitle": "Community badges",
-  "growCityBadgeSupporter": "Community Supporter",
-  "growCityBadgeBuilder": "Community Builder",
-  "growCityBadgeAmbassador": "City Ambassador",
-  "growCityBadgeTopPromoter": "Top Promoter",
-  "growCityWhyHelpTitle": "Why help?",
-  "growCityWhyHelpBullet1": "More riders nearby",
+  "growCityJoined": "انضم",
+  "growCityCompletedRides": "رحلات مكتملة",
+  "growCityBadgesTitle": "شارات المجتمع",
+  "growCityBadgeSupporter": "داعم المجتمع",
+  "growCityBadgeBuilder": "باني المجتمع",
+  "growCityBadgeAmbassador": "سفير المدينة",
+  "growCityBadgeTopPromoter": "أفضل مروّج",
+  "growCityWhyHelpTitle": "لماذا المساعدة؟",
+  "growCityWhyHelpBullet1": "المزيد من الركاب قربك",
   "growCityWhyHelpBullet2": "المزيد من العمل لسائقي التaxi المحليين",
-  "growCityWhyHelpBullet3": "Shorter waiting times",
-  "growCityWhyHelpBullet4": "Stronger taxi community",
+  "growCityWhyHelpBullet3": "أوقات انتظار أقصر",
+  "growCityWhyHelpBullet4": "مجتمع تaxi أقوى",
+  "growCityPitchLine": "ادعُ من يحتاجون تaxi في مدينتك.",
+  "growCityPitchBenefit": "المزيد من الركاب قربك → المزيد من السائقين وانتظار أقصر.",
+  "growCityProgressHeader": "{region} · {current} / {milestone} راكب شهريًا",
+  "@growCityProgressHeader": {
+    "placeholders": {
+      "region": {
+        "type": "String"
+      },
+      "current": {
+        "type": "String"
+      },
+      "milestone": {
+        "type": "String"
+      }
+    }
+  },
+  "growCityCompactDrivers": "{count} سائقين",
+  "@growCityCompactDrivers": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "growCityCompactRiders": "{count} راكبين",
+  "@growCityCompactRiders": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "growCityLearnMore": "لماذا يساعد هذا",
+  "growCityImpactCompact": "{invited} مدعو · {joined} انضم",
+  "@growCityImpactCompact": {
+    "placeholders": {
+      "invited": {
+        "type": "int"
+      },
+      "joined": {
+        "type": "int"
+      }
+    }
+  },
+  "growCityWhySheetDone": "حسنًا",
   "iosUpdateRequiredTitle": "يُرجى تحديث iOS",
   "iosUpdateRequiredBody": "يتطلب HeyCaby iOS {minimumVersion} أو أحدث. هذا الـ iPhone يعمل بـ iOS {currentVersion}. افتح الإعدادات → عام → تحديث البرنامج لتثبيت أحدث إصدار يدعمه جهازك.",
   "@iosUpdateRequiredBody": {
     "placeholders": {
-      "minimumVersion": { "type": "String" },
-      "currentVersion": { "type": "String" }
+      "minimumVersion": {
+        "type": "String"
+      },
+      "currentVersion": {
+        "type": "String"
+      }
     }
   },
   "iosUpdateRequiredFooter": "إذا لم يستطع جهازك الترقية إلى iOS {minimumVersion}، ستحتاج إلى iPhone أحدث لاستخدام HeyCaby.",
   "@iosUpdateRequiredFooter": {
     "placeholders": {
-      "minimumVersion": { "type": "String" }
+      "minimumVersion": {
+        "type": "String"
+      }
     }
   },
   "scheduledCommitmentDisclosure": "قد يطلب منك السائق مساهمة تأكيد صغيرة تصل إلى ٥ يورو قبل موعد الرحلة بحد أقصى ٤٠ دقيقة. تُخصم من إجمالي الرحلة. إذا ألغيت أنت أو السائق لاحقًا، تسري قواعد الإلغاء المعتادة.",
@@ -235,7 +308,9 @@
   "favouriteDriversSubtitleWithCount": "{count} سائق في شبكتك",
   "@favouriteDriversSubtitleWithCount": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "noFavouritesYet": "لا يوجد مفضلون بعد",
@@ -249,13 +324,17 @@
   "marketplaceTagline": "السائقون يتنافسون على رحلتك.",
   "makeAnOffer": "السوق",
   "marketplacePostRequest": "نشر الطلب",
-  "marketplaceRequestOffers": "نشر الطلب",
+  "marketplaceRequestOffers": "اطلب عروضاً",
   "marketplaceMatchingTitle": "السوق",
   "marketplaceMatchingHeadline": "البحث عن سائقين…",
   "marketplaceMatchingNotifySubtitle": "سنُعلمك عند وصول العروض.",
   "marketplaceDriversReceivedRequest": "استلم {count} سائقاً طلبك",
   "@marketplaceDriversReceivedRequest": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "marketplaceExpectedWait": "الانتظار المتوقع: 1 – 2 دقيقة",
   "marketplaceOffersFromDrivers": "عروض من السائقين",
@@ -275,8 +354,12 @@
   "marketplaceMatchingSubhead": "{nearby} قريب · {received} عروض",
   "@marketplaceMatchingSubhead": {
     "placeholders": {
-      "nearby": { "type": "int" },
-      "received": { "type": "int" }
+      "nearby": {
+        "type": "int"
+      },
+      "received": {
+        "type": "int"
+      }
     }
   },
   "marketplaceMatchingWaiting": "في انتظار ردود السائقين",
@@ -299,18 +382,28 @@
   "marketplaceDriversOnline": "{count} سائق متصل",
   "@marketplaceDriversOnline": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "marketplaceWhereAreYouGoing": "إلى أين تذهب؟",
   "marketplaceYouAreHere": "أنت هنا",
   "marketplaceYouAreHereIn": "أنت هنا في {area}",
   "@marketplaceYouAreHereIn": {
-    "placeholders": { "area": { "type": "String" } }
+    "placeholders": {
+      "area": {
+        "type": "String"
+      }
+    }
   },
   "marketplaceYouAreHereOn": "أنت في {street}",
   "@marketplaceYouAreHereOn": {
-    "placeholders": { "street": { "type": "String" } }
+    "placeholders": {
+      "street": {
+        "type": "String"
+      }
+    }
   },
   "marketplaceLocatingYou": "جاري تحديد موقعك…",
   "marketplaceLocationNeeded": "فعّل الموقع لمعرفة مكانك",
@@ -318,22 +411,29 @@
   "marketplaceNameYourPriceSubtitle": "سيرى السائقون عرضك ويردون.",
   "marketplaceTypicalRangeLabel": "النطاق المعتاد: {range}",
   "@marketplaceTypicalRangeLabel": {
-    "placeholders": { "range": { "type": "String" } }
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
   },
   "marketplaceControlBanner": "أنت المتحكم. يمكن للسائقين القبول أو المقابلة أو التجاهل.",
   "marketplaceFasterOffersTip": "تريد عروضاً أسرع؟ ارفع سعرك للحصول على المزيد من الردود.",
   "marketplaceEnterCustomPrice": "اضغط لكتابة أي مبلغ",
-  "marketplacePriceHint": "50",
+  "marketplacePriceHint": "أدخل سعرك",
   "marketplaceBidRangeHint": "يمكنك العرض بين €{min} و €{max}",
   "@marketplaceBidRangeHint": {
     "placeholders": {
-      "min": { "type": "int" },
-      "max": { "type": "int" }
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
     }
   },
   "marketplaceTypicalFareTitle": "الأجرة المعتادة",
   "marketplaceYourOfferTitle": "عرضك",
-  "marketplaceRequestOffers": "اطلب عروضاً",
   "marketplaceAcceptanceGood": "فرصة جيدة للقبول",
   "marketplaceAcceptanceFair": "عرض معقول — قد يقبل السائق أو يقترح سعراً آخر",
   "marketplaceAcceptanceLow": "العرض منخفض — توقّع عروضاً مضادة",
@@ -358,10 +458,15 @@
   "acceptBid": "قبول",
   "notifyMe": "أخبرني عند التوفر",
   "rideHistory": "سجل الرحلات",
-  "reportDriver": "الإبلاغ عن سائق",
+  "reportDriver": "الإبلاغ عن السائق",
   "support": "الدعم",
   "settings": "الإعدادات",
   "language": "اللغة",
+  "languageFollowDevice": "لغة الجهاز",
+  "languageFollowDeviceSubtitle": "تتبع إعدادات هاتفك",
+  "languageEnglish": "English",
+  "languageDutch": "Nederlands",
+  "languageArabic": "العربية",
   "theme": "المظهر",
   "homeAddress": "عنوان المنزل",
   "savedAddresses": "الأماكن المحفوظة",
@@ -369,13 +474,17 @@
   "distance": "{km} كم",
   "@distance": {
     "placeholders": {
-      "km": { "type": "String" }
+      "km": {
+        "type": "String"
+      }
     }
   },
   "duration": "{min} دقيقة",
   "@duration": {
     "placeholders": {
-      "min": { "type": "String" }
+      "min": {
+        "type": "String"
+      }
     }
   },
   "bestPrice": "أفضل سعر",
@@ -421,7 +530,9 @@
   "eta": "وقت الوصول {min} دقيقة",
   "@eta": {
     "placeholders": {
-      "min": { "type": "String" }
+      "min": {
+        "type": "String"
+      }
     }
   },
   "shareRide": "مشاركة الرحلة",
@@ -505,14 +616,14 @@
   "smartBundleFootnoteWide": "فئات أكثر — عادةً تطابق أسرع. أول سائق يقبل يحدد السعر لفئته.",
   "smartBundleFootnoteNarrow": "فئات أقل — قد يستغرق العثور على سائق وقتاً أطول قليلاً.",
   "smartBundleFootnoteSingle": "فئة واحدة — تقدير ثابت لهذه الرحلة.",
-  "smartBundlePriceBand": "€{min}–€{max}",
+  "smartBundlePriceBand": "{min} - {max}",
   "@smartBundlePriceBand": {
     "placeholders": {
       "min": {},
       "max": {}
     }
   },
-  "smartBundlePriceSingle": "€{price}",
+  "smartBundlePriceSingle": "{price}",
   "@smartBundlePriceSingle": {
     "placeholders": {
       "price": {}
@@ -566,15 +677,21 @@
   "marketplaceTypicalPriceBody": "بناءً على السائقين القريبين، تكلفة رحلة مثل هذه عادةً حوالي {amount}.",
   "@marketplaceTypicalPriceBody": {
     "placeholders": {
-      "amount": { "type": "String" }
+      "amount": {
+        "type": "String"
+      }
     }
   },
   "marketplaceMatchChanceTitle": "فرصة القبول",
   "marketplaceMatchChanceBody": "مع عرض {bid}، نقدّر احتمال قبول سائق بحوالي {percent}٪.",
   "@marketplaceMatchChanceBody": {
     "placeholders": {
-      "bid": { "type": "String" },
-      "percent": { "type": "String" }
+      "bid": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
     }
   },
   "marketplaceMatchChanceStrong": "عرض قوي — سعرك يساوي أو يتجاوز المعتاد، فالسائقون أكثر ميلاً للقبول.",
@@ -583,13 +700,17 @@
   "marketplaceSavingsVsTypicalPercent": "أقل {percent}% عن المعتاد",
   "@marketplaceSavingsVsTypicalPercent": {
     "placeholders": {
-      "percent": { "type": "String" }
+      "percent": {
+        "type": "String"
+      }
     }
   },
   "marketplaceSavingsBanner": "وفر حتى {percent}% على هذه الرحلة",
   "@marketplaceSavingsBanner": {
     "placeholders": {
-      "percent": { "type": "String" }
+      "percent": {
+        "type": "String"
+      }
     }
   },
   "marketplaceYourBid": "عرضك",
@@ -603,16 +724,20 @@
   "marketplaceQuickPopular": "شائع",
   "marketplaceQuickFaster": "أسرع",
   "marketplaceQuickExpress": "سريع",
-  "marketplaceBidRangeMin": "€{amount}",
+  "marketplaceBidRangeMin": "الحد الأدنى",
   "@marketplaceBidRangeMin": {
     "placeholders": {
-      "amount": { "type": "int" }
+      "amount": {
+        "type": "int"
+      }
     }
   },
-  "marketplaceBidRangeMax": "€{amount}",
+  "marketplaceBidRangeMax": "الحد الأقصى",
   "@marketplaceBidRangeMax": {
     "placeholders": {
-      "amount": { "type": "int" }
+      "amount": {
+        "type": "int"
+      }
     }
   },
   "favoritesSaveTrustedDriversBody": "احفظ السائقين الموثوقين للحجز السريع",
@@ -620,7 +745,9 @@
   "favoritesPostRideTo": "انشر الرحلة إلى {count} من المفضلين",
   "@favoritesPostRideTo": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "searchFactIndependentDrivers": "السائقون المستقلون يحددون أسعارهم",
@@ -635,7 +762,9 @@
   "taxisInZone": "{count}+ سيارة أجرة في منطقتك",
   "@taxisInZone": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "favouriteDriver": "سائق مفضل",
@@ -694,7 +823,9 @@
   "paymentMethodsSelected": "{count} طريقة دفع محددة",
   "@paymentMethodsSelected": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "vehicleStandard": "عادي",
@@ -711,19 +842,25 @@
   "vehicleSupplyDriversCount": "{count, plural, =0{لا يوجد سائقون قريبون} one{سائق واحد قريب} other{{count} سائقين قريبين}}",
   "@vehicleSupplyDriversCount": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "vehicleSupplyNearestKm": "الأقرب ~{km} كم",
   "@vehicleSupplyNearestKm": {
     "placeholders": {
-      "km": { "type": "String" }
+      "km": {
+        "type": "String"
+      }
     }
   },
   "vehicleSupplyFromPrice": "من €{price}",
   "@vehicleSupplyFromPrice": {
     "placeholders": {
-      "price": { "type": "String" }
+      "price": {
+        "type": "String"
+      }
     }
   },
   "vehicleSupplyShowDrivers": "عرض السائقين",
@@ -738,14 +875,20 @@
   "vehicleDriverOfferRow": "~{distanceKm} كم · €{price}",
   "@vehicleDriverOfferRow": {
     "placeholders": {
-      "distanceKm": { "type": "String" },
-      "price": { "type": "String" }
+      "distanceKm": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      }
     }
   },
   "vehicleDriverNumbered": "سائق {n}",
   "@vehicleDriverNumbered": {
     "placeholders": {
-      "n": { "type": "int" }
+      "n": {
+        "type": "int"
+      }
     }
   },
   "ratingGreatDriver": "سائق ممتاز",
@@ -787,7 +930,9 @@
   "etaToDestination": "{min} دقيقة إلى الوجهة",
   "@etaToDestination": {
     "placeholders": {
-      "min": { "type": "String" }
+      "min": {
+        "type": "String"
+      }
     }
   },
   "rideDetails": "تفاصيل الرحلة",
@@ -882,7 +1027,9 @@
   "distanceRemaining": "{km} كم متبقية",
   "@distanceRemaining": {
     "placeholders": {
-      "km": { "type": "String" }
+      "km": {
+        "type": "String"
+      }
     }
   },
   "shareRideLink": "مشاركة رابط الرحلة",
@@ -903,7 +1050,6 @@
   "dialogOk": "حسنًا",
   "blockDriver": "حظر السائق",
   "blockDriverConfirm": "لن تظهر لك رسائل جديدة من هذا السائق في دردشة هذه الرحلة.",
-  "reportDriver": "الإبلاغ عن السائق",
   "reportDriverTitle": "الإبلاغ عن هذا السائق؟",
   "reportDriverBody": "سيراجع HeyCaby محادثة هذه الرحلة. يمكنك إضافة تفاصيل أدناه (اختياري).",
   "reportReasonHint": "ماذا حدث؟ (اختياري)",
@@ -1023,10 +1169,47 @@
   "smartBundleEstimatedPrice": "السعر التقديري: {min} - {max}",
   "@smartBundleEstimatedPrice": {
     "placeholders": {
-      "min": { "type": "String" },
-      "max": { "type": "String" }
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
     }
   },
   "smartBundleDriverPricingNote": "السائقون يحددون أسعارهم الخاصة. سنطابقك مع أفضل الخيارات القريبة.",
-  "smartBundleTapToHide": "اضغط لإخفاء فئات الرحلات"
+  "smartBundleTapToHide": "اضغط لإخفاء فئات الرحلات",
+  "growCityRegionNetherlands": "هولندا",
+  "openLinkAction": "فتح الرابط",
+  "activeRideShareError": "تعذرت مشاركة الرحلة الآن",
+  "activeRideCancelConfirmBody": "هل تريد إلغاء الرحلة حقًا؟ إعادة الحجز قد لا توصلك أسرع إلى وجهتك.",
+  "activeRideWaitForDriver": "انتظر السائق",
+  "activeRidePickupNotes": "ملاحظات للالتقاط؟",
+  "activeRideChatSubtitle": "راسل سائقك بسرعة",
+  "activeRideFoundingShort": "مؤسس",
+  "activeRideShareSubtitle": "مشاركة رابط الرحلة المباشر",
+  "activeRideReportSubtitle": "إرسال تقرير عن الرحلة",
+  "activeRideSupportSubtitle": "السلامة والمساعدة",
+  "activeRidePickupNotSet": "نقطة الالتقاط غير محددة",
+  "activeRideDestinationNotSet": "الوجهة غير محددة",
+  "activeRideShareDetails": "مشاركة تفاصيل الرحلة",
+  "activeRideCategoryLabel": "الفئة: {category}",
+  "rideDetailViewReceipt": "عرض الإيصال",
+  "rideDetailReceiptLoadFailed": "تعذر تحميل الإيصال",
+  "supportCategoryRideIssue": "مشكلة في الرحلة",
+  "supportCategoryPayment": "الدفع",
+  "supportCategoryAccount": "الحساب",
+  "supportMessageSentTitle": "تم إرسال الرسالة",
+  "supportMessageSentBody": "شكرًا لرسالتك. سيراجعها فريق الدعم ويرد عليك في أقرب وقت.\n\nإذا كانت مشكلتك عاجلة، يمكنك الدردشة مع Yaz (مساعد الدعم بالذكاء الاصطناعي). يُرجى تجنب مشاركة معلومات شخصية حساسة في الدردشة.",
+  "supportMessageSendFailedTitle": "تعذر إرسال الرسالة",
+  "supportMessageSendFailedBody": "تعذر إرسال رسالة الدعم الآن. حاول مرة أخرى قريبًا، أو استخدم الدردشة مع Yaz للمساعدة العاجلة.",
+  "supportChatWithYaz": "الدردشة مع Yaz",
+  "supportSendMessageButton": "إرسال الرسالة",
+  "supportYazUnavailableGuestAuthDisabled": "دردشة Yaz غير متاحة مؤقتًا لأن مصادقة الضيوف معطّلة على الخادم.",
+  "supportYazUnavailableTemporary": "دردشة Yaz غير متاحة مؤقتًا. حاول مرة أخرى قريبًا.",
+  "supportYazFallbackReply": "تعذر الرد الآن. حاول مرة أخرى أو أرسل بريدًا للدعم.",
+  "supportEmailSupport": "دعم البريد الإلكتروني",
+  "supportYazAssistantTitle": "Yaz — مساعد الدعم بالذكاء الاصطناعي",
+  "supportYazAssistantSubtitle": "اسأل عن رحلتك أو حسابك أو الدفع.",
+  "supportYazMessageHint": "راسل Yaz..."
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
+import 'package:heycaby_rider/l10n/app_localizations.dart';
 
 import '../services/rider_notification_router.dart';
 
@@ -32,12 +33,13 @@ Future<void> showRiderDriverPingAlert({
 
   final messenger = ScaffoldMessenger.maybeOf(context);
   if (messenger == null) return;
+  final l10n = AppLocalizations.of(context);
 
   messenger.clearSnackBars();
   messenger.showSnackBar(
     SnackBar(
       behavior: SnackBarBehavior.floating,
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      margin: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 16),
       duration: const Duration(seconds: 10),
       showCloseIcon: true,
       backgroundColor: urgent ? const Color(0xFF1B5E20) : null,
@@ -97,7 +99,7 @@ Future<void> showRiderDriverPingAlert({
         ],
       ),
       action: SnackBarAction(
-        label: 'Open',
+        label: l10n.openAction,
         textColor: urgent ? Colors.white : null,
         onPressed: () {
           if (context.mounted) context.go('/active');

@@ -521,6 +521,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get growCityWhyHelpBullet4 => 'Stronger taxi community';
 
   @override
+  String get growCityPitchLine => 'Invite people who need taxis in your city.';
+
+  @override
+  String get growCityPitchBenefit =>
+      'More riders nearby → more drivers and shorter waits.';
+
+  @override
+  String growCityProgressHeader(
+      String region, String current, String milestone) {
+    return '$region · $current / $milestone monthly riders';
+  }
+
+  @override
+  String growCityCompactDrivers(String count) {
+    return '$count drivers';
+  }
+
+  @override
+  String growCityCompactRiders(String count) {
+    return '$count riders';
+  }
+
+  @override
+  String get growCityLearnMore => 'Why this helps';
+
+  @override
+  String growCityImpactCompact(int invited, int joined) {
+    return '$invited invited · $joined joined';
+  }
+
+  @override
+  String get growCityWhySheetDone => 'Got it';
+
+  @override
+  String get growCityRegionNetherlands => 'Netherlands';
+
+  @override
   String get iosUpdateRequiredTitle => 'Please update iOS';
 
   @override
@@ -893,6 +930,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get language => 'Language';
+
+  @override
+  String get languageFollowDevice => 'Device language';
+
+  @override
+  String get languageFollowDeviceSubtitle => 'Matches your phone settings';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languageDutch => 'Nederlands';
+
+  @override
+  String get languageArabic => 'العربية';
 
   @override
   String get theme => 'Theme';
@@ -2661,6 +2713,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openAction => 'Open';
+
+  @override
+  String get openLinkAction => 'Open link';
 
   @override
   String get rideReceiptTitle => 'Ride receipt';

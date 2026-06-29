@@ -4,12 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
-import 'providers/settings_provider.dart';
+import 'providers/rider_locale_provider.dart';
 import 'router.dart';
 import 'services/heycaby_widget_deep_links.dart';
 import 'services/notify_search_notification_scope.dart';
 import 'services/rider_invite_attribution.dart';
 import 'services/rider_fcm_scope.dart';
+import 'utils/rider_locale_utils.dart';
+import 'widgets/rider_locale_bridge_sync.dart';
+import 'widgets/rider_locale_observer.dart';
 
 class HeyCabyRiderApp extends ConsumerWidget {
   const HeyCabyRiderApp({super.key});
@@ -20,21 +23,16 @@ class HeyCabyRiderApp extends ConsumerWidget {
     ref.read(themeProvider.notifier).loadSavedTheme();
     final colors = ref.watch(colorsProvider);
     final themeId = ref.watch(themeProvider).id;
-    final settingsAsync = ref.watch(settingsProvider);
-
-    Locale? effectiveLocale;
-    settingsAsync.whenData((settings) {
-      if (settings.language.isNotEmpty) {
-        effectiveLocale = Locale(settings.language);
-      }
-    });
+    final appLocale = ref.watch(riderAppLocaleProvider);
 
     return RiderInviteAttributionScope(
       child: RiderFcmScope(
         child: HeyCabyWidgetDeepLinkScope(
           child: NotifySearchNotificationScope(
-            child: _GlobalTapHaptics(
-              child: MaterialApp.router(
+            child: RiderLocaleObserver(
+              child: RiderLocaleBridgeSync(
+                child: _GlobalTapHaptics(
+                  child: MaterialApp.router(
                 title: 'HeyCaby',
                 debugShowCheckedModeBanner: false,
                 localizationsDelegates: const [
@@ -44,17 +42,9 @@ class HeyCabyRiderApp extends ConsumerWidget {
                   GlobalCupertinoLocalizations.delegate,
                 ],
                 supportedLocales: AppLocalizations.supportedLocales,
-                locale: effectiveLocale,
+                locale: appLocale,
                 localeResolutionCallback: (deviceLocale, supportedLocales) {
-                  if (effectiveLocale != null) return effectiveLocale;
-                  if (deviceLocale != null) {
-                    for (final locale in supportedLocales) {
-                      if (locale.languageCode == deviceLocale.languageCode) {
-                        return locale;
-                      }
-                    }
-                  }
-                  return const Locale('nl', 'NL');
+                  return resolveRiderSupportedLocale(deviceLocale);
                 },
                 theme: buildHeyCabyMaterialTheme(
                   colors: colors,
@@ -62,6 +52,8 @@ class HeyCabyRiderApp extends ConsumerWidget {
                   themeId: themeId,
                 ),
                 routerConfig: ref.watch(appRouterProvider),
+                  ),
+                ),
               ),
             ),
           ),

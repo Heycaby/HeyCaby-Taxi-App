@@ -29,6 +29,18 @@ class HomeGreetingHeader extends ConsumerWidget {
     return l10n.rider;
   }
 
+  /// Light halo so greeting/name stay readable on the map (any tile brightness).
+  static List<Shadow> _mapTextShadow(HeyCabyColorTokens colors) => [
+        Shadow(
+          color: colors.card.withValues(alpha: 0.92),
+          blurRadius: 8,
+        ),
+        Shadow(
+          color: colors.card.withValues(alpha: 0.65),
+          blurRadius: 16,
+        ),
+      ];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = ref.watch(colorsProvider);
@@ -44,8 +56,9 @@ class HomeGreetingHeader extends ConsumerWidget {
         Text(
           _greeting(l10n),
           style: typo.bodyMedium.copyWith(
-            color: colors.textMid,
-            fontWeight: FontWeight.w500,
+            color: colors.text,
+            fontWeight: FontWeight.w600,
+            shadows: _mapTextShadow(colors),
           ),
         ),
         const SizedBox(height: 2),
@@ -57,6 +70,7 @@ class HomeGreetingHeader extends ConsumerWidget {
             fontSize: 28,
             height: 1.1,
             letterSpacing: -0.5,
+            shadows: _mapTextShadow(colors),
           ),
         ),
         if (!completeness.isComplete) ...[

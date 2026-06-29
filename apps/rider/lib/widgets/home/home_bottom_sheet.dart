@@ -8,7 +8,8 @@ import '../active_search_stop_dialog.dart';
 import '../booking_draft_resume_card.dart';
 import '../near_term_ride_home_banner.dart';
 import '../../providers/active_search_provider.dart';
-import 'home_availability_card.dart';
+import '../../providers/rider_home_banners_provider.dart';
+import 'home_announcement_banner.dart';
 import 'home_booking_options_grid.dart';
 import 'home_recent_places_section.dart';
 import 'home_ride_again_section.dart';
@@ -34,6 +35,14 @@ class HomeBottomSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final active = ref.watch(activeSearchProvider).valueOrNull;
+    final bannersAsync = ref.watch(riderHomeBannersProvider);
+    final banners = bannersAsync.valueOrNull ?? const [];
+    final announcement = pickRiderHomeBanner(
+      banners: banners,
+      nearbyTaxiCount: nearbyTaxiCount,
+    );
+    final showFallbackNoSupply =
+        announcement == null && nearbyTaxiCount == 0;
 
     return DraggableScrollableSheet(
       controller: sheetController,
@@ -89,7 +98,13 @@ class HomeBottomSheet extends ConsumerWidget {
             const BookingDraftResumeCard(),
             if (active == null) const NearTermRideHomeBanner(),
             HomeSearchHeroCard(colors: colors, typo: typo, l10n: l10n),
-            if (nearbyTaxiCount == 0)
+            if (announcement != null)
+              HomeAnnouncementBanner(
+                banner: announcement,
+                colors: colors,
+                typo: typo,
+              ),
+            if (showFallbackNoSupply)
               HomeAvailabilityCard(colors: colors, typo: typo, l10n: l10n),
             HomeRideAgainSection(colors: colors, typo: typo, l10n: l10n),
             HomeBookingOptionsGrid(colors: colors, typo: typo, l10n: l10n),

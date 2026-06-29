@@ -4,6 +4,8 @@ import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:heycaby_utils/heycaby_utils.dart';
 
+import '../utils/rider_locale_utils.dart';
+
 /// Full-screen gate before [MaterialApp.router] when iOS is below minimum.
 class RiderIosUpdateRequiredApp extends StatelessWidget {
   const RiderIosUpdateRequiredApp({
@@ -14,12 +16,7 @@ class RiderIosUpdateRequiredApp extends StatelessWidget {
   final String systemVersion;
 
   static Locale _resolveLocale(Locale device) {
-    for (final l in AppLocalizations.supportedLocales) {
-      if (l.languageCode == device.languageCode) {
-        return l;
-      }
-    }
-    return const Locale('nl', 'NL');
+    return resolveRiderSupportedLocale(device);
   }
 
   @override

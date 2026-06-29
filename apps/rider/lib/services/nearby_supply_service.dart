@@ -1,10 +1,10 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_models/heycaby_models.dart';
 
 import '../models/rider_vehicle_category.dart';
+import '../utils/rider_effective_locale_bridge.dart';
 import 'rider_runtime_config_service.dart';
 
 /// One driver available near pickup — carries their real pricing from the DB.
@@ -63,7 +63,7 @@ class CategorySupplySnapshot {
 /// Loads live driver supply near pickup, joins real driver pricing + profile.
 class NearbySupplyService {
   static String _fallbackDriverLabel() {
-    final code = PlatformDispatcher.instance.locale.languageCode.toLowerCase();
+    final code = RiderEffectiveLocaleBridge.languageCode;
     if (code == 'ar') return 'السائق';
     if (code == 'nl') return 'Chauffeur';
     return 'Driver';

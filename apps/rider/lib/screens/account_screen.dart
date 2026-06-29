@@ -9,6 +9,7 @@ import 'package:heycaby_api/heycaby_api.dart';
 
 import '../providers/booking_provider.dart';
 import '../providers/rider_profile_completeness_provider.dart';
+import '../providers/rider_home_banners_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/rider_device_permission_snapshot.dart';
 import '../services/rider_permission_backend_sync.dart';
@@ -334,6 +335,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
 
   void _showLanguagePicker(HeyCabyColorTokens colors, HeyCabyTypography typo) {
     final settings = ref.watch(settingsProvider).valueOrNull;
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       backgroundColor: colors.surface,
@@ -349,14 +351,43 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
               padding: const EdgeInsets.only(bottom: 20),
               children: [
                 _DragHandle(colors: colors),
-                for (final lang in [('en', 'English'), ('nl', 'Nederlands'), ('ar', 'العربية')])
+                ListTile(
+                  title: Text(
+                    l10n.languageFollowDevice,
+                    style: typo.bodyLarge.copyWith(color: colors.text),
+                  ),
+                  subtitle: Text(
+                    l10n.languageFollowDeviceSubtitle,
+                    style: typo.bodySmall.copyWith(color: colors.textMid),
+                  ),
+                  trailing: settings?.languageFollowsDevice == true
+                      ? Icon(Icons.check, color: colors.accent)
+                      : null,
+                  onTap: () {
+                    ref
+                        .read(settingsProvider.notifier)
+                        .setFollowDeviceLanguage();
+                    ref.read(riderHomeBannersRefreshProvider.notifier).state++;
+                    Navigator.pop(ctx);
+                  },
+                ),
+                for (final lang in [
+                  ('en', l10n.languageEnglish),
+                  ('nl', l10n.languageDutch),
+                  ('ar', l10n.languageArabic),
+                ])
                   ListTile(
-                    title: Text(lang.$2, style: typo.bodyLarge.copyWith(color: colors.text)),
-                    trailing: settings?.language == lang.$1
+                    title: Text(
+                      lang.$2,
+                      style: typo.bodyLarge.copyWith(color: colors.text),
+                    ),
+                    trailing: settings?.languageFollowsDevice == false &&
+                            settings?.language == lang.$1
                         ? Icon(Icons.check, color: colors.accent)
                         : null,
                     onTap: () {
                       ref.read(settingsProvider.notifier).setLanguage(lang.$1);
+                      ref.read(riderHomeBannersRefreshProvider.notifier).state++;
                       Navigator.pop(ctx);
                     },
                   ),
@@ -407,11 +438,18 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
   }
 
   String _currentLanguageLabel() {
-    final lang = ref.watch(settingsProvider).valueOrNull?.language;
-    switch (lang) {
-      case 'nl': return 'Nederlands';
-      case 'ar': return 'العربية';
-      default: return 'English';
+    final settings = ref.watch(settingsProvider).valueOrNull;
+    final l10n = AppLocalizations.of(context);
+    if (settings?.languageFollowsDevice ?? true) {
+      return l10n.languageFollowDevice;
+    }
+    switch (settings?.language) {
+      case 'nl':
+        return l10n.languageDutch;
+      case 'ar':
+        return l10n.languageArabic;
+      default:
+        return l10n.languageEnglish;
     }
   }
 

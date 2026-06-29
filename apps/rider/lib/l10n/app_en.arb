@@ -207,6 +207,38 @@
   "growCityWhyHelpBullet2": "More work for local taxi drivers",
   "growCityWhyHelpBullet3": "Shorter waiting times",
   "growCityWhyHelpBullet4": "Stronger taxi community",
+  "growCityPitchLine": "Invite people who need taxis in your city.",
+  "growCityPitchBenefit": "More riders nearby → more drivers and shorter waits.",
+  "growCityProgressHeader": "{region} · {current} / {milestone} monthly riders",
+  "@growCityProgressHeader": {
+    "placeholders": {
+      "region": { "type": "String" },
+      "current": { "type": "String" },
+      "milestone": { "type": "String" }
+    }
+  },
+  "growCityCompactDrivers": "{count} drivers",
+  "@growCityCompactDrivers": {
+    "placeholders": {
+      "count": { "type": "String" }
+    }
+  },
+  "growCityCompactRiders": "{count} riders",
+  "@growCityCompactRiders": {
+    "placeholders": {
+      "count": { "type": "String" }
+    }
+  },
+  "growCityLearnMore": "Why this helps",
+  "growCityImpactCompact": "{invited} invited · {joined} joined",
+  "@growCityImpactCompact": {
+    "placeholders": {
+      "invited": { "type": "int" },
+      "joined": { "type": "int" }
+    }
+  },
+  "growCityWhySheetDone": "Got it",
+  "growCityRegionNetherlands": "Netherlands",
   "iosUpdateRequiredTitle": "Please update iOS",
   "iosUpdateRequiredBody": "HeyCaby requires iOS {minimumVersion} or later. This iPhone is on iOS {currentVersion}. Open Settings → General → Software Update to install the latest iOS your device supports.",
   "@iosUpdateRequiredBody": {
@@ -373,6 +405,11 @@
   "support": "Support",
   "settings": "Settings",
   "language": "Language",
+  "languageFollowDevice": "Device language",
+  "languageFollowDeviceSubtitle": "Matches your phone settings",
+  "languageEnglish": "English",
+  "languageDutch": "Nederlands",
+  "languageArabic": "العربية",
   "theme": "Theme",
   "homeAddress": "Home address",
   "savedAddresses": "Saved places",
@@ -1059,6 +1096,7 @@
   "activeRideFoundingMember": "Founding Member",
   "activeRideVerifyPlate": "Please verify this plate before entering the vehicle.",
   "openAction": "Open",
+  "openLinkAction": "Open link",
   "rideReceiptTitle": "Ride receipt",
   "rideReceiptUnavailable": "Receipt not available yet.",
   "rideReceiptSettlement": "Settlement",

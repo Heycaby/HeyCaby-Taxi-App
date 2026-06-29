@@ -523,6 +523,44 @@ class AppLocalizationsNl extends AppLocalizations {
   String get growCityWhyHelpBullet4 => 'Sterkere taxigemeenschap';
 
   @override
+  String get growCityPitchLine =>
+      'Nodig mensen uit die taxi nodig hebben in jouw stad.';
+
+  @override
+  String get growCityPitchBenefit =>
+      'Meer passagiers in de buurt → meer chauffeurs en kortere wachttijden.';
+
+  @override
+  String growCityProgressHeader(
+      String region, String current, String milestone) {
+    return '$region · $current / $milestone maandelijkse passagiers';
+  }
+
+  @override
+  String growCityCompactDrivers(String count) {
+    return '$count chauffeurs';
+  }
+
+  @override
+  String growCityCompactRiders(String count) {
+    return '$count passagiers';
+  }
+
+  @override
+  String get growCityLearnMore => 'Waarom dit helpt';
+
+  @override
+  String growCityImpactCompact(int invited, int joined) {
+    return '$invited uitgenodigd · $joined aangemeld';
+  }
+
+  @override
+  String get growCityWhySheetDone => 'Begrepen';
+
+  @override
+  String get growCityRegionNetherlands => 'Nederland';
+
+  @override
   String get iosUpdateRequiredTitle => 'Werk iOS bij';
 
   @override
@@ -899,6 +937,22 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get language => 'Taal';
+
+  @override
+  String get languageFollowDevice => 'Taal van apparaat';
+
+  @override
+  String get languageFollowDeviceSubtitle =>
+      'Volgt de instellingen van je telefoon';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languageDutch => 'Nederlands';
+
+  @override
+  String get languageArabic => 'العربية';
 
   @override
   String get theme => 'Thema';
@@ -2675,6 +2729,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get openAction => 'Openen';
+
+  @override
+  String get openLinkAction => 'Link openen';
 
   @override
   String get rideReceiptTitle => 'Ritbon';

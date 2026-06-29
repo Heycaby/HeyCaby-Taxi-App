@@ -135,7 +135,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get vehicleCategoryTitle => 'أي نوع رحلة تريد؟';
 
   @override
-  String get homeAirportChipSchiphol => 'Schiphol';
+  String get homeAirportChipSchiphol => 'سخيبول';
 
   @override
   String get homeAirportChipRotterdam => 'مطار روتردام';
@@ -312,13 +312,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get account => 'الحساب';
 
   @override
-  String get tellAFriendNavLabel => 'Community';
+  String get tellAFriendNavLabel => 'المجتمع';
 
   @override
   String get tellAFriendNavSemanticLabel => 'نمِّ مدينتك — ابنِ مجتمع HeyCaby';
 
   @override
-  String get tellAFriendScreenTitle => 'Grow Your City';
+  String get tellAFriendScreenTitle => 'نمِّ مدينتك';
 
   @override
   String get tellAFriendSharePrompt =>
@@ -371,10 +371,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tellAFriendCopyLink => 'نسخ الرابط';
 
   @override
-  String get tellAFriendShareLink => 'Share HeyCaby';
+  String get tellAFriendShareLink => 'شارك HeyCaby';
 
   @override
-  String get tellAFriendShowQr => 'QR code';
+  String get tellAFriendShowQr => 'رمز QR';
 
   @override
   String get tellAFriendQrTitle => 'امسح لتحميل HeyCaby';
@@ -409,7 +409,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String growCityHeroTitle(String cityName) {
-    return 'Grow HeyCaby in $cityName';
+    return 'انمُ HeyCaby في $cityName';
   }
 
   @override
@@ -422,33 +422,33 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get growCityHeroMission =>
-      'Help us build the largest independent taxi network in the Netherlands.';
+      'ساعدنا في بناء أكبر شبكة تaxi مستقلة في هولندا.';
 
   @override
   String growCityCommunityTitle(String cityName) {
-    return '$cityName community';
+    return 'مجتمع $cityName';
   }
 
   @override
-  String get growCityDriversLabel => 'Drivers';
+  String get growCityDriversLabel => 'السائقون';
 
   @override
-  String get growCityRidersLabel => 'Riders';
+  String get growCityRidersLabel => 'الركاب';
 
   @override
-  String get growCityMonthlyRidersLabel => 'Monthly riders';
+  String get growCityMonthlyRidersLabel => 'الركاب الشهريون';
 
   @override
-  String get growCityMonthlyDriversLabel => 'Monthly drivers';
+  String get growCityMonthlyDriversLabel => 'السائقون الشهريون';
 
   @override
-  String get growCityMilestoneLabel => 'Next milestone';
+  String get growCityMilestoneLabel => 'المحطة التالية';
 
   @override
-  String get growCityDriverCapLabel => 'Driver network cap';
+  String get growCityDriverCapLabel => 'حد شبكة السائقين';
 
   @override
-  String get growCityRiderCapLabel => 'Monthly rider vision';
+  String get growCityRiderCapLabel => 'هدف الركاب الشهري';
 
   @override
   String growCityProgressCount(String current, String milestone) {
@@ -457,65 +457,102 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String growCityMilestoneHint(String remaining, String milestone) {
-    return '$remaining monthly riders until we celebrate $milestone.';
+    return 'متبقٍ $remaining راكب شهريًا حتى نحتفل بـ $milestone.';
   }
 
   @override
   String get growCityFinalGoalReached =>
-      'We reached 1 million monthly riders in the Netherlands. Thank you for growing HeyCaby with us.';
+      'وصلنا إلى مليون راكب شهري في هولندا. شكرًا لمساعدتنا في نمو HeyCaby.';
 
   @override
-  String get growCityMilestoneCelebrationTitle => 'Milestone reached!';
+  String get growCityMilestoneCelebrationTitle => 'تم بلوغ المحطة!';
 
   @override
   String growCityMilestoneCelebrationBody(String milestone) {
-    return 'The HeyCaby community just hit $milestone monthly riders in the Netherlands. Thank you for helping us grow — on to the next milestone!';
+    return 'وصل مجتمع HeyCaby إلى $milestone راكب شهري في هولندا. شكرًا لمساعدتك — نحو المحطة التالية!';
   }
 
   @override
-  String get growCityMilestoneCelebrationCta => 'Let\'s keep growing';
+  String get growCityMilestoneCelebrationCta => 'لنواصل النمو';
 
   @override
-  String get growCityImpactTitle => 'Your impact';
+  String get growCityImpactTitle => 'أثرك';
 
   @override
   String get growCityPeopleInvited => 'الركاب المدعوون';
 
   @override
-  String get growCityJoined => 'Joined';
+  String get growCityJoined => 'انضم';
 
   @override
-  String get growCityCompletedRides => 'Completed rides';
+  String get growCityCompletedRides => 'رحلات مكتملة';
 
   @override
-  String get growCityBadgesTitle => 'Community badges';
+  String get growCityBadgesTitle => 'شارات المجتمع';
 
   @override
-  String get growCityBadgeSupporter => 'Community Supporter';
+  String get growCityBadgeSupporter => 'داعم المجتمع';
 
   @override
-  String get growCityBadgeBuilder => 'Community Builder';
+  String get growCityBadgeBuilder => 'باني المجتمع';
 
   @override
-  String get growCityBadgeAmbassador => 'City Ambassador';
+  String get growCityBadgeAmbassador => 'سفير المدينة';
 
   @override
-  String get growCityBadgeTopPromoter => 'Top Promoter';
+  String get growCityBadgeTopPromoter => 'أفضل مروّج';
 
   @override
-  String get growCityWhyHelpTitle => 'Why help?';
+  String get growCityWhyHelpTitle => 'لماذا المساعدة؟';
 
   @override
-  String get growCityWhyHelpBullet1 => 'More riders nearby';
+  String get growCityWhyHelpBullet1 => 'المزيد من الركاب قربك';
 
   @override
   String get growCityWhyHelpBullet2 => 'المزيد من العمل لسائقي التaxi المحليين';
 
   @override
-  String get growCityWhyHelpBullet3 => 'Shorter waiting times';
+  String get growCityWhyHelpBullet3 => 'أوقات انتظار أقصر';
 
   @override
-  String get growCityWhyHelpBullet4 => 'Stronger taxi community';
+  String get growCityWhyHelpBullet4 => 'مجتمع تaxi أقوى';
+
+  @override
+  String get growCityPitchLine => 'ادعُ من يحتاجون تaxi في مدينتك.';
+
+  @override
+  String get growCityPitchBenefit =>
+      'المزيد من الركاب قربك → المزيد من السائقين وانتظار أقصر.';
+
+  @override
+  String growCityProgressHeader(
+      String region, String current, String milestone) {
+    return '$region · $current / $milestone راكب شهريًا';
+  }
+
+  @override
+  String growCityCompactDrivers(String count) {
+    return '$count سائقين';
+  }
+
+  @override
+  String growCityCompactRiders(String count) {
+    return '$count راكبين';
+  }
+
+  @override
+  String get growCityLearnMore => 'لماذا يساعد هذا';
+
+  @override
+  String growCityImpactCompact(int invited, int joined) {
+    return '$invited مدعو · $joined انضم';
+  }
+
+  @override
+  String get growCityWhySheetDone => 'حسنًا';
+
+  @override
+  String get growCityRegionNetherlands => 'هولندا';
 
   @override
   String get iosUpdateRequiredTitle => 'يُرجى تحديث iOS';
@@ -663,7 +700,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get marketplaceEnterCustomPrice => 'اضغط لكتابة أي مبلغ';
 
   @override
-  String get marketplacePriceHint => '50';
+  String get marketplacePriceHint => 'أدخل سعرك';
 
   @override
   String marketplaceBidRangeHint(int min, int max) {
@@ -885,6 +922,21 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get language => 'اللغة';
+
+  @override
+  String get languageFollowDevice => 'لغة الجهاز';
+
+  @override
+  String get languageFollowDeviceSubtitle => 'تتبع إعدادات هاتفك';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languageDutch => 'Nederlands';
+
+  @override
+  String get languageArabic => 'العربية';
 
   @override
   String get theme => 'المظهر';
@@ -1247,12 +1299,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String smartBundlePriceBand(Object min, Object max) {
-    return '€$min–€$max';
+    return '$min - $max';
   }
 
   @override
   String smartBundlePriceSingle(Object price) {
-    return '€$price';
+    return '$price';
   }
 
   @override
@@ -1449,12 +1501,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String marketplaceBidRangeMin(int amount) {
-    return '€$amount';
+    return 'الحد الأدنى';
   }
 
   @override
   String marketplaceBidRangeMax(int amount) {
-    return '€$amount';
+    return 'الحد الأقصى';
   }
 
   @override
@@ -1654,58 +1706,57 @@ class AppLocalizationsAr extends AppLocalizations {
   String get supportAiConsentSendEmail => 'إرسال بريد إلكتروني بدلاً من ذلك';
 
   @override
-  String get supportCategoryRideIssue => 'Ride issue';
+  String get supportCategoryRideIssue => 'مشكلة في الرحلة';
 
   @override
-  String get supportCategoryPayment => 'Payment';
+  String get supportCategoryPayment => 'الدفع';
 
   @override
-  String get supportCategoryAccount => 'Account';
+  String get supportCategoryAccount => 'الحساب';
 
   @override
-  String get supportMessageSentTitle => 'Message sent';
+  String get supportMessageSentTitle => 'تم إرسال الرسالة';
 
   @override
   String get supportMessageSentBody =>
-      'Thank you for your message. Our customer support team will review it and get back to you as soon as possible.\n\nIf your issue is urgent, you can chat with Yaz (AI support assistant). Please avoid sharing sensitive personal information in AI chat.';
+      'شكرًا لرسالتك. سيراجعها فريق الدعم ويرد عليك في أقرب وقت.\n\nإذا كانت مشكلتك عاجلة، يمكنك الدردشة مع Yaz (مساعد الدعم بالذكاء الاصطناعي). يُرجى تجنب مشاركة معلومات شخصية حساسة في الدردشة.';
 
   @override
-  String get supportMessageSendFailedTitle => 'Could not send message';
+  String get supportMessageSendFailedTitle => 'تعذر إرسال الرسالة';
 
   @override
   String get supportMessageSendFailedBody =>
-      'We could not send your support message right now. Please try again shortly, or use Chat with Yaz for urgent help.';
+      'تعذر إرسال رسالة الدعم الآن. حاول مرة أخرى قريبًا، أو استخدم الدردشة مع Yaz للمساعدة العاجلة.';
 
   @override
-  String get supportChatWithYaz => 'Chat with Yaz';
+  String get supportChatWithYaz => 'الدردشة مع Yaz';
 
   @override
-  String get supportSendMessageButton => 'Send message';
+  String get supportSendMessageButton => 'إرسال الرسالة';
 
   @override
   String get supportYazUnavailableGuestAuthDisabled =>
-      'Yaz chat is temporarily unavailable because guest chat auth is disabled on the server.';
+      'دردشة Yaz غير متاحة مؤقتًا لأن مصادقة الضيوف معطّلة على الخادم.';
 
   @override
   String get supportYazUnavailableTemporary =>
-      'Yaz chat is temporarily unavailable. Please try again shortly.';
+      'دردشة Yaz غير متاحة مؤقتًا. حاول مرة أخرى قريبًا.';
 
   @override
   String get supportYazFallbackReply =>
-      'I could not answer right now. Please try again or send email support.';
+      'تعذر الرد الآن. حاول مرة أخرى أو أرسل بريدًا للدعم.';
 
   @override
-  String get supportEmailSupport => 'Email support';
+  String get supportEmailSupport => 'دعم البريد الإلكتروني';
 
   @override
-  String get supportYazAssistantTitle => 'Yaz AI support assistant';
+  String get supportYazAssistantTitle => 'Yaz — مساعد الدعم بالذكاء الاصطناعي';
 
   @override
-  String get supportYazAssistantSubtitle =>
-      'Ask anything about your ride, account, or payment.';
+  String get supportYazAssistantSubtitle => 'اسأل عن رحلتك أو حسابك أو الدفع.';
 
   @override
-  String get supportYazMessageHint => 'Message Yaz...';
+  String get supportYazMessageHint => 'راسل Yaz...';
 
   @override
   String get favouriteDriversAccountSubtitle =>
@@ -1949,10 +2000,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get rideDetails => 'تفاصيل الرحلة';
 
   @override
-  String get rideDetailViewReceipt => 'View receipt';
+  String get rideDetailViewReceipt => 'عرض الإيصال';
 
   @override
-  String get rideDetailReceiptLoadFailed => 'Could not load receipt right now.';
+  String get rideDetailReceiptLoadFailed => 'تعذر تحميل الإيصال';
 
   @override
   String get rebookRide => 'احجز مرة أخرى';
@@ -2552,48 +2603,48 @@ class AppLocalizationsAr extends AppLocalizations {
   String get scheduledRideLabel => 'مجدول لـ';
 
   @override
-  String get activeRideShareError => 'Unable to share ride right now';
+  String get activeRideShareError => 'تعذرت مشاركة الرحلة الآن';
 
   @override
   String get activeRideCancelConfirmBody =>
-      'Do you really want to cancel the ride? Rebooking may not get you to your destination more quickly.';
+      'هل تريد إلغاء الرحلة حقًا؟ إعادة الحجز قد لا توصلك أسرع إلى وجهتك.';
 
   @override
-  String get activeRideWaitForDriver => 'Wait for driver';
+  String get activeRideWaitForDriver => 'انتظر السائق';
 
   @override
-  String get activeRidePickupNotes => 'Any pickup notes?';
+  String get activeRidePickupNotes => 'ملاحظات للالتقاط؟';
 
   @override
-  String get activeRideChatSubtitle => 'Message your driver fast';
+  String get activeRideChatSubtitle => 'راسل سائقك بسرعة';
 
   @override
-  String get activeRideFoundingShort => 'Founding';
+  String get activeRideFoundingShort => 'مؤسس';
 
   @override
-  String get activeRideShareSubtitle => 'Share live trip link';
+  String get activeRideShareSubtitle => 'مشاركة رابط الرحلة المباشر';
 
   @override
-  String get activeRideReportSubtitle => 'Submit ride report';
+  String get activeRideReportSubtitle => 'إرسال تقرير عن الرحلة';
 
   @override
-  String get activeRideSupportSubtitle => 'Safety and help';
+  String get activeRideSupportSubtitle => 'السلامة والمساعدة';
 
   @override
-  String get activeRidePickupNotSet => 'Pickup not set';
+  String get activeRidePickupNotSet => 'نقطة الالتقاط غير محددة';
 
   @override
-  String get activeRideDestinationNotSet => 'Destination not set';
+  String get activeRideDestinationNotSet => 'الوجهة غير محددة';
 
   @override
-  String get activeRideShareDetails => 'Share ride details';
+  String get activeRideShareDetails => 'مشاركة تفاصيل الرحلة';
 
   @override
   String get activeRideContactDriver => 'اتصل بالسائق';
 
   @override
   String activeRideCategoryLabel(String category) {
-    return 'Category: $category';
+    return 'الفئة: $category';
   }
 
   @override
@@ -2630,6 +2681,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get openAction => 'فتح';
+
+  @override
+  String get openLinkAction => 'فتح الرابط';
 
   @override
   String get rideReceiptTitle => 'إيصال الرحلة';

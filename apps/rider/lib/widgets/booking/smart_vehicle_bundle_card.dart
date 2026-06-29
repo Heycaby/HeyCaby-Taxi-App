@@ -50,8 +50,9 @@ class _SmartVehicleBundleCardState extends State<SmartVehicleBundleCard> {
   String _priceLabel() {
     final b = _bandFor(_sel);
     if (b.min <= 0 && b.max <= 0) return '—';
+    final locale = Localizations.localeOf(context).toString();
     final formatter = NumberFormat.currency(
-      locale: 'nl_NL',
+      locale: locale,
       symbol: '€',
       decimalDigits: 0,
     );

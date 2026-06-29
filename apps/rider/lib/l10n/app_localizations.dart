@@ -1042,6 +1042,61 @@ abstract class AppLocalizations {
   /// **'Stronger taxi community'**
   String get growCityWhyHelpBullet4;
 
+  /// No description provided for @growCityPitchLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite people who need taxis in your city.'**
+  String get growCityPitchLine;
+
+  /// No description provided for @growCityPitchBenefit.
+  ///
+  /// In en, this message translates to:
+  /// **'More riders nearby → more drivers and shorter waits.'**
+  String get growCityPitchBenefit;
+
+  /// No description provided for @growCityProgressHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'{region} · {current} / {milestone} monthly riders'**
+  String growCityProgressHeader(
+      String region, String current, String milestone);
+
+  /// No description provided for @growCityCompactDrivers.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} drivers'**
+  String growCityCompactDrivers(String count);
+
+  /// No description provided for @growCityCompactRiders.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} riders'**
+  String growCityCompactRiders(String count);
+
+  /// No description provided for @growCityLearnMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Why this helps'**
+  String get growCityLearnMore;
+
+  /// No description provided for @growCityImpactCompact.
+  ///
+  /// In en, this message translates to:
+  /// **'{invited} invited · {joined} joined'**
+  String growCityImpactCompact(int invited, int joined);
+
+  /// No description provided for @growCityWhySheetDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get growCityWhySheetDone;
+
+  /// No description provided for @growCityRegionNetherlands.
+  ///
+  /// In en, this message translates to:
+  /// **'Netherlands'**
+  String get growCityRegionNetherlands;
+
   /// No description provided for @iosUpdateRequiredTitle.
   ///
   /// In en, this message translates to:
@@ -1695,6 +1750,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Language'**
   String get language;
+
+  /// No description provided for @languageFollowDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Device language'**
+  String get languageFollowDevice;
+
+  /// No description provided for @languageFollowDeviceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Matches your phone settings'**
+  String get languageFollowDeviceSubtitle;
+
+  /// No description provided for @languageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageEnglish;
+
+  /// No description provided for @languageDutch.
+  ///
+  /// In en, this message translates to:
+  /// **'Nederlands'**
+  String get languageDutch;
+
+  /// No description provided for @languageArabic.
+  ///
+  /// In en, this message translates to:
+  /// **'العربية'**
+  String get languageArabic;
 
   /// No description provided for @theme.
   ///
@@ -4815,6 +4900,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open'**
   String get openAction;
+
+  /// No description provided for @openLinkAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open link'**
+  String get openLinkAction;
 
   /// No description provided for @rideReceiptTitle.
   ///
