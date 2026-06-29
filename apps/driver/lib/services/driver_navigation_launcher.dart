@@ -78,12 +78,12 @@ class DriverNavigationLauncher {
           children: [
             ListTile(
               leading: const Icon(Icons.map_outlined),
-              title: Text(DriverStrings.hotspotsGoogleMaps),
+              title: const Text(DriverStrings.hotspotsGoogleMaps),
               onTap: () => Navigator.pop(ctx, DriverNavApp.google),
             ),
             ListTile(
               leading: const Icon(Icons.navigation_outlined),
-              title: Text(DriverStrings.hotspotsWaze),
+              title: const Text(DriverStrings.hotspotsWaze),
               onTap: () => Navigator.pop(ctx, DriverNavApp.waze),
             ),
           ],

@@ -43,7 +43,7 @@ Future<bool> ensureDriverPlatformFeeAllowsOnline(
     );
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.platformFeeStatusError)),
+        const SnackBar(content: Text(DriverStrings.platformFeeStatusError)),
       );
     }
     return false;
@@ -56,7 +56,7 @@ Future<bool> ensureDriverPlatformFeeAllowsOnline(
   if (isLedger && data['can_settle_outstanding'] != true) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.platformFeeStatusError)),
+        const SnackBar(content: Text(DriverStrings.platformFeeStatusError)),
       );
     }
     return false;
@@ -65,7 +65,7 @@ Future<bool> ensureDriverPlatformFeeAllowsOnline(
   if (driverStatusUsesAppleBilling(data) && !driverAppleIapSupportedOnDevice) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.iapOnlyAvailableOnIos)),
+        const SnackBar(content: Text(DriverStrings.iapOnlyAvailableOnIos)),
       );
     }
     return false;
@@ -75,9 +75,8 @@ Future<bool> ensureDriverPlatformFeeAllowsOnline(
   final colors = ref.read(colorsProvider);
   final typo = ref.read(typographyProvider);
   final weeklyCents = data['weekly_fee_cents'];
-  final feeEuro = weeklyCents is num
-      ? (weeklyCents / 100).toStringAsFixed(2)
-      : '?';
+  final feeEuro =
+      weeklyCents is num ? (weeklyCents / 100).toStringAsFixed(2) : '?';
   String? selectedPlan;
   if (isLedger) {
     selectedPlan = 'settlement';
@@ -111,7 +110,7 @@ Future<bool> ensureDriverPlatformFeeAllowsOnline(
               Navigator.pop(ctx, false);
               context.push('/driver/billing/history');
             },
-            child: Text(DriverStrings.billingViewHistory),
+            child: const Text(DriverStrings.billingViewHistory),
           ),
         ],
       ),
@@ -125,7 +124,7 @@ Future<bool> ensureDriverPlatformFeeAllowsOnline(
             HapticService.mediumTap();
             Navigator.pop(ctx, true);
           },
-          child: Text(DriverStrings.platformFeePay),
+          child: const Text(DriverStrings.platformFeePay),
         ),
       ],
     ),
@@ -196,7 +195,7 @@ Future<bool> ensureDriverPlatformFeeAllowsOnline(
     if (url == null || url.isEmpty) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(DriverStrings.platformFeeStartError)),
+          const SnackBar(content: Text(DriverStrings.platformFeeStartError)),
         );
       }
       return false;
@@ -225,7 +224,7 @@ Future<bool> ensureDriverPlatformFeeAllowsOnline(
     );
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.platformFeeStatusError)),
+        const SnackBar(content: Text(DriverStrings.platformFeeStatusError)),
       );
     }
     return false;
@@ -234,7 +233,7 @@ Future<bool> ensureDriverPlatformFeeAllowsOnline(
   final stillRequired = data['payment_required'] == true;
   if (stillRequired && context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(DriverStrings.platformFeeStillPending)),
+      const SnackBar(content: Text(DriverStrings.platformFeeStillPending)),
     );
     return false;
   }

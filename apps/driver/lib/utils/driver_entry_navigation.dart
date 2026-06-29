@@ -69,7 +69,7 @@ Future<void> navigateDriverAfterAuth({
     return;
   }
 
-  final target = '/driver';
+  const target = '/driver';
   final current = router.routeInformationProvider.value.uri.path;
   if (current != target && !current.startsWith('$target/')) {
     context.go(target);

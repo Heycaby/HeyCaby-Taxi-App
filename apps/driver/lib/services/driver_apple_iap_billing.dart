@@ -10,10 +10,7 @@ import '../l10n/driver_strings.dart';
 
 /// Matches [driverservice] `billing_provider` when App Store IAP is active.
 bool driverStatusUsesAppleBilling(Map<String, dynamic> status) {
-  return (status['billing_provider'] ?? '')
-          .toString()
-          .trim()
-          .toLowerCase() ==
+  return (status['billing_provider'] ?? '').toString().trim().toLowerCase() ==
       'apple';
 }
 
@@ -50,7 +47,7 @@ Future<bool> purchaseDriverPlatformAccessWithAppleIap({
   if (!driverAppleIapSupportedOnDevice) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.iapOnlyAvailableOnIos)),
+        const SnackBar(content: Text(DriverStrings.iapOnlyAvailableOnIos)),
       );
     }
     return false;
@@ -63,7 +60,7 @@ Future<bool> purchaseDriverPlatformAccessWithAppleIap({
   if (!available) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.iapStoreUnavailable)),
+        const SnackBar(content: Text(DriverStrings.iapStoreUnavailable)),
       );
     }
     return false;
@@ -74,7 +71,7 @@ Future<bool> purchaseDriverPlatformAccessWithAppleIap({
   if (response.error != null) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.iapProductsLoadFailed)),
+        const SnackBar(content: Text(DriverStrings.iapProductsLoadFailed)),
       );
     }
     return false;
@@ -90,7 +87,7 @@ Future<bool> purchaseDriverPlatformAccessWithAppleIap({
   if (product == null) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.iapProductsLoadFailed)),
+        const SnackBar(content: Text(DriverStrings.iapProductsLoadFailed)),
       );
     }
     return false;
@@ -159,7 +156,7 @@ Future<bool> purchaseDriverPlatformAccessWithAppleIap({
     if (receipt.isEmpty) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(DriverStrings.iapVerifyFailed)),
+          const SnackBar(content: Text(DriverStrings.iapVerifyFailed)),
         );
       }
       return false;
@@ -196,7 +193,7 @@ Future<bool> restoreDriverPlatformAccessAppleIap({
   if (!driverAppleIapSupportedOnDevice) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.iapOnlyAvailableOnIos)),
+        const SnackBar(content: Text(DriverStrings.iapOnlyAvailableOnIos)),
       );
     }
     return false;
@@ -206,7 +203,7 @@ Future<bool> restoreDriverPlatformAccessAppleIap({
   if (!available) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.iapStoreUnavailable)),
+        const SnackBar(content: Text(DriverStrings.iapStoreUnavailable)),
       );
     }
     return false;
@@ -266,7 +263,7 @@ Future<bool> restoreDriverPlatformAccessAppleIap({
     if (purchase == null) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(DriverStrings.iapNothingToRestore)),
+          const SnackBar(content: Text(DriverStrings.iapNothingToRestore)),
         );
       }
       return false;
@@ -276,7 +273,7 @@ Future<bool> restoreDriverPlatformAccessAppleIap({
     if (receipt.isEmpty) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(DriverStrings.iapVerifyFailed)),
+          const SnackBar(content: Text(DriverStrings.iapVerifyFailed)),
         );
       }
       return false;
