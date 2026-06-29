@@ -124,8 +124,19 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
   ) {
     return switch (status) {
       DriverAvailabilityStatus.available => colors.success,
-      DriverAvailabilityStatus.onBreak => colors.accent,
+      DriverAvailabilityStatus.onBreak => colors.accent.withValues(alpha: 0.86),
       DriverAvailabilityStatus.offline => colors.textSoft,
+    };
+  }
+
+  Color _tintForStatus(
+    HeyCabyColorTokens colors,
+    DriverAvailabilityStatus status,
+  ) {
+    return switch (status) {
+      DriverAvailabilityStatus.available => colors.success,
+      DriverAvailabilityStatus.onBreak => colors.accent,
+      DriverAvailabilityStatus.offline => colors.textMid,
     };
   }
 
@@ -152,6 +163,20 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
       DriverAvailabilityStatus.available => DriverStrings.goOnlineFailed,
       DriverAvailabilityStatus.onBreak => DriverStrings.goBreakFailed,
       DriverAvailabilityStatus.offline => DriverStrings.goOfflineFailed,
+    };
+  }
+
+  Future<void> _previewHapticForStatus(
+    DriverAvailabilityStatus status, {
+    required bool isSameStatus,
+  }) {
+    if (isSameStatus) {
+      return HapticService.lightTap();
+    }
+    return switch (status) {
+      DriverAvailabilityStatus.available => HapticService.mediumTap(),
+      DriverAvailabilityStatus.onBreak => HapticService.selectionClick(),
+      DriverAvailabilityStatus.offline => HapticService.lightTap(),
     };
   }
 
@@ -393,13 +418,18 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
         final dragStatus = _positionToStatus(_thumbPosition);
         final confirmedStatus = widget.currentStatus;
         final activeColor = _colorForStatus(colors, dragStatus);
+        final activeTint = _tintForStatus(colors, dragStatus);
         final confirmedColor = _colorForStatus(colors, confirmedStatus);
+        final confirmedTint = _tintForStatus(colors, confirmedStatus);
         final enabled = !_isWritingStatus;
         final confirmedIcon = _iconForStatus(confirmedStatus);
 
         Future<void> submitStatus(DriverAvailabilityStatus status) async {
           if (!enabled) return;
-          HapticService.selectionClick();
+          await _previewHapticForStatus(
+            status,
+            isSameStatus: status == widget.currentStatus,
+          );
           _animateToPosition(_statusToPosition(status));
           await _onStatusSnapped(status);
         }
@@ -426,7 +456,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                   spreadRadius: -10,
                 ),
                 BoxShadow(
-                  color: confirmedColor.withValues(alpha: 0.10),
+                  color: confirmedTint.withValues(alpha: 0.12),
                   blurRadius: 28,
                   offset: const Offset(0, 8),
                   spreadRadius: -12,
@@ -448,17 +478,20 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
                           colors: [
-                            confirmedColor.withValues(alpha: 0.22),
-                            confirmedColor.withValues(alpha: 0.10),
+                            Color.alphaBlend(
+                              confirmedTint.withValues(alpha: 0.16),
+                              colors.card,
+                            ),
+                            confirmedColor.withValues(alpha: 0.08),
                           ],
                         ),
                         border: Border.all(
-                          color: confirmedColor.withValues(alpha: 0.30),
+                          color: confirmedTint.withValues(alpha: 0.30),
                           width: 1.2,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: confirmedColor.withValues(alpha: 0.20),
+                            color: confirmedTint.withValues(alpha: 0.18),
                             blurRadius: 22,
                             offset: const Offset(0, 9),
                             spreadRadius: -7,
@@ -537,7 +570,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                         colors: [
                           colors.surface.withValues(alpha: 0.96),
                           Color.alphaBlend(
-                            activeColor.withValues(alpha: 0.08),
+                            activeTint.withValues(alpha: 0.08),
                             colors.card,
                           ),
                           colors.card.withValues(alpha: 0.98),
@@ -545,12 +578,12 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                         stops: const [0, 0.54, 1],
                       ),
                       border: Border.all(
-                        color: activeColor.withValues(alpha: 0.24),
+                        color: activeTint.withValues(alpha: 0.24),
                         width: 1.1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: activeColor.withValues(alpha: 0.13),
+                          color: activeTint.withValues(alpha: 0.13),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                           spreadRadius: -9,
@@ -582,14 +615,14 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                                   colors: [
                                     colors.card,
                                     Color.alphaBlend(
-                                      activeColor.withValues(alpha: 0.12),
+                                      activeTint.withValues(alpha: 0.12),
                                       colors.card,
                                     ),
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(999),
                                 border: Border.all(
-                                  color: activeColor.withValues(alpha: 0.42),
+                                  color: activeTint.withValues(alpha: 0.42),
                                 ),
                                 boxShadow: [
                                   BoxShadow(
@@ -598,7 +631,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                                     offset: const Offset(0, -1),
                                   ),
                                   BoxShadow(
-                                    color: activeColor.withValues(alpha: 0.24),
+                                    color: activeTint.withValues(alpha: 0.24),
                                     blurRadius: 18,
                                     offset: const Offset(0, 7),
                                     spreadRadius: -2,
