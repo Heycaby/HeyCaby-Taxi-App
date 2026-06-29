@@ -10,6 +10,7 @@ import '../providers/driver_state_provider.dart';
 import '../services/location_service.dart';
 import '../services/sound_service.dart';
 import '../l10n/driver_strings.dart';
+import '../theme/app_icons.dart';
 import '../utils/driver_go_online_runtime_action.dart';
 import '../utils/driver_network_guard.dart';
 import '../utils/driver_runtime_refresh.dart';
@@ -43,6 +44,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
   late Animation<double> _snapAnimation;
   DriverAvailabilityStatus? _lastDragHapticStatus;
   bool _didStartDragHaptic = false;
+  bool _isWritingStatus = false;
 
   Future<void> _showBreakWidgetPopout() async {
     final colors = ref.read(colorsProvider);
@@ -117,15 +119,34 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
     return DriverAvailabilityStatus.offline;
   }
 
-  Color _colorForPosition(HeyCabyColorTokens colors, double p) {
-    // Off line = red, On break = amber, Online = green.
-    if (p > 0.66) return colors.success;
-    if (p > 0.33) return colors.warning;
-    return colors.error;
+  Color _colorForStatus(
+    HeyCabyColorTokens colors,
+    DriverAvailabilityStatus status,
+  ) {
+    return switch (status) {
+      DriverAvailabilityStatus.available => colors.success,
+      DriverAvailabilityStatus.onBreak => colors.warning,
+      DriverAvailabilityStatus.offline => colors.textSoft,
+    };
+  }
+
+  String _hintForStatus(DriverAvailabilityStatus status) {
+    return switch (status) {
+      DriverAvailabilityStatus.available => 'Je bent live in jouw zone.',
+      DriverAvailabilityStatus.onBreak =>
+        'Je pauze is actief. Ga online om ritten te zien.',
+      DriverAvailabilityStatus.offline =>
+        'Ga online om live ritaanvragen in jouw zone te zien.',
+    };
   }
 
   Future<void> _onStatusSnapped(DriverAvailabilityStatus newStatus) async {
+    if (_isWritingStatus || newStatus == widget.currentStatus) {
+      _resetThumbToCurrentStatus();
+      return;
+    }
     if (!await ensureDriverNetworkForAction(context, ref)) {
+      HapticService.error();
       _resetThumbToCurrentStatus();
       return;
     }
@@ -142,6 +163,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
           : (stats?.shiftTotalOnlineMinutes ?? 0);
       final ridesToday = stats?.shiftRidesToday ?? 0;
       if (onlineMinutes >= 30) {
+        if (!mounted) return;
         final confirmed = await _showEndShiftDialog(
           context,
           onlineMinutes: onlineMinutes,
@@ -155,6 +177,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
     }
 
     final api = ref.read(driverApiProvider);
+    setState(() => _isWritingStatus = true);
     try {
       final position = await requestAndGetLocation();
       if (!mounted) return;
@@ -163,7 +186,9 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
         if (position == null) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(DriverStrings.locationRequiredMessage)),
+            const SnackBar(
+              content: Text(DriverStrings.locationRequiredMessage),
+            ),
           );
           HapticService.mediumTap();
           SoundService().playActionBlocked();
@@ -180,11 +205,13 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
         if (attempt.isBlocked) {
           HapticService.mediumTap();
           SoundService().playActionBlocked();
-          await showDriverGoOnlineGuidanceSheet(context, ref, args: attempt.gateArgs!);
+          await showDriverGoOnlineGuidanceSheet(context, ref,
+              args: attempt.gateArgs!);
           _resetThumbToCurrentStatus();
           return;
         }
         if (!attempt.succeeded) {
+          HapticService.error();
           _resetThumbToCurrentStatus();
           return;
         }
@@ -231,15 +258,14 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
         notifier.setStatus(DriverAppState.offline);
         final id = await ref.read(driverIdProvider.future);
         if (id != null) {
-          await ref
-              .read(driverShiftSessionServiceProvider)
-              .endShiftSession(id);
+          await ref.read(driverShiftSessionServiceProvider).endShiftSession(id);
         }
         ref.invalidate(driverShiftStatsProvider);
         unawaited(refreshDriverRuntime(ref));
       }
     } catch (e) {
       if (!mounted) return;
+      HapticService.error();
       _resetThumbToCurrentStatus();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -247,6 +273,10 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
           duration: const Duration(seconds: 4),
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() => _isWritingStatus = false);
+      }
     }
   }
 
@@ -330,213 +360,246 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        const thumbDiameter = 44.0;
         const trackPadding = 5.0;
-        final trackWidth = width - trackPadding * 2 - thumbDiameter;
+        final trackWidth = width - trackPadding * 2;
+        final segmentWidth = trackWidth / 3;
 
         double positionToDx(double position) {
-          return trackPadding + position * trackWidth;
+          return trackPadding + position * (trackWidth - segmentWidth);
         }
 
         final thumbDx = positionToDx(_thumbPosition);
 
         final labelStyle =
-            typo.bodySmall.copyWith(fontSize: 13, letterSpacing: 0.2);
+            typo.bodyMedium.copyWith(fontSize: 15, letterSpacing: 0);
         final dragStatus = _positionToStatus(_thumbPosition);
-        final activeColor = _colorForPosition(colors, _thumbPosition);
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GestureDetector(
-              onHorizontalDragStart: (_) {
-                _isDragging = true;
-                if (!_didStartDragHaptic) {
-                  HapticService.mediumTap();
-                  _didStartDragHaptic = true;
-                }
-                _lastDragHapticStatus = _positionToStatus(_thumbPosition);
-              },
-              onHorizontalDragUpdate: (details) {
-                setState(() {
-                  final delta = details.delta.dx / trackWidth;
-                  _thumbPosition = (_thumbPosition + delta).clamp(0.0, 1.0);
-                });
-                final newStatus = _positionToStatus(_thumbPosition);
-                if (newStatus != _lastDragHapticStatus) {
-                  _lastDragHapticStatus = newStatus;
-                  HapticService.mediumTap();
-                }
-              },
-              onHorizontalDragEnd: (_) async {
-                _isDragging = false;
-                _didStartDragHaptic = false;
-                final snappedStatus = _positionToStatus(_thumbPosition);
-                final goingOnline =
-                    snappedStatus == DriverAvailabilityStatus.available;
-                if (!goingOnline) {
-                  _animateToPosition(_statusToPosition(snappedStatus));
-                }
-                await _onStatusSnapped(snappedStatus);
-                if (!mounted) return;
-                if (goingOnline &&
-                    widget.currentStatus != DriverAvailabilityStatus.available) {
-                  _resetThumbToCurrentStatus();
-                }
-              },
-              child: Container(
-                height: 58,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(29),
-                  gradient: LinearGradient(
-                    colors: [
-                      colors.error.withValues(alpha: 0.08),
-                      colors.warning.withValues(alpha: 0.06),
-                      colors.success.withValues(alpha: 0.10),
-                    ],
-                  ),
-                  border: Border.all(
-                    color: colors.text.withValues(alpha: 0.06),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: activeColor.withValues(alpha: 0.18),
-                      blurRadius: 20,
-                      offset: const Offset(0, 6),
-                      spreadRadius: -8,
+        final confirmedStatus = widget.currentStatus;
+        final activeColor = _colorForStatus(colors, dragStatus);
+        final enabled = !_isWritingStatus;
+
+        Future<void> submitStatus(DriverAvailabilityStatus status) async {
+          if (!enabled) return;
+          HapticService.selectionClick();
+          _animateToPosition(_statusToPosition(status));
+          await _onStatusSnapped(status);
+        }
+
+        return Opacity(
+          opacity: enabled ? 1 : 0.72,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colors.card,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: colors.border.withValues(alpha: 0.95),
+                width: 1.3,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: colors.text.withValues(alpha: 0.08),
+                  blurRadius: 24,
+                  offset: const Offset(0, 10),
+                  spreadRadius: -10,
+                ),
+                BoxShadow(
+                  color: colors.success.withValues(alpha: 0.08),
+                  blurRadius: 22,
+                  offset: const Offset(0, 8),
+                  spreadRadius: -12,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: colors.success.withValues(alpha: 0.18),
+                        border: Border.all(
+                          color: colors.success.withValues(alpha: 0.20),
+                          width: 1.2,
+                        ),
+                      ),
+                      child: Icon(
+                        AppIcons.navHome,
+                        color: colors.success,
+                        size: 24,
+                      ),
                     ),
-                    BoxShadow(
-                      color: colors.text.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        _hintForStatus(confirmedStatus),
+                        style: typo.bodyLarge.copyWith(
+                          color: colors.textMid,
+                          fontWeight: FontWeight.w700,
+                          height: 1.28,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                child: Stack(
-                  alignment: Alignment.centerLeft,
-                  children: [
-                    Positioned.fill(
-                      child: AnimatedAlign(
-                        duration: _isDragging
-                            ? Duration.zero
-                            : const Duration(milliseconds: 180),
-                        curve: Curves.easeOut,
-                        alignment:
-                            dragStatus == DriverAvailabilityStatus.offline
+                const SizedBox(height: 18),
+                GestureDetector(
+                  onTapUp: (details) async {
+                    final dx = details.localPosition.dx.clamp(0.0, width);
+                    final segment = (dx / (width / 3)).floor().clamp(0, 2);
+                    final status = switch (segment) {
+                      0 => DriverAvailabilityStatus.offline,
+                      1 => DriverAvailabilityStatus.onBreak,
+                      _ => DriverAvailabilityStatus.available,
+                    };
+                    await submitStatus(status);
+                  },
+                  onHorizontalDragStart: (_) {
+                    if (!enabled) return;
+                    _isDragging = true;
+                    if (!_didStartDragHaptic) {
+                      HapticService.selectionClick();
+                      _didStartDragHaptic = true;
+                    }
+                    _lastDragHapticStatus = _positionToStatus(_thumbPosition);
+                  },
+                  onHorizontalDragUpdate: (details) {
+                    if (!enabled) return;
+                    setState(() {
+                      final delta = details.delta.dx / trackWidth;
+                      _thumbPosition = (_thumbPosition + delta).clamp(0.0, 1.0);
+                    });
+                    final newStatus = _positionToStatus(_thumbPosition);
+                    if (newStatus != _lastDragHapticStatus) {
+                      _lastDragHapticStatus = newStatus;
+                      HapticService.selectionClick();
+                    }
+                  },
+                  onHorizontalDragEnd: (_) async {
+                    if (!enabled) return;
+                    _isDragging = false;
+                    _didStartDragHaptic = false;
+                    final snappedStatus = _positionToStatus(_thumbPosition);
+                    _animateToPosition(_statusToPosition(snappedStatus));
+                    await _onStatusSnapped(snappedStatus);
+                  },
+                  child: Container(
+                    height: 58,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(29),
+                      color: colors.surface.withValues(alpha: 0.74),
+                      border: Border.all(
+                        color: colors.border.withValues(alpha: 0.95),
+                        width: 1.1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.text.withValues(alpha: 0.05),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                          spreadRadius: -8,
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      alignment: Alignment.centerLeft,
+                      children: [
+                        Positioned.fill(
+                          child: AnimatedAlign(
+                            duration: _isDragging
+                                ? Duration.zero
+                                : const Duration(milliseconds: 180),
+                            curve: Curves.easeOut,
+                            alignment: dragStatus ==
+                                    DriverAvailabilityStatus.offline
                                 ? Alignment.centerLeft
                                 : dragStatus == DriverAvailabilityStatus.onBreak
                                     ? Alignment.center
                                     : Alignment.centerRight,
-                        child: Container(
-                          width: width / 3,
-                          margin: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: colors.card.withValues(alpha: 0.88),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                              color: activeColor.withValues(alpha: 0.22),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: activeColor.withValues(alpha: 0.12),
-                                blurRadius: 12,
-                                offset: const Offset(0, 3),
+                            child: Container(
+                              width: width / 3,
+                              margin: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: colors.card.withValues(alpha: 0.88),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color: activeColor.withValues(alpha: 0.30),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: activeColor.withValues(alpha: 0.16),
+                                    blurRadius: 14,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                    AnimatedPositioned(
-                      duration: _isDragging
-                          ? Duration.zero
-                          : const Duration(milliseconds: 200),
-                      curve: Curves.easeOut,
-                      left: thumbDx,
-                      top: 7,
-                      child: Container(
-                        width: thumbDiameter,
-                        height: thumbDiameter,
-                        decoration: BoxDecoration(
-                          color: colors.card,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: activeColor.withValues(alpha: 0.35),
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: activeColor.withValues(alpha: 0.35),
-                              blurRadius: 16,
-                              offset: const Offset(0, 4),
-                              spreadRadius: -2,
+                        Row(
+                          children: [
+                            _SegmentButton(
+                              label: DriverStrings.offline,
+                              active: dragStatus ==
+                                  DriverAvailabilityStatus.offline,
+                              activeColor: activeColor,
+                              inactiveColor: colors.textMid,
+                              style: labelStyle,
                             ),
-                            BoxShadow(
-                              color: colors.text.withValues(alpha: 0.12),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
+                            _SegmentButton(
+                              label: DriverStrings.onBreak,
+                              active: dragStatus ==
+                                  DriverAvailabilityStatus.onBreak,
+                              activeColor: activeColor,
+                              inactiveColor: colors.textMid,
+                              style: labelStyle,
+                            ),
+                            _SegmentButton(
+                              label: DriverStrings.online,
+                              active: dragStatus ==
+                                  DriverAvailabilityStatus.available,
+                              activeColor: activeColor,
+                              inactiveColor: colors.textMid,
+                              style: labelStyle,
                             ),
                           ],
                         ),
-                        child: Center(
-                          child: Container(
-                            width: 12,
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: activeColor,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: activeColor.withValues(alpha: 0.55),
-                                  blurRadius: 8,
-                                  spreadRadius: 0.5,
+                        if (_isWritingStatus)
+                          AnimatedPositioned(
+                            duration: const Duration(milliseconds: 160),
+                            curve: Curves.easeOut,
+                            left: thumbDx + segmentWidth - 34,
+                            top: 21,
+                            child: SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  activeColor,
                                 ),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _ToggleLabel(
-                  label: DriverStrings.offline,
-                  active: widget.currentStatus == DriverAvailabilityStatus.offline,
-                  activeColor: colors.error,
-                  inactiveColor: colors.textSoft.withValues(alpha: 0.75),
-                  style: labelStyle,
-                ),
-                _ToggleLabel(
-                  label: DriverStrings.onBreak,
-                  active: widget.currentStatus == DriverAvailabilityStatus.onBreak,
-                  activeColor: colors.warning,
-                  inactiveColor: colors.textSoft.withValues(alpha: 0.75),
-                  style: labelStyle,
-                ),
-                _ToggleLabel(
-                  label: DriverStrings.online,
-                  active: widget.currentStatus ==
-                      DriverAvailabilityStatus.available,
-                  activeColor: colors.success,
-                  inactiveColor: colors.textSoft.withValues(alpha: 0.75),
-                  style: labelStyle,
+                  ),
                 ),
               ],
             ),
-          ],
+          ),
         );
       },
     ).animate().fadeIn(duration: 250.ms);
   }
 }
 
-class _ToggleLabel extends StatelessWidget {
-  const _ToggleLabel({
+class _SegmentButton extends StatelessWidget {
+  const _SegmentButton({
     required this.label,
     required this.active,
     required this.activeColor,
@@ -552,14 +615,22 @@ class _ToggleLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedDefaultTextStyle(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
-      style: style.copyWith(
-        color: active ? activeColor : inactiveColor,
-        fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+    return Expanded(
+      child: Center(
+        child: AnimatedDefaultTextStyle(
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOut,
+          style: style.copyWith(
+            color: active ? activeColor : inactiveColor,
+            fontWeight: active ? FontWeight.w800 : FontWeight.w700,
+          ),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
       ),
-      child: Text(label),
     );
   }
 }

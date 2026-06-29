@@ -143,6 +143,7 @@ If Login + Home nail their purpose, the design system is proven.
 ## Related
 
 - Phase 2 milestones: [`PREMIUM_EXPERIENCE_PROOF.md`](./PREMIUM_EXPERIENCE_PROOF.md)
+- Current home status-control redesign: [`STATUS_CONTROL_REDESIGN_HANDOFF.md`](./STATUS_CONTROL_REDESIGN_HANDOFF.md)
 - TTU targets: [`DESIGN_SCORE.md`](./DESIGN_SCORE.md#time-to-understand-ttu)
 - PR checklist: [`DESIGN_GUARDRAILS.md`](./DESIGN_GUARDRAILS.md)
 
