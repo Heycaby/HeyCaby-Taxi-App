@@ -127,7 +127,7 @@ class DriverHelpHubBody extends StatelessWidget {
           ).driverFadeSlideIn(staggerIndex: 1),
           const SizedBox(height: DriverSpacing.lg),
           DriverSettingsSectionLabel(
-            label: 'Contact',
+            label: DriverStrings.supportContactSection,
             colors: colors,
             typography: typography,
           ),

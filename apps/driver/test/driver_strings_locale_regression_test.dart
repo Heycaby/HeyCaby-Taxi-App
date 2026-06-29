@@ -42,6 +42,7 @@ void main() {
       'Vehicle breakdown',
     );
     expect(DriverStrings.swapOfferDetailHint, 'Details (optional)');
+    expect(DriverStrings.supportContactSection, 'Contact');
     expect(DriverStrings.appSuggestion, 'Suggestion for the app');
     expect(DriverStrings.homeAutoAcceptReturnRides, 'Auto-accept return rides');
     expect(DriverStrings.homeTodayRidesCount(0), 'No rides yet');
@@ -159,6 +160,7 @@ void main() {
       'Conflicto de horario',
     );
     expect(DriverStrings.swapOfferConfirm, 'Sí, ofrecer viaje');
+    expect(DriverStrings.supportContactSection, 'Contacto');
     expect(DriverStrings.appSuggestion, 'Sugerencia para la app');
     expect(
       DriverStrings.homeAutoAcceptReturnRides,
@@ -275,6 +277,7 @@ void main() {
     expect(DriverStrings.swapOfferTitle, 'عرض الرحلة للتبديل');
     expect(DriverStrings.swapReasonLabel('medical'), 'طبي');
     expect(DriverStrings.swapOfferFailed, 'فشل');
+    expect(DriverStrings.supportContactSection, 'التواصل');
     expect(DriverStrings.appSuggestion, 'اقتراح للتطبيق');
     expect(
         DriverStrings.homeAutoAcceptReturnRides, 'قبول رحلات العودة تلقائيا');

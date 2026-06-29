@@ -2021,6 +2021,12 @@ class DriverStrings {
       'We reageren meestal binnen enkele uren.';
   static const String recentTickets = 'Recente meldingen';
   static const String helpAndSupport = 'Help & ondersteuning';
+  static String get supportContactSection => _t(
+        'Contact',
+        en: 'Contact',
+        es: 'Contacto',
+        ar: 'التواصل',
+      );
   static const String seeAllTickets = 'Alles zien →';
   static const String sendMessage = 'Stuur een bericht';
   static const String messages = 'Berichten';
