@@ -1087,33 +1087,102 @@ class DriverStrings {
       'Rond verificatie in de browser af. Status wordt hier bijgewerkt als je klaar bent.';
 
   /// Bottom sheet before opening Veriff (hosted flow + chauffeur terms art. 3).
-  static const String veriffTermsGateTitle =
-      'Voorwaarden & identiteitscontrole';
-  static const String veriffTermsGateBody =
-      'Verificatie gebeurt door Veriff (zie chauffeurvoorwaarden, sectie 3). '
-      'Lees de voorwaarden voordat je doorgaat.';
-  static const String veriffTermsDataControllerTitle =
-      'Hoe je rijbewijsgegevens worden verwerkt';
-  static const String veriffTermsDataControllerBody =
-      'HeyCaby gebruikt Veriff als gespecialiseerde externe aanbieder voor identiteitsverificatie. '
-      'Veriff verwerkt identiteits- en documentgegevens namens ons om echtheid en compliance te controleren.';
-  static const String veriffTermsDataMinimizationBody =
-      'Om risico te beperken en AVG-principes te volgen, slaat HeyCaby geen volledige kopieën van gevoelige ID-/rijbewijsbeelden op in de app-database. '
-      'We bewaren alleen verificatiestatus en minimale metadata voor compliance en bedrijfsvoering.';
-  static const String veriffTermsSecurityLiabilityBody =
-      'Veriff is verantwoordelijk voor de beveiliging en integriteit van zijn verificatie-infrastructuur. '
-      'HeyCaby kan niet garanderen dat Veriff altijd beschikbaar is en is niet aansprakelijk voor storingen, vertraging of incidenten bij derden buiten onze controle.';
-  static const String veriffTermsLegalDisclosureBody =
-      'Waar de wet of bevoegde autoriteit dit vereist, kunnen relevante verificatiegegevens worden verstrekt conform wettelijke verplichtingen.';
-  static const String veriffTermsReadFull =
-      'Volledige chauffeurvoorwaarden lezen';
-  static const String veriffTermsReadVeriffOnly = 'Alleen Veriff-sectie openen';
-  static const String veriffTermsCheckbox =
-      'Ik heb de HeyCaby-chauffeurvoorwaarden en het Veriff-verificatieproces gelezen en ga ermee akkoord.';
-  static const String veriffTermsCheckboxDataProcessing =
-      'Ik begrijp dat mijn verificatiegegevens door Veriff als verwerker worden verwerkt en dat HeyCaby alleen minimale compliance-metadata bewaart.';
-  static const String veriffTermsContinue = 'Doorgaan naar Veriff';
-  static const String veriffTermsCancel = 'Annuleren';
+  static String get veriffTermsGateTitle => _t(
+        'Voorwaarden & identiteitscontrole',
+        en: 'Terms & identity check',
+        es: 'Condiciones y verificación de identidad',
+        ar: 'الشروط والتحقق من الهوية',
+      );
+  static String get veriffTermsGateBody => _t(
+        'Verificatie gebeurt door Veriff (zie chauffeurvoorwaarden, sectie 3). Lees de voorwaarden voordat je doorgaat.',
+        en: 'Verification is handled by Veriff (see driver terms, section 3). Read the terms before you continue.',
+        es: 'La verificación la realiza Veriff (consulta las condiciones para conductores, sección 3). Lee las condiciones antes de continuar.',
+        ar: 'تتم عملية التحقق عبر Veriff (راجع شروط السائق، القسم 3). اقرأ الشروط قبل المتابعة.',
+      );
+  static String get veriffTermsDataControllerTitle => _t(
+        'Hoe je rijbewijsgegevens worden verwerkt',
+        en: 'How your license data is processed',
+        es: 'Cómo se procesan los datos de tu licencia',
+        ar: 'كيف تتم معالجة بيانات رخصتك',
+      );
+  static String get veriffTermsDataControllerBody => _t(
+        'HeyCaby gebruikt Veriff als gespecialiseerde externe aanbieder voor identiteitsverificatie. Veriff verwerkt identiteits- en documentgegevens namens ons om echtheid en compliance te controleren.',
+        en: 'HeyCaby uses Veriff as a specialist third-party identity verification provider. Veriff processes identity and document data on our behalf to check authenticity and compliance.',
+        es: 'HeyCaby usa Veriff como proveedor externo especializado en verificación de identidad. Veriff procesa datos de identidad y documentos en nuestro nombre para comprobar autenticidad y cumplimiento.',
+        ar: 'تستخدم HeyCaby خدمة Veriff كمزود خارجي متخصص للتحقق من الهوية. تعالج Veriff بيانات الهوية والمستندات نيابة عنا للتحقق من صحتها والامتثال.',
+      );
+  static String get veriffTermsDataMinimizationTitle => _t(
+        'AVG en minimale gegevens',
+        en: 'GDPR and data minimisation',
+        es: 'RGPD y minimización de datos',
+        ar: 'اللائحة العامة وحفظ أقل قدر من البيانات',
+      );
+  static String get veriffTermsDataMinimizationBody => _t(
+        'Om risico te beperken en AVG-principes te volgen, slaat HeyCaby geen volledige kopieën van gevoelige ID-/rijbewijsbeelden op in de app-database. We bewaren alleen verificatiestatus en minimale metadata voor compliance en bedrijfsvoering.',
+        en: 'To reduce risk and follow GDPR principles, HeyCaby does not store full copies of sensitive ID or license images in the app database. We keep only verification status and minimal metadata for compliance and operations.',
+        es: 'Para reducir riesgos y seguir los principios del RGPD, HeyCaby no almacena copias completas de imágenes sensibles de identidad o licencia en la base de datos de la app. Solo guardamos el estado de verificación y metadatos mínimos para cumplimiento y operación.',
+        ar: 'لتقليل المخاطر واتباع مبادئ حماية البيانات، لا تخزن HeyCaby نسخا كاملة من صور الهوية أو الرخصة الحساسة في قاعدة بيانات التطبيق. نحتفظ فقط بحالة التحقق وبيانات وصفية محدودة للامتثال والتشغيل.',
+      );
+  static String get veriffTermsSecurityLiabilityTitle => _t(
+        'Beveiliging en verantwoordelijkheid van derden',
+        en: 'Security and third-party responsibility',
+        es: 'Seguridad y responsabilidad de terceros',
+        ar: 'الأمان ومسؤولية الطرف الثالث',
+      );
+  static String get veriffTermsSecurityLiabilityBody => _t(
+        'Veriff is verantwoordelijk voor de beveiliging en integriteit van zijn verificatie-infrastructuur. HeyCaby kan niet garanderen dat Veriff altijd beschikbaar is en is niet aansprakelijk voor storingen, vertraging of incidenten bij derden buiten onze controle.',
+        en: 'Veriff is responsible for the security and integrity of its verification infrastructure. HeyCaby cannot guarantee that Veriff is always available and is not liable for third-party outages, delays, or incidents outside our control.',
+        es: 'Veriff es responsable de la seguridad e integridad de su infraestructura de verificación. HeyCaby no puede garantizar que Veriff esté siempre disponible y no responde por interrupciones, retrasos o incidentes de terceros fuera de nuestro control.',
+        ar: 'تتحمل Veriff مسؤولية أمان وسلامة بنية التحقق الخاصة بها. لا تستطيع HeyCaby ضمان توفر Veriff دائما ولا تتحمل مسؤولية الأعطال أو التأخير أو الحوادث لدى أطراف ثالثة خارج سيطرتنا.',
+      );
+  static String get veriffTermsLegalDisclosureTitle => _t(
+        'Juridische verstrekking',
+        en: 'Legal disclosure',
+        es: 'Divulgación legal',
+        ar: 'الإفصاح القانوني',
+      );
+  static String get veriffTermsLegalDisclosureBody => _t(
+        'Waar de wet of bevoegde autoriteit dit vereist, kunnen relevante verificatiegegevens worden verstrekt conform wettelijke verplichtingen.',
+        en: 'Where required by law or a competent authority, relevant verification data may be disclosed in line with legal obligations.',
+        es: 'Cuando lo exija la ley o una autoridad competente, los datos de verificación pertinentes pueden divulgarse conforme a las obligaciones legales.',
+        ar: 'عندما يطلب القانون أو جهة مختصة ذلك، قد يتم الإفصاح عن بيانات التحقق ذات الصلة وفقا للالتزامات القانونية.',
+      );
+  static String get veriffTermsReadFull => _t(
+        'Volledige chauffeurvoorwaarden lezen',
+        en: 'Read full driver terms',
+        es: 'Leer condiciones completas para conductores',
+        ar: 'قراءة شروط السائق كاملة',
+      );
+  static String get veriffTermsReadVeriffOnly => _t(
+        'Alleen Veriff-sectie openen',
+        en: 'Open Veriff section only',
+        es: 'Abrir solo la sección de Veriff',
+        ar: 'فتح قسم Veriff فقط',
+      );
+  static String get veriffTermsCheckbox => _t(
+        'Ik heb de HeyCaby-chauffeurvoorwaarden en het Veriff-verificatieproces gelezen en ga ermee akkoord.',
+        en: 'I have read and agree to the HeyCaby driver terms and the Veriff verification process.',
+        es: 'He leído y acepto las condiciones para conductores de HeyCaby y el proceso de verificación de Veriff.',
+        ar: 'قرأت وأوافق على شروط سائقي HeyCaby وعملية التحقق عبر Veriff.',
+      );
+  static String get veriffTermsCheckboxDataProcessing => _t(
+        'Ik begrijp dat mijn verificatiegegevens door Veriff als verwerker worden verwerkt en dat HeyCaby alleen minimale compliance-metadata bewaart.',
+        en: 'I understand that my verification data is processed by Veriff as a processor and that HeyCaby keeps only minimal compliance metadata.',
+        es: 'Entiendo que Veriff procesa mis datos de verificación como encargado y que HeyCaby conserva solo metadatos mínimos de cumplimiento.',
+        ar: 'أفهم أن بيانات التحقق الخاصة بي تعالجها Veriff كمعالج بيانات وأن HeyCaby تحتفظ فقط ببيانات وصفية محدودة للامتثال.',
+      );
+  static String get veriffTermsContinue => _t(
+        'Doorgaan naar Veriff',
+        en: 'Continue to Veriff',
+        es: 'Continuar a Veriff',
+        ar: 'المتابعة إلى Veriff',
+      );
+  static String get veriffTermsCancel => _t(
+        'Annuleren',
+        en: 'Cancel',
+        es: 'Cancelar',
+        ar: 'إلغاء',
+      );
 
   /// After terms: explicit consent before opening Veriff in Safari/Chrome (App Review / transparency).
   static const String veriffExternalBrowserTitle = 'Verificatie buiten de app';

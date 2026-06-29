@@ -31,6 +31,15 @@ void main() {
     expect(DriverStrings.pricingSwitchTariff, 'Switch tariff');
     expect(DriverStrings.faq, 'Frequently asked questions');
     expect(DriverStrings.faqHowGoOnlineQuestion, 'How do I go online?');
+    expect(
+      DriverStrings.veriffTermsDataMinimizationTitle,
+      'GDPR and data minimisation',
+    );
+    expect(
+      DriverStrings.veriffTermsSecurityLiabilityTitle,
+      'Security and third-party responsibility',
+    );
+    expect(DriverStrings.veriffTermsLegalDisclosureTitle, 'Legal disclosure');
 
     DriverStrings.useLocale(const Locale('es'));
     expect(DriverStrings.home, 'Inicio');
@@ -48,6 +57,15 @@ void main() {
     expect(DriverStrings.pricingSwitchTariff, 'Cambiar tarifa');
     expect(DriverStrings.faq, 'Preguntas frecuentes');
     expect(DriverStrings.faqHowGoOnlineQuestion, '¿Cómo me conecto?');
+    expect(
+      DriverStrings.veriffTermsDataMinimizationTitle,
+      'RGPD y minimización de datos',
+    );
+    expect(
+      DriverStrings.veriffTermsSecurityLiabilityTitle,
+      'Seguridad y responsabilidad de terceros',
+    );
+    expect(DriverStrings.veriffTermsLegalDisclosureTitle, 'Divulgación legal');
 
     DriverStrings.useLocale(const Locale('ar'));
     expect(DriverStrings.home, 'الرئيسية');
@@ -63,5 +81,14 @@ void main() {
     expect(DriverStrings.pricingSwitchTariff, 'تغيير التعرفة');
     expect(DriverStrings.faq, 'الأسئلة الشائعة');
     expect(DriverStrings.faqHowGoOnlineQuestion, 'كيف أصبح متصلا؟');
+    expect(
+      DriverStrings.veriffTermsDataMinimizationTitle,
+      'اللائحة العامة وحفظ أقل قدر من البيانات',
+    );
+    expect(
+      DriverStrings.veriffTermsSecurityLiabilityTitle,
+      'الأمان ومسؤولية الطرف الثالث',
+    );
+    expect(DriverStrings.veriffTermsLegalDisclosureTitle, 'الإفصاح القانوني');
   });
 }

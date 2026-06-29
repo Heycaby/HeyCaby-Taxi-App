@@ -81,7 +81,11 @@ class _VeriffTermsSheetState extends ConsumerState<_VeriffTermsSheet> {
                       color: colors.accentL,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.verified_user_rounded, color: colors.accent, size: 26),
+                    child: Icon(
+                      Icons.verified_user_rounded,
+                      color: colors.accent,
+                      size: 26,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -114,21 +118,21 @@ class _VeriffTermsSheetState extends ConsumerState<_VeriffTermsSheet> {
               ),
               const SizedBox(height: 14),
               _InfoBlock(
-                title: 'GDPR and data minimisation',
+                title: DriverStrings.veriffTermsDataMinimizationTitle,
                 body: DriverStrings.veriffTermsDataMinimizationBody,
                 colors: colors,
                 typo: typo,
               ),
               const SizedBox(height: 14),
               _InfoBlock(
-                title: 'Security and third-party responsibility',
+                title: DriverStrings.veriffTermsSecurityLiabilityTitle,
                 body: DriverStrings.veriffTermsSecurityLiabilityBody,
                 colors: colors,
                 typo: typo,
               ),
               const SizedBox(height: 14),
               _InfoBlock(
-                title: 'Legal disclosure',
+                title: DriverStrings.veriffTermsLegalDisclosureTitle,
                 body: DriverStrings.veriffTermsLegalDisclosureBody,
                 colors: colors,
                 typo: typo,
@@ -140,25 +144,31 @@ class _VeriffTermsSheetState extends ConsumerState<_VeriffTermsSheet> {
                 children: [
                   TextButton.icon(
                     onPressed: () => _open(kDriverTermsUrl),
-                    icon: Icon(Icons.open_in_new_rounded, size: 18, color: colors.accent),
+                    icon: Icon(
+                      Icons.open_in_new_rounded,
+                      size: 18,
+                      color: colors.accent,
+                    ),
                     label: Text(
                       DriverStrings.veriffTermsReadFull,
                       style: typo.titleSmall.copyWith(
                         color: colors.accent,
                         fontWeight: FontWeight.w800,
-                        fontSize: 20,
                       ),
                     ),
                   ),
                   TextButton.icon(
                     onPressed: () => _open(kDriverTermsVeriffSectionUrl),
-                    icon: Icon(Icons.article_outlined, size: 18, color: colors.textMid),
+                    icon: Icon(
+                      Icons.article_outlined,
+                      size: 18,
+                      color: colors.textMid,
+                    ),
                     label: Text(
                       DriverStrings.veriffTermsReadVeriffOnly,
                       style: typo.titleSmall.copyWith(
                         color: colors.text,
                         fontWeight: FontWeight.w700,
-                        fontSize: 18,
                       ),
                     ),
                   ),
@@ -185,7 +195,8 @@ class _VeriffTermsSheetState extends ConsumerState<_VeriffTermsSheet> {
               const SizedBox(height: 8),
               CheckboxListTile(
                 value: _agreedDataProcessing,
-                onChanged: (v) => setState(() => _agreedDataProcessing = v ?? false),
+                onChanged: (v) =>
+                    setState(() => _agreedDataProcessing = v ?? false),
                 contentPadding: EdgeInsets.zero,
                 activeColor: colors.accent,
                 checkColor: colors.onAccent,
@@ -222,13 +233,15 @@ class _VeriffTermsSheetState extends ConsumerState<_VeriffTermsSheet> {
                           ? null
                           : () => Navigator.of(context).pop(true),
                       style: FilledButton.styleFrom(
-                          disabledBackgroundColor: colors.border,
-                          disabledForegroundColor: colors.textMid,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
+                        disabledBackgroundColor: colors.border,
+                        disabledForegroundColor: colors.textMid,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
                       child: Text(
                         DriverStrings.veriffTermsContinue,
-                        style: typo.labelLarge.copyWith(fontWeight: FontWeight.w800),
+                        style: typo.labelLarge.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ),
@@ -272,7 +285,7 @@ class _InfoBlock extends StatelessWidget {
             style: typo.titleMedium.copyWith(
               color: colors.text,
               fontWeight: FontWeight.w800,
-              fontSize: 24,
+              height: 1.18,
             ),
           ),
           const SizedBox(height: 10),
