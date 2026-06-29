@@ -66,7 +66,8 @@ class _DriverSwipeToGoOnlineState extends ConsumerState<DriverSwipeToGoOnline> {
       if (attempt.isBlocked) {
         HapticService.mediumTap();
         SoundService().playActionBlocked();
-        await showDriverGoOnlineGuidanceSheet(context, ref, args: attempt.gateArgs!);
+        await showDriverGoOnlineGuidanceSheet(context, ref,
+            args: attempt.gateArgs!);
         if (mounted) setState(() => _dragOffset = 0);
         return;
       }
@@ -80,10 +81,14 @@ class _DriverSwipeToGoOnlineState extends ConsumerState<DriverSwipeToGoOnline> {
         return;
       }
       if (!mounted) return;
-      ref.read(driverStateProvider.notifier).setStatus(DriverAppState.onlineAvailable);
+      ref
+          .read(driverStateProvider.notifier)
+          .setStatus(DriverAppState.onlineAvailable);
       final driverId = await ref.read(driverIdProvider.future);
       if (driverId != null) {
-        await ref.read(driverShiftSessionServiceProvider).ensureShiftSessionStarted(driverId);
+        await ref
+            .read(driverShiftSessionServiceProvider)
+            .ensureShiftSessionStarted(driverId);
       }
       ref.invalidate(driverShiftStatsProvider);
       HapticService.heavyTap();
@@ -115,7 +120,7 @@ class _DriverSwipeToGoOnlineState extends ConsumerState<DriverSwipeToGoOnline> {
         return DriverStrings.platformFeeStillPending;
       }
       if (res?.statusCode == 400) {
-        return 'Server rejected request. Check that your driver profile is complete.';
+        return DriverStrings.driverProfileIncompleteForStatus;
       }
     }
     return DriverStrings.failedToGoOnline;
@@ -199,7 +204,8 @@ class _DriverSwipeToGoOnlineState extends ConsumerState<DriverSwipeToGoOnline> {
       builder: (context, constraints) {
         final trackWidth = constraints.maxWidth;
         final maxSlide = trackWidth - thumbSize - 8;
-        final progress = maxSlide > 0 ? (_dragOffset / maxSlide).clamp(0.0, 1.0) : 0.0;
+        final progress =
+            maxSlide > 0 ? (_dragOffset / maxSlide).clamp(0.0, 1.0) : 0.0;
         final triggered = progress >= 0.85;
 
         return GestureDetector(
@@ -214,7 +220,9 @@ class _DriverSwipeToGoOnlineState extends ConsumerState<DriverSwipeToGoOnline> {
                       HapticService.mediumTap();
                       _didStartDragHaptic = true;
                     }
-                    if (maxSlide > 0 && _dragOffset >= maxSlide * 0.85 && !_didReachTriggerHaptic) {
+                    if (maxSlide > 0 &&
+                        _dragOffset >= maxSlide * 0.85 &&
+                        !_didReachTriggerHaptic) {
                       _didReachTriggerHaptic = true;
                       HapticService.heavyTap();
                       _onSlideComplete();

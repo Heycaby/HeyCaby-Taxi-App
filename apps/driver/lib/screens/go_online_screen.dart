@@ -55,11 +55,14 @@ class _GoOnlineScreenState extends ConsumerState<GoOnlineScreen> {
       if (attempt.isBlocked) {
         HapticService.mediumTap();
         SoundService().playActionBlocked();
-        await showDriverGoOnlineGuidanceSheet(context, ref, args: attempt.gateArgs!);
+        await showDriverGoOnlineGuidanceSheet(context, ref,
+            args: attempt.gateArgs!);
         return;
       }
       if (!attempt.succeeded) return;
-      ref.read(driverStateProvider.notifier).setStatus(DriverAppState.onlineAvailable);
+      ref
+          .read(driverStateProvider.notifier)
+          .setStatus(DriverAppState.onlineAvailable);
       SoundService().playStatusOnline();
       context.go('/driver');
       return;
@@ -72,13 +75,19 @@ class _GoOnlineScreenState extends ConsumerState<GoOnlineScreen> {
             lng: position?.longitude,
           );
       if (newStatus == 'available') {
-        ref.read(driverStateProvider.notifier).setStatus(DriverAppState.onlineAvailable);
+        ref
+            .read(driverStateProvider.notifier)
+            .setStatus(DriverAppState.onlineAvailable);
         SoundService().playStatusOnline();
       } else if (newStatus == 'offline') {
-        ref.read(driverStateProvider.notifier).setStatus(DriverAppState.offline);
+        ref
+            .read(driverStateProvider.notifier)
+            .setStatus(DriverAppState.offline);
         SoundService().playStatusOffline();
       } else if (newStatus == 'on_break') {
-        ref.read(driverStateProvider.notifier).setStatus(DriverAppState.onBreak);
+        ref
+            .read(driverStateProvider.notifier)
+            .setStatus(DriverAppState.onBreak);
         SoundService().playStatusOnBreak();
       }
       if (!mounted) return;
@@ -99,10 +108,10 @@ class _GoOnlineScreenState extends ConsumerState<GoOnlineScreen> {
       final res = e.response;
       if (res != null && res.data is Map) {
         final msg = res.data['message'] ?? res.data['error'];
-        if (msg != null) return 'Server: $msg';
+        if (msg != null) return DriverStrings.serverErrorMessage('$msg');
       }
       if (res?.statusCode == 400) {
-        return 'Server rejected request. Check that your driver profile is complete.';
+        return DriverStrings.driverProfileIncompleteForStatus;
       }
     }
     return DriverStrings.failedToUpdateStatus;
@@ -153,7 +162,8 @@ class _GoOnlineScreenState extends ConsumerState<GoOnlineScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
 
     return DriverGoLiveBody(
       colors: colors,
@@ -166,4 +176,3 @@ class _GoOnlineScreenState extends ConsumerState<GoOnlineScreen> {
     );
   }
 }
-

@@ -317,7 +317,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(DriverStrings.cancel),
+            child: Text(DriverStrings.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(

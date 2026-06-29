@@ -26,7 +26,7 @@ Future<void> performDriverLogout(
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(DriverStrings.cancel),
+            child: Text(DriverStrings.cancel),
           ),
           TextButton(
             style: TextButton.styleFrom(foregroundColor: err),

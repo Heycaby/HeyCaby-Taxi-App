@@ -22,6 +22,9 @@ void main() {
     expect(DriverStrings.home, 'Home');
     expect(DriverStrings.goOnline, 'Go online');
     expect(DriverStrings.myRides, 'My rides');
+    expect(DriverStrings.cancel, 'Cancel');
+    expect(DriverStrings.enableLocation, 'Enable location');
+    expect(DriverStrings.tryAgain, 'Try again');
     expect(DriverStrings.loginFormTitle, 'Welcome back');
     expect(DriverStrings.appSuggestion, 'Suggestion for the app');
     expect(DriverStrings.homeAutoAcceptReturnRides, 'Auto-accept return rides');
@@ -30,6 +33,20 @@ void main() {
     expect(DriverStrings.returnTrips, 'Return rides');
     expect(DriverStrings.returnTripsEmpty, 'No return rides available.');
     expect(DriverStrings.ridesThisWeek, 'Rides this week');
+    expect(DriverStrings.vehicleRdwTitle, 'Your vehicle');
+    expect(DriverStrings.vehicleRdwSubtitle,
+        'Enter your plate number. We automatically fetch vehicle details from RDW.');
+    expect(DriverStrings.vehicleMake, 'Make');
+    expect(DriverStrings.vehicleModel, 'Model');
+    expect(DriverStrings.vehicleApk, 'APK');
+    expect(
+        DriverStrings.failedToUpdateStatus, 'Status update failed. Try again.');
+    expect(
+        DriverStrings.serverErrorMessage('rate limit'), 'Server: rate limit');
+    expect(
+      DriverStrings.driverProfileIncompleteForStatus,
+      'Server rejected the request. Check that your driver profile is complete.',
+    );
     expect(DriverStrings.pricingBase, 'Start price');
     expect(DriverStrings.pricingSwitchTariff, 'Switch tariff');
     expect(DriverStrings.announcements, 'Announcements');
@@ -78,6 +95,9 @@ void main() {
     expect(DriverStrings.home, 'Inicio');
     expect(DriverStrings.goOnline, 'Conectarse');
     expect(DriverStrings.myRides, 'Mis viajes');
+    expect(DriverStrings.cancel, 'Cancelar');
+    expect(DriverStrings.enableLocation, 'Activar ubicación');
+    expect(DriverStrings.tryAgain, 'Intentar de nuevo');
     expect(DriverStrings.loginFormTitle, 'Bienvenido de nuevo');
     expect(DriverStrings.appSuggestion, 'Sugerencia para la app');
     expect(
@@ -92,6 +112,21 @@ void main() {
       'No hay viajes de vuelta disponibles.',
     );
     expect(DriverStrings.ridesThisWeek, 'Viajes esta semana');
+    expect(DriverStrings.vehicleRdwTitle, 'Tu vehículo');
+    expect(DriverStrings.vehicleRdwSubtitle,
+        'Introduce tu matrícula. Obtenemos automáticamente los datos del vehículo desde RDW.');
+    expect(DriverStrings.vehicleMake, 'Marca');
+    expect(DriverStrings.vehicleModel, 'Modelo');
+    expect(DriverStrings.vehicleApk, 'APK');
+    expect(
+      DriverStrings.failedToUpdateStatus,
+      'No se pudo actualizar el estado. Inténtalo de nuevo.',
+    );
+    expect(DriverStrings.serverErrorMessage('límite'), 'Servidor: límite');
+    expect(
+      DriverStrings.driverProfileIncompleteForStatus,
+      'El servidor rechazó la solicitud. Comprueba que tu perfil de conductor esté completo.',
+    );
     expect(DriverStrings.pricingBase, 'Precio inicial');
     expect(DriverStrings.pricingSwitchTariff, 'Cambiar tarifa');
     expect(DriverStrings.announcements, 'Anuncios');
@@ -143,6 +178,9 @@ void main() {
     expect(DriverStrings.home, 'الرئيسية');
     expect(DriverStrings.goOnline, 'الاتصال');
     expect(DriverStrings.myRides, 'رحلاتي');
+    expect(DriverStrings.cancel, 'إلغاء');
+    expect(DriverStrings.enableLocation, 'تفعيل الموقع');
+    expect(DriverStrings.tryAgain, 'حاول مرة أخرى');
     expect(DriverStrings.loginFormTitle, 'مرحبا بعودتك');
     expect(DriverStrings.appSuggestion, 'اقتراح للتطبيق');
     expect(
@@ -152,6 +190,21 @@ void main() {
     expect(DriverStrings.returnTrips, 'رحلات العودة');
     expect(DriverStrings.returnTripsEmpty, 'لا توجد رحلات عودة متاحة.');
     expect(DriverStrings.ridesThisWeek, 'رحلات هذا الأسبوع');
+    expect(DriverStrings.vehicleRdwTitle, 'مركبتك');
+    expect(
+      DriverStrings.vehicleRdwSubtitle,
+      'أدخل رقم اللوحة. سنجلب بيانات المركبة تلقائيا من RDW.',
+    );
+    expect(DriverStrings.vehicleMake, 'الشركة');
+    expect(DriverStrings.vehicleModel, 'الطراز');
+    expect(DriverStrings.vehicleApk, 'APK');
+    expect(
+        DriverStrings.failedToUpdateStatus, 'فشل تحديث الحالة. حاول مرة أخرى.');
+    expect(DriverStrings.serverErrorMessage('الحد'), 'الخادم: الحد');
+    expect(
+      DriverStrings.driverProfileIncompleteForStatus,
+      'رفض الخادم الطلب. تحقق من اكتمال ملفك الشخصي كسائق.',
+    );
     expect(DriverStrings.pricingBase, 'سعر البداية');
     expect(DriverStrings.pricingSwitchTariff, 'تغيير التعرفة');
     expect(DriverStrings.announcements, 'الإعلانات');

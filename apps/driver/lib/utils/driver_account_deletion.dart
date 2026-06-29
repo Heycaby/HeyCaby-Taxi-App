@@ -90,7 +90,7 @@ class _DriverDeleteAccountConfirmDialogState
       actions: [
         TextButton(
           onPressed: () => _pop(false),
-          child: const Text(DriverStrings.cancel),
+          child: Text(DriverStrings.cancel),
         ),
         TextButton(
           onPressed: _onConfirmDelete,
@@ -182,7 +182,8 @@ class _AccountDeletionSuccessDialog extends StatelessWidget {
                   ),
                   child: Text(
                     DriverStrings.deleteAccountSuccessModalCta,
-                    style: typo.labelLarge.copyWith(fontWeight: FontWeight.w700),
+                    style:
+                        typo.labelLarge.copyWith(fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
@@ -204,7 +205,8 @@ Future<void> performDriverAccountDeletion(
   final confirmed = await showDialog<bool>(
     context: context,
     barrierDismissible: false,
-    builder: (ctx) => _DriverDeleteAccountConfirmDialog(themeColors: themeColors),
+    builder: (ctx) =>
+        _DriverDeleteAccountConfirmDialog(themeColors: themeColors),
   );
 
   if (confirmed != true || !context.mounted) return;
@@ -225,14 +227,18 @@ Future<void> performDriverAccountDeletion(
   } on HeyCabyAccountDeletionException catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${DriverStrings.deleteAccountFailed} (${e.message})')),
+        SnackBar(
+            content:
+                Text('${DriverStrings.deleteAccountFailed} (${e.message})')),
       );
     }
     return;
   } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${DriverStrings.deleteAccountFailed} (${e.toString()})')),
+        SnackBar(
+            content:
+                Text('${DriverStrings.deleteAccountFailed} (${e.toString()})')),
       );
     }
     return;

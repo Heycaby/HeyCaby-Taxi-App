@@ -148,7 +148,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text(DriverStrings.cancel),
+              child: Text(DriverStrings.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
@@ -421,7 +421,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                         const SizedBox(height: 12),
                         TextButton(
                           onPressed: () => Navigator.pop(ctx),
-                          child: const Text(DriverStrings.cancel),
+                          child: Text(DriverStrings.cancel),
                         ),
                       ],
                     ),

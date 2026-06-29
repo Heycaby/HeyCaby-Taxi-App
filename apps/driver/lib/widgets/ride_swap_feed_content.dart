@@ -299,7 +299,7 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(DriverStrings.cancel),
+            child: Text(DriverStrings.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -492,7 +492,7 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
                                     actions: [
                                       TextButton(
                                         onPressed: () => Navigator.pop(ctx),
-                                        child: const Text(DriverStrings.cancel),
+                                        child: Text(DriverStrings.cancel),
                                       ),
                                     ],
                                   ),

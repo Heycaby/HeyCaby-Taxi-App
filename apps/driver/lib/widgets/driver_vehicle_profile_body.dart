@@ -379,10 +379,12 @@ class _RdwDetailsCard extends StatelessWidget {
           ),
           if (make != null) ...[
             const SizedBox(height: DriverSpacing.md),
-            _kv('Merk', make!, typography, colors),
+            _kv(DriverStrings.vehicleMake, make!, typography, colors),
           ],
-          if (model != null) _kv('Model', model!, typography, colors),
-          if (apk != null) _kv('APK', apk!, typography, colors),
+          if (model != null)
+            _kv(DriverStrings.vehicleModel, model!, typography, colors),
+          if (apk != null)
+            _kv(DriverStrings.vehicleApk, apk!, typography, colors),
         ],
       ),
     );
@@ -399,7 +401,8 @@ class _RdwDetailsCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(k, style: typography.bodySmall.copyWith(color: colors.textMuted)),
+          Text(k,
+              style: typography.bodySmall.copyWith(color: colors.textMuted)),
           Text(
             v,
             style: typography.bodyMedium.copyWith(

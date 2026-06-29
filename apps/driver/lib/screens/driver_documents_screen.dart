@@ -386,7 +386,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(null),
-                child: const Text(DriverStrings.cancel),
+                child: Text(DriverStrings.cancel),
               ),
               FilledButton(
                 onPressed: () {
@@ -450,7 +450,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
             ),
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text(DriverStrings.tryAgain),
+              child: Text(DriverStrings.tryAgain),
             ),
           ],
         ),

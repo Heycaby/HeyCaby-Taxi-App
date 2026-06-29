@@ -86,7 +86,8 @@ class DriverMapFloating extends ConsumerWidget {
     final badgeCount = ref.watch(driverHubBadgeCountProvider).valueOrNull ?? 0;
     final driverColors = DriverColors.fromTheme(colors);
     final driverTypography = DriverTypography.fromTheme(typo);
-    final zones = ref.watch(zoneDemandProvider).valueOrNull ?? const <ZoneDemand>[];
+    final zones =
+        ref.watch(zoneDemandProvider).valueOrNull ?? const <ZoneDemand>[];
     final currentZoneId = ref.watch(currentZoneIdProvider).valueOrNull;
     final currentZone = _currentZoneDemand(zones, currentZoneId);
     final waitingCount = currentZone?.waitingPassengers ?? 0;
@@ -391,7 +392,7 @@ class _EndShiftConfirmDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text(DriverStrings.cancel),
+          child: Text(DriverStrings.cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),

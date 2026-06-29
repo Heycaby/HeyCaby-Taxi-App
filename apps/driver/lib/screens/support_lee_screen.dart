@@ -63,32 +63,38 @@ class _SupportLeeScreenState extends ConsumerState<SupportLeeScreen> {
               children: [
                 Text(
                   DriverStrings.supportAiConsentIntro,
-                  style: typo.bodyMedium.copyWith(color: colors.textMid, height: 1.4),
+                  style: typo.bodyMedium
+                      .copyWith(color: colors.textMid, height: 1.4),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   DriverStrings.supportAiConsentDataSent,
-                  style: typo.bodySmall.copyWith(color: colors.textMid, height: 1.5),
+                  style: typo.bodySmall
+                      .copyWith(color: colors.textMid, height: 1.5),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   DriverStrings.supportAiConsentThirdParty,
-                  style: typo.bodySmall.copyWith(color: colors.textMid, height: 1.5),
+                  style: typo.bodySmall
+                      .copyWith(color: colors.textMid, height: 1.5),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   DriverStrings.supportAiConsentPolicy,
-                  style: typo.bodySmall.copyWith(color: colors.textMid, height: 1.5),
+                  style: typo.bodySmall
+                      .copyWith(color: colors.textMid, height: 1.5),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   DriverStrings.supportAiConsentEmailOption,
-                  style: typo.bodySmall.copyWith(color: colors.textMid, height: 1.5),
+                  style: typo.bodySmall
+                      .copyWith(color: colors.textMid, height: 1.5),
                 ),
                 const SizedBox(height: 8),
                 CheckboxListTile(
                   value: consentChecked,
-                  onChanged: (v) => setDialogState(() => consentChecked = v ?? false),
+                  onChanged: (v) =>
+                      setDialogState(() => consentChecked = v ?? false),
                   contentPadding: EdgeInsets.zero,
                   dense: true,
                   controlAffinity: ListTileControlAffinity.leading,
@@ -103,10 +109,11 @@ class _SupportLeeScreenState extends ConsumerState<SupportLeeScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text(DriverStrings.cancel),
+              child: Text(DriverStrings.cancel),
             ),
             FilledButton(
-              onPressed: consentChecked ? () => Navigator.of(ctx).pop(true) : null,
+              onPressed:
+                  consentChecked ? () => Navigator.of(ctx).pop(true) : null,
               child: const Text(DriverStrings.supportAiConsentContinue),
             ),
           ],
@@ -128,10 +135,11 @@ class _SupportLeeScreenState extends ConsumerState<SupportLeeScreen> {
     });
     _controller.clear();
 
-    final result = await ref.read(driverDataServiceProvider).sendDriverSupportChatMessage(
-          message: text,
-          ticketId: _ticketId,
-        );
+    final result =
+        await ref.read(driverDataServiceProvider).sendDriverSupportChatMessage(
+              message: text,
+              ticketId: _ticketId,
+            );
 
     if (!mounted) return;
     setState(() {
@@ -143,7 +151,8 @@ class _SupportLeeScreenState extends ConsumerState<SupportLeeScreen> {
         if (kDebugMode) debugPrint('support-lee failed: ${result.error}');
         _messages.add({
           'role': 'assistant',
-          'content': 'Lee is tijdelijk niet beschikbaar. Probeer opnieuw over een moment.',
+          'content':
+              'Lee is tijdelijk niet beschikbaar. Probeer opnieuw over een moment.',
         });
       }
     });
@@ -162,7 +171,8 @@ class _SupportLeeScreenState extends ConsumerState<SupportLeeScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
     final messages = _messages
         .map(
           (m) => DriverAiChatMessage(
@@ -184,4 +194,3 @@ class _SupportLeeScreenState extends ConsumerState<SupportLeeScreen> {
     );
   }
 }
-

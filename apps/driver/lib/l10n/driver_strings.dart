@@ -189,7 +189,12 @@ class DriverStrings {
   static const String endShiftConfirm = 'Dienst beëindigen?';
   static const String endShiftDetail =
       'Je hebt vandaag X uur gereden en Y ritten voltooid.';
-  static const String cancel = 'Annuleren';
+  static String get cancel => _t(
+        'Annuleren',
+        en: 'Cancel',
+        es: 'Cancelar',
+        ar: 'إلغاء',
+      );
   static const String readyToGoBackOnline = 'Klaar om weer online te gaan?';
   static const String zoneView = 'Zone-weergave';
   static const String demandZones = 'Vraagzones';
@@ -931,9 +936,36 @@ class DriverStrings {
   static const String preferencesMolliePreviewSubtitle =
       'Open tijdelijk voorbeeldscherm voor checkout in de app.';
   static const String saveAction = 'Opslaan';
-  static const String vehicleRdwTitle = 'Jouw voertuig';
-  static const String vehicleRdwSubtitle =
-      'Vul je kenteken in. We halen voertuiggegevens automatisch op bij RDW.';
+  static String get vehicleRdwTitle => _t(
+        'Jouw voertuig',
+        en: 'Your vehicle',
+        es: 'Tu vehículo',
+        ar: 'مركبتك',
+      );
+  static String get vehicleRdwSubtitle => _t(
+        'Vul je kenteken in. We halen voertuiggegevens automatisch op bij RDW.',
+        en: 'Enter your plate number. We automatically fetch vehicle details from RDW.',
+        es: 'Introduce tu matrícula. Obtenemos automáticamente los datos del vehículo desde RDW.',
+        ar: 'أدخل رقم اللوحة. سنجلب بيانات المركبة تلقائيا من RDW.',
+      );
+  static String get vehicleMake => _t(
+        'Merk',
+        en: 'Make',
+        es: 'Marca',
+        ar: 'الشركة',
+      );
+  static String get vehicleModel => _t(
+        'Model',
+        en: 'Model',
+        es: 'Modelo',
+        ar: 'الطراز',
+      );
+  static String get vehicleApk => _t(
+        'APK',
+        en: 'APK',
+        es: 'APK',
+        ar: 'APK',
+      );
   static const String onboardingPlateFlowTitle = 'Start als chauffeur';
   static const String onboardingPlateTitle = 'Jouw taxi';
   static const String onboardingPlateSubtitle =
@@ -1607,8 +1639,18 @@ class DriverStrings {
   static const String sessionRevokedBody =
       'Je bent uitgelogd omdat er op een ander apparaat is ingelogd. Log opnieuw in op dit apparaat als dat de juiste is.';
   static const String sessionRevokedCta = 'Naar inloggen';
-  static const String enableLocation = 'Locatie inschakelen';
-  static const String tryAgain = 'Opnieuw proberen';
+  static String get enableLocation => _t(
+        'Locatie inschakelen',
+        en: 'Enable location',
+        es: 'Activar ubicación',
+        ar: 'تفعيل الموقع',
+      );
+  static String get tryAgain => _t(
+        'Opnieuw proberen',
+        en: 'Try again',
+        es: 'Intentar de nuevo',
+        ar: 'حاول مرة أخرى',
+      );
   static const String runtimeGateTitle = 'Accountstatus';
   static const String runtimeGateBackHome = 'Terug naar start';
   static const String runtimeComplianceBlockedTitle =
@@ -2425,8 +2467,24 @@ class DriverStrings {
       'Reactie mislukt. Controleer of de nieuwste database-migratie is toegepast.';
   static const String couldNotLoadEarnings = 'Verdiensten laden mislukt.';
   static const String couldNotLoadRides = 'Ritten laden mislukt.';
-  static const String failedToUpdateStatus =
-      'Status bijwerken mislukt. Probeer opnieuw.';
+  static String get failedToUpdateStatus => _t(
+        'Status bijwerken mislukt. Probeer opnieuw.',
+        en: 'Status update failed. Try again.',
+        es: 'No se pudo actualizar el estado. Inténtalo de nuevo.',
+        ar: 'فشل تحديث الحالة. حاول مرة أخرى.',
+      );
+  static String serverErrorMessage(String message) => _t(
+        'Server: $message',
+        en: 'Server: $message',
+        es: 'Servidor: $message',
+        ar: 'الخادم: $message',
+      );
+  static String get driverProfileIncompleteForStatus => _t(
+        'Server heeft de aanvraag geweigerd. Controleer of je chauffeursprofiel compleet is.',
+        en: 'Server rejected the request. Check that your driver profile is complete.',
+        es: 'El servidor rechazó la solicitud. Comprueba que tu perfil de conductor esté completo.',
+        ar: 'رفض الخادم الطلب. تحقق من اكتمال ملفك الشخصي كسائق.',
+      );
   static const String failedToGoOnline =
       'Online gaan mislukt. Probeer opnieuw.';
   static const String couldNotReportComment =
