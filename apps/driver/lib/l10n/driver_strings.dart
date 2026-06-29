@@ -154,7 +154,12 @@ class DriverStrings {
         es: 'Viajes de hoy',
         ar: 'رحلات اليوم',
       );
-  static const String driverTalk = 'Chauffeurpraat';
+  static String get driverTalk => _t(
+        'Chauffeurpraat',
+        en: 'Driver Talk',
+        es: 'Charla de conductores',
+        ar: 'حديث السائقين',
+      );
   static String get takeABreak => _t(
         'Neem pauze',
         en: 'Take a break',
@@ -634,7 +639,12 @@ class DriverStrings {
   static const String requests = 'Aanvragen';
   static const String confirmed = 'Bevestigd';
   static const String marketplace = 'Marktplaats';
-  static const String announcements = 'Aankondigingen';
+  static String get announcements => _t(
+        'Aankondigingen',
+        en: 'Announcements',
+        es: 'Anuncios',
+        ar: 'الإعلانات',
+      );
   static const String rideSwap = 'Ritwissel';
 
   /// How Ride Swap works — title (swap screen, sheet, help).
@@ -2428,6 +2438,54 @@ class DriverStrings {
       'Tip: sla het e-mailadres van je accountant op dit scherm op; dan wordt Aan: automatisch ingevuld.';
 
   // Community hub (NL default)
+  static String get communityHubSubtitle => _t(
+        'Verbind, deel en groei samen.',
+        en: 'Connect, share, and grow together.',
+        es: 'Conecta, comparte y crece junto a otros.',
+        ar: 'تواصل وشارك وانم مع الآخرين.',
+      );
+  static String get communityAnnouncementsSubtitle => _t(
+        'Nieuws, updates en peilingen',
+        en: 'News, updates and polls',
+        es: 'Noticias, novedades y encuestas',
+        ar: 'أخبار وتحديثات واستطلاعات',
+      );
+  static String get communityDriverTalkSubtitle => _t(
+        'Deel, vraag en help',
+        en: 'Share, ask and help',
+        es: 'Comparte, pregunta y ayuda',
+        ar: 'شارك واسأل وساعد',
+      );
+  static String get communityNotificationsTitle => _t(
+        'Meldingen',
+        en: 'Notifications',
+        es: 'Notificaciones',
+        ar: 'الإشعارات',
+      );
+  static String get communityMarkAllRead => _t(
+        'Alles gelezen',
+        en: 'Mark all read',
+        es: 'Marcar todo como leído',
+        ar: 'تحديد الكل كمقروء',
+      );
+  static String get communityNotificationsEmpty => _t(
+        'Nog geen meldingen.',
+        en: 'No notifications yet.',
+        es: 'Aún no hay notificaciones.',
+        ar: 'لا توجد إشعارات بعد.',
+      );
+  static String get communitySearchHint => _t(
+        'Zoek berichten, onderwerpen of chauffeurs...',
+        en: 'Search posts, topics, or users...',
+        es: 'Buscar publicaciones, temas o usuarios...',
+        ar: 'ابحث في المنشورات أو المواضيع أو المستخدمين...',
+      );
+  static String get communityEmptyPosts => _t(
+        'Nog geen berichten',
+        en: 'No posts yet',
+        es: 'Aún no hay publicaciones',
+        ar: 'لا توجد منشورات بعد',
+      );
   static const String communityNewPost = 'Nieuw bericht';
   static const String communityWelcomeDisclaimerTitle =
       'Welkom bij de gemeenschap';

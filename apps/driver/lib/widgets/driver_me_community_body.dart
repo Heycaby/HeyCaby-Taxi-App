@@ -131,7 +131,8 @@ class DriverMeCommunityBody extends StatelessWidget {
               ),
               if (postsLoading)
                 const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  child:
+                      Center(child: CircularProgressIndicator(strokeWidth: 2)),
                 )
               else if (postsError != null)
                 SliverFillRemaining(
@@ -148,7 +149,7 @@ class DriverMeCommunityBody extends StatelessWidget {
                 SliverFillRemaining(
                   child: DriverEmptyState(
                     icon: Icons.forum_outlined,
-                    title: 'Nog geen berichten',
+                    title: DriverStrings.communityEmptyPosts,
                     colors: colors,
                     typography: typography,
                   ),

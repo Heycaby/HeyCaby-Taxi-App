@@ -116,7 +116,7 @@ class DriverCommunityHubHeader extends StatelessWidget {
           ),
           const SizedBox(height: DriverSpacing.sm),
           Text(
-            'Connect, share, and grow together.',
+            DriverStrings.communityHubSubtitle,
             style: typography.bodyMedium.copyWith(
               color: colors.textMuted,
               height: 1.4,
@@ -211,7 +211,7 @@ class DriverCommunityFeedSelector extends StatelessWidget {
             child: DriverCommunityFeedEntryCard(
               icon: Icons.campaign_rounded,
               title: DriverStrings.announcements,
-              subtitle: 'News, updates and polls',
+              subtitle: DriverStrings.communityAnnouncementsSubtitle,
               active: activeFeed == 'announcements',
               colors: colors,
               typography: typography,
@@ -223,7 +223,7 @@ class DriverCommunityFeedSelector extends StatelessWidget {
             child: DriverCommunityFeedEntryCard(
               icon: Icons.forum_rounded,
               title: DriverStrings.driverTalk,
-              subtitle: 'Share, ask and help',
+              subtitle: DriverStrings.communityDriverTalkSubtitle,
               active: activeFeed == 'general',
               colors: colors,
               typography: typography,
@@ -316,6 +316,7 @@ class DriverCommunityFeedEntryCard extends StatelessWidget {
     );
   }
 }
+
 class DriverCommunityFeedSectionHeader extends StatelessWidget {
   const DriverCommunityFeedSectionHeader({
     super.key,

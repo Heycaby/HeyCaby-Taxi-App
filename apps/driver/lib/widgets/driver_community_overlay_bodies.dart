@@ -116,7 +116,7 @@ class DriverCommunityNotificationsSheetBody extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Notifications',
+                    DriverStrings.communityNotificationsTitle,
                     style: typography.titleLarge.copyWith(
                       color: colors.text,
                       fontWeight: FontWeight.w800,
@@ -126,8 +126,9 @@ class DriverCommunityNotificationsSheetBody extends StatelessWidget {
                 TextButton(
                   onPressed: onMarkAllRead,
                   child: Text(
-                    'Mark all read',
-                    style: typography.labelMedium.copyWith(color: colors.primary),
+                    DriverStrings.communityMarkAllRead,
+                    style:
+                        typography.labelMedium.copyWith(color: colors.primary),
                   ),
                 ),
               ],
@@ -140,7 +141,8 @@ class DriverCommunityNotificationsSheetBody extends StatelessWidget {
             child: loading
                 ? const Padding(
                     padding: EdgeInsets.all(DriverSpacing.xl),
-                    child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    child: Center(
+                        child: CircularProgressIndicator(strokeWidth: 2)),
                   )
                 : error != null
                     ? Padding(
@@ -167,7 +169,7 @@ class DriverCommunityNotificationsSheetBody extends StatelessWidget {
                             ),
                             child: DriverEmptyState(
                               icon: Icons.notifications_off_outlined,
-                              title: 'No notifications yet.',
+                              title: DriverStrings.communityNotificationsEmpty,
                               colors: colors,
                               typography: typography,
                             ),
@@ -256,7 +258,8 @@ class DriverCommunityNotificationTile extends StatelessWidget {
                     item.body,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: typography.bodySmall.copyWith(color: colors.textMuted),
+                    style:
+                        typography.bodySmall.copyWith(color: colors.textMuted),
                   ),
                 ],
               ),
@@ -267,7 +270,8 @@ class DriverCommunityNotificationTile extends StatelessWidget {
               children: [
                 Text(
                   item.timeLabel,
-                  style: typography.labelSmall.copyWith(color: colors.textMuted),
+                  style:
+                      typography.labelSmall.copyWith(color: colors.textMuted),
                 ),
                 if (item.unread)
                   Container(
@@ -405,8 +409,7 @@ class _DriverCommunitySearchSheetBodyState
     }
     _debounce = Timer(const Duration(milliseconds: 280), () async {
       setState(() => _loading = true);
-      final rows =
-          await widget.dataService!.searchCommunityPosts(q, limit: 25);
+      final rows = await widget.dataService!.searchCommunityPosts(q, limit: 25);
       if (!mounted) return;
       setState(() {
         _results = rows;
@@ -454,9 +457,11 @@ class _DriverCommunitySearchSheetBodyState
               onChanged: _onQueryChanged,
               style: typography.bodyMedium.copyWith(color: colors.text),
               decoration: InputDecoration(
-                hintText: 'Search posts, topics, or users...',
-                hintStyle: typography.bodyMedium.copyWith(color: colors.textMuted),
-                prefixIcon: Icon(Icons.search_rounded, color: colors.textSecondary),
+                hintText: DriverStrings.communitySearchHint,
+                hintStyle:
+                    typography.bodyMedium.copyWith(color: colors.textMuted),
+                prefixIcon:
+                    Icon(Icons.search_rounded, color: colors.textSecondary),
                 filled: true,
                 fillColor: colors.backgroundAlt,
                 border: OutlineInputBorder(
@@ -492,7 +497,8 @@ class _DriverCommunitySearchSheetBodyState
                           selected: _selectedCategory == cat.key,
                           colors: colors,
                           typography: typography,
-                          onTap: () => setState(() => _selectedCategory = cat.key),
+                          onTap: () =>
+                              setState(() => _selectedCategory = cat.key),
                         ),
                       ),
                   ],
@@ -502,19 +508,20 @@ class _DriverCommunitySearchSheetBodyState
               if (loading)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: DriverSpacing.xl),
-                  child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  child:
+                      Center(child: CircularProgressIndicator(strokeWidth: 2)),
                 )
-              else if (isPreview
-                  ? previewItems.isEmpty
-                  : liveItems.isEmpty)
+              else if (isPreview ? previewItems.isEmpty : liveItems.isEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: DriverSpacing.xl),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: DriverSpacing.xl),
                   child: Text(
                     widget.previewEmptyMessage ??
-                        ( _results.isEmpty
+                        (_results.isEmpty
                             ? DriverStrings.communitySearchNoLiveResults
                             : DriverStrings.communitySearchNoCategoryResults),
-                    style: typography.bodySmall.copyWith(color: colors.textMuted),
+                    style:
+                        typography.bodySmall.copyWith(color: colors.textMuted),
                   ),
                 )
               else if (isPreview)
@@ -641,7 +648,8 @@ class DriverCommunitySearchResultRow extends StatelessWidget {
                   ),
                   Text(
                     subtitle,
-                    style: typography.bodySmall.copyWith(color: colors.textMuted),
+                    style:
+                        typography.bodySmall.copyWith(color: colors.textMuted),
                   ),
                 ],
               ),
@@ -693,7 +701,8 @@ class DriverCommunityDisclaimerBody extends StatelessWidget {
                   color: colors.primary.withValues(alpha: 0.1),
                   borderRadius: DriverRadius.mdAll,
                 ),
-                child: Icon(Icons.groups_rounded, color: colors.primary, size: 28),
+                child:
+                    Icon(Icons.groups_rounded, color: colors.primary, size: 28),
               ),
               const SizedBox(width: DriverSpacing.md),
               Expanded(
@@ -709,7 +718,8 @@ class DriverCommunityDisclaimerBody extends StatelessWidget {
                     ),
                     Text(
                       DriverStrings.communityWelcomeDisclaimerSubtitle,
-                      style: typography.bodySmall.copyWith(color: colors.textMuted),
+                      style: typography.bodySmall
+                          .copyWith(color: colors.textMuted),
                     ),
                   ],
                 ),
@@ -876,11 +886,14 @@ class DriverCommunityDisclaimerRuleSection extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('• ', style: typography.bodySmall.copyWith(color: colors.textSecondary)),
+                Text('• ',
+                    style: typography.bodySmall
+                        .copyWith(color: colors.textSecondary)),
                 Expanded(
                   child: Text(
                     item,
-                    style: typography.bodySmall.copyWith(color: colors.textSecondary),
+                    style: typography.bodySmall
+                        .copyWith(color: colors.textSecondary),
                   ),
                 ),
               ],
@@ -952,7 +965,9 @@ Future<void> showDriverCommunityNotificationsSheet(
             onNotificationTap: (index) {
               final notification = items[index];
               if (notification.isUnread) {
-                ref.read(driverApiProvider).markNotificationRead(notification.id);
+                ref
+                    .read(driverApiProvider)
+                    .markNotificationRead(notification.id);
               }
               ref.invalidate(communityNotificationsProvider);
               ref.invalidate(communityUnreadNotificationsCountProvider);
@@ -1043,7 +1058,8 @@ Future<void> showDriverCommunityDisclaimerDialog(
         shape: RoundedRectangleBorder(borderRadius: DriverRadius.lgAll),
         insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: 500, maxHeight: maxDialogHeight),
+          constraints:
+              BoxConstraints(maxWidth: 500, maxHeight: maxDialogHeight),
           child: StatefulBuilder(
             builder: (ctx, setLocal) => DriverCommunityDisclaimerBody(
               colors: colors,
