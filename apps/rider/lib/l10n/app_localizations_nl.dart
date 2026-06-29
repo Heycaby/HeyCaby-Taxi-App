@@ -1413,6 +1413,56 @@ class AppLocalizationsNl extends AppLocalizations {
   String get accountProfilePreferencesLabel => 'Taal en thema';
 
   @override
+  String get riderPassportTitle => 'Rider Passport';
+
+  @override
+  String get riderPassportSubtitle =>
+      'Je HeyCaby-reisidentiteit voor sneller en soepeler boeken.';
+
+  @override
+  String get riderPassportReady => 'Klaar voor sneller boeken';
+
+  @override
+  String get riderPassportNeedsWork => 'Een paar gegevens maken boeken sneller';
+
+  @override
+  String get accountCompleteProfileHeading => 'Profiel aanvullen';
+
+  @override
+  String get accountBookingDetailsHeading => 'Boekingsgegevens';
+
+  @override
+  String get accountRidePreferencesHeading => 'Ritvoorkeuren';
+
+  @override
+  String get accountHelpSafetyHeading => 'Hulp en veiligheid';
+
+  @override
+  String get accountLegalAccountHeading => 'Juridisch en account';
+
+  @override
+  String get accountChecklistName => 'Boekingsnaam';
+
+  @override
+  String get accountChecklistEmail => 'Geverifieerde e-mail';
+
+  @override
+  String get accountChecklistSavedPlaces => 'Opgeslagen plaatsen';
+
+  @override
+  String get accountChecklistPayment => 'Betaalvoorkeur';
+
+  @override
+  String get accountChecklistDone => 'Klaar';
+
+  @override
+  String get accountChecklistMissing => 'Ontbreekt';
+
+  @override
+  String get accountTripReadyBody =>
+      'Je profiel helpt chauffeurs je te herkennen en maakt opnieuw boeken sneller.';
+
+  @override
   String get accountBookingNameLabel => 'Boekingsnaam';
 
   @override

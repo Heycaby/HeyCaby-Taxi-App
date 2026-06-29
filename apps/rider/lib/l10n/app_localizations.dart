@@ -2597,6 +2597,102 @@ abstract class AppLocalizations {
   /// **'Language & theme'**
   String get accountProfilePreferencesLabel;
 
+  /// No description provided for @riderPassportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rider Passport'**
+  String get riderPassportTitle;
+
+  /// No description provided for @riderPassportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your HeyCaby travel identity for faster, smoother bookings.'**
+  String get riderPassportSubtitle;
+
+  /// No description provided for @riderPassportReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready for faster bookings'**
+  String get riderPassportReady;
+
+  /// No description provided for @riderPassportNeedsWork.
+  ///
+  /// In en, this message translates to:
+  /// **'A few details make booking faster'**
+  String get riderPassportNeedsWork;
+
+  /// No description provided for @accountCompleteProfileHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete your profile'**
+  String get accountCompleteProfileHeading;
+
+  /// No description provided for @accountBookingDetailsHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking details'**
+  String get accountBookingDetailsHeading;
+
+  /// No description provided for @accountRidePreferencesHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride preferences'**
+  String get accountRidePreferencesHeading;
+
+  /// No description provided for @accountHelpSafetyHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Help & safety'**
+  String get accountHelpSafetyHeading;
+
+  /// No description provided for @accountLegalAccountHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Legal & account'**
+  String get accountLegalAccountHeading;
+
+  /// No description provided for @accountChecklistName.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking name'**
+  String get accountChecklistName;
+
+  /// No description provided for @accountChecklistEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified email'**
+  String get accountChecklistEmail;
+
+  /// No description provided for @accountChecklistSavedPlaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved places'**
+  String get accountChecklistSavedPlaces;
+
+  /// No description provided for @accountChecklistPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment preference'**
+  String get accountChecklistPayment;
+
+  /// No description provided for @accountChecklistDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get accountChecklistDone;
+
+  /// No description provided for @accountChecklistMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing'**
+  String get accountChecklistMissing;
+
+  /// No description provided for @accountTripReadyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your profile helps drivers recognize you and keeps repeat bookings quick.'**
+  String get accountTripReadyBody;
+
   /// No description provided for @accountBookingNameLabel.
   ///
   /// In en, this message translates to:

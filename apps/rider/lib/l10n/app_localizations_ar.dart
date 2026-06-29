@@ -1389,6 +1389,55 @@ class AppLocalizationsAr extends AppLocalizations {
   String get accountProfilePreferencesLabel => 'اللغة والمظهر';
 
   @override
+  String get riderPassportTitle => 'جواز الراكب';
+
+  @override
+  String get riderPassportSubtitle => 'هويتك في HeyCaby لحجوزات أسرع وأسلس.';
+
+  @override
+  String get riderPassportReady => 'جاهز لحجوزات أسرع';
+
+  @override
+  String get riderPassportNeedsWork => 'بعض التفاصيل تجعل الحجز أسرع';
+
+  @override
+  String get accountCompleteProfileHeading => 'أكمل ملفك';
+
+  @override
+  String get accountBookingDetailsHeading => 'تفاصيل الحجز';
+
+  @override
+  String get accountRidePreferencesHeading => 'تفضيلات الرحلة';
+
+  @override
+  String get accountHelpSafetyHeading => 'المساعدة والسلامة';
+
+  @override
+  String get accountLegalAccountHeading => 'القانوني والحساب';
+
+  @override
+  String get accountChecklistName => 'اسم الحجز';
+
+  @override
+  String get accountChecklistEmail => 'بريد إلكتروني موثق';
+
+  @override
+  String get accountChecklistSavedPlaces => 'الأماكن المحفوظة';
+
+  @override
+  String get accountChecklistPayment => 'تفضيل الدفع';
+
+  @override
+  String get accountChecklistDone => 'مكتمل';
+
+  @override
+  String get accountChecklistMissing => 'ناقص';
+
+  @override
+  String get accountTripReadyBody =>
+      'يساعد ملفك السائقين على التعرف عليك ويجعل الحجز المتكرر أسرع.';
+
+  @override
   String get accountBookingNameLabel => 'اسم الحجز';
 
   @override

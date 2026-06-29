@@ -1404,6 +1404,56 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountProfilePreferencesLabel => 'Language & theme';
 
   @override
+  String get riderPassportTitle => 'Rider Passport';
+
+  @override
+  String get riderPassportSubtitle =>
+      'Your HeyCaby travel identity for faster, smoother bookings.';
+
+  @override
+  String get riderPassportReady => 'Ready for faster bookings';
+
+  @override
+  String get riderPassportNeedsWork => 'A few details make booking faster';
+
+  @override
+  String get accountCompleteProfileHeading => 'Complete your profile';
+
+  @override
+  String get accountBookingDetailsHeading => 'Booking details';
+
+  @override
+  String get accountRidePreferencesHeading => 'Ride preferences';
+
+  @override
+  String get accountHelpSafetyHeading => 'Help & safety';
+
+  @override
+  String get accountLegalAccountHeading => 'Legal & account';
+
+  @override
+  String get accountChecklistName => 'Booking name';
+
+  @override
+  String get accountChecklistEmail => 'Verified email';
+
+  @override
+  String get accountChecklistSavedPlaces => 'Saved places';
+
+  @override
+  String get accountChecklistPayment => 'Payment preference';
+
+  @override
+  String get accountChecklistDone => 'Done';
+
+  @override
+  String get accountChecklistMissing => 'Missing';
+
+  @override
+  String get accountTripReadyBody =>
+      'Your profile helps drivers recognize you and keeps repeat bookings quick.';
+
+  @override
   String get accountBookingNameLabel => 'Booking name';
 
   @override

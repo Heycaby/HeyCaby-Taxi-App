@@ -216,7 +216,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
                   ),
                   child: Text(
                     l10n.dialogOk,
-                    style: typo.labelLarge.copyWith(fontWeight: FontWeight.w800),
+                    style:
+                        typo.labelLarge.copyWith(fontWeight: FontWeight.w800),
                   ),
                 ),
               ),
@@ -257,7 +258,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
         final colors = ref.read(colorsProvider);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.nameSavedSuccess, style: TextStyle(color: colors.text)),
+            content: Text(l10n.nameSavedSuccess,
+                style: TextStyle(color: colors.text)),
             backgroundColor: colors.surface,
             behavior: SnackBarBehavior.floating,
           ),
@@ -301,18 +303,22 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
       builder: (context) => AlertDialog(
         backgroundColor: colors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(l10n.logoutConfirmTitle, style: typo.headingMedium.copyWith(color: colors.text)),
-        content: Text(l10n.logoutConfirmMessage, style: typo.bodyMedium.copyWith(color: colors.textMid)),
+        title: Text(l10n.logoutConfirmTitle,
+            style: typo.headingMedium.copyWith(color: colors.text)),
+        content: Text(l10n.logoutConfirmMessage,
+            style: typo.bodyMedium.copyWith(color: colors.textMid)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.cancel, style: typo.bodyLarge.copyWith(color: colors.accent)),
+            child: Text(l10n.cancel,
+                style: typo.bodyLarge.copyWith(color: colors.accent)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: heyCabyElevatedErrorStyle(colors).merge(
               ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
             ),
             child: Text(
@@ -387,7 +393,9 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
                         : null,
                     onTap: () {
                       ref.read(settingsProvider.notifier).setLanguage(lang.$1);
-                      ref.read(riderHomeBannersRefreshProvider.notifier).state++;
+                      ref
+                          .read(riderHomeBannersRefreshProvider.notifier)
+                          .state++;
                       Navigator.pop(ctx);
                     },
                   ),
@@ -419,13 +427,18 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
                 _DragHandle(colors: colors),
                 for (final entry in themes)
                   ListTile(
-                    title: Text(entry.value.name, style: typo.bodyLarge.copyWith(color: colors.text)),
+                    title: Text(entry.value.name,
+                        style: typo.bodyLarge.copyWith(color: colors.text)),
                     trailing: settings?.theme == entry.key
                         ? Icon(Icons.check, color: colors.accent)
                         : null,
                     onTap: () async {
-                      await ref.read(settingsProvider.notifier).setTheme(entry.key);
-                      await ref.read(themeProvider.notifier).setTheme(entry.key);
+                      await ref
+                          .read(settingsProvider.notifier)
+                          .setTheme(entry.key);
+                      await ref
+                          .read(themeProvider.notifier)
+                          .setTheme(entry.key);
                       if (ctx.mounted) Navigator.pop(ctx);
                     },
                   ),
@@ -479,86 +492,27 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
           padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 32),
           children: [
             _buildHeader(colors, typo, l10n),
+            const SizedBox(height: 16),
+            _buildPassportCard(colors, typo, l10n),
             if (fromOnboarding) ...[
               const SizedBox(height: 12),
               _buildOnboardingBanner(colors, typo, l10n),
             ],
-            SizedBox(height: fromOnboarding ? 20 : 28),
-            _buildProfileSection(colors, typo, l10n, fromOnboarding: fromOnboarding),
+            if (!ref.watch(riderProfileCompletenessProvider).isComplete) ...[
+              const SizedBox(height: 14),
+              _buildCompletionChecklist(colors, typo, l10n),
+            ],
+            const SizedBox(height: 24),
+            _buildProfileSection(colors, typo, l10n,
+                fromOnboarding: fromOnboarding),
             const SizedBox(height: 24),
             _buildSettingsSection(colors, typo, l10n),
-            const SizedBox(height: 16),
-            _buildActionCard(
-              icon: Icons.home_outlined,
-              iconBg: colors.accent.withValues(alpha: 0.12),
-              iconColor: colors.accent,
-              title: l10n.savedAddresses,
-              subtitle: l10n.savedAddressesSubtitle,
-              colors: colors, typo: typo,
-              onTap: () async {
-                final identity = await ref.read(riderIdentityProvider.future);
-                if (!context.mounted) return;
-                if (identity.hasSession && identity.identityId != null) {
-                  context.push('/saved-addresses');
-                } else {
-                  final ok = await showEmailModal(context, ref);
-                  if (ok && context.mounted) {
-                    context.push('/saved-addresses');
-                  }
-                }
-              },
-            ),
-            const SizedBox(height: 12),
-            _buildActionCard(
-              icon: Icons.star_outline,
-              iconBg: colors.warning.withValues(alpha: 0.15),
-              iconColor: colors.warning,
-              title: l10n.myDrivers,
-              subtitle: l10n.favouriteDriversAccountSubtitle,
-              colors: colors, typo: typo,
-              onTap: () async {
-                final identity = await ref.read(riderIdentityProvider.future);
-                if (!context.mounted) return;
-                if (identity.hasSession && identity.email != null) {
-                  context.push('/favorites');
-                  return;
-                }
-                final ok = await showEmailModal(context, ref);
-                if (ok && context.mounted) {
-                  context.push('/favorites');
-                }
-              },
-            ),
-            const SizedBox(height: 12),
-            _buildActionCard(
-              icon: Icons.description_outlined,
-              iconBg: colors.accent.withValues(alpha: 0.15),
-              iconColor: colors.accent,
-              title: l10n.reportARide,
-              subtitle: l10n.reportARideSubtitle,
-              colors: colors, typo: typo,
-              onTap: () => context.push('/report'),
-            ),
-            const SizedBox(height: 12),
-            _buildActionCard(
-              icon: Icons.chat_bubble_outline,
-              iconBg: colors.success.withValues(alpha: 0.15),
-              iconColor: colors.success,
-              title: l10n.support,
-              subtitle: l10n.supportSubtitle,
-              colors: colors, typo: typo,
-              onTap: () => context.push('/support'),
-            ),
             const SizedBox(height: 24),
-            _buildNavRow(Icons.help_outline, l10n.faq, colors, typo, () => context.push('/faq')),
-            const SizedBox(height: 8),
-            _buildNavRow(Icons.article_outlined, l10n.termsOfService, colors, typo, () => context.push('/terms')),
-            const SizedBox(height: 8),
-            _buildNavRow(Icons.privacy_tip_outlined, l10n.privacyPolicy, colors, typo, () => context.push('/privacy')),
+            _buildBookingToolsSection(colors, typo, l10n),
             const SizedBox(height: 24),
-            _buildDeleteAccountButton(colors, typo, l10n),
-            const SizedBox(height: 12),
-            _buildLogoutButton(colors, typo, l10n),
+            _buildHelpSafetySection(colors, typo, l10n),
+            const SizedBox(height: 24),
+            _buildLegalAccountSection(colors, typo, l10n),
           ],
         ),
       ),
@@ -596,42 +550,19 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
     );
   }
 
-  Widget _buildHeader(HeyCabyColorTokens colors, HeyCabyTypography typo, AppLocalizations l10n) {
-    final completeness = ref.watch(riderProfileCompletenessProvider);
+  Widget _buildHeader(HeyCabyColorTokens colors, HeyCabyTypography typo,
+      AppLocalizations l10n) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l10n.account,
-                style: typo.displayMedium.copyWith(
-                  color: colors.text,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              if (!completeness.isComplete) ...[
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsetsDirectional.fromSTEB(10, 6, 10, 6),
-                  decoration: BoxDecoration(
-                    color: colors.accentL,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: colors.accent.withValues(alpha: 0.25)),
-                  ),
-                  child: Text(
-                    '${completeness.percent}% · ${l10n.homeCompleteProfile}',
-                    style: typo.labelMedium.copyWith(
-                      color: colors.accent,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ],
+          child: Text(
+            l10n.riderPassportTitle,
+            style: typo.displayMedium.copyWith(
+              color: colors.text,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.5,
+            ),
           ),
         ),
         IconButton(
@@ -650,6 +581,214 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
         ),
       ],
     );
+  }
+
+  Widget _buildPassportCard(
+    HeyCabyColorTokens colors,
+    HeyCabyTypography typo,
+    AppLocalizations l10n,
+  ) {
+    final completeness = ref.watch(riderProfileCompletenessProvider);
+    final identity = ref.watch(riderIdentityProvider).valueOrNull;
+    final name = _passportName(l10n);
+    final initial = name.trim().isEmpty ? '?' : name.trim()[0].toUpperCase();
+    final email = identity?.email?.trim();
+    final percent = completeness.percent / 100;
+
+    return Container(
+      padding: const EdgeInsetsDirectional.all(20),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: colors.border.withValues(alpha: 0.7)),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: colors.accentL,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: colors.accent.withValues(alpha: 0.24),
+                    width: 1.2,
+                  ),
+                ),
+                child: Text(
+                  initial,
+                  style: typo.headingMedium.copyWith(
+                    color: colors.accent,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: typo.headingSmall.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      email?.isNotEmpty == true ? email! : l10n.addYourEmail,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: typo.bodyMedium.copyWith(
+                        color: colors.textMid,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                width: 56,
+                height: 56,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      value: percent,
+                      strokeWidth: 5,
+                      backgroundColor: colors.border.withValues(alpha: 0.55),
+                      color: completeness.isComplete
+                          ? colors.success
+                          : colors.accent,
+                    ),
+                    Text(
+                      '${completeness.percent}%',
+                      style: typo.labelMedium.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsetsDirectional.fromSTEB(12, 10, 12, 10),
+            decoration: BoxDecoration(
+              color: completeness.isComplete
+                  ? colors.success.withValues(alpha: 0.12)
+                  : colors.accent.withValues(alpha: 0.11),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  completeness.isComplete
+                      ? Icons.verified_rounded
+                      : Icons.auto_awesome_outlined,
+                  color:
+                      completeness.isComplete ? colors.success : colors.accent,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        completeness.isComplete
+                            ? l10n.riderPassportReady
+                            : l10n.riderPassportNeedsWork,
+                        style: typo.labelLarge.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.accountTripReadyBody,
+                        style: typo.bodySmall.copyWith(
+                          color: colors.textMid,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompletionChecklist(
+    HeyCabyColorTokens colors,
+    HeyCabyTypography typo,
+    AppLocalizations l10n,
+  ) {
+    final completeness = ref.watch(riderProfileCompletenessProvider);
+    return _buildSectionCard(
+      colors: colors,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionTitle(
+            l10n.accountCompleteProfileHeading,
+            colors,
+            typo,
+            icon: Icons.fact_check_outlined,
+          ),
+          const SizedBox(height: 14),
+          _buildChecklistRow(
+            icon: Icons.badge_outlined,
+            title: l10n.accountChecklistName,
+            done: completeness.hasName,
+            colors: colors,
+            typo: typo,
+            l10n: l10n,
+          ),
+          const SizedBox(height: 10),
+          _buildChecklistRow(
+            icon: Icons.alternate_email_rounded,
+            title: l10n.accountChecklistEmail,
+            done: completeness.hasEmail,
+            colors: colors,
+            typo: typo,
+            l10n: l10n,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _passportName(AppLocalizations l10n) {
+    final settings = ref.watch(settingsProvider).valueOrNull;
+    final identity = ref.watch(riderIdentityProvider).valueOrNull;
+    final localName = (settings?.userName ?? '').trim();
+    if (localName.isNotEmpty) return localName;
+    final bookingName = (identity?.bookingName ?? '').trim();
+    if (bookingName.isNotEmpty) return bookingName;
+    return l10n.account;
   }
 
   Widget _buildProfileSection(
@@ -694,7 +833,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l10n.accountProfileHeading,
+                  l10n.accountBookingDetailsHeading,
                   style: typo.headingSmall.copyWith(
                     color: colors.text,
                     fontWeight: FontWeight.w900,
@@ -795,32 +934,6 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
                   _buildVerifiedEmailCard(colors, typo, l10n, identity!.email!)
                 else
                   _buildAddEmailRow(colors, typo, l10n),
-                const SizedBox(height: 20),
-                Text(
-                  l10n.accountProfilePreferencesLabel,
-                  style: typo.titleSmall.copyWith(
-                    color: colors.text,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                _buildSettingRow(
-                  Icons.language_rounded,
-                  l10n.language,
-                  _currentLanguageLabel(),
-                  colors,
-                  typo,
-                  onTap: () => _showLanguagePicker(colors, typo),
-                ),
-                const SizedBox(height: 10),
-                _buildSettingRow(
-                  Icons.palette_outlined,
-                  l10n.theme,
-                  _currentThemeLabel(),
-                  colors,
-                  typo,
-                  onTap: () => _showThemePicker(colors, typo),
-                ),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
@@ -891,7 +1004,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Icon(Icons.verified_rounded, color: colors.success, size: 18),
+                    Icon(Icons.verified_rounded,
+                        color: colors.success, size: 18),
                     const SizedBox(width: 6),
                     Text(
                       l10n.verified,
@@ -910,7 +1024,9 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
     );
   }
 
-  Widget _buildSettingRow(IconData icon, String label, String value, HeyCabyColorTokens colors, HeyCabyTypography typo, {VoidCallback? onTap, Widget? trailing}) {
+  Widget _buildSettingRow(IconData icon, String label, String value,
+      HeyCabyColorTokens colors, HeyCabyTypography typo,
+      {VoidCallback? onTap, Widget? trailing}) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -947,7 +1063,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
               if (trailing != null) trailing,
               if (trailing == null) ...[
                 const SizedBox(width: 6),
-                Icon(Icons.chevron_right_rounded, color: colors.textSoft, size: 22),
+                Icon(Icons.chevron_right_rounded,
+                    color: colors.textSoft, size: 22),
               ],
             ],
           ),
@@ -956,7 +1073,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
     );
   }
 
-  Widget _buildAddEmailRow(HeyCabyColorTokens colors, HeyCabyTypography typo, AppLocalizations l10n) {
+  Widget _buildAddEmailRow(HeyCabyColorTokens colors, HeyCabyTypography typo,
+      AppLocalizations l10n) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -982,7 +1100,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
                   color: colors.accentL,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.email_rounded, color: colors.accent, size: 22),
+                child:
+                    Icon(Icons.email_rounded, color: colors.accent, size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -995,7 +1114,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
                   color: colors.accent,
                   borderRadius: BorderRadius.circular(10),
@@ -1015,49 +1135,317 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
     );
   }
 
-  Widget _buildSettingsSection(HeyCabyColorTokens colors, HeyCabyTypography typo, AppLocalizations l10n) {
+  Widget _buildSettingsSection(HeyCabyColorTokens colors,
+      HeyCabyTypography typo, AppLocalizations l10n) {
     final settings = ref.watch(settingsProvider).valueOrNull;
     final locationEnabled = settings?.locationEnabled ?? true;
     final notificationsEnabled = settings?.notificationsEnabled ?? false;
-    return Container(
-      padding: const EdgeInsetsDirectional.all(20),
-      decoration: BoxDecoration(
-        color: colors.card, borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.border, width: 0.5),
-        boxShadow: [BoxShadow(color: colors.text.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
-      ),
+    return _buildSectionCard(
+      colors: colors,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(l10n.accountSettingsHeading, style: typo.bodySmall.copyWith(color: colors.textSoft)),
+        _buildSectionTitle(
+          l10n.accountRidePreferencesHeading,
+          colors,
+          typo,
+          icon: Icons.tune_rounded,
+        ),
         const SizedBox(height: 16),
-        _buildToggleRow(l10n.accountLocationNeededBody, locationEnabled, colors, typo, _toggleLocation),
+        _buildSettingRow(
+          Icons.language_rounded,
+          l10n.language,
+          _currentLanguageLabel(),
+          colors,
+          typo,
+          onTap: () => _showLanguagePicker(colors, typo),
+        ),
+        const SizedBox(height: 10),
+        _buildSettingRow(
+          Icons.palette_outlined,
+          l10n.theme,
+          _currentThemeLabel(),
+          colors,
+          typo,
+          onTap: () => _showThemePicker(colors, typo),
+        ),
+        const SizedBox(height: 18),
+        _buildToggleRow(l10n.accountLocationNeededBody, locationEnabled, colors,
+            typo, _toggleLocation),
         const SizedBox(height: 8),
-        _buildLinkRow(l10n.openLocationSettings, colors, typo, () => openAppSettings()),
+        _buildLinkRow(
+            l10n.openLocationSettings, colors, typo, () => openAppSettings()),
         const SizedBox(height: 20),
-        _buildToggleRow(l10n.accountNotificationsNeededBody, notificationsEnabled, colors, typo, _toggleNotifications),
+        _buildToggleRow(l10n.accountNotificationsNeededBody,
+            notificationsEnabled, colors, typo, _toggleNotifications),
         const SizedBox(height: 8),
-        _buildLinkRow(l10n.openNotificationSettings, colors, typo, () => openAppSettings()),
+        _buildLinkRow(l10n.openNotificationSettings, colors, typo,
+            () => openAppSettings()),
       ]),
     );
   }
 
-  Widget _buildToggleRow(String title, bool value, HeyCabyColorTokens colors, HeyCabyTypography typo, ValueChanged<bool> onChanged) {
+  Widget _buildSectionCard({
+    required HeyCabyColorTokens colors,
+    required Widget child,
+  }) {
+    return Container(
+      padding: const EdgeInsetsDirectional.all(18),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colors.border.withValues(alpha: 0.65)),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.055),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildSectionTitle(
+    String title,
+    HeyCabyColorTokens colors,
+    HeyCabyTypography typo, {
+    required IconData icon,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: colors.accent.withValues(alpha: 0.11),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: colors.accent, size: 18),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            title,
+            style: typo.titleMedium.copyWith(
+              color: colors.text,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.2,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChecklistRow({
+    required IconData icon,
+    required String title,
+    required bool done,
+    required HeyCabyColorTokens colors,
+    required HeyCabyTypography typo,
+    required AppLocalizations l10n,
+  }) {
+    final tone = done ? colors.success : colors.warning;
+    return Container(
+      padding: const EdgeInsetsDirectional.fromSTEB(12, 11, 12, 11),
+      decoration: BoxDecoration(
+        color: colors.bgAlt,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: colors.border.withValues(alpha: 0.65)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: tone, size: 21),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: typo.bodyLarge.copyWith(
+                color: colors.text,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsetsDirectional.fromSTEB(9, 5, 9, 5),
+            decoration: BoxDecoration(
+              color: tone.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              done ? l10n.accountChecklistDone : l10n.accountChecklistMissing,
+              style: typo.labelMedium.copyWith(
+                color: tone,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookingToolsSection(
+    HeyCabyColorTokens colors,
+    HeyCabyTypography typo,
+    AppLocalizations l10n,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(
+          l10n.savedAddresses,
+          colors,
+          typo,
+          icon: Icons.bolt_rounded,
+        ),
+        const SizedBox(height: 12),
+        _buildActionCard(
+          icon: Icons.home_outlined,
+          iconBg: colors.accent.withValues(alpha: 0.12),
+          iconColor: colors.accent,
+          title: l10n.savedAddresses,
+          subtitle: l10n.savedAddressesSubtitle,
+          colors: colors,
+          typo: typo,
+          onTap: () async {
+            final identity = await ref.read(riderIdentityProvider.future);
+            if (!mounted) return;
+            if (identity.hasSession && identity.identityId != null) {
+              context.push('/saved-addresses');
+            } else {
+              final ok = await showEmailModal(context, ref);
+              if (ok && mounted) {
+                context.push('/saved-addresses');
+              }
+            }
+          },
+        ),
+        const SizedBox(height: 12),
+        _buildActionCard(
+          icon: Icons.star_outline,
+          iconBg: colors.warning.withValues(alpha: 0.15),
+          iconColor: colors.warning,
+          title: l10n.myDrivers,
+          subtitle: l10n.favouriteDriversAccountSubtitle,
+          colors: colors,
+          typo: typo,
+          onTap: () async {
+            final identity = await ref.read(riderIdentityProvider.future);
+            if (!mounted) return;
+            if (identity.hasSession && identity.email != null) {
+              context.push('/favorites');
+              return;
+            }
+            final ok = await showEmailModal(context, ref);
+            if (ok && mounted) {
+              context.push('/favorites');
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHelpSafetySection(
+    HeyCabyColorTokens colors,
+    HeyCabyTypography typo,
+    AppLocalizations l10n,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(
+          l10n.accountHelpSafetyHeading,
+          colors,
+          typo,
+          icon: Icons.health_and_safety_outlined,
+        ),
+        const SizedBox(height: 12),
+        _buildActionCard(
+          icon: Icons.chat_bubble_outline,
+          iconBg: colors.success.withValues(alpha: 0.15),
+          iconColor: colors.success,
+          title: l10n.support,
+          subtitle: l10n.supportSubtitle,
+          colors: colors,
+          typo: typo,
+          onTap: () => context.push('/support'),
+        ),
+        const SizedBox(height: 12),
+        _buildActionCard(
+          icon: Icons.description_outlined,
+          iconBg: colors.accent.withValues(alpha: 0.15),
+          iconColor: colors.accent,
+          title: l10n.reportARide,
+          subtitle: l10n.reportARideSubtitle,
+          colors: colors,
+          typo: typo,
+          onTap: () => context.push('/report'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLegalAccountSection(
+    HeyCabyColorTokens colors,
+    HeyCabyTypography typo,
+    AppLocalizations l10n,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(
+          l10n.accountLegalAccountHeading,
+          colors,
+          typo,
+          icon: Icons.admin_panel_settings_outlined,
+        ),
+        const SizedBox(height: 12),
+        _buildNavRow(Icons.help_outline, l10n.faq, colors, typo,
+            () => context.push('/faq')),
+        const SizedBox(height: 8),
+        _buildNavRow(Icons.article_outlined, l10n.termsOfService, colors, typo,
+            () => context.push('/terms')),
+        const SizedBox(height: 8),
+        _buildNavRow(Icons.privacy_tip_outlined, l10n.privacyPolicy, colors,
+            typo, () => context.push('/privacy')),
+        const SizedBox(height: 18),
+        _buildLogoutButton(colors, typo, l10n),
+        const SizedBox(height: 12),
+        _buildDeleteAccountButton(colors, typo, l10n),
+      ],
+    );
+  }
+
+  Widget _buildToggleRow(String title, bool value, HeyCabyColorTokens colors,
+      HeyCabyTypography typo, ValueChanged<bool> onChanged) {
     final l10n = AppLocalizations.of(context);
     return Row(children: [
-      Expanded(child: Text(title, style: typo.bodySmall.copyWith(color: colors.text))),
+      Expanded(
+          child:
+              Text(title, style: typo.bodySmall.copyWith(color: colors.text))),
       const SizedBox(width: 12),
-      Text(value ? l10n.toggleOn : l10n.toggleOff, style: typo.labelLarge.copyWith(color: value ? colors.accent : colors.textMid, fontWeight: FontWeight.w700)),
+      Text(value ? l10n.toggleOn : l10n.toggleOff,
+          style: typo.labelLarge.copyWith(
+              color: value ? colors.accent : colors.textMid,
+              fontWeight: FontWeight.w700)),
       const SizedBox(width: 8),
-      Switch.adaptive(value: value, onChanged: onChanged, activeTrackColor: colors.accent),
+      Switch.adaptive(
+          value: value, onChanged: onChanged, activeTrackColor: colors.accent),
     ]);
   }
 
-  Widget _buildLinkRow(String text, HeyCabyColorTokens colors, HeyCabyTypography typo, VoidCallback onTap) {
+  Widget _buildLinkRow(String text, HeyCabyColorTokens colors,
+      HeyCabyTypography typo, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(children: [
-          Text(text, style: typo.bodyMedium.copyWith(color: colors.accent, fontWeight: FontWeight.w600)),
+          Text(text,
+              style: typo.bodyMedium
+                  .copyWith(color: colors.accent, fontWeight: FontWeight.w600)),
           const SizedBox(width: 4),
           Icon(Icons.chevron_right, color: colors.accent, size: 18),
         ]),
@@ -1065,54 +1453,80 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
     );
   }
 
-  Widget _buildActionCard({required IconData icon, required Color iconBg, required Color iconColor, required String title, required String subtitle, required HeyCabyColorTokens colors, required HeyCabyTypography typo, required VoidCallback onTap}) {
+  Widget _buildActionCard(
+      {required IconData icon,
+      required Color iconBg,
+      required Color iconColor,
+      required String title,
+      required String subtitle,
+      required HeyCabyColorTokens colors,
+      required HeyCabyTypography typo,
+      required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsetsDirectional.all(16),
         decoration: BoxDecoration(
-          color: colors.card, borderRadius: BorderRadius.circular(16),
+          color: colors.card,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: colors.border, width: 0.5),
-          boxShadow: [BoxShadow(color: colors.text.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
+          boxShadow: [
+            BoxShadow(
+                color: colors.text.withValues(alpha: 0.06),
+                blurRadius: 8,
+                offset: const Offset(0, 2))
+          ],
         ),
         child: Row(children: [
           Container(
             padding: const EdgeInsetsDirectional.all(12),
-            decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+                color: iconBg, borderRadius: BorderRadius.circular(12)),
             child: Icon(icon, color: iconColor, size: 24),
           ),
           const SizedBox(width: 14),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: typo.titleMedium.copyWith(color: colors.text, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 2),
-            Text(subtitle, style: typo.bodySmall.copyWith(color: colors.textMid)),
-          ])),
+          Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text(title,
+                    style: typo.titleMedium.copyWith(
+                        color: colors.text, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 2),
+                Text(subtitle,
+                    style: typo.bodySmall.copyWith(color: colors.textMid)),
+              ])),
           Icon(Icons.chevron_right, color: colors.textSoft, size: 20),
         ]),
       ),
     );
   }
 
-  Widget _buildNavRow(IconData icon, String label, HeyCabyColorTokens colors, HeyCabyTypography typo, VoidCallback onTap) {
+  Widget _buildNavRow(IconData icon, String label, HeyCabyColorTokens colors,
+      HeyCabyTypography typo, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsetsDirectional.all(16),
         decoration: BoxDecoration(
-          color: colors.card, borderRadius: BorderRadius.circular(12),
+          color: colors.card,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: colors.border, width: 0.5),
         ),
         child: Row(children: [
           Icon(icon, color: colors.textMid, size: 22),
           const SizedBox(width: 14),
-          Expanded(child: Text(label, style: typo.bodyLarge.copyWith(color: colors.text))),
+          Expanded(
+              child: Text(label,
+                  style: typo.bodyLarge.copyWith(color: colors.text))),
           Icon(Icons.chevron_right, color: colors.textSoft, size: 20),
         ]),
       ),
     );
   }
 
-  Widget _buildDeleteAccountButton(HeyCabyColorTokens colors, HeyCabyTypography typo, AppLocalizations l10n) {
+  Widget _buildDeleteAccountButton(HeyCabyColorTokens colors,
+      HeyCabyTypography typo, AppLocalizations l10n) {
     return GestureDetector(
       onTap: () => performRiderAccountDeletion(context, ref),
       child: Container(
@@ -1120,7 +1534,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
         decoration: BoxDecoration(
           color: colors.error.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colors.error.withValues(alpha: 0.25), width: 0.5),
+          border: Border.all(
+              color: colors.error.withValues(alpha: 0.25), width: 0.5),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1129,7 +1544,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
             const SizedBox(width: 8),
             Text(
               l10n.deleteMyAccount,
-              style: typo.bodyLarge.copyWith(color: colors.error, fontWeight: FontWeight.w600),
+              style: typo.bodyLarge
+                  .copyWith(color: colors.error, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -1137,19 +1553,24 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
     );
   }
 
-  Widget _buildLogoutButton(HeyCabyColorTokens colors, HeyCabyTypography typo, AppLocalizations l10n) {
+  Widget _buildLogoutButton(HeyCabyColorTokens colors, HeyCabyTypography typo,
+      AppLocalizations l10n) {
     return GestureDetector(
       onTap: _logout,
       child: Container(
         padding: const EdgeInsetsDirectional.all(16),
         decoration: BoxDecoration(
-          color: colors.error.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colors.error.withValues(alpha: 0.2), width: 0.5),
+          color: colors.error.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+              color: colors.error.withValues(alpha: 0.2), width: 0.5),
         ),
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(Icons.logout, color: colors.error, size: 20),
           const SizedBox(width: 8),
-          Text(l10n.logout, style: typo.bodyLarge.copyWith(color: colors.error, fontWeight: FontWeight.w600)),
+          Text(l10n.logout,
+              style: typo.bodyLarge
+                  .copyWith(color: colors.error, fontWeight: FontWeight.w600)),
         ]),
       ),
     );
@@ -1164,7 +1585,11 @@ class _DragHandle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(children: [
       const SizedBox(height: 12),
-      Container(width: 40, height: 4, decoration: BoxDecoration(color: colors.border, borderRadius: BorderRadius.circular(2))),
+      Container(
+          width: 40,
+          height: 4,
+          decoration: BoxDecoration(
+              color: colors.border, borderRadius: BorderRadius.circular(2))),
       const SizedBox(height: 20),
     ]);
   }
