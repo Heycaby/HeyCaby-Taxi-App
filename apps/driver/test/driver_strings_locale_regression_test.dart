@@ -75,6 +75,14 @@ void main() {
     expect(DriverStrings.cash, 'Cash');
     expect(DriverStrings.card, 'Card');
     expect(DriverStrings.done, 'Done');
+    expect(DriverStrings.rateRider, 'Rate rider');
+    expect(DriverStrings.rateRiderHeadline, 'How was your rider?');
+    expect(DriverStrings.rateRiderCommentHint, 'Optional note');
+    expect(DriverStrings.rateRiderSubmit, 'Submit');
+    expect(DriverStrings.rateRiderSkip, 'Skip');
+    expect(DriverStrings.selectRatingPrompt, 'Select a rating.');
+    expect(DriverStrings.thanksForRating, 'Thanks for your rating!');
+    expect(DriverStrings.actionFailedPrefix, 'Failed:');
     expect(DriverStrings.returnTrips, 'Return rides');
     expect(DriverStrings.returnTripsEmpty, 'No return rides available.');
     expect(DriverStrings.ridesThisWeek, 'Rides this week');
@@ -225,6 +233,14 @@ void main() {
     expect(DriverStrings.cash, 'Efectivo');
     expect(DriverStrings.card, 'Tarjeta');
     expect(DriverStrings.done, 'Listo');
+    expect(DriverStrings.rateRider, 'Valorar pasajero');
+    expect(DriverStrings.rateRiderHeadline, '¿Cómo fue tu pasajero?');
+    expect(DriverStrings.rateRiderCommentHint, 'Nota opcional');
+    expect(DriverStrings.rateRiderSubmit, 'Enviar');
+    expect(DriverStrings.rateRiderSkip, 'Omitir');
+    expect(DriverStrings.selectRatingPrompt, 'Selecciona una valoración.');
+    expect(DriverStrings.thanksForRating, '¡Gracias por tu valoración!');
+    expect(DriverStrings.actionFailedPrefix, 'Error:');
     expect(DriverStrings.returnTrips, 'Viajes de vuelta');
     expect(
       DriverStrings.returnTripsEmpty,
@@ -367,6 +383,14 @@ void main() {
     expect(DriverStrings.cash, 'نقدا');
     expect(DriverStrings.card, 'بطاقة');
     expect(DriverStrings.done, 'تم');
+    expect(DriverStrings.rateRider, 'تقييم الراكب');
+    expect(DriverStrings.rateRiderHeadline, 'كيف كان الراكب؟');
+    expect(DriverStrings.rateRiderCommentHint, 'ملاحظة اختيارية');
+    expect(DriverStrings.rateRiderSubmit, 'إرسال');
+    expect(DriverStrings.rateRiderSkip, 'تخطي');
+    expect(DriverStrings.selectRatingPrompt, 'اختر تقييما.');
+    expect(DriverStrings.thanksForRating, 'شكرا على تقييمك!');
+    expect(DriverStrings.actionFailedPrefix, 'فشل:');
     expect(DriverStrings.returnTrips, 'رحلات العودة');
     expect(DriverStrings.returnTripsEmpty, 'لا توجد رحلات عودة متاحة.');
     expect(DriverStrings.ridesThisWeek, 'رحلات هذا الأسبوع');

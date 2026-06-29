@@ -35,7 +35,7 @@ class _RateRiderScreenState extends ConsumerState<RateRiderScreen> {
     if (_stars < 1) {
       HapticService.error();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.selectRatingPrompt)),
+        SnackBar(content: Text(DriverStrings.selectRatingPrompt)),
       );
       return;
     }
@@ -57,7 +57,7 @@ class _RateRiderScreenState extends ConsumerState<RateRiderScreen> {
       if (!mounted) return;
       context.go('/driver');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.thanksForRating)),
+        SnackBar(content: Text(DriverStrings.thanksForRating)),
       );
     } catch (e) {
       HapticService.error();
@@ -79,7 +79,8 @@ class _RateRiderScreenState extends ConsumerState<RateRiderScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
 
     return DriverFeedbackLoopBody(
       colors: colors,

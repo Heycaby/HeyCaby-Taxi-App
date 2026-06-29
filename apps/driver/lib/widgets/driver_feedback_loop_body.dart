@@ -24,10 +24,10 @@ class DriverFeedbackLoopBody extends StatelessWidget {
     required this.onSubmit,
     required this.onSkip,
     required this.onClose,
-    this.headline = DriverStrings.rateRiderHeadline,
-    this.commentHint = DriverStrings.rateRiderCommentHint,
-    this.submitLabel = DriverStrings.rateRiderSubmit,
-    this.skipLabel = DriverStrings.rateRiderSkip,
+    this.headline,
+    this.commentHint,
+    this.submitLabel,
+    this.skipLabel,
   });
 
   final DriverColors colors;
@@ -40,14 +40,19 @@ class DriverFeedbackLoopBody extends StatelessWidget {
   final VoidCallback onSubmit;
   final VoidCallback onSkip;
   final VoidCallback onClose;
-  final String headline;
-  final String commentHint;
-  final String submitLabel;
-  final String skipLabel;
+  final String? headline;
+  final String? commentHint;
+  final String? submitLabel;
+  final String? skipLabel;
 
   @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.paddingOf(context).bottom;
+    final effectiveHeadline = headline ?? DriverStrings.rateRiderHeadline;
+    final effectiveCommentHint =
+        commentHint ?? DriverStrings.rateRiderCommentHint;
+    final effectiveSubmitLabel = submitLabel ?? DriverStrings.rateRiderSubmit;
+    final effectiveSkipLabel = skipLabel ?? DriverStrings.rateRiderSkip;
 
     return DriverTrustFlowScaffold(
       title: DriverStrings.rateRider,
@@ -66,7 +71,7 @@ class DriverFeedbackLoopBody extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              headline,
+              effectiveHeadline,
               style: typography.titleLarge.copyWith(
                 color: colors.text,
                 fontWeight: FontWeight.w700,
@@ -117,7 +122,7 @@ class DriverFeedbackLoopBody extends StatelessWidget {
                       maxLines: 3,
                       style: typography.bodyMedium.copyWith(color: colors.text),
                       decoration: InputDecoration(
-                        hintText: commentHint,
+                        hintText: effectiveCommentHint,
                         hintStyle: typography.bodyMedium.copyWith(
                           color: colors.textMuted,
                         ),
@@ -155,7 +160,7 @@ class DriverFeedbackLoopBody extends StatelessWidget {
             ),
             const SizedBox(height: DriverSpacing.xl),
             DriverButton(
-              label: submitLabel,
+              label: effectiveSubmitLabel,
               colors: colors,
               typography: typography,
               loading: loading,
@@ -164,7 +169,7 @@ class DriverFeedbackLoopBody extends StatelessWidget {
             ).driverFadeSlideIn(staggerIndex: 3),
             const SizedBox(height: DriverSpacing.md),
             DriverButton(
-              label: skipLabel,
+              label: effectiveSkipLabel,
               colors: colors,
               typography: typography,
               variant: DriverButtonVariant.ghost,

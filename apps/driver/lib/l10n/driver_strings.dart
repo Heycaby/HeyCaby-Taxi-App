@@ -2628,7 +2628,12 @@ class DriverStrings {
   static const String privacyPolicy = 'Privacy beleid';
   static const String indemnification = 'Vrijwaring';
   static const String copiedToClipboard = 'Gekopieerd naar klembord';
-  static const String actionFailedPrefix = 'Mislukt:';
+  static String get actionFailedPrefix => _t(
+        'Mislukt:',
+        en: 'Failed:',
+        es: 'Error:',
+        ar: 'فشل:',
+      );
   static const String requestsResumed = 'Nieuwe aanvragen hervat.';
   static const String requestsPaused = 'Nieuwe aanvragen gepauzeerd.';
   static const String requestStatusUpdateFailed =
@@ -2650,8 +2655,18 @@ class DriverStrings {
   static const String noNavigationAppAvailable =
       'Geen navigatie-app beschikbaar.';
   static const String noShowReported = 'No-show gemeld.';
-  static const String selectRatingPrompt = 'Selecteer een beoordeling.';
-  static const String thanksForRating = 'Bedankt voor je beoordeling!';
+  static String get selectRatingPrompt => _t(
+        'Selecteer een beoordeling.',
+        en: 'Select a rating.',
+        es: 'Selecciona una valoración.',
+        ar: 'اختر تقييما.',
+      );
+  static String get thanksForRating => _t(
+        'Bedankt voor je beoordeling!',
+        en: 'Thanks for your rating!',
+        es: '¡Gracias por tu valoración!',
+        ar: 'شكرا على تقييمك!',
+      );
   static const String acceptRideFailedCode = 'Accepteren mislukt:';
   static const String acceptRideFailed = 'Rit accepteren mislukt:';
   static String get rideActionFailedMessage => _t(
@@ -2740,12 +2755,37 @@ class DriverStrings {
   static const String rideInProgress = 'Rit bezig';
   static const String startRide = 'Rit starten';
   static const String completeRide = 'Rit voltooien';
-  static const String rateRider = 'Reiziger beoordelen';
-  static const String rateRiderHeadline = 'Hoe was je reiziger?';
-  static const String rateRiderCommentHint = 'Optionele opmerking';
-  static const String rateRiderSubmit = 'Versturen';
-  static const String rateRiderSkip = 'Overslaan';
-  static const String skip = 'Overslaan';
+  static String get rateRider => _t(
+        'Reiziger beoordelen',
+        en: 'Rate rider',
+        es: 'Valorar pasajero',
+        ar: 'تقييم الراكب',
+      );
+  static String get rateRiderHeadline => _t(
+        'Hoe was je reiziger?',
+        en: 'How was your rider?',
+        es: '¿Cómo fue tu pasajero?',
+        ar: 'كيف كان الراكب؟',
+      );
+  static String get rateRiderCommentHint => _t(
+        'Optionele opmerking',
+        en: 'Optional note',
+        es: 'Nota opcional',
+        ar: 'ملاحظة اختيارية',
+      );
+  static String get rateRiderSubmit => _t(
+        'Versturen',
+        en: 'Submit',
+        es: 'Enviar',
+        ar: 'إرسال',
+      );
+  static String get rateRiderSkip => skip;
+  static String get skip => _t(
+        'Overslaan',
+        en: 'Skip',
+        es: 'Omitir',
+        ar: 'تخطي',
+      );
   static String get createAccount => _t(
         'Account aanmaken',
         en: 'Create account',
