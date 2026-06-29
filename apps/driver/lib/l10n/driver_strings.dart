@@ -2128,6 +2128,12 @@ class DriverStrings {
   static const String account = 'Account';
   static const String overige = 'Overige';
   static const String open = 'Open';
+  static String get notificationOpenAction => _t(
+        'Openen',
+        en: 'Open',
+        es: 'Abrir',
+        ar: 'فتح',
+      );
 
   // Profile settings
   static const String mijnVoertuig = 'Mijn voertuig';

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../l10n/driver_strings.dart';
 import 'sound_service.dart';
 
 /// Permanent driver notification matrix (Program 3C).
@@ -30,7 +31,9 @@ DriverNotificationBehavior driverBehaviorForCategory(String? category) {
   }
   if (c.contains('chat')) return DriverNotificationBehavior.chat;
   if (c.contains('rating')) return DriverNotificationBehavior.rating;
-  if (c.contains('verification')) return DriverNotificationBehavior.verification;
+  if (c.contains('verification')) {
+    return DriverNotificationBehavior.verification;
+  }
   if (c.contains('shift_handover')) {
     return DriverNotificationBehavior.shiftHandover;
   }
@@ -145,7 +148,7 @@ Future<void> dispatchDriverNotification({
       ),
       duration: const Duration(seconds: 6),
       action: SnackBarAction(
-        label: 'Open',
+        label: DriverStrings.notificationOpenAction,
         onPressed: () {
           if (context.mounted) {
             context.push(driverDeepLinkForBehavior(behavior, data: data));
