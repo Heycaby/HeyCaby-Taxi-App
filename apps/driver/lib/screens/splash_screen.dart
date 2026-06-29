@@ -1,8 +1,7 @@
 import 'dart:async' show unawaited;
 import 'dart:math' show sin, pi;
-import 'dart:ui' as ui;
-
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +10,7 @@ import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../router.dart';
+import '../providers/driver_locale_provider.dart';
 import '../providers/driver_runtime_providers.dart';
 import '../utils/driver_entry_navigation.dart';
 import '../theme/driver_typography.dart';
@@ -43,12 +43,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   void initState() {
     super.initState();
-    final lang = ui.PlatformDispatcher.instance.locale.languageCode;
-    if (lang == 'nl' || !kDriverBrandMomentCopyByLanguage.containsKey(lang)) {
-      _languageCode = 'nl';
-    } else {
-      _languageCode = lang;
-    }
+    final resolvedLocale =
+        ref.read(localeProvider) ?? resolveDriverDeviceLocale();
+    final lang = resolvedLocale.languageCode;
+    _languageCode = kDriverBrandMomentCopyByLanguage.containsKey(lang)
+        ? lang
+        : driverFallbackLocale.languageCode;
 
     _ctrl = AnimationController(
       vsync: this,
@@ -125,7 +125,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   DriverBrandMomentCopy get _copy =>
       kDriverBrandMomentCopyByLanguage[_languageCode] ??
-      kDriverBrandMomentCopyByLanguage['nl']!;
+      kDriverBrandMomentCopyByLanguage[driverFallbackLocale.languageCode]!;
 
   bool get _isIOS => defaultTargetPlatform == TargetPlatform.iOS;
 
@@ -136,7 +136,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
 
     return AnimatedBuilder(
       animation: _ctrl,

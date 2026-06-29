@@ -202,7 +202,7 @@ final _nl = DriverGrowCityStrings(
 );
 
 DriverGrowCityStrings driverGrowCityStringsFor(Locale? locale) {
-  final code = locale?.languageCode ?? 'nl';
+  final code = locale?.languageCode ?? 'en';
   if (code == 'en') return _en;
   if (code == 'nl') return _nl;
   return _en;

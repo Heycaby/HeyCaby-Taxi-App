@@ -1,17 +1,17 @@
 import 'dart:ui';
 
-/// Driver app strings (standaardtaal: Nederlands – Nederland).
+/// Driver app strings (fallback language: English).
 /// Migrate to flutter gen-l10n when driver l10n is set up.
 class DriverStrings {
-  static String _languageCode = 'nl';
+  static String _languageCode = 'en';
 
   static String get currentLanguageCode => _languageCode;
 
   static void useLocale(Locale? locale) {
     final code = locale?.languageCode.toLowerCase();
     _languageCode = switch (code) {
-      'en' || 'es' || 'ar' => code!,
-      _ => 'nl',
+      'nl' || 'es' || 'ar' => code!,
+      _ => 'en',
     };
   }
 
@@ -22,10 +22,11 @@ class DriverStrings {
     required String ar,
   }) {
     return switch (_languageCode) {
+      'nl' => nl,
       'en' => en,
       'es' => es,
       'ar' => ar,
-      _ => nl,
+      _ => en,
     };
   }
 
@@ -1017,6 +1018,36 @@ class DriverStrings {
         es: 'Idioma',
         ar: 'اللغة',
       );
+  static String get languageFollowDevice => _t(
+        'Apparaattaal',
+        en: 'Device language',
+        es: 'Idioma del dispositivo',
+        ar: 'لغة الجهاز',
+      );
+  static String get languageEnglish => _t(
+        'Engels',
+        en: 'English',
+        es: 'Inglés',
+        ar: 'الإنجليزية',
+      );
+  static String get languageDutch => _t(
+        'Nederlands',
+        en: 'Dutch',
+        es: 'Neerlandés',
+        ar: 'الهولندية',
+      );
+  static String get languageSpanish => _t(
+        'Spaans',
+        en: 'Spanish',
+        es: 'Español',
+        ar: 'الإسبانية',
+      );
+  static String get languageArabic => _t(
+        'Arabisch',
+        en: 'Arabic',
+        es: 'Árabe',
+        ar: 'العربية',
+      );
   static const String theme = 'Thema';
   static String get preferences => _t(
         'Voorkeuren',
@@ -1607,12 +1638,13 @@ class DriverStrings {
   static const String onlineChecklistLicenceApproval =
       'Handmatige goedkeuring rijbewijs (na Veriff)';
 
-  /// Weekly HeyCaby driver platform fee (after free starter rides).
-  static const String platformFeeTitle = 'Platformfee';
+  /// Legacy compatibility labels for the old platform-fee gate.
+  /// Active UI should use Platform Balance wording.
+  static const String platformFeeTitle = 'Platformbalans';
   static String platformFeeBody(String euros) =>
-      'Je hebt je startritten gebruikt. Betaal €$euros voor 7 dagen platformtoegang om weer online te gaan.';
-  static const String platformFeePay = 'Betaal nu';
-  static const String platformFeeCheckoutTitle = 'Betaling';
+      'Je openstaande platformbalans is €$euros. Vereffen deze om weer nieuwe ritaanvragen te ontvangen.';
+  static const String platformFeePay = 'Platformbalans vereffenen';
+  static const String platformFeeCheckoutTitle = 'Platformbalans';
   static const String platformFeeStartingCheckout = 'Betaling voorbereiden…';
   static const String platformFeeInvalidUrl =
       'Ongeldige betaallink. Probeer opnieuw.';
@@ -1756,8 +1788,8 @@ class DriverStrings {
       );
   static String get billingTitle => platformBalanceTitle;
   static const String billingCurrentPlan = 'Platformbalans';
-  static const String billingFoundingMember = 'Founding Member';
-  static const String billingRegularMember = 'Regulier lid';
+  static const String billingFoundingMember = 'Founding Driver';
+  static const String billingRegularMember = 'Chauffeur';
   static const String billingWeeklyFee = 'Wekelijkse platformbalans';
   static const String billingPerRideSuffix = 'per rit';
   static const String billingOutstandingLimit = 'Openstaand';
@@ -1773,7 +1805,7 @@ class DriverStrings {
   static const String billingPlanUnknown = 'Platformbalans';
   static const String billingUseSelectedPlan = 'Platformbalans vereffenen';
 
-  /// Shown when `/api/driver/status` returns no usable `plans` (strict server pricing).
+  /// Shown when the server does not return usable Platform Balance pricing.
   static const String billingPlansUnavailable =
       'Prijzen zijn nu niet beschikbaar. Vernieuw of probeer het later opnieuw.';
   static const String billingHistoryTitle = 'Platformactiviteit';

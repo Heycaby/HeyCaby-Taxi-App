@@ -33,9 +33,7 @@ class DriverPreferencesScreen extends ConsumerWidget {
             colors: colors,
             typography: typography,
             vehicleSubtitle: profile?.vehicleDisplay ?? '—',
-            languageSubtitle: languageDisplayName[
-                    ref.watch(localeProvider)?.languageCode ?? 'nl'] ??
-                languageDisplayName['nl']!,
+            languageSubtitle: _languageSubtitle(ref),
             acceptsCash: profile?.acceptsCash ?? false,
             acceptsCard: profile?.acceptsCard ?? false,
             acceptsTikkie: profile?.acceptsTikkie ?? false,
@@ -135,6 +133,8 @@ class DriverPreferencesScreen extends ConsumerWidget {
     final colors = ref.read(colorsProvider);
     final typo = ref.read(typographyProvider);
     final current = ref.read(localeProvider)?.languageCode ?? 'nl';
+    final followsDevice =
+        ref.read(localeProvider.notifier).languageFollowsDevice;
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -168,12 +168,30 @@ class DriverPreferencesScreen extends ConsumerWidget {
                   ),
                 ),
               ),
+              ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                title: Text(
+                  DriverStrings.languageFollowDevice,
+                  style: typo.bodyLarge.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                trailing: followsDevice
+                    ? Icon(AppIcons.checkCircle, color: colors.accent)
+                    : null,
+                onTap: () {
+                  ref.read(localeProvider.notifier).resetToDevice();
+                  if (ctx.mounted) Navigator.pop(ctx);
+                },
+              ),
               ...supportedLanguageCodes.map(
                 (code) => ListTile(
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                   title: Text(
-                    languageDisplayName[code] ?? code,
+                    _languageLabel(code),
                     style: typo.bodyLarge.copyWith(
                       color: colors.text,
                       fontWeight: FontWeight.w500,
@@ -194,6 +212,23 @@ class DriverPreferencesScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  String _languageSubtitle(WidgetRef ref) {
+    final notifier = ref.watch(localeProvider.notifier);
+    if (notifier.languageFollowsDevice) {
+      return DriverStrings.languageFollowDevice;
+    }
+    return _languageLabel(ref.watch(localeProvider)?.languageCode ?? 'en');
+  }
+
+  String _languageLabel(String code) {
+    return switch (code) {
+      'nl' => DriverStrings.languageDutch,
+      'es' => DriverStrings.languageSpanish,
+      'ar' => DriverStrings.languageArabic,
+      _ => DriverStrings.languageEnglish,
+    };
   }
 }
 

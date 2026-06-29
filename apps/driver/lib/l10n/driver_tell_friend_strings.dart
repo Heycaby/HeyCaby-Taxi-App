@@ -58,7 +58,8 @@ const _en = DriverTellFriendStrings(
   headline: 'Grow HeyCaby in your city',
   bullet1: 'Every rider you invite means more opportunities for drivers.',
   bullet2: 'Every driver you invite means shorter waiting times for riders.',
-  bullet3: 'Help build the largest independent taxi network in the Netherlands.',
+  bullet3:
+      'Help build the largest independent taxi network in the Netherlands.',
   inviteLinkLabel: 'Your link',
   linkResolving: 'Getting your short invite link…',
   copyLink: 'Copy link',
@@ -68,16 +69,20 @@ const _en = DriverTellFriendStrings(
   shareMessage:
       'Help us build the largest independent taxi network in the Netherlands. Join HeyCaby with my invite:',
   linkUnavailable: 'Link not ready yet',
-  linkUnavailableHint: 'Open this screen again in a moment, or restart the app.',
+  linkUnavailableHint:
+      'Open this screen again in a moment, or restart the app.',
 );
 
 const _nl = DriverTellFriendStrings(
   navLabel: 'Community',
   screenTitle: 'Groei je stad',
   headline: 'Laat HeyCaby groeien in jouw stad',
-  bullet1: 'Elke passagier die je uitnodigt betekent meer kansen voor chauffeurs.',
-  bullet2: 'Elke chauffeur die je uitnodigt betekent kortere wachttijden voor passagiers.',
-  bullet3: 'Help het grootste onafhankelijke taxinetwerk van Nederland te bouwen.',
+  bullet1:
+      'Elke passagier die je uitnodigt betekent meer kansen voor chauffeurs.',
+  bullet2:
+      'Elke chauffeur die je uitnodigt betekent kortere wachttijden voor passagiers.',
+  bullet3:
+      'Help het grootste onafhankelijke taxinetwerk van Nederland te bouwen.',
   inviteLinkLabel: 'Jouw link',
   linkResolving: 'Je korte uitnodigingslink ophalen…',
   copyLink: 'Link kopiëren',
@@ -94,9 +99,12 @@ const _de = DriverTellFriendStrings(
   navLabel: 'Einladen',
   screenTitle: 'Fahrer einladen',
   headline: 'Mehr Fahrer, mehr Einkommen.',
-  bullet1: 'Je mehr Fahrer auf HeyCaby, desto mehr Nutzer nutzen die Plattform.',
-  bullet2: 'Baue eine starke Fahrergemeinschaft auf und erhöhe dein Verdienpotenzial.',
-  bullet3: 'Teile deinen Einladungslink mit Fahrerkollegen, denen du vertraust.',
+  bullet1:
+      'Je mehr Fahrer auf HeyCaby, desto mehr Nutzer nutzen die Plattform.',
+  bullet2:
+      'Baue eine starke Fahrergemeinschaft auf und erhöhe dein Verdienpotenzial.',
+  bullet3:
+      'Teile deinen Einladungslink mit Fahrerkollegen, denen du vertraust.',
   inviteLinkLabel: 'Dein Einladungslink',
   linkResolving: 'Kurzer Einladungslink wird geladen…',
   copyLink: 'Link kopieren',
@@ -113,9 +121,12 @@ const _fr = DriverTellFriendStrings(
   navLabel: 'Inviter',
   screenTitle: 'Inviter un chauffeur',
   headline: 'Plus de chauffeurs, plus de revenus.',
-  bullet1: 'Plus de chauffeurs sur HeyCaby, plus d\'utilisateurs sur la plateforme.',
-  bullet2: 'Construisez une forte communauté de chauffeurs et augmentez vos revenus.',
-  bullet3: 'Partagez votre lien d\'invitation avec les chauffeurs de confiance.',
+  bullet1:
+      'Plus de chauffeurs sur HeyCaby, plus d\'utilisateurs sur la plateforme.',
+  bullet2:
+      'Construisez une forte communauté de chauffeurs et augmentez vos revenus.',
+  bullet3:
+      'Partagez votre lien d\'invitation avec les chauffeurs de confiance.',
   inviteLinkLabel: 'Votre lien d’invitation',
   linkResolving: 'Récupération de votre lien court…',
   copyLink: 'Copier le lien',
@@ -132,8 +143,10 @@ const _es = DriverTellFriendStrings(
   navLabel: 'Invitar',
   screenTitle: 'Invitar a un conductor',
   headline: 'Más conductores, más ganancias.',
-  bullet1: 'Cuántos más conductores en HeyCaby, más usuarios usarán la plataforma.',
-  bullet2: 'Construye una fuerte comunidad de conductores y aumenta tu potencial de ganancias.',
+  bullet1:
+      'Cuántos más conductores en HeyCaby, más usuarios usarán la plataforma.',
+  bullet2:
+      'Construye una fuerte comunidad de conductores y aumenta tu potencial de ganancias.',
   bullet3: 'Comparte tu enlace de invitación con conductores de confianza.',
   inviteLinkLabel: 'Tu enlace de invitación',
   linkResolving: 'Obteniendo tu enlace corto…',
@@ -170,8 +183,10 @@ const _tr = DriverTellFriendStrings(
   navLabel: 'Davet',
   screenTitle: 'Sürücü davet et',
   headline: 'Daha fazla sürücü, daha fazla kazanç.',
-  bullet1: 'HeyCaby\'de ne kadar çok sürücü olursa, platformu o kadar çok kullanıcı kullanır.',
-  bullet2: 'Güçlü bir sürücü topluluğu oluşturun ve kazanç potansiyelinizi artırın.',
+  bullet1:
+      'HeyCaby\'de ne kadar çok sürücü olursa, platformu o kadar çok kullanıcı kullanır.',
+  bullet2:
+      'Güçlü bir sürücü topluluğu oluşturun ve kazanç potansiyelinizi artırın.',
   bullet3: 'Davet bağlantınızı güvendiğiniz sürücü arkadaşlarla paylaşın.',
   inviteLinkLabel: 'Davet bağlantın',
   linkResolving: 'Kısa davet bağlantısı alınıyor…',
@@ -182,7 +197,8 @@ const _tr = DriverTellFriendStrings(
   shareMessage:
       'HeyCaby\'de sürüyorum ve ne kadar çok sürücümüz olursa, o kadar çok kazanırız. Sürücü topluluğumuza katılın ve bugün kazanmaya başlayın. İşte davetim:',
   linkUnavailable: 'Bağlantı henüz hazır değil',
-  linkUnavailableHint: 'Biraz sonra tekrar dene veya uygulamayı yeniden başlat.',
+  linkUnavailableHint:
+      'Biraz sonra tekrar dene veya uygulamayı yeniden başlat.',
 );
 
 final Map<String, DriverTellFriendStrings> _driverTellFriendByLang = {
@@ -196,8 +212,8 @@ final Map<String, DriverTellFriendStrings> _driverTellFriendByLang = {
 };
 
 /// Resolves strings for the current app [locale] (language code only).
-/// Dutch is the fallback when no specific language is available.
+/// English is the fallback when no specific language is available.
 DriverTellFriendStrings driverTellFriendStringsFor(Locale? locale) {
-  final code = locale?.languageCode ?? 'nl';
-  return _driverTellFriendByLang[code] ?? _nl;
+  final code = locale?.languageCode ?? 'en';
+  return _driverTellFriendByLang[code] ?? _en;
 }

@@ -91,14 +91,7 @@ class _HeyCabyDriverAppState extends ConsumerState<HeyCabyDriverApp> {
           ],
           localeResolutionCallback: (deviceLocale, supportedLocales) {
             if (locale != null) return locale;
-            if (deviceLocale != null) {
-              for (final supported in supportedLocales) {
-                if (supported.languageCode == deviceLocale.languageCode) {
-                  return supported;
-                }
-              }
-            }
-            return const Locale('nl', 'NL');
+            return resolveDriverSupportedLocale(deviceLocale);
           },
           theme: buildHeyCabyMaterialTheme(
             colors: colors,
