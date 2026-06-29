@@ -5,7 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 const _kLocaleKey = 'driver_locale';
 
-const supportedLanguageCodes = ['en', 'nl', 'de', 'fr', 'es', 'ar', 'tr'];
+const supportedLanguageCodes = ['nl', 'en', 'es', 'ar'];
 
 /// Auto-detects phone language on first launch. Falls back to 'nl'.
 /// If user manually overrides, that preference is persisted.
@@ -52,9 +52,6 @@ final localeProvider =
 final languageDisplayName = {
   'en': 'English',
   'nl': 'Nederlands',
-  'de': 'Deutsch',
-  'fr': 'Français',
   'es': 'Español',
   'ar': 'العربية',
-  'tr': 'Türkçe',
 };

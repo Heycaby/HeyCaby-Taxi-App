@@ -9,11 +9,13 @@ class HeyCabyDriverLogo extends StatelessWidget {
     this.width = 200,
     this.height,
     this.semanticsLabel = 'HeyCaby',
+    this.color,
   });
 
   final double width;
   final double? height;
   final String semanticsLabel;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +28,8 @@ class HeyCabyDriverLogo extends StatelessWidget {
         height: height,
         fit: BoxFit.contain,
         filterQuality: FilterQuality.high,
+        color: color,
+        colorBlendMode: color == null ? null : BlendMode.srcIn,
       ),
     );
   }

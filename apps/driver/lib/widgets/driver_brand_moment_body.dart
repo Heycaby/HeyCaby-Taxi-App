@@ -67,7 +67,7 @@ class DriverBrandMomentBody extends StatelessWidget {
 
   static const _splashBackground = Color(0xFFF5F7F6);
   static const _splashText = Color(0xFF111827);
-  static const _splashAccent = Color(0xFFFFD100);
+  static const _splashAccent = Color(0xFF00A651);
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +96,8 @@ class DriverBrandMomentBody extends StatelessWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: _splashAccent.withValues(alpha: glowOpacity),
+                              color:
+                                  _splashAccent.withValues(alpha: glowOpacity),
                               blurRadius: 80,
                               spreadRadius: 20,
                             ),
@@ -115,7 +116,10 @@ class DriverBrandMomentBody extends StatelessWidget {
                         opacity: logoFade,
                         child: Transform.scale(
                           scale: logoScale,
-                          child: const HeyCabyDriverLogo(width: 260),
+                          child: const HeyCabyDriverLogo(
+                            width: 260,
+                            color: _splashAccent,
+                          ),
                         ),
                       ),
                       const Spacer(flex: 2),
@@ -227,9 +231,10 @@ class DriverBrandMomentBody extends StatelessWidget {
           text,
           textAlign: TextAlign.center,
           style: typography.titleMedium.copyWith(
-            color: accentLast ? _splashAccent : textColor.withValues(alpha: 0.92),
+            color:
+                accentLast ? _splashAccent : textColor.withValues(alpha: 0.92),
             height: 1.28,
-            letterSpacing: isIOS ? -0.28 : -0.2,
+            letterSpacing: 0,
             fontWeight: FontWeight.w700,
             fontSize: accentLast ? 19.5 : 18,
           ),
@@ -250,7 +255,7 @@ class DriverBrandMomentLoadingRow extends StatelessWidget {
   final double progress;
   final bool isIOS;
 
-  static const _accent = Color(0xFFFFD100);
+  static const _accent = Color(0xFF00A651);
   static const _track = Color(0xFF111827);
 
   @override
@@ -267,12 +272,12 @@ class DriverBrandMomentLoadingRow extends StatelessWidget {
                 Container(color: _track.withValues(alpha: 0.12)),
                 FractionallySizedBox(
                   alignment: Alignment.centerLeft,
-                  widthFactor:
-                      (0.22 + 0.78 * ((progress * 1.15) % 1.0)).clamp(0.15, 0.92),
+                  widthFactor: (0.22 + 0.78 * ((progress * 1.15) % 1.0))
+                      .clamp(0.15, 0.92),
                   child: const DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Color(0x66FFD100), _accent],
+                        colors: [Color(0xFFE6F7EE), _accent],
                       ),
                     ),
                   ),
@@ -285,9 +290,11 @@ class DriverBrandMomentLoadingRow extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _LoadingDot(active: progress > 0.18 && progress < 0.45, isIOS: isIOS),
+            _LoadingDot(
+                active: progress > 0.18 && progress < 0.45, isIOS: isIOS),
             SizedBox(width: isIOS ? 10 : 8),
-            _LoadingDot(active: progress >= 0.40 && progress < 0.72, isIOS: isIOS),
+            _LoadingDot(
+                active: progress >= 0.40 && progress < 0.72, isIOS: isIOS),
             SizedBox(width: isIOS ? 10 : 8),
             _LoadingDot(active: progress >= 0.68, isIOS: isIOS),
           ],
@@ -303,7 +310,7 @@ class _LoadingDot extends StatelessWidget {
   final bool active;
   final bool isIOS;
 
-  static const _accent = Color(0xFFFFD100);
+  static const _accent = Color(0xFF00A651);
   static const _inactive = Color(0xFF111827);
 
   @override

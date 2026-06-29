@@ -16,7 +16,6 @@ class DriverPreferencesBody extends StatelessWidget {
     required this.typography,
     required this.vehicleSubtitle,
     required this.languageSubtitle,
-    required this.themeSubtitle,
     required this.acceptsCash,
     required this.acceptsCard,
     required this.acceptsTikkie,
@@ -26,13 +25,12 @@ class DriverPreferencesBody extends StatelessWidget {
     required this.onBack,
     required this.onVehicle,
     required this.onLanguage,
-    required this.onTheme,
     required this.onCashChanged,
     required this.onCardChanged,
     required this.onTikkieChanged,
     required this.onInvoiceChanged,
     required this.onPetFriendlyChanged,
-    required     this.onWheelchairChanged,
+    required this.onWheelchairChanged,
     this.navigationContent,
     this.soundsContent,
     this.extraSections = const [],
@@ -42,7 +40,6 @@ class DriverPreferencesBody extends StatelessWidget {
   final DriverTypography typography;
   final String vehicleSubtitle;
   final String languageSubtitle;
-  final String themeSubtitle;
   final bool acceptsCash;
   final bool acceptsCard;
   final bool acceptsTikkie;
@@ -52,7 +49,6 @@ class DriverPreferencesBody extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onVehicle;
   final VoidCallback onLanguage;
-  final VoidCallback onTheme;
   final ValueChanged<bool> onCashChanged;
   final ValueChanged<bool> onCardChanged;
   final ValueChanged<bool> onTikkieChanged;
@@ -179,7 +175,7 @@ class DriverPreferencesBody extends StatelessWidget {
                 const SizedBox(height: DriverSpacing.xl),
                 _ExpandableSection(
                   title: DriverStrings.preferencesSectionAppearance,
-                  icon: Icons.palette_outlined,
+                  icon: Icons.language_rounded,
                   colors: colors,
                   typography: typography,
                   children: [
@@ -190,14 +186,6 @@ class DriverPreferencesBody extends StatelessWidget {
                       colors: colors,
                       typography: typography,
                       onTap: onLanguage,
-                    ),
-                    DriverSettingsNavRow(
-                      icon: Icons.palette_outlined,
-                      title: DriverStrings.theme,
-                      subtitle: themeSubtitle,
-                      colors: colors,
-                      typography: typography,
-                      onTap: onTheme,
                       showDivider: false,
                     ),
                   ],

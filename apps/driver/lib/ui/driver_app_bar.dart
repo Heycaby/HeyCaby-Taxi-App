@@ -31,8 +31,8 @@ class DriverAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: transparent ? Colors.transparent : colors.card,
-      elevation: transparent ? 0 : 0.5,
+      backgroundColor: transparent ? Colors.transparent : colors.background,
+      elevation: 0,
       scrolledUnderElevation: 0,
       surfaceTintColor: Colors.transparent,
       leading: leading ??
@@ -45,7 +45,13 @@ class DriverAppBar extends StatelessWidget implements PreferredSizeWidget {
               : null),
       title: Text(
         title,
-        style: typography.titleLarge.copyWith(color: colors.text),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: typography.titleLarge.copyWith(
+          color: colors.text,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0,
+        ),
       ),
       centerTitle: centerTitle,
       actions: actions,

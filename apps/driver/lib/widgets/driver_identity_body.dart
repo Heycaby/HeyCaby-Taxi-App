@@ -17,6 +17,7 @@ class DriverIdentityViewModel {
     required this.rating,
     required this.vehiclePlate,
     required this.vehicleDisplay,
+    this.profilePhotoUrl,
     this.email,
     this.emphasizePlaceholder = false,
     this.foundingNumber,
@@ -29,6 +30,7 @@ class DriverIdentityViewModel {
   final String headline;
   final String initials;
   final String? email;
+  final String? profilePhotoUrl;
   final bool emphasizePlaceholder;
   final double rating;
   final int? foundingNumber;
@@ -168,12 +170,11 @@ class _ProfileHeroCard extends StatelessWidget {
               CircleAvatar(
                 radius: 44,
                 backgroundColor: colors.primary.withValues(alpha: 0.12),
-                child: Text(
-                  model.initials,
-                  style: typography.headlineSmall.copyWith(
-                    color: colors.primary,
-                    fontWeight: FontWeight.w800,
-                  ),
+                child: _ProfileAvatarContent(
+                  photoUrl: model.profilePhotoUrl,
+                  initials: model.initials,
+                  colors: colors,
+                  typography: typography,
                 ),
               ),
               const SizedBox(width: DriverSpacing.lg),
@@ -181,16 +182,39 @@ class _ProfileHeroCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      model.headline,
-                      style: typography.headlineSmall.copyWith(
-                        color: model.emphasizePlaceholder
-                            ? colors.textMuted
-                            : colors.text,
-                        fontWeight: FontWeight.w800,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    Wrap(
+                      spacing: DriverSpacing.sm,
+                      runSpacing: DriverSpacing.xs,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          model.headline,
+                          style: typography.headlineSmall.copyWith(
+                            color: model.emphasizePlaceholder
+                                ? colors.textMuted
+                                : colors.text,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0,
+                            height: 1.12,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (model.isVerifiedBadge)
+                          Icon(
+                            Icons.verified_rounded,
+                            color: colors.primary,
+                            size: 22,
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: DriverSpacing.xs),
+                    _PlatePill(
+                      label: model.vehiclePlate == '—'
+                          ? DriverStrings.vehicleCardTitle
+                          : model.vehiclePlate,
+                      colors: colors,
+                      typography: typography,
                     ),
                     if (model.email != null && model.email!.isNotEmpty) ...[
                       const SizedBox(height: DriverSpacing.xs),
@@ -238,19 +262,119 @@ class _ProfileHeroCard extends StatelessWidget {
                 child: Text(
                   DriverStrings.profileRatingHint,
                   style: typography.bodySmall.copyWith(color: colors.textMuted),
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (model.isVerifiedBadge)
-                DriverStatusBadge(
-                  label: DriverStrings.statusVerified,
-                  colors: colors,
-                  typography: typography,
-                  tone: DriverStatusTone.success,
-                  icon: Icons.verified_rounded,
-                ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileAvatarContent extends StatelessWidget {
+  const _ProfileAvatarContent({
+    required this.photoUrl,
+    required this.initials,
+    required this.colors,
+    required this.typography,
+  });
+
+  final String? photoUrl;
+  final String initials;
+  final DriverColors colors;
+  final DriverTypography typography;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = photoUrl?.trim();
+    if (url != null && url.startsWith('http')) {
+      return ClipOval(
+        child: Image.network(
+          url,
+          width: 88,
+          height: 88,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _InitialsAvatar(
+            initials: initials,
+            colors: colors,
+            typography: typography,
+          ),
+        ),
+      );
+    }
+    return _InitialsAvatar(
+      initials: initials,
+      colors: colors,
+      typography: typography,
+    );
+  }
+}
+
+class _InitialsAvatar extends StatelessWidget {
+  const _InitialsAvatar({
+    required this.initials,
+    required this.colors,
+    required this.typography,
+  });
+
+  final String initials;
+  final DriverColors colors;
+  final DriverTypography typography;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      initials,
+      style: typography.headlineSmall.copyWith(
+        color: colors.primary,
+        fontWeight: FontWeight.w800,
+      ),
+    );
+  }
+}
+
+class _PlatePill extends StatelessWidget {
+  const _PlatePill({
+    required this.label,
+    required this.colors,
+    required this.typography,
+  });
+
+  final String label;
+  final DriverColors colors;
+  final DriverTypography typography;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: DriverSpacing.sm,
+        vertical: 5,
+      ),
+      decoration: BoxDecoration(
+        color: colors.primary.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: colors.primary.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.directions_car_rounded, size: 14, color: colors.primary),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: typography.labelSmall.copyWith(
+                color: colors.primary,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0,
+              ),
+            ),
           ),
         ],
       ),

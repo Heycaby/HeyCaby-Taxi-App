@@ -82,13 +82,10 @@ class _HeyCabyDriverAppState extends ConsumerState<HeyCabyDriverApp> {
             GlobalCupertinoLocalizations.delegate,
           ],
           supportedLocales: const [
-            Locale('en'),
             Locale('nl'),
-            Locale('de'),
-            Locale('fr'),
+            Locale('en'),
             Locale('es'),
             Locale('ar'),
-            Locale('tr'),
           ],
           localeResolutionCallback: (deviceLocale, supportedLocales) {
             if (locale != null) return locale;

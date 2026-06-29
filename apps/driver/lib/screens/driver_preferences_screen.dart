@@ -25,7 +25,6 @@ class DriverPreferencesScreen extends ConsumerWidget {
     final typography =
         DriverTypography.fromTheme(ref.watch(typographyProvider));
     final profileAsync = ref.watch(driverProfileProvider);
-    final themeData = ref.watch(themeProvider);
 
     return Scaffold(
       body: profileAsync.when(
@@ -37,7 +36,6 @@ class DriverPreferencesScreen extends ConsumerWidget {
             languageSubtitle: languageDisplayName[
                     ref.watch(localeProvider)?.languageCode ?? 'nl'] ??
                 languageDisplayName['nl']!,
-            themeSubtitle: themeData.name,
             acceptsCash: profile?.acceptsCash ?? false,
             acceptsCard: profile?.acceptsCard ?? false,
             acceptsTikkie: profile?.acceptsTikkie ?? false,
@@ -47,7 +45,6 @@ class DriverPreferencesScreen extends ConsumerWidget {
             onBack: () => context.pop(),
             onVehicle: () => context.push('/driver/vehicle'),
             onLanguage: () => _showLanguagePicker(context, ref),
-            onTheme: () => _showThemePicker(context, ref),
             onCashChanged: (v) {
               SoundService().playTariffSwitch();
               _updatePaymentMethod(context, ref, profile, 'cash', v);
@@ -171,7 +168,7 @@ class DriverPreferencesScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              ...['en', 'nl', 'ar'].map(
+              ...supportedLanguageCodes.map(
                 (code) => ListTile(
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
@@ -198,88 +195,6 @@ class DriverPreferencesScreen extends ConsumerWidget {
       ),
     );
   }
-
-  void _showThemePicker(BuildContext context, WidgetRef ref) {
-    final colors = ref.read(colorsProvider);
-    final typo = ref.read(typographyProvider);
-    final currentId = ref.read(themeProvider).id;
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.55,
-        minChildSize: 0.35,
-        maxChildSize: 0.92,
-        builder: (ctx, scrollController) => DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.card,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            border: Border.all(color: colors.border.withValues(alpha: 0.5)),
-            boxShadow: [
-              BoxShadow(
-                color: colors.text.withValues(alpha: 0.12),
-                blurRadius: 32,
-                offset: const Offset(0, -8),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              premiumSheetHandle(colors),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-                child: Text(
-                  DriverStrings.theme,
-                  style: typo.titleMedium.copyWith(
-                    color: colors.text,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.only(bottom: 16),
-                  children: [
-                    ...kThemes.keys.map((id) {
-                      final theme = kThemes[id]!;
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 6,
-                        ),
-                        title: Text(
-                          theme.name,
-                          style: typo.bodyLarge.copyWith(
-                            color: colors.text,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        subtitle: Text(
-                          theme.tagline,
-                          style: typo.bodySmall.copyWith(color: colors.textSoft),
-                        ),
-                        trailing: currentId == id
-                            ? Icon(AppIcons.checkCircle, color: colors.accent)
-                            : null,
-                        onTap: () async {
-                          await ref.read(themeProvider.notifier).setTheme(id);
-                          if (ctx.mounted) Navigator.pop(ctx);
-                        },
-                      );
-                    }),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
 }
 
 class _NavAppPreferenceSection extends ConsumerWidget {
@@ -307,7 +222,8 @@ class _NavAppPreferenceSection extends ConsumerWidget {
         Widget row(DriverNavApp app, String label, IconData icon) {
           final isSelected = selected == app;
           return InkWell(
-            onTap: () => ref.read(driverNavAppPrefProvider.notifier).setApp(app),
+            onTap: () =>
+                ref.read(driverNavAppPrefProvider.notifier).setApp(app),
             child: Padding(
               padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 14, 12),
               child: Row(
@@ -450,10 +366,12 @@ class _RideRingtonePreferenceRowState
                       ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.play_arrow_rounded, color: colors.accent),
+                      icon:
+                          Icon(Icons.play_arrow_rounded, color: colors.accent),
                       tooltip: 'Play 10s preview',
                       onPressed: () async {
-                        await SoundService().playRideRequestPreviewByKey(entry.key);
+                        await SoundService()
+                            .playRideRequestPreviewByKey(entry.key);
                       },
                     ),
                   ],

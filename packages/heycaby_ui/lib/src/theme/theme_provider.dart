@@ -1,13 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import 'theme_data.dart';
-import 'theme_registry.dart';
+import 'package:heycaby_ui/src/theme/theme_data.dart';
+import 'package:heycaby_ui/src/theme/theme_registry.dart';
 
 const _kThemeKey = 'heycaby_theme_id';
+
 /// On-device SecureStorage key from pre–HeyCaby builds; value must match old clients.
 final _kLegacyThemeKey = String.fromCharCodes(const <int>[
-  114, 121, 100, 116, 97, 112, 95, 116, 104, 101, 109, 101, 95, 105, 100,
+  114,
+  121,
+  100,
+  116,
+  97,
+  112,
+  95,
+  116,
+  104,
+  101,
+  109,
+  101,
+  95,
+  105,
+  100,
 ]);
 
 class ThemeNotifier extends Notifier<HeyCabyThemeData> {
@@ -43,16 +58,15 @@ class DriverThemeNotifier extends ThemeNotifier {
   @override
   Future<void> loadSavedTheme() async {
     const storage = FlutterSecureStorage();
-    var id = await storage.read(key: _kThemeKey);
-    id ??= await storage.read(key: _kLegacyThemeKey);
-    if (id == null || id.isEmpty) {
-      return;
-    }
-    id = migrateThemeId(id);
-    if (kThemes.containsKey(id)) {
-      state = kThemes[id]!;
-      await storage.write(key: _kThemeKey, value: id);
-    }
+    state = kThemes[kDriverDefaultTheme]!;
+    await storage.write(key: _kThemeKey, value: kDriverDefaultTheme);
+  }
+
+  @override
+  Future<void> setTheme(String id) async {
+    const storage = FlutterSecureStorage();
+    state = kThemes[kDriverDefaultTheme]!;
+    await storage.write(key: _kThemeKey, value: kDriverDefaultTheme);
   }
 }
 
