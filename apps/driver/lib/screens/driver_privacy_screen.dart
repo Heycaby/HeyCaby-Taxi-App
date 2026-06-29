@@ -282,7 +282,7 @@ class _DriverPrivacyScreenState extends ConsumerState<DriverPrivacyScreen> {
   void _syncDocumentLanguage() {
     if (_hasManualLanguageChoice) return;
     final locale = ref.watch(localeProvider);
-    _isDutch = locale?.languageCode != 'en';
+    _isDutch = locale == null || locale.languageCode == 'nl';
   }
 
   List<_PrivacySection> get _sections =>

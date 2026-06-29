@@ -5,6 +5,8 @@ import 'dart:ui';
 class DriverStrings {
   static String _languageCode = 'nl';
 
+  static String get currentLanguageCode => _languageCode;
+
   static void useLocale(Locale? locale) {
     final code = locale?.languageCode.toLowerCase();
     _languageCode = switch (code) {
@@ -95,6 +97,24 @@ class DriverStrings {
         en: 'Break',
         es: 'Descanso',
         ar: 'استراحة',
+      );
+  static String get legalCopyForTranslation => _t(
+        'Kopieer voor vertaling',
+        en: 'Copy for translation',
+        es: 'Copiar para traducir',
+        ar: 'نسخ للترجمة',
+      );
+  static String get legalCopyAllText => _t(
+        'Alle tekst kopiëren',
+        en: 'Copy all text',
+        es: 'Copiar todo el texto',
+        ar: 'نسخ كل النص',
+      );
+  static String get legalDocumentLanguageNotice => _t(
+        'Juridische documenten zijn beschikbaar in Nederlands en Engels.',
+        en: 'Legal documents are available in Dutch and English.',
+        es: 'Los documentos legales están disponibles en neerlandés e inglés.',
+        ar: 'المستندات القانونية متاحة بالهولندية والإنجليزية.',
       );
   static String get resume => _t(
         'Hervatten',

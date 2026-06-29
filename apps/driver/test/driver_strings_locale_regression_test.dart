@@ -44,6 +44,12 @@ void main() {
     expect(DriverStrings.swapOfferDetailHint, 'Details (optional)');
     expect(DriverStrings.supportContactSection, 'Contact');
     expect(DriverStrings.notificationOpenAction, 'Open');
+    expect(DriverStrings.legalCopyForTranslation, 'Copy for translation');
+    expect(DriverStrings.legalCopyAllText, 'Copy all text');
+    expect(
+      DriverStrings.legalDocumentLanguageNotice,
+      'Legal documents are available in Dutch and English.',
+    );
     expect(DriverStrings.matchChanceSummary(30), 'Match chance: high');
     expect(DriverStrings.appSuggestion, 'Suggestion for the app');
     expect(DriverStrings.homeAutoAcceptReturnRides, 'Auto-accept return rides');
@@ -164,6 +170,12 @@ void main() {
     expect(DriverStrings.swapOfferConfirm, 'Sí, ofrecer viaje');
     expect(DriverStrings.supportContactSection, 'Contacto');
     expect(DriverStrings.notificationOpenAction, 'Abrir');
+    expect(DriverStrings.legalCopyForTranslation, 'Copiar para traducir');
+    expect(DriverStrings.legalCopyAllText, 'Copiar todo el texto');
+    expect(
+      DriverStrings.legalDocumentLanguageNotice,
+      'Los documentos legales están disponibles en neerlandés e inglés.',
+    );
     expect(
         DriverStrings.matchChanceSummary(20), 'Probabilidad de match: media');
     expect(DriverStrings.appSuggestion, 'Sugerencia para la app');
@@ -284,6 +296,12 @@ void main() {
     expect(DriverStrings.swapOfferFailed, 'فشل');
     expect(DriverStrings.supportContactSection, 'التواصل');
     expect(DriverStrings.notificationOpenAction, 'فتح');
+    expect(DriverStrings.legalCopyForTranslation, 'نسخ للترجمة');
+    expect(DriverStrings.legalCopyAllText, 'نسخ كل النص');
+    expect(
+      DriverStrings.legalDocumentLanguageNotice,
+      'المستندات القانونية متاحة بالهولندية والإنجليزية.',
+    );
     expect(DriverStrings.matchChanceSummary(8), 'فرصة المطابقة: منخفضة');
     expect(DriverStrings.appSuggestion, 'اقتراح للتطبيق');
     expect(
