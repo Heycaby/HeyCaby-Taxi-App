@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../constants/driver_brand_assets.dart';
 
-/// HeyCaby wordmark — yellow text, transparent background.
+/// HeyCaby wordmark. Pass [color] when a screen needs the green driver mark.
 class HeyCabyDriverLogo extends StatelessWidget {
   const HeyCabyDriverLogo({
     super.key,

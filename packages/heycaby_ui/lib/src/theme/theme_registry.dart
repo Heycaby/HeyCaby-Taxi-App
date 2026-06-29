@@ -1,13 +1,10 @@
-import 'color_tokens.dart';
-import 'theme_data.dart';
-import 'typography.dart';
+import 'package:heycaby_ui/src/theme/color_tokens.dart';
+import 'package:heycaby_ui/src/theme/theme_data.dart';
+import 'package:heycaby_ui/src/theme/typography.dart';
 
 const String kRiderDefaultTheme = 'taxi-1';
 
-/// Soft Warm White — Chacool neutrals, taxi amber, paper-warm surfaces (driver).
-const String kHeyCabyDriverWarmThemeId = 'driver-warm';
-
-/// Premium green driver palette (Phase 1 default).
+/// Premium green driver palette. This is the only driver app palette.
 const String kHeyCabyDriverProThemeId = 'driver-pro';
 
 const String kDriverDefaultTheme = kHeyCabyDriverProThemeId;
@@ -90,23 +87,13 @@ final Map<String, HeyCabyThemeData> kThemes = {
     colors: kHeyCabyDriverPro,
     typography: buildTypographyForTheme(kHeyCabyDriverProThemeId),
   ),
-  kHeyCabyDriverWarmThemeId: HeyCabyThemeData(
-    id: kHeyCabyDriverWarmThemeId,
-    name: 'Soft Warm White',
-    tagline: 'Paper-warm light — Chacool neutrals & taxi amber',
-    colors: kHeyCabyDriverWarm,
-    typography: buildTypographyForTheme(kHeyCabyDriverWarmThemeId),
-  ),
 };
 
-/// Whether [themeId] is a driver app palette (warm legacy or pro green).
+/// Whether [themeId] is the driver app palette.
 extension HeyCabyThemeIdHelpers on String {
-  bool get isHeyCabyDriverWarmTheme => this == kHeyCabyDriverWarmThemeId;
-
   bool get isHeyCabyDriverProTheme => this == kHeyCabyDriverProThemeId;
 
-  bool get isHeyCabyDriverTheme =>
-      isHeyCabyDriverWarmTheme || isHeyCabyDriverProTheme;
+  bool get isHeyCabyDriverTheme => isHeyCabyDriverProTheme;
 }
 
 HeyCabyThemeData getTheme(String id) {

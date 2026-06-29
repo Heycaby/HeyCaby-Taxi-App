@@ -88,7 +88,8 @@ class RideSwapHowIntroSection extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             DriverStrings.rideSwapPullToRefreshHint,
-            style: typo.bodySmall.copyWith(color: colors.textSoft, height: 1.35),
+            style:
+                typo.bodySmall.copyWith(color: colors.textSoft, height: 1.35),
           ),
         ],
       ],
@@ -127,7 +128,8 @@ Future<void> showRideSwapHowBottomSheet({
               const SizedBox(height: 12),
               Text(
                 DriverStrings.rideSwapInfoModalFooter,
-                style: typo.bodySmall.copyWith(color: colors.textSoft, height: 1.35),
+                style: typo.bodySmall
+                    .copyWith(color: colors.textSoft, height: 1.35),
               ),
               const SizedBox(height: 10),
               CheckboxListTile(
@@ -138,7 +140,8 @@ Future<void> showRideSwapHowBottomSheet({
                   DriverStrings.rideSwapDontShowAgain,
                   style: typo.bodySmall.copyWith(color: colors.text),
                 ),
-                onChanged: (v) => setSheetState(() => dontShowAgain = v ?? false),
+                onChanged: (v) =>
+                    setSheetState(() => dontShowAgain = v ?? false),
               ),
               const SizedBox(height: 8),
               SizedBox(
@@ -153,7 +156,7 @@ Future<void> showRideSwapHowBottomSheet({
                     }
                     if (ctx.mounted) Navigator.of(ctx).pop();
                   },
-                  child: Text(DriverStrings.rideSwapGotIt),
+                  child: const Text(DriverStrings.rideSwapGotIt),
                 ),
               ),
             ],
@@ -169,7 +172,8 @@ class RideSwapFeedContent extends ConsumerStatefulWidget {
   const RideSwapFeedContent({super.key});
 
   @override
-  ConsumerState<RideSwapFeedContent> createState() => _RideSwapFeedContentState();
+  ConsumerState<RideSwapFeedContent> createState() =>
+      _RideSwapFeedContentState();
 }
 
 bool _jsonBool(dynamic v) {
@@ -209,14 +213,16 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
   void _subscribe() {
     try {
       _channel = HeyCabySupabase.client.channel('public:ride_swaps');
-      _channel!.onPostgresChanges(
-        event: PostgresChangeEvent.all,
-        schema: 'public',
-        table: 'ride_swaps',
-        callback: (_) {
-          if (mounted) ref.invalidate(rideSwapFeedProvider);
-        },
-      ).subscribe();
+      _channel!
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'ride_swaps',
+            callback: (_) {
+              if (mounted) ref.invalidate(rideSwapFeedProvider);
+            },
+          )
+          .subscribe();
     } catch (_) {
       // Realtime optional if replication is off.
     }
@@ -293,11 +299,11 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(DriverStrings.cancel),
+            child: const Text(DriverStrings.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(DriverStrings.swapConfirmCta),
+            child: const Text(DriverStrings.swapConfirmCta),
           ),
         ],
       ),
@@ -338,7 +344,9 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
         if (list.isEmpty) {
           if (prefLoaded && !hideEmptyInfoModal && !_hasShownEmptyInfoModal) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!mounted || _hasShownEmptyInfoModal || hideEmptyInfoModal) return;
+              if (!mounted || _hasShownEmptyInfoModal || hideEmptyInfoModal) {
+                return;
+              }
               _hasShownEmptyInfoModal = true;
               showRideSwapHowBottomSheet(
                 context: context,
@@ -355,7 +363,8 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.swap_horiz_rounded, size: 42, color: colors.textSoft),
+                  Icon(Icons.swap_horiz_rounded,
+                      size: 42, color: colors.textSoft),
                   const SizedBox(height: 12),
                   Text(
                     DriverStrings.swapFeedEmpty,
@@ -370,7 +379,7 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
                       typo: typo,
                     ),
                     icon: const Icon(Icons.info_outline_rounded),
-                    label: Text(DriverStrings.rideSwapHowButton),
+                    label: const Text(DriverStrings.rideSwapHowButton),
                   ),
                 ],
               ),
@@ -396,15 +405,13 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
                   ? DateFormat('HH:mm').format(swap.pickupAt!)
                   : '—';
               final pay = (swap.paymentMethods ?? []).join(' / ');
-              final swapRadius =
-                  themeId.isHeyCabyDriverWarmTheme ? 16.0 : 14.0;
               return Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: colors.card,
-                    borderRadius: BorderRadius.circular(swapRadius),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: colors.border),
                   ),
                   child: Column(
@@ -413,9 +420,11 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: _urgencyColor(colors, swap.urgency).withValues(alpha: 0.15),
+                              color: _urgencyColor(colors, swap.urgency)
+                                  .withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -431,7 +440,8 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
                       const SizedBox(height: 10),
                       Text(
                         '📍 ${swap.pickupAddress ?? '—'}',
-                        style: typo.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                        style: typo.bodyMedium
+                            .copyWith(fontWeight: FontWeight.w600),
                       ),
                       Text(
                         '→ ${swap.destinationAddress ?? '—'}',
@@ -443,11 +453,14 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
                         style: typo.bodySmall.copyWith(color: colors.textSoft),
                       ),
                       if (pay.isNotEmpty)
-                        Text('💵 $pay', style: typo.bodySmall.copyWith(color: colors.textSoft)),
+                        Text('💵 $pay',
+                            style: typo.bodySmall
+                                .copyWith(color: colors.textSoft)),
                       const SizedBox(height: 8),
                       Text(
                         '📍 ${DriverStrings.swapDistanceToPickup} $distStr ${DriverStrings.swapKmFromPickup}',
-                        style: typo.bodySmall.copyWith(color: colors.accent, fontWeight: FontWeight.w600),
+                        style: typo.bodySmall.copyWith(
+                            color: colors.accent, fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -458,13 +471,16 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
                                 showDialog<void>(
                                   context: context,
                                   builder: (ctx) => AlertDialog(
-                                    title: Text(DriverStrings.rideSwap, style: typo.titleMedium),
+                                    title: Text(DriverStrings.rideSwap,
+                                        style: typo.titleMedium),
                                     content: SingleChildScrollView(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text('${swap.pickupAddress ?? ''}\n→ ${swap.destinationAddress ?? ''}'),
+                                          Text(
+                                              '${swap.pickupAddress ?? ''}\n→ ${swap.destinationAddress ?? ''}'),
                                           const SizedBox(height: 8),
                                           Text(
                                             '${DriverStrings.swapDetailPickupPrefix} ${swap.pickupAt != null ? DateFormat('yyyy-MM-dd HH:mm').format(swap.pickupAt!) : '—'}',
@@ -476,20 +492,20 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
                                     actions: [
                                       TextButton(
                                         onPressed: () => Navigator.pop(ctx),
-                                        child: Text(DriverStrings.cancel),
+                                        child: const Text(DriverStrings.cancel),
                                       ),
                                     ],
                                   ),
                                 );
                               },
-                              child: Text(DriverStrings.swapViewDetails),
+                              child: const Text(DriverStrings.swapViewDetails),
                             ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: FilledButton(
                               onPressed: () => _claim(swap),
-                              child: Text(DriverStrings.swapClaim),
+                              child: const Text(DriverStrings.swapClaim),
                             ),
                           ),
                         ],
@@ -506,7 +522,8 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
       loading: () => _RideSwapSkeleton(colors: colors, themeId: themeId),
       error: (_, __) => SliverFillRemaining(
         child: Center(
-            child: Text(DriverStrings.swapFeedLoadFailed, style: typo.bodyMedium)),
+            child:
+                Text(DriverStrings.swapFeedLoadFailed, style: typo.bodyMedium)),
       ),
     );
   }
@@ -523,15 +540,10 @@ class _RideSwapSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final warm = themeId.isHeyCabyDriverWarmTheme;
-    final outerR = warm ? 16.0 : 14.0;
     Widget bar({
       required double width,
       required double height,
     }) {
-      if (warm) {
-        return _WarmShimmerBar(colors: colors, width: width, height: height);
-      }
       return _Bar(colors: colors, width: width, height: height);
     }
 
@@ -543,7 +555,7 @@ class _RideSwapSkeleton extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: colors.card,
-              borderRadius: BorderRadius.circular(outerR),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(color: colors.border),
             ),
             child: Column(
@@ -559,11 +571,9 @@ class _RideSwapSkeleton extends StatelessWidget {
                 const SizedBox(height: 14),
                 Row(
                   children: [
-                    Expanded(
-                        child: bar(width: double.infinity, height: 40)),
+                    Expanded(child: bar(width: double.infinity, height: 40)),
                     const SizedBox(width: 8),
-                    Expanded(
-                        child: bar(width: double.infinity, height: 40)),
+                    Expanded(child: bar(width: double.infinity, height: 40)),
                   ],
                 ),
               ],
@@ -571,75 +581,6 @@ class _RideSwapSkeleton extends StatelessWidget {
           ),
         ),
         childCount: 3,
-      ),
-    );
-  }
-}
-
-class _WarmShimmerBar extends StatefulWidget {
-  const _WarmShimmerBar({
-    required this.colors,
-    required this.width,
-    required this.height,
-  });
-
-  final HeyCabyColorTokens colors;
-  final double width;
-  final double height;
-
-  @override
-  State<_WarmShimmerBar> createState() => _WarmShimmerBarState();
-}
-
-class _WarmShimmerBarState extends State<_WarmShimmerBar>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        final t = _controller.value;
-        return ShaderMask(
-          blendMode: BlendMode.srcATop,
-          shaderCallback: (rect) {
-            return LinearGradient(
-              begin: Alignment(-1.4 + 2.8 * t, 0),
-              end: Alignment(-0.4 + 2.8 * t, 0),
-              colors: [
-                widget.colors.surface,
-                Colors.white.withValues(alpha: 0.4),
-                widget.colors.surface,
-              ],
-              stops: const [0.38, 0.5, 0.62],
-            ).createShader(rect);
-          },
-          child: child,
-        );
-      },
-      child: Container(
-        width: widget.width,
-        height: widget.height,
-        decoration: BoxDecoration(
-          color: widget.colors.surface,
-          borderRadius: BorderRadius.circular(8),
-        ),
       ),
     );
   }

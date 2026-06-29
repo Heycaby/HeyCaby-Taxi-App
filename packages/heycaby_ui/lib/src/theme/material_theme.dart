@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-import 'color_tokens.dart';
-import 'heycaby_app_chrome.dart';
-import 'theme_registry.dart';
+import 'package:heycaby_ui/src/theme/color_tokens.dart';
+import 'package:heycaby_ui/src/theme/heycaby_app_chrome.dart';
+import 'package:heycaby_ui/src/theme/theme_registry.dart';
 
 /// Alpha applied to [HeyCabyColorTokens.accent] for disabled primary CTAs.
 const double kHeyCabyCtaDisabledBgAlpha = 0.42;
@@ -142,7 +141,7 @@ ThemeData buildHeyCabyMaterialTheme({
   );
 }
 
-/// Maps “Soft Warm White” UI chrome (inputs, cards, app bars, sheets) from the driver guide.
+/// Maps driver UI chrome (inputs, cards, app bars, sheets) from the green driver guide.
 ThemeData _applySoftWarmWhiteMaterial(
   ThemeData base,
   HeyCabyColorTokens colors,
@@ -161,7 +160,8 @@ ThemeData _applySoftWarmWhiteMaterial(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       hintStyle: TextStyle(color: colors.textSoft, fontFamily: bodyFont),
       labelStyle: TextStyle(color: colors.textMid, fontFamily: bodyFont),
-      floatingLabelStyle: TextStyle(color: colors.textMid, fontFamily: bodyFont),
+      floatingLabelStyle:
+          TextStyle(color: colors.textMid, fontFamily: bodyFont),
       enabledBorder: outlineIdle,
       border: outlineIdle,
       focusedBorder: OutlineInputBorder(
@@ -260,8 +260,7 @@ ButtonStyle heyCabyElevatedErrorStyle(HeyCabyColorTokens colors) {
   return ElevatedButton.styleFrom(
     backgroundColor: colors.error,
     foregroundColor: colors.onError,
-    disabledBackgroundColor:
-        colors.border,
+    disabledBackgroundColor: colors.border,
     disabledForegroundColor: colors.textMid,
     elevation: 0,
   );

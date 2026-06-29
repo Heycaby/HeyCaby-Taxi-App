@@ -11,10 +11,17 @@ void main() {
         File('lib/screens/driver_preferences_screen.dart').readAsStringSync();
     final preferencesBodySource =
         File('lib/widgets/driver_preferences_body.dart').readAsStringSync();
+    final shellSource =
+        File('lib/widgets/driver_shell.dart').readAsStringSync();
     final splashSource =
         File('lib/widgets/driver_brand_moment_body.dart').readAsStringSync();
+    final logoSource =
+        File('lib/widgets/heycaby_driver_logo.dart').readAsStringSync();
     final themeProviderSource = File(
       '../../packages/heycaby_ui/lib/src/theme/theme_provider.dart',
+    ).readAsStringSync();
+    final themeRegistrySource = File(
+      '../../packages/heycaby_ui/lib/src/theme/theme_registry.dart',
     ).readAsStringSync();
 
     test('locks driver app to the single green theme', () {
@@ -31,6 +38,10 @@ void main() {
       expect(preferencesScreenSource, isNot(contains('kThemes.keys')));
       expect(preferencesBodySource, isNot(contains('onTheme')));
       expect(preferencesBodySource, isNot(contains('themeSubtitle')));
+      expect(themeRegistrySource, contains("'driver-warm': 'driver-pro'"));
+      expect(themeRegistrySource, isNot(contains('kHeyCabyDriverWarmThemeId')));
+      expect(themeRegistrySource, isNot(contains('Soft Warm White')));
+      expect(themeRegistrySource, isNot(contains('kHeyCabyDriverWarm,')));
     });
 
     test('supports only Dutch, English, Spanish, and Arabic for driver app',
@@ -52,6 +63,9 @@ void main() {
       expect(splashSource, contains('Color(0xFF00A651)'));
       expect(splashSource, isNot(contains('Color(0xFFFFD100)')));
       expect(splashSource, contains('letterSpacing: 0'));
+      expect(logoSource, isNot(contains('yellow text')));
+      expect(shellSource, isNot(contains('letterSpacing: -')));
+      expect(shellSource, isNot(contains('warmChrome')));
     });
   });
 }

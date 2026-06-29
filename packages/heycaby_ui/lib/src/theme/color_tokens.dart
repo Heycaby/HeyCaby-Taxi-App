@@ -211,7 +211,7 @@ const kHeyCabyDriverProDark = HeyCabyColorTokens(
   previewDots: [Color(0xFF3A403D), Color(0xFF34D399), Color(0xFF3A403D)],
 );
 
-/// Driver — soft warm white, Chacool greys, taxi amber (long-shift friendly).
+/// Legacy pre-green driver palette. Kept only so older imports continue to compile.
 const kHeyCabyDriverWarm = HeyCabyColorTokens(
   bg: Color(0xFFFDFBF7),
   bgAlt: Color(0xFFF8F5F0),

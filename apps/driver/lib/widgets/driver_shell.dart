@@ -68,8 +68,6 @@ class _DriverShellState extends ConsumerState<DriverShell>
 
     final colors = ref.watch(colorsProvider);
     final typo = ref.watch(typographyProvider);
-    final themeId = HeyCabyAppChrome.themeIdOf(context);
-    final warm = themeId.isHeyCabyDriverTheme;
     final location = GoRouterState.of(context).uri.toString();
     // Home | Community | My rides | Me
     int currentIndex = 0;
@@ -103,64 +101,60 @@ class _DriverShellState extends ConsumerState<DriverShell>
       bottomNavigationBar: immersive
           ? null
           : Container(
-        decoration: BoxDecoration(
-          color: warm ? colors.bg : colors.card,
-          border: Border(
-            top: BorderSide(color: colors.border, width: warm ? 0.5 : 1),
-          ),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Row(
-            children: [
-              Expanded(
-                child: _NavItem(
-                  icon: AppIcons.navHome,
-                  label: DriverStrings.home,
-                  isActive: currentIndex == 0,
-                  colors: colors,
-                  typo: typo,
-                  warmChrome: warm,
-                  onTap: () => context.go('/driver'),
+              decoration: BoxDecoration(
+                color: colors.bg,
+                border: Border(
+                  top: BorderSide(color: colors.border, width: 0.5),
                 ),
               ),
-              Expanded(
-                child: _NavItem(
-                  icon: AppIcons.navCommunity,
-                  label: DriverStrings.community,
-                  isActive: currentIndex == 1,
-                  colors: colors,
-                  typo: typo,
-                  warmChrome: warm,
-                  onTap: () => context.go('/driver/community'),
+              child: SafeArea(
+                top: false,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _NavItem(
+                        icon: AppIcons.navHome,
+                        label: DriverStrings.home,
+                        isActive: currentIndex == 0,
+                        colors: colors,
+                        typo: typo,
+                        onTap: () => context.go('/driver'),
+                      ),
+                    ),
+                    Expanded(
+                      child: _NavItem(
+                        icon: AppIcons.navCommunity,
+                        label: DriverStrings.community,
+                        isActive: currentIndex == 1,
+                        colors: colors,
+                        typo: typo,
+                        onTap: () => context.go('/driver/community'),
+                      ),
+                    ),
+                    Expanded(
+                      child: _NavItem(
+                        icon: AppIcons.navMyRides,
+                        label: DriverStrings.myRides,
+                        isActive: currentIndex == 2,
+                        colors: colors,
+                        typo: typo,
+                        onTap: () => context.go('/driver/my-rides'),
+                      ),
+                    ),
+                    Expanded(
+                      child: _NavItem(
+                        icon: AppIcons.navProfile,
+                        label: DriverStrings.me,
+                        isActive: currentIndex == 3,
+                        colors: colors,
+                        typo: typo,
+                        onTap: () => context.go('/driver/me'),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Expanded(
-                child: _NavItem(
-                  icon: AppIcons.navMyRides,
-                  label: DriverStrings.myRides,
-                  isActive: currentIndex == 2,
-                  colors: colors,
-                  typo: typo,
-                  warmChrome: warm,
-                  onTap: () => context.go('/driver/my-rides'),
-                ),
-              ),
-              Expanded(
-                child: _NavItem(
-                  icon: AppIcons.navProfile,
-                  label: DriverStrings.me,
-                  isActive: currentIndex == 3,
-                  colors: colors,
-                  typo: typo,
-                  warmChrome: warm,
-                  onTap: () => context.go('/driver/me'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }
@@ -171,9 +165,6 @@ class _NavItem extends StatelessWidget {
   final bool isActive;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
-
-  /// Soft Warm White tab spec: amber icon + ink label when active.
-  final bool warmChrome;
   final VoidCallback onTap;
 
   const _NavItem({
@@ -182,21 +173,13 @@ class _NavItem extends StatelessWidget {
     required this.isActive,
     required this.colors,
     required this.typo,
-    this.warmChrome = false,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final Color iconColor;
-    final Color labelColor;
-    if (warmChrome) {
-      iconColor = isActive ? colors.accent : colors.textSoft;
-      labelColor = isActive ? colors.text : colors.textMid;
-    } else {
-      iconColor = isActive ? colors.accent : colors.textSoft;
-      labelColor = isActive ? colors.accent : colors.textSoft;
-    }
+    final iconColor = isActive ? colors.accent : colors.textSoft;
+    final labelColor = isActive ? colors.text : colors.textMid;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
@@ -222,7 +205,7 @@ class _NavItem extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               decoration: BoxDecoration(
                 color: isActive
-                    ? colors.accent.withValues(alpha: warmChrome ? 0.15 : 0.11)
+                    ? colors.accent.withValues(alpha: 0.15)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(22),
                 border: Border.all(
@@ -252,7 +235,7 @@ class _NavItem extends StatelessWidget {
                     style: typo.labelSmall.copyWith(
                       color: labelColor,
                       fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                      letterSpacing: isActive ? -0.15 : 0,
+                      letterSpacing: 0,
                     ),
                     maxLines: 2,
                     textAlign: TextAlign.center,
