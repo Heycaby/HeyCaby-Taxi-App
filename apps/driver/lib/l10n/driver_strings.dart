@@ -600,6 +600,19 @@ class DriverStrings {
         es: 'Conéctate para ver solicitudes de viaje en tu zona.',
         ar: 'اتصل لرؤية طلبات الرحلات المباشرة في منطقتك.',
       );
+  static String get statusControlOfflineHint => homeNoLiveRidesOffline;
+  static String get statusControlBreakHint => _t(
+        'Je pauze is actief. Ga online om ritten te zien.',
+        en: 'Your break is active. Go online to see rides.',
+        es: 'Tu descanso está activo. Conéctate para ver viajes.',
+        ar: 'استراحتك نشطة. اتصل لرؤية الرحلات.',
+      );
+  static String get statusControlOnlineHint => _t(
+        'Je bent live in jouw zone.',
+        en: 'You are live in your zone.',
+        es: 'Estás activo en tu zona.',
+        ar: 'أنت نشط في منطقتك.',
+      );
   static String get homeNoLiveRidesOnline => _t(
         'Geen open ritaanvragen — we laten het weten zodra er iets binnenkomt.',
         en: 'No open ride requests — we’ll let you know when one arrives.',
@@ -1399,6 +1412,18 @@ class DriverStrings {
         en: 'Could not go online. Check your connection and try again.',
         es: 'No se pudo conectar. Revisa tu conexión e inténtalo de nuevo.',
         ar: 'تعذر الاتصال. تحقق من اتصالك وحاول مرة أخرى.',
+      );
+  static String get goBreakFailed => _t(
+        'Pauze starten mislukt. Controleer je verbinding en probeer opnieuw.',
+        en: 'Could not start break. Check your connection and try again.',
+        es: 'No se pudo iniciar el descanso. Revisa tu conexión e inténtalo de nuevo.',
+        ar: 'تعذر بدء الاستراحة. تحقق من اتصالك وحاول مرة أخرى.',
+      );
+  static String get goOfflineFailed => _t(
+        'Offline gaan mislukt. Controleer je verbinding en probeer opnieuw.',
+        en: 'Could not go offline. Check your connection and try again.',
+        es: 'No se pudo desconectar. Revisa tu conexión e inténtalo de nuevo.',
+        ar: 'تعذر عدم الاتصال. تحقق من اتصالك وحاول مرة أخرى.',
       );
   static const String platformFeeStillPending =
       'Betaling nog niet bevestigd. Wacht even of probeer opnieuw.';

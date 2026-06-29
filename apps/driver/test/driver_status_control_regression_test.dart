@@ -14,12 +14,12 @@ void main() {
     ).readAsStringSync();
 
     test('keeps the redesigned three-state control labels and hints', () {
-      expect(toggleSource, contains('Offline'));
-      expect(toggleSource, contains('Pauze'));
-      expect(toggleSource, contains('Online'));
+      expect(toggleSource, contains('DriverStrings.offline'));
+      expect(toggleSource, contains('DriverStrings.onBreak'));
+      expect(toggleSource, contains('DriverStrings.online'));
       expect(
         toggleSource,
-        contains('Ga online om live ritaanvragen in jouw zone te zien.'),
+        contains('DriverStrings.statusControlOfflineHint'),
       );
       expect(
           homeSheetSource, contains('label: DriverStrings.homeRidesSection'));
@@ -31,9 +31,8 @@ void main() {
 
     test('keeps haptics on status transitions and supporting actions', () {
       expect(toggleSource, contains('HapticService.selectionClick()'));
-      expect(toggleSource, contains('HapticService.heavyTap()'));
+      expect(toggleSource, contains('HapticService.success()'));
       expect(toggleSource, contains('HapticService.mediumTap()'));
-      expect(toggleSource, contains('HapticService.lightTap()'));
       expect(toggleSource, contains('HapticService.error()'));
       expect(homeSheetSource, contains('HapticService.selectionClick()'));
     });
@@ -42,14 +41,8 @@ void main() {
       expect(toggleSource, isNot(contains(r'($e)')));
       expect(toggleSource, isNot(contains('PostgrestException')));
       expect(toggleSource, contains('_failureMessageForStatus'));
-      expect(
-        toggleSource,
-        contains('Pauze starten mislukt. Controleer je verbinding'),
-      );
-      expect(
-        toggleSource,
-        contains('Offline gaan mislukt. Controleer je verbinding'),
-      );
+      expect(toggleSource, contains('DriverStrings.goBreakFailed'));
+      expect(toggleSource, contains('DriverStrings.goOfflineFailed'));
     });
 
     test('keeps driver location upsert conflict target aligned with schema',

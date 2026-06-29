@@ -11,10 +11,16 @@ void main() {
     DriverStrings.useLocale(null);
     expect(DriverStrings.home, 'Start');
     expect(DriverStrings.goOnline, 'Ga online');
+    expect(
+      DriverStrings.statusControlOfflineHint,
+      'Ga online om live ritaanvragen in jouw zone te zien.',
+    );
 
     DriverStrings.useLocale(const Locale('fr'));
     expect(DriverStrings.home, 'Start');
     expect(DriverStrings.goOnline, 'Ga online');
+    expect(DriverStrings.goBreakFailed,
+        'Pauze starten mislukt. Controleer je verbinding en probeer opnieuw.');
   });
 
   test('DriverStrings switches core driver labels by supported locale', () {
@@ -41,6 +47,18 @@ void main() {
     expect(DriverStrings.vehicleApk, 'APK');
     expect(
         DriverStrings.failedToUpdateStatus, 'Status update failed. Try again.');
+    expect(
+      DriverStrings.statusControlBreakHint,
+      'Your break is active. Go online to see rides.',
+    );
+    expect(
+      DriverStrings.statusControlOnlineHint,
+      'You are live in your zone.',
+    );
+    expect(
+      DriverStrings.goOfflineFailed,
+      'Could not go offline. Check your connection and try again.',
+    );
     expect(
         DriverStrings.serverErrorMessage('rate limit'), 'Server: rate limit');
     expect(
@@ -140,6 +158,14 @@ void main() {
       DriverStrings.failedToUpdateStatus,
       'No se pudo actualizar el estado. Inténtalo de nuevo.',
     );
+    expect(
+      DriverStrings.statusControlBreakHint,
+      'Tu descanso está activo. Conéctate para ver viajes.',
+    );
+    expect(
+      DriverStrings.goBreakFailed,
+      'No se pudo iniciar el descanso. Revisa tu conexión e inténtalo de nuevo.',
+    );
     expect(DriverStrings.serverErrorMessage('límite'), 'Servidor: límite');
     expect(
       DriverStrings.driverProfileIncompleteForStatus,
@@ -236,6 +262,14 @@ void main() {
     expect(DriverStrings.vehicleApk, 'APK');
     expect(
         DriverStrings.failedToUpdateStatus, 'فشل تحديث الحالة. حاول مرة أخرى.');
+    expect(
+      DriverStrings.statusControlOnlineHint,
+      'أنت نشط في منطقتك.',
+    );
+    expect(
+      DriverStrings.goOfflineFailed,
+      'تعذر عدم الاتصال. تحقق من اتصالك وحاول مرة أخرى.',
+    );
     expect(DriverStrings.serverErrorMessage('الحد'), 'الخادم: الحد');
     expect(
       DriverStrings.driverProfileIncompleteForStatus,

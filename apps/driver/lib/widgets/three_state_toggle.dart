@@ -10,7 +10,6 @@ import '../providers/driver_state_provider.dart';
 import '../services/location_service.dart';
 import '../services/sound_service.dart';
 import '../l10n/driver_strings.dart';
-import '../theme/app_icons.dart';
 import '../utils/driver_go_online_runtime_action.dart';
 import '../utils/driver_network_guard.dart';
 import '../utils/driver_runtime_refresh.dart';
@@ -130,23 +129,29 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
     };
   }
 
+  IconData _iconForStatus(DriverAvailabilityStatus status) {
+    return switch (status) {
+      DriverAvailabilityStatus.available => Icons.radio_button_checked,
+      DriverAvailabilityStatus.onBreak => Icons.pause_rounded,
+      DriverAvailabilityStatus.offline => Icons.location_off_rounded,
+    };
+  }
+
   String _hintForStatus(DriverAvailabilityStatus status) {
     return switch (status) {
-      DriverAvailabilityStatus.available => 'Je bent live in jouw zone.',
-      DriverAvailabilityStatus.onBreak =>
-        'Je pauze is actief. Ga online om ritten te zien.',
+      DriverAvailabilityStatus.available =>
+        DriverStrings.statusControlOnlineHint,
+      DriverAvailabilityStatus.onBreak => DriverStrings.statusControlBreakHint,
       DriverAvailabilityStatus.offline =>
-        'Ga online om live ritaanvragen in jouw zone te zien.',
+        DriverStrings.statusControlOfflineHint,
     };
   }
 
   String _failureMessageForStatus(DriverAvailabilityStatus status) {
     return switch (status) {
       DriverAvailabilityStatus.available => DriverStrings.goOnlineFailed,
-      DriverAvailabilityStatus.onBreak =>
-        'Pauze starten mislukt. Controleer je verbinding en probeer opnieuw.',
-      DriverAvailabilityStatus.offline =>
-        'Offline gaan mislukt. Controleer je verbinding en probeer opnieuw.',
+      DriverAvailabilityStatus.onBreak => DriverStrings.goBreakFailed,
+      DriverAvailabilityStatus.offline => DriverStrings.goOfflineFailed,
     };
   }
 
@@ -226,7 +231,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
           return;
         }
         if (!mounted) return;
-        HapticService.heavyTap();
+        HapticService.success();
         SoundService().playStatusOnline();
         final notifier = ref.read(driverStateProvider.notifier);
         notifier.setStatus(DriverAppState.onlineAvailable);
@@ -254,7 +259,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
       if (!mounted) return;
       final notifier = ref.read(driverStateProvider.notifier);
       if (newStatus == DriverAvailabilityStatus.onBreak) {
-        HapticService.mediumTap();
+        HapticService.success();
         SoundService().playStatusOnBreak();
         notifier.setStatus(DriverAppState.onBreak);
         ref.invalidate(driverShiftStatsProvider);
@@ -263,7 +268,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
           unawaited(_showBreakWidgetPopout());
         }
       } else {
-        HapticService.lightTap();
+        HapticService.mediumTap();
         SoundService().playStatusOffline();
         notifier.setStatus(DriverAppState.offline);
         final id = await ref.read(driverIdProvider.future);
@@ -390,6 +395,7 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
         final activeColor = _colorForStatus(colors, dragStatus);
         final confirmedColor = _colorForStatus(colors, confirmedStatus);
         final enabled = !_isWritingStatus;
+        final confirmedIcon = _iconForStatus(confirmedStatus);
 
         Future<void> submitStatus(DriverAvailabilityStatus status) async {
           if (!enabled) return;
@@ -406,7 +412,10 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
               color: colors.card,
               borderRadius: BorderRadius.circular(22),
               border: Border.all(
-                color: colors.border.withValues(alpha: 0.95),
+                color: Color.alphaBlend(
+                  confirmedColor.withValues(alpha: 0.10),
+                  colors.border,
+                ),
                 width: 1.3,
               ),
               boxShadow: [
@@ -417,8 +426,8 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                   spreadRadius: -10,
                 ),
                 BoxShadow(
-                  color: colors.success.withValues(alpha: 0.08),
-                  blurRadius: 22,
+                  color: confirmedColor.withValues(alpha: 0.10),
+                  blurRadius: 28,
                   offset: const Offset(0, 8),
                   spreadRadius: -12,
                 ),
@@ -437,22 +446,27 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                       height: 48,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: confirmedColor.withValues(alpha: 0.14),
+                        gradient: RadialGradient(
+                          colors: [
+                            confirmedColor.withValues(alpha: 0.22),
+                            confirmedColor.withValues(alpha: 0.10),
+                          ],
+                        ),
                         border: Border.all(
-                          color: confirmedColor.withValues(alpha: 0.22),
+                          color: confirmedColor.withValues(alpha: 0.30),
                           width: 1.2,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: confirmedColor.withValues(alpha: 0.12),
-                            blurRadius: 18,
-                            offset: const Offset(0, 8),
-                            spreadRadius: -8,
+                            color: confirmedColor.withValues(alpha: 0.20),
+                            blurRadius: 22,
+                            offset: const Offset(0, 9),
+                            spreadRadius: -7,
                           ),
                         ],
                       ),
                       child: Icon(
-                        AppIcons.navHome,
+                        confirmedIcon,
                         color: confirmedColor,
                         size: 24,
                       ),
@@ -518,22 +532,28 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(29),
                       gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
                         colors: [
-                          activeColor.withValues(alpha: 0.08),
-                          colors.surface.withValues(alpha: 0.88),
-                          colors.card.withValues(alpha: 0.96),
+                          colors.surface.withValues(alpha: 0.96),
+                          Color.alphaBlend(
+                            activeColor.withValues(alpha: 0.08),
+                            colors.card,
+                          ),
+                          colors.card.withValues(alpha: 0.98),
                         ],
+                        stops: const [0, 0.54, 1],
                       ),
                       border: Border.all(
-                        color: activeColor.withValues(alpha: 0.20),
+                        color: activeColor.withValues(alpha: 0.24),
                         width: 1.1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: activeColor.withValues(alpha: 0.12),
-                          blurRadius: 18,
+                          color: activeColor.withValues(alpha: 0.13),
+                          blurRadius: 20,
                           offset: const Offset(0, 8),
-                          spreadRadius: -8,
+                          spreadRadius: -9,
                         ),
                       ],
                     ),
@@ -556,13 +576,20 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                               width: width / 3,
                               margin: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
-                                color: Color.alphaBlend(
-                                  activeColor.withValues(alpha: 0.10),
-                                  colors.card,
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    colors.card,
+                                    Color.alphaBlend(
+                                      activeColor.withValues(alpha: 0.12),
+                                      colors.card,
+                                    ),
+                                  ],
                                 ),
                                 borderRadius: BorderRadius.circular(999),
                                 border: Border.all(
-                                  color: activeColor.withValues(alpha: 0.34),
+                                  color: activeColor.withValues(alpha: 0.42),
                                 ),
                                 boxShadow: [
                                   BoxShadow(
@@ -571,9 +598,10 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
                                     offset: const Offset(0, -1),
                                   ),
                                   BoxShadow(
-                                    color: activeColor.withValues(alpha: 0.18),
-                                    blurRadius: 16,
-                                    offset: const Offset(0, 6),
+                                    color: activeColor.withValues(alpha: 0.24),
+                                    blurRadius: 18,
+                                    offset: const Offset(0, 7),
+                                    spreadRadius: -2,
                                   ),
                                 ],
                               ),
