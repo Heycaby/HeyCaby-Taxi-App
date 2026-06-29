@@ -17,8 +17,15 @@ import '../services/sound_service.dart';
 import '../utils/rider_account_deletion.dart';
 import '../widgets/email_modal.dart';
 
+enum AccountScreenMode { profile, settings }
+
 class AccountScreen extends ConsumerStatefulWidget {
-  const AccountScreen({super.key});
+  const AccountScreen({
+    super.key,
+    this.mode = AccountScreenMode.profile,
+  });
+
+  final AccountScreenMode mode;
 
   @override
   ConsumerState<AccountScreen> createState() => _AccountScreenState();
@@ -492,27 +499,32 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
           padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 32),
           children: [
             _buildHeader(colors, typo, l10n),
-            const SizedBox(height: 16),
-            _buildPassportCard(colors, typo, l10n),
-            if (fromOnboarding) ...[
-              const SizedBox(height: 12),
-              _buildOnboardingBanner(colors, typo, l10n),
+            if (widget.mode == AccountScreenMode.profile) ...[
+              const SizedBox(height: 16),
+              _buildPassportCard(colors, typo, l10n),
+              if (fromOnboarding) ...[
+                const SizedBox(height: 12),
+                _buildOnboardingBanner(colors, typo, l10n),
+              ],
+              if (!ref.watch(riderProfileCompletenessProvider).isComplete) ...[
+                const SizedBox(height: 14),
+                _buildCompletionChecklist(colors, typo, l10n),
+              ],
+              const SizedBox(height: 24),
+              _buildProfileSection(colors, typo, l10n,
+                  fromOnboarding: fromOnboarding),
+              const SizedBox(height: 24),
+              _buildOpenSettingsSection(colors, typo, l10n),
+            ] else ...[
+              const SizedBox(height: 16),
+              _buildSettingsSection(colors, typo, l10n),
+              const SizedBox(height: 24),
+              _buildBookingToolsSection(colors, typo, l10n),
+              const SizedBox(height: 24),
+              _buildHelpSafetySection(colors, typo, l10n),
+              const SizedBox(height: 24),
+              _buildLegalAccountSection(colors, typo, l10n),
             ],
-            if (!ref.watch(riderProfileCompletenessProvider).isComplete) ...[
-              const SizedBox(height: 14),
-              _buildCompletionChecklist(colors, typo, l10n),
-            ],
-            const SizedBox(height: 24),
-            _buildProfileSection(colors, typo, l10n,
-                fromOnboarding: fromOnboarding),
-            const SizedBox(height: 24),
-            _buildSettingsSection(colors, typo, l10n),
-            const SizedBox(height: 24),
-            _buildBookingToolsSection(colors, typo, l10n),
-            const SizedBox(height: 24),
-            _buildHelpSafetySection(colors, typo, l10n),
-            const SizedBox(height: 24),
-            _buildLegalAccountSection(colors, typo, l10n),
           ],
         ),
       ),
@@ -552,12 +564,15 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
 
   Widget _buildHeader(HeyCabyColorTokens colors, HeyCabyTypography typo,
       AppLocalizations l10n) {
+    final title = widget.mode == AccountScreenMode.settings
+        ? l10n.settings
+        : l10n.riderPassportTitle;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: Text(
-            l10n.riderPassportTitle,
+            title,
             style: typo.displayMedium.copyWith(
               color: colors.text,
               fontWeight: FontWeight.w900,
@@ -580,6 +595,20 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
           icon: const Icon(Icons.close_rounded, size: 22),
         ),
       ],
+    );
+  }
+
+  Widget _buildOpenSettingsSection(
+    HeyCabyColorTokens colors,
+    HeyCabyTypography typo,
+    AppLocalizations l10n,
+  ) {
+    return _buildNavRow(
+      Icons.settings_rounded,
+      l10n.settings,
+      colors,
+      typo,
+      () => context.push('/settings'),
     );
   }
 

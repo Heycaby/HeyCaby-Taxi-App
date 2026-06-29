@@ -23,7 +23,8 @@ class RiderShell extends ConsumerWidget {
       currentIndex = 1;
     } else if (location.startsWith('/tell-friend')) {
       currentIndex = 2;
-    } else if (location.startsWith('/account')) {
+    } else if (location.startsWith('/account') ||
+        location.startsWith('/settings')) {
       currentIndex = 3;
     }
 

@@ -2,7 +2,7 @@ import 'package:heycaby_ui/src/theme/color_tokens.dart';
 import 'package:heycaby_ui/src/theme/theme_data.dart';
 import 'package:heycaby_ui/src/theme/typography.dart';
 
-const String kRiderDefaultTheme = 'taxi-1';
+const String kRiderDefaultTheme = 'taxi-3';
 
 /// Premium green driver palette. This is the only driver app palette.
 const String kHeyCabyDriverProThemeId = 'driver-pro';

@@ -235,8 +235,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           if (hasRide && _isActiveRideStatus(ride.status)) {
             return null;
           }
-          if (hasRide && (ride.status == 'pending' || ride.status == 'bidding')) {
-            return rideMatchingVariantForBookingModeString(ride.bookingMode).routePath;
+          if (hasRide &&
+              (ride.status == 'pending' || ride.status == 'bidding')) {
+            return rideMatchingVariantForBookingModeString(ride.bookingMode)
+                .routePath;
           }
           return '/home';
         },
@@ -377,6 +379,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (_, __) => const RiderTellFriendScreen(),
           ),
           GoRoute(path: '/account', builder: (_, __) => const AccountScreen()),
+          GoRoute(
+            path: '/settings',
+            builder: (_, __) =>
+                const AccountScreen(mode: AccountScreenMode.settings),
+          ),
         ],
       ),
     ],
