@@ -52,6 +52,13 @@ void main() {
       DriverStrings.missingFieldsMessage(['insurer', 'policy number']),
       'Missing: insurer, policy number.',
     );
+    expect(DriverStrings.kvkNumberLabel, 'KvK number (8 digits)');
+    expect(DriverStrings.kvkBusinessNameLabel, 'Business name');
+    expect(DriverStrings.kvkBusinessAddressLabel, 'Business address');
+    expect(
+      DriverStrings.documentSaveFailed,
+      'Save failed. Check your details and try again.',
+    );
     expect(DriverStrings.faq, 'Frequently asked questions');
     expect(DriverStrings.faqHowGoOnlineQuestion, 'How do I go online?');
     expect(
@@ -104,6 +111,13 @@ void main() {
       DriverStrings.missingFieldsMessage(['aseguradora', 'número de póliza']),
       'Falta: aseguradora, número de póliza.',
     );
+    expect(DriverStrings.kvkNumberLabel, 'Número KvK (8 dígitos)');
+    expect(DriverStrings.kvkBusinessNameLabel, 'Nombre de la empresa');
+    expect(DriverStrings.kvkBusinessAddressLabel, 'Dirección comercial');
+    expect(
+      DriverStrings.documentSaveFailed,
+      'No se pudo guardar. Revisa tus datos e inténtalo de nuevo.',
+    );
     expect(DriverStrings.faq, 'Preguntas frecuentes');
     expect(DriverStrings.faqHowGoOnlineQuestion, '¿Cómo me conecto?');
     expect(
@@ -149,6 +163,13 @@ void main() {
     expect(
       DriverStrings.missingFieldsMessage(['شركة التأمين', 'رقم الوثيقة']),
       'الحقول الناقصة: شركة التأمين, رقم الوثيقة.',
+    );
+    expect(DriverStrings.kvkNumberLabel, 'رقم KvK (8 أرقام)');
+    expect(DriverStrings.kvkBusinessNameLabel, 'اسم الشركة');
+    expect(DriverStrings.kvkBusinessAddressLabel, 'عنوان العمل');
+    expect(
+      DriverStrings.documentSaveFailed,
+      'فشل الحفظ. تحقق من بياناتك وحاول مرة أخرى.',
     );
     expect(DriverStrings.faq, 'الأسئلة الشائعة');
     expect(DriverStrings.faqHowGoOnlineQuestion, 'كيف أصبح متصلا؟');

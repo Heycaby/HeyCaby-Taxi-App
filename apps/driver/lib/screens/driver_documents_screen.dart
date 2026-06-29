@@ -584,7 +584,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
     final n = _kvkNumberCtrl.text.trim();
     if (!RegExp(r'^\d{8}$').hasMatch(n)) {
       setState(() {
-        _message = 'KvK nummer: 8 cijfers';
+        _message = DriverStrings.kvkNumberInvalid;
         _messageOk = false;
       });
       return;
@@ -606,14 +606,14 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
     setState(() => _savingKvk = false);
     if (res?['success'] == true) {
       setState(() {
-        _message = DriverStrings.chauffeurspasSaved;
+        _message = DriverStrings.documentInformationSaved;
         _messageOk = true;
       });
-      _showInfoSnack('Information saved successfully.');
+      _showInfoSnack(DriverStrings.documentInformationSaved);
       _refreshComplianceCaches();
     } else {
       setState(() {
-        _message = res?['error']?.toString() ?? 'Opslaan mislukt';
+        _message = DriverStrings.documentSaveFailed;
         _messageOk = false;
       });
     }
@@ -749,14 +749,14 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
     if (res?['success'] == true) {
       setState(() {
         _pendingInsurancePhotoUrl = null;
-        _message = 'Insurance saved successfully.';
+        _message = DriverStrings.documentInformationSaved;
         _messageOk = true;
       });
-      _showInfoSnack('Insurance document saved successfully.');
+      _showInfoSnack(DriverStrings.documentInformationSaved);
       _refreshComplianceCaches();
     } else {
       setState(() {
-        _message = res?['error']?.toString() ?? 'Opslaan mislukt';
+        _message = DriverStrings.documentSaveFailed;
         _messageOk = false;
       });
     }
@@ -1548,7 +1548,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
                   LengthLimitingTextInputFormatter(8),
                 ],
                 decoration: InputDecoration(
-                  labelText: 'KvK nummer (8 cijfers)',
+                  labelText: DriverStrings.kvkNumberLabel,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -1559,7 +1559,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
                 controller: _kvkNameCtrl,
                 readOnly: kvkLocked,
                 decoration: InputDecoration(
-                  labelText: 'Bedrijfsnaam',
+                  labelText: DriverStrings.kvkBusinessNameLabel,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -1570,7 +1570,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
                 controller: _kvkAddressCtrl,
                 readOnly: kvkLocked,
                 decoration: InputDecoration(
-                  labelText: 'Vestigingsadres',
+                  labelText: DriverStrings.kvkBusinessAddressLabel,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

@@ -374,8 +374,48 @@ class DriverStrings {
   static const String kvkManualVerifyDetailed =
       'Vul je juiste KvK-nummer en geregistreerde bedrijfsadres in. '
       'Ons team controleert dit handmatig na indiening.';
-  static const String kvkNumberAddressRequired =
-      'KvK-nummer en bedrijfsadres zijn vereist voor handmatige verificatie.';
+  static String get kvkNumberAddressRequired => _t(
+        'KvK-nummer en bedrijfsadres zijn vereist voor handmatige verificatie.',
+        en: 'KvK number and business address are required for manual verification.',
+        es: 'El número KvK y la dirección comercial son obligatorios para la verificación manual.',
+        ar: 'رقم KvK وعنوان العمل مطلوبان للتحقق اليدوي.',
+      );
+  static String get kvkNumberLabel => _t(
+        'KvK nummer (8 cijfers)',
+        en: 'KvK number (8 digits)',
+        es: 'Número KvK (8 dígitos)',
+        ar: 'رقم KvK (8 أرقام)',
+      );
+  static String get kvkNumberInvalid => _t(
+        'KvK nummer moet 8 cijfers hebben.',
+        en: 'KvK number must be 8 digits.',
+        es: 'El número KvK debe tener 8 dígitos.',
+        ar: 'يجب أن يتكون رقم KvK من 8 أرقام.',
+      );
+  static String get kvkBusinessNameLabel => _t(
+        'Bedrijfsnaam',
+        en: 'Business name',
+        es: 'Nombre de la empresa',
+        ar: 'اسم الشركة',
+      );
+  static String get kvkBusinessAddressLabel => _t(
+        'Vestigingsadres',
+        en: 'Business address',
+        es: 'Dirección comercial',
+        ar: 'عنوان العمل',
+      );
+  static String get documentInformationSaved => _t(
+        'Gegevens opgeslagen.',
+        en: 'Information saved.',
+        es: 'Información guardada.',
+        ar: 'تم حفظ المعلومات.',
+      );
+  static String get documentSaveFailed => _t(
+        'Opslaan mislukt. Controleer je gegevens en probeer opnieuw.',
+        en: 'Save failed. Check your details and try again.',
+        es: 'No se pudo guardar. Revisa tus datos e inténtalo de nuevo.',
+        ar: 'فشل الحفظ. تحقق من بياناتك وحاول مرة أخرى.',
+      );
   static const String complianceOverall = 'Totale status';
   static const String complianceProgressTitle = 'Profiel voltooid';
   static String complianceProgressCount(int done, int total) =>
