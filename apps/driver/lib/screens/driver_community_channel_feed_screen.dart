@@ -107,7 +107,7 @@ class _DriverCommunityChannelFeedScreenState
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(DriverStrings.communityEditPostTitle),
+        title: const Text(DriverStrings.communityEditPostTitle),
         content: TextField(
           controller: controller,
           maxLines: 4,
@@ -122,7 +122,7 @@ class _DriverCommunityChannelFeedScreenState
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(DriverStrings.save),
+            child: const Text(DriverStrings.save),
           ),
         ],
       ),
@@ -140,8 +140,8 @@ class _DriverCommunityChannelFeedScreenState
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(DriverStrings.communityDeletePostTitle),
-        content: Text(DriverStrings.communityDeletePostBody),
+        title: const Text(DriverStrings.communityDeletePostTitle),
+        content: const Text(DriverStrings.communityDeletePostBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -149,7 +149,7 @@ class _DriverCommunityChannelFeedScreenState
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(DriverStrings.communityDeleteAction),
+            child: const Text(DriverStrings.communityDeleteAction),
           ),
         ],
       ),
@@ -171,7 +171,7 @@ class _DriverCommunityChannelFeedScreenState
             );
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.communityPollVoteFailed)),
+        const SnackBar(content: Text(DriverStrings.communityPollVoteFailed)),
       );
       return;
     }

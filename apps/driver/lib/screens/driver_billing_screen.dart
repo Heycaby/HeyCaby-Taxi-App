@@ -69,12 +69,16 @@ String _paymentStatusLine(Map<String, dynamic>? s, bool paymentRequired) {
     if (st == 'WARNING') return DriverStrings.billingStatusOverdue;
     return DriverStrings.billingStatusNoPaymentDue;
   }
-  final explicit =
-      s['billing_status_label'] as String? ?? s['subscription_status'] as String?;
+  final explicit = s['billing_status_label'] as String? ??
+      s['subscription_status'] as String?;
   if (explicit != null && explicit.trim().isNotEmpty) return explicit.trim();
   final st = (s['subscription_status'] as String?)?.toLowerCase();
-  if (st == 'paused' || st == 'suspended') return DriverStrings.billingStatusPaused;
-  if (st == 'canceled' || st == 'cancelled') return DriverStrings.billingStatusCanceled;
+  if (st == 'paused' || st == 'suspended') {
+    return DriverStrings.billingStatusPaused;
+  }
+  if (st == 'canceled' || st == 'cancelled') {
+    return DriverStrings.billingStatusCanceled;
+  }
   if (paymentRequired) return DriverStrings.billingStatusPaymentRequired;
   return DriverStrings.billingStatusNoPaymentDue;
 }
@@ -137,7 +141,9 @@ String? _starterBody(Map<String, dynamic>? s) {
     } else if (cap is num) {
       parts.add('Starter cap: €${(cap / 100).toStringAsFixed(2)}');
     }
-    if (parts.isEmpty) return 'Starter benefits apply — see HeyCaby for details.';
+    if (parts.isEmpty) {
+      return 'Starter benefits apply — see HeyCaby for details.';
+    }
     return parts.join('\n');
   }
   return null;
@@ -174,7 +180,8 @@ class DriverBillingScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tokens = ref.watch(colorsProvider);
     final colors = DriverColors.fromTheme(tokens);
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
     final profileAsync = ref.watch(driverProfileProvider);
     final billingStatusAsync = ref.watch(driverBillingStatusProvider);
 
@@ -214,9 +221,7 @@ class DriverBillingScreen extends ConsumerWidget {
     final billingStatus = billingStatusAsync.valueOrNull;
     final paymentRequired = billingStatus?['payment_required'] == true;
     final ledgerV1 = DriverBillingService.isLedgerV1(billingStatus);
-    final weeklyEuro = ledgerV1
-        ? null
-        : _weeklyFeeEuro(billingStatus);
+    final weeklyEuro = ledgerV1 ? null : _weeklyFeeEuro(billingStatus);
     final weeklyFeeDisplay = ledgerV1
         ? _ledgerFeePerRideLabel(billingStatus)
         : (weeklyEuro != null ? '€$weeklyEuro' : DriverStrings.billingDash);
@@ -337,7 +342,7 @@ class DriverBillingScreen extends ConsumerWidget {
       if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(DriverStrings.billingSubscriptionDone)),
+          const SnackBar(content: Text(DriverStrings.billingSubscriptionDone)),
         );
         onAfterAction();
       }
@@ -348,7 +353,8 @@ class DriverBillingScreen extends ConsumerWidget {
             ? (e.response!.data['error']?.toString() ??
                 DriverStrings.billingSubscriptionError)
             : DriverStrings.billingSubscriptionError;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(msg)));
       }
     }
   }
@@ -361,8 +367,8 @@ class DriverBillingScreen extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(DriverStrings.billingSubscriptionCancelConfirmTitle),
-        content: Text(DriverStrings.billingSubscriptionCancelConfirmBody),
+        title: const Text(DriverStrings.billingSubscriptionCancelConfirmTitle),
+        content: const Text(DriverStrings.billingSubscriptionCancelConfirmBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -370,7 +376,7 @@ class DriverBillingScreen extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(DriverStrings.billingSubscriptionConfirm),
+            child: const Text(DriverStrings.billingSubscriptionConfirm),
           ),
         ],
       ),
@@ -405,7 +411,7 @@ class DriverBillingScreen extends ConsumerWidget {
     if (driverStatusUsesAppleBilling(bs) && !driverAppleIapSupportedOnDevice) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(DriverStrings.iapOnlyAvailableOnIos)),
+          const SnackBar(content: Text(DriverStrings.iapOnlyAvailableOnIos)),
         );
       }
       return;
@@ -477,7 +483,7 @@ class DriverBillingScreen extends ConsumerWidget {
     if (url == null || url.isEmpty) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(DriverStrings.platformFeeStartError)),
+          const SnackBar(content: Text(DriverStrings.platformFeeStartError)),
         );
       }
       return;
@@ -520,7 +526,8 @@ class DriverBillingScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _openPaymentMethodsPortal(BuildContext context, WidgetRef ref) async {
+  Future<void> _openPaymentMethodsPortal(
+      BuildContext context, WidgetRef ref) async {
     final colors = ref.read(colorsProvider);
     final typo = ref.read(typographyProvider);
     final api = ref.read(driverApiProvider);
@@ -554,7 +561,8 @@ class DriverBillingScreen extends ConsumerWidget {
             ? (e.response!.data['error']?.toString() ??
                 DriverStrings.billingPaymentMethodsUnavailable)
             : DriverStrings.billingPaymentMethodsUnavailable;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(msg)));
       }
       return;
     }
@@ -565,7 +573,8 @@ class DriverBillingScreen extends ConsumerWidget {
     if (portal == null || portal.isEmpty) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(DriverStrings.billingPaymentMethodsUnavailable)),
+          const SnackBar(
+              content: Text(DriverStrings.billingPaymentMethodsUnavailable)),
         );
       }
       return;
@@ -626,7 +635,7 @@ class DriverBillingScreen extends ConsumerWidget {
       ref.invalidate(driverProfileProvider);
       ref.invalidate(driverPaymentLedgerProvider);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.billingRestoreDone)),
+        const SnackBar(content: Text(DriverStrings.billingRestoreDone)),
       );
     }
   }
