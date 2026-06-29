@@ -4,6 +4,13 @@ import 'package:heycaby_ui/src/theme/typography.dart';
 
 const String kRiderDefaultTheme = 'taxi-3';
 
+const Set<String> kRiderSelectableThemeIds = {
+  'fresh',
+  'blossom',
+  'taxi-1',
+  'taxi-3',
+};
+
 /// Premium green driver palette. This is the only driver app palette.
 const String kHeyCabyDriverProThemeId = 'driver-pro';
 
@@ -28,6 +35,13 @@ const Map<String, String> kMigratedThemeIds = {
 String migrateThemeId(String? id) {
   if (id == null || id.isEmpty) return kRiderDefaultTheme;
   return kMigratedThemeIds[id] ?? id;
+}
+
+String resolveRiderThemeId(String? id) {
+  final migrated = migrateThemeId(id);
+  if (!kRiderSelectableThemeIds.contains(migrated)) return kRiderDefaultTheme;
+  if (!kThemes.containsKey(migrated)) return kRiderDefaultTheme;
+  return migrated;
 }
 
 final Map<String, HeyCabyThemeData> kThemes = {

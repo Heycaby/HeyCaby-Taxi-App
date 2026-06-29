@@ -70,12 +70,12 @@ class SettingsNotifier extends AsyncNotifier<SettingsState> {
             ? normalizedSaved
             : deviceLanguage;
     final language = followsDevice ? deviceLanguage : overrideLanguage;
-    var theme = await _storage.read(key: 'theme') ?? kRiderDefaultTheme;
-    theme = migrateThemeId(theme);
-    if (!kThemes.containsKey(theme)) theme = kRiderDefaultTheme;
+    final theme = resolveRiderThemeId(await _storage.read(key: 'theme'));
     await _storage.write(key: 'theme', value: theme);
-    final locationEnabled = await _storage.read(key: 'location_enabled') != 'false';
-    final notificationsEnabled = await _storage.read(key: 'notifications_enabled') == 'true';
+    final locationEnabled =
+        await _storage.read(key: 'location_enabled') != 'false';
+    final notificationsEnabled =
+        await _storage.read(key: 'notifications_enabled') == 'true';
     final userName = await _storage.read(key: 'user_name');
 
     return SettingsState(
@@ -113,8 +113,7 @@ class SettingsNotifier extends AsyncNotifier<SettingsState> {
   }
 
   Future<void> setTheme(String theme) async {
-    final resolved = migrateThemeId(theme);
-    final id = kThemes.containsKey(resolved) ? resolved : kRiderDefaultTheme;
+    final id = resolveRiderThemeId(theme);
     await _storage.write(key: 'theme', value: id);
     state = AsyncData(state.value!.copyWith(theme: id));
   }
@@ -125,7 +124,8 @@ class SettingsNotifier extends AsyncNotifier<SettingsState> {
   }
 
   Future<void> setNotificationsEnabled(bool enabled) async {
-    await _storage.write(key: 'notifications_enabled', value: enabled.toString());
+    await _storage.write(
+        key: 'notifications_enabled', value: enabled.toString());
     state = AsyncData(state.value!.copyWith(notificationsEnabled: enabled));
   }
 

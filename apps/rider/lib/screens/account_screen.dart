@@ -416,7 +416,10 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
 
   void _showThemePicker(HeyCabyColorTokens colors, HeyCabyTypography typo) {
     final settings = ref.watch(settingsProvider).valueOrNull;
-    final themes = kThemes.entries.toList();
+    final themes = kRiderSelectableThemeIds
+        .map((id) => MapEntry(id, kThemes[id]))
+        .where((entry) => entry.value != null)
+        .toList();
     showModalBottomSheet(
       context: context,
       backgroundColor: colors.surface,
@@ -434,7 +437,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
                 _DragHandle(colors: colors),
                 for (final entry in themes)
                   ListTile(
-                    title: Text(entry.value.name,
+                    title: Text(entry.value!.name,
                         style: typo.bodyLarge.copyWith(color: colors.text)),
                     trailing: settings?.theme == entry.key
                         ? Icon(Icons.check, color: colors.accent)
@@ -476,7 +479,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
   String _currentThemeLabel() {
     final themeId = ref.watch(settingsProvider).valueOrNull?.theme;
     if (themeId != null) {
-      final theme = kThemes[migrateThemeId(themeId)];
+      final theme = kThemes[resolveRiderThemeId(themeId)];
       if (theme != null) return theme.name;
     }
     return kThemes[kRiderDefaultTheme]?.name ?? '';
