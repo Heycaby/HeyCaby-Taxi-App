@@ -12,7 +12,6 @@ import '../l10n/driver_strings.dart';
 import '../providers/driver_location_provider.dart';
 import '../providers/driver_data_providers.dart';
 import '../providers/driver_map_providers.dart';
-import '../services/driver_billing_service.dart';
 import '../services/driver_data_service.dart' show ZoneDemand;
 import '../theme/driver_colors.dart';
 import '../theme/driver_spacing.dart';
@@ -604,30 +603,14 @@ class _DriverDrawerHeader extends StatelessWidget {
   final dynamic profile;
   final Map<String, dynamic>? billingStatus;
 
-  DateTime? _firstDateFromKeys(Map<String, dynamic>? map, List<String> keys) {
-    if (map == null) return null;
-    for (final k in keys) {
-      final v = map[k];
-      if (v is String && v.trim().isNotEmpty) {
-        final d = DateTime.tryParse(v.trim());
-        if (d != null) return d.toLocal();
-      }
-    }
-    return null;
-  }
-
   String _ledgerDrawerSubtitle(Map<String, dynamic>? s) {
     if (s == null) return DriverStrings.billingDash;
     final outstanding = s['outstanding_cents'];
-    final limit = s['limit_cents'];
-    if (outstanding is num && limit is num) {
-      return '€${(outstanding / 100).toStringAsFixed(2)} / €${(limit / 100).toStringAsFixed(2)}';
+    if (outstanding is num) {
+      if (outstanding <= 0) return DriverStrings.platformBalanceCurrent;
+      return '${DriverStrings.platformBalanceOutstanding}: €${(outstanding / 100).toStringAsFixed(2)}';
     }
-    final fee = s['platform_fee_cents'];
-    if (fee is num) {
-      return '€${(fee / 100).toStringAsFixed(2)} ${DriverStrings.billingPerRideSuffix}';
-    }
-    return DriverStrings.billingDash;
+    return DriverStrings.platformBalanceCurrent;
   }
 
   @override
@@ -642,52 +625,19 @@ class _DriverDrawerHeader extends StatelessWidget {
     final String memberLabel = isFounding
         ? DriverStrings.drawerFoundingMemberLine(foundingNumber)
         : DriverStrings.drawerMember;
-    final DateTime now = DateTime.now();
-    final DateTime? paidUntil = _firstDateFromKeys(
-      billingStatus,
-      const ['subscription_expires_at'],
-    );
-    final int? daysRemaining = paidUntil == null
-        ? null
-        : (paidUntil
-                    .difference(DateTime(now.year, now.month, now.day))
-                    .inHours /
-                24)
-            .ceil();
     final bool? paymentRequired = billingStatus == null
         ? null
         : (billingStatus?['payment_required'] == true);
-    final bool ledgerV1 = DriverBillingService.isLedgerV1(billingStatus);
-    final int? weeklyFeeCents = billingStatus?['weekly_fee_cents'] is num
-        ? (billingStatus!['weekly_fee_cents'] as num).toInt()
-        : null;
-    final String? weeklyFeeEuro = weeklyFeeCents == null
-        ? null
-        : (weeklyFeeCents / 100).toStringAsFixed(2);
     final bool hasLiveStatus = paymentRequired != null;
     final bool activePass = hasLiveStatus && paymentRequired == false;
     final String paymentTitle = !hasLiveStatus
         ? DriverStrings.drawerBillingStatusUnavailable
         : activePass
-            ? (ledgerV1
-                ? DriverStrings.billingStatusNoPaymentDue
-                : DriverStrings.drawerBillingWeeklyPassActive)
-            : DriverStrings.billingStatusPaymentRequired;
+            ? DriverStrings.platformBalanceTitle
+            : DriverStrings.platformBalanceRequestsPaused;
     final String paymentSubtitle = !hasLiveStatus
         ? DriverStrings.drawerBillingWaitingLiveStatus
-        : activePass
-            ? (ledgerV1
-                ? _ledgerDrawerSubtitle(billingStatus)
-                : (daysRemaining == null
-                    ? (weeklyFeeEuro == null
-                        ? DriverStrings.drawerBillingPaidSubscriptionActive
-                        : DriverStrings.drawerBillingEuroPaid(weeklyFeeEuro))
-                    : DriverStrings.billingDaysRemaining(daysRemaining)))
-            : (ledgerV1
-                ? _ledgerDrawerSubtitle(billingStatus)
-                : (weeklyFeeEuro == null
-                    ? DriverStrings.drawerBillingPayWeeklyGeneric
-                    : DriverStrings.drawerBillingPayWeeklyEuro(weeklyFeeEuro)));
+        : _ledgerDrawerSubtitle(billingStatus);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),

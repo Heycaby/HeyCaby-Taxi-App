@@ -7,8 +7,6 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../services/driver_billing_service.dart';
 import '../l10n/driver_strings.dart';
-import 'driver_apple_iap_billing.dart';
-import '../widgets/driver_billing_plan_picker.dart';
 import '../widgets/driver_mollie_checkout_screen.dart';
 
 /// `true` when the signed-in user has [user_metadata.review_account] (App Store review).
@@ -52,20 +50,11 @@ Future<bool> ensureDriverPlatformFeeAllowsOnline(
   final paymentRequired = data['payment_required'] == true;
   if (!paymentRequired) return true;
 
-  final isLedger = DriverBillingService.isLedgerV1(data);
-  if (isLedger && data['can_settle_outstanding'] != true) {
+  if (!DriverBillingService.isLedgerV1(data) ||
+      data['can_settle_outstanding'] != true) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text(DriverStrings.platformFeeStatusError)),
-      );
-    }
-    return false;
-  }
-
-  if (driverStatusUsesAppleBilling(data) && !driverAppleIapSupportedOnDevice) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.iapOnlyAvailableOnIos)),
       );
     }
     return false;
@@ -74,34 +63,23 @@ Future<bool> ensureDriverPlatformFeeAllowsOnline(
 
   final colors = ref.read(colorsProvider);
   final typo = ref.read(typographyProvider);
-  final weeklyCents = data['weekly_fee_cents'];
-  final feeEuro =
-      weeklyCents is num ? (weeklyCents / 100).toStringAsFixed(2) : '?';
-  String? selectedPlan;
-  if (isLedger) {
-    selectedPlan = 'settlement';
-  } else {
-    final plans = parseServerBillingPlans(data);
-    selectedPlan = await pickDriverBillingPlanCode(
-      context,
-      colors: colors,
-      typo: typo,
-      plans: plans,
-    );
-  }
-  if (selectedPlan == null || !context.mounted) return false;
+  final outstanding = data['outstanding_cents'];
+  final amount = outstanding is num
+      ? '€${(outstanding / 100).toStringAsFixed(2)}'
+      : DriverStrings.billingDash;
 
   final pay = await showDialog<bool>(
     context: context,
     barrierDismissible: false,
     builder: (ctx) => AlertDialog(
-      title: Text(DriverStrings.platformFeeTitle, style: typo.titleLarge),
+      title: Text(DriverStrings.platformBalanceTitle, style: typo.titleLarge),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            DriverStrings.platformFeeBody(feeEuro),
+            '${DriverStrings.platformBalanceOutstanding}: $amount\n\n'
+            '${DriverStrings.platformBalancePausedBody}',
             style: typo.bodyMedium.copyWith(color: colors.textMid),
           ),
           const SizedBox(height: 12),
@@ -110,7 +88,7 @@ Future<bool> ensureDriverPlatformFeeAllowsOnline(
               Navigator.pop(ctx, false);
               context.push('/driver/billing/history');
             },
-            child: const Text(DriverStrings.billingViewHistory),
+            child: Text(DriverStrings.platformBalanceViewHistory),
           ),
         ],
       ),
@@ -124,16 +102,13 @@ Future<bool> ensureDriverPlatformFeeAllowsOnline(
             HapticService.mediumTap();
             Navigator.pop(ctx, true);
           },
-          child: const Text(DriverStrings.platformFeePay),
+          child: Text(DriverStrings.platformBalanceSettleBalance),
         ),
       ],
     ),
   );
 
   if (pay != true || !context.mounted) return false;
-
-  final useAppleIap =
-      driverStatusUsesAppleBilling(data) && driverAppleIapSupportedOnDevice;
 
   showDialog<void>(
     context: context,
@@ -145,9 +120,7 @@ Future<bool> ensureDriverPlatformFeeAllowsOnline(
           const SizedBox(width: 20),
           Expanded(
             child: Text(
-              useAppleIap
-                  ? DriverStrings.platformFeeStartingAppleIap
-                  : DriverStrings.platformFeeStartingCheckout,
+              DriverStrings.platformBalancePreparingSettlement,
               style: typo.bodyMedium,
             ),
           ),
@@ -156,62 +129,56 @@ Future<bool> ensureDriverPlatformFeeAllowsOnline(
     ),
   );
 
-  if (useAppleIap) {
-    final iapOk = await purchaseDriverPlatformAccessWithAppleIap(
-      context: context,
-      api: api,
-      planCode: selectedPlan,
+  Map<String, dynamic> created;
+  try {
+    created = await api.createDriverPlatformPayment();
+  } catch (e) {
+    _logPlatformFeeTelemetry(
+      scope: 'platform_fee',
+      event: 'create_payment_failed',
+      detail: e.toString(),
     );
     if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-    if (!iapOk) return false;
-  } else {
-    Map<String, dynamic> created;
-    try {
-      created = isLedger
-          ? await api.createDriverPlatformPayment()
-          : await api.createDriverPlatformPayment(plan: selectedPlan);
-    } catch (e) {
-      _logPlatformFeeTelemetry(
-        scope: 'platform_fee',
-        event: 'create_payment_failed',
-        detail: e.toString(),
+    if (context.mounted) {
+      final msg = e is DioException && e.response?.data is Map
+          ? (e.response!.data['error']?.toString() ??
+              DriverStrings.platformFeeStartError)
+          : DriverStrings.platformFeeStartError;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
       );
-      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-      if (context.mounted) {
-        final msg = e is DioException && e.response?.data is Map
-            ? (e.response!.data['error']?.toString() ??
-                DriverStrings.platformFeeStartError)
-            : DriverStrings.platformFeeStartError;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
-        );
-      }
-      return false;
     }
+    return false;
+  }
 
-    if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
+  if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
 
-    final url = created['checkoutUrl'] as String?;
-    if (url == null || url.isEmpty) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(DriverStrings.platformFeeStartError)),
-        );
-      }
-      return false;
+  final url = created['checkoutUrl'] as String?;
+  if (url == null || url.isEmpty) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(DriverStrings.platformFeeStartError)),
+      );
     }
+    return false;
+  }
 
-    if (!context.mounted) return false;
+  if (!context.mounted) return false;
 
-    await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => DriverMollieCheckoutScreen(
-          checkoutUrl: url,
-          colors: colors,
-          typo: typo,
-        ),
+  await Navigator.of(context).push<bool>(
+    MaterialPageRoute(
+      builder: (_) => DriverMollieCheckoutScreen(
+        checkoutUrl: url,
+        colors: colors,
+        typo: typo,
+        appBarTitle: DriverStrings.platformBalanceSettleBalance,
       ),
-    );
+    ),
+  );
+
+  final paymentId = created['mollie_payment_id']?.toString();
+  if (paymentId != null && paymentId.isNotEmpty) {
+    await api.syncDriverBillingPayment(paymentId);
   }
 
   try {

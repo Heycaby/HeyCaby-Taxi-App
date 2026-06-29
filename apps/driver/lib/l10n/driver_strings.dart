@@ -587,7 +587,7 @@ class DriverStrings {
         es: 'Ajustes',
         ar: 'الإعدادات',
       );
-  static const String billing = 'Facturatie';
+  static String get billing => platformBalanceTitle;
   static const String instellingen = 'Instellingen';
   static const String tarieven = 'Tarieven';
   static const String uitloggen = 'Uitloggen';
@@ -1614,7 +1614,6 @@ class DriverStrings {
   static const String platformFeePay = 'Betaal nu';
   static const String platformFeeCheckoutTitle = 'Betaling';
   static const String platformFeeStartingCheckout = 'Betaling voorbereiden…';
-  static const String platformFeeStartingAppleIap = 'Verbinden met App Store…';
   static const String platformFeeInvalidUrl =
       'Ongeldige betaallink. Probeer opnieuw.';
   static const String platformFeeStatusError =
@@ -1641,30 +1640,132 @@ class DriverStrings {
       );
   static const String platformFeeStillPending =
       'Betaling nog niet bevestigd. Wacht even of probeer opnieuw.';
-  static const String billingTitle = 'Facturatie';
-  static const String billingCurrentPlan = 'Huidig abonnement';
+  static String get platformBalanceTitle => _t(
+        'Platformbalans',
+        en: 'Platform Balance',
+        es: 'Balance de plataforma',
+        ar: 'رصيد المنصة',
+      );
+  static String get platformBalanceOutstanding => _t(
+        'Openstaand',
+        en: 'Outstanding',
+        es: 'Pendiente',
+        ar: 'مستحق',
+      );
+  static String get platformBalanceNoOutstanding => _t(
+        'Geen openstaand bedrag',
+        en: 'No outstanding balance',
+        es: 'Sin saldo pendiente',
+        ar: 'لا يوجد رصيد مستحق',
+      );
+  static String get platformBalanceCurrent => _t(
+        'Balans op orde',
+        en: 'Balance current',
+        es: 'Balance al día',
+        ar: 'الرصيد محدث',
+      );
+  static String get platformBalanceRequestsPaused => _t(
+        'Ritaanvragen tijdelijk gepauzeerd',
+        en: 'Ride requests temporarily paused',
+        es: 'Solicitudes de viaje pausadas temporalmente',
+        ar: 'طلبات الرحلات متوقفة مؤقتا',
+      );
+  static String get platformBalanceCurrentBody => _t(
+        'Je hebt geen openstaande platformbalans.',
+        en: 'You have no outstanding platform balance.',
+        es: 'No tienes saldo pendiente de plataforma.',
+        ar: 'لا يوجد لديك رصيد مستحق للمنصة.',
+      );
+  static String get platformBalanceDueBody => _t(
+        'Vereffen je balans binnen de betaaltermijn om nieuwe ritaanvragen te blijven ontvangen.',
+        en: 'Settle your balance within the payment window to keep receiving new ride requests.',
+        es: 'Liquida tu balance dentro del plazo para seguir recibiendo solicitudes de viaje.',
+        ar: 'سوّ رصيدك ضمن مهلة الدفع للاستمرار في تلقي طلبات رحلات جديدة.',
+      );
+  static String get platformBalancePausedBody => _t(
+        'Nieuwe ritaanvragen zijn tijdelijk gepauzeerd totdat je platformbalans is vereffend.',
+        en: 'New ride requests are temporarily paused until your platform balance is settled.',
+        es: 'Las nuevas solicitudes de viaje están pausadas temporalmente hasta que liquides tu balance de plataforma.',
+        ar: 'طلبات الرحلات الجديدة متوقفة مؤقتا حتى تتم تسوية رصيد المنصة.',
+      );
+  static String get platformBalanceDueToday => _t(
+        'Vereffen je balans vandaag om nieuwe ritaanvragen te blijven ontvangen.',
+        en: 'Settle your balance today to keep receiving new ride requests.',
+        es: 'Liquida tu balance hoy para seguir recibiendo solicitudes de viaje.',
+        ar: 'سوّ رصيدك اليوم للاستمرار في تلقي طلبات رحلات جديدة.',
+      );
+  static String get platformBalanceDueTomorrow => _t(
+        'Vereffen je balans uiterlijk morgen.',
+        en: 'Settle your balance by tomorrow.',
+        es: 'Liquida tu balance antes de mañana.',
+        ar: 'سوّ رصيدك بحلول الغد.',
+      );
+  static String platformBalanceDueInDays(int days) => _t(
+        'Vereffen je balans binnen $days dagen.',
+        en: 'Settle your balance within $days days.',
+        es: 'Liquida tu balance dentro de $days días.',
+        ar: 'سوّ رصيدك خلال $days أيام.',
+      );
+  static String get platformBalanceExplainer => _t(
+        'HeyCaby maakt na elke actieve week automatisch een platformbalans aan. Je houdt 100% van je ritopbrengst.',
+        en: 'HeyCaby creates a platform balance after each active week. You keep 100% of your ride earnings.',
+        es: 'HeyCaby crea un balance de plataforma después de cada semana activa. Conservas el 100% de tus ingresos por viajes.',
+        ar: 'تنشئ HeyCaby رصيد منصة بعد كل أسبوع نشط. تحتفظ بنسبة 100% من أرباح رحلاتك.',
+      );
+  static String get platformBalancePausedExplainer => _t(
+        'Je kunt geschiedenis, inkomsten, profiel, community en support blijven gebruiken. Alleen nieuwe ritaanvragen zijn gepauzeerd.',
+        en: 'You can still use history, earnings, profile, community, and support. Only new ride requests are paused.',
+        es: 'Puedes seguir usando historial, ingresos, perfil, comunidad y soporte. Solo las nuevas solicitudes de viaje están pausadas.',
+        ar: 'يمكنك الاستمرار في استخدام السجل والأرباح والملف الشخصي والمجتمع والدعم. فقط طلبات الرحلات الجديدة متوقفة.',
+      );
+  static String get platformBalanceSettleBalance => _t(
+        'Balans vereffenen',
+        en: 'Settle Balance',
+        es: 'Liquidar balance',
+        ar: 'تسوية الرصيد',
+      );
+  static String get platformBalanceViewHistory => _t(
+        'Geschiedenis bekijken',
+        en: 'View history',
+        es: 'Ver historial',
+        ar: 'عرض السجل',
+      );
+  static String get platformBalancePreparingSettlement => _t(
+        'Betaling voorbereiden…',
+        en: 'Preparing settlement…',
+        es: 'Preparando liquidación…',
+        ar: 'جار تحضير التسوية…',
+      );
+  static String get platformBalanceVerifyPayment => _t(
+        'We verifiëren je betaling. De meeste betalingen worden binnen enkele minuten bevestigd.',
+        en: 'We’ll verify your payment. Most payments are confirmed within a few minutes.',
+        es: 'Verificaremos tu pago. La mayoría de pagos se confirman en unos minutos.',
+        ar: 'سنتحقق من دفعتك. يتم تأكيد معظم المدفوعات خلال دقائق.',
+      );
+  static String get billingTitle => platformBalanceTitle;
+  static const String billingCurrentPlan = 'Platformbalans';
   static const String billingFoundingMember = 'Founding Member';
   static const String billingRegularMember = 'Regulier lid';
-  static const String billingWeeklyFee = 'Weekprijs';
+  static const String billingWeeklyFee = 'Wekelijkse platformbalans';
   static const String billingPerRideSuffix = 'per rit';
-  static const String billingOutstandingLimit = 'Openstaand / limiet';
+  static const String billingOutstandingLimit = 'Openstaand';
   static const String billingNextPayment = 'Volgende betaling';
   static const String billingPaymentStatus = 'Betalingsstatus';
   static const String billingStatusActive = 'Actief';
   static const String billingStatusPending = 'In afwachting';
   static const String billingStatusOverdue = 'Achterstallig';
-  static const String billingViewHistory = 'Factuurgeschiedenis bekijken';
+  static const String billingViewHistory = 'Balansgeschiedenis bekijken';
   static const String billingPaymentMethods = 'Betaalmethoden';
-  static const String billingPayNow = 'Nu betalen';
-  static const String billingChoosePlanTitle = 'Kies een abonnement';
-  static const String billingPlanUnknown = 'Abonnement';
-  static const String billingUseSelectedPlan = 'Doorgaan met dit abonnement';
+  static const String billingPayNow = 'Balans vereffenen';
+  static const String billingChoosePlanTitle = 'Balans vereffenen';
+  static const String billingPlanUnknown = 'Platformbalans';
+  static const String billingUseSelectedPlan = 'Balans vereffenen';
 
   /// Shown when `/api/driver/status` returns no usable `plans` (strict server pricing).
   static const String billingPlansUnavailable =
       'Prijzen zijn nu niet beschikbaar. Vernieuw of probeer het later opnieuw.';
-  static const String billingHistoryTitle = 'Factuurgeschiedenis';
-  static const String billingHistoryEmpty = 'Nog geen factuurgeschiedenis';
+  static const String billingHistoryTitle = 'Balansgeschiedenis';
+  static const String billingHistoryEmpty = 'Nog geen balansgeschiedenis';
   static const String billingHistoryDate = 'Datum';
   static const String billingHistoryAmount = 'Bedrag';
   static const String billingHistoryStatus = 'Status';
@@ -1680,36 +1781,10 @@ class DriverStrings {
   static const String billingStatusNoPaymentDue = 'Geen betaling verschuldigd';
   static const String billingStatusPaused = 'Gepauzeerd';
   static const String billingStatusCanceled = 'Geannuleerd';
-  static const String billingSubscriptionTitle = 'Weekabonnement';
-  static const String billingSubscriptionPause = 'Pauzeren';
-  static const String billingSubscriptionResume = 'Hervatten';
-  static const String billingSubscriptionCancel = 'Stoppen na deze periode';
-  static const String billingSubscriptionCancelConfirmTitle =
-      'Weekfacturatie stoppen?';
-  static const String billingSubscriptionCancelConfirmBody =
-      'Je behoudt toegang tot het einde van de betaalde periode. Je kunt later opnieuw starten van dit scherm.';
-  static const String billingSubscriptionConfirm = 'Bevestigen';
-  static const String billingSubscriptionWorking = 'Bijwerken…';
-  static const String billingSubscriptionDone = 'Opgeslagen.';
-  static const String billingSubscriptionError =
-      'Abonnement bijwerken mislukt. Probeer opnieuw.';
   static const String billingPaymentMethodsPortalTitle = 'Betaalmethoden';
   static const String billingPaymentMethodsUnavailable =
       'Beheren van betaalmethoden is nog niet beschikbaar. Neem contact op met de ondersteuning als je je kaart wilt wijzigen.';
   static const String billingPayPreparing = 'Betaling voorbereiden…';
-  static const String billingRestoreApplePurchases = 'Aankopen herstellen';
-  static const String billingRestoreDone = 'Aankopen hersteld.';
-  static const String iapOnlyAvailableOnIos =
-      'In-app aankoop is alleen beschikbaar op iPhone.';
-  static const String iapStoreUnavailable = 'App Store is nu niet beschikbaar.';
-  static const String iapProductsLoadFailed =
-      'Abonnementen niet geladen. Probeer opnieuw.';
-  static const String iapVerifyFailed = 'Validatie mislukt.';
-  static const String iapRestoreFailed = 'Herstellen mislukt.';
-  static const String iapNothingToRestore =
-      'Geen eerdere aankoop gevonden voor dit account.';
-  static String billingDaysRemaining(int n) =>
-      n == 1 ? 'Nog 1 dag' : 'Nog $n dagen';
   static const String billingNextPaymentDueSoon = 'Binnenkort verschuldigd';
 
   /// Home map hamburger drawer — use NL strings throughout so the menu matches [DriverStrings] defaults.
@@ -1722,16 +1797,8 @@ class DriverStrings {
 
   static const String drawerBillingStatusUnavailable =
       'Weekstatus niet beschikbaar';
-  static const String drawerBillingWeeklyPassActive = 'Weekpas actief';
   static const String drawerBillingWaitingLiveStatus =
       'Wachten op live status van de server';
-  static const String drawerBillingPaidSubscriptionActive =
-      'Betaald abonnement actief';
-  static String drawerBillingEuroPaid(String euro) => '€$euro betaald';
-  static const String drawerBillingPayWeeklyGeneric =
-      'Betaal de weekprijs voor 7 dagen';
-  static String drawerBillingPayWeeklyEuro(String euro) =>
-      'Betaal €$euro voor 7 dagen';
 
   static const String licenceSubmittedPendingReview =
       'Ingediend — ons team bevestigt je rijbewijs na beoordeling van Veriff.';
@@ -3437,11 +3504,11 @@ class DriverStrings {
   static const String featureTour3Heading = 'Deel met collega-chauffeurs';
   static const String featureTour3Body =
       'Nodig andere chauffeurs uit. Hoe meer chauffeurs op het platform, hoe meer passagiers het vertrouwen en gebruiken.';
-  static const String featureTour4Kicker = 'Betalen naar gebruik';
-  static const String featureTour4Heading = 'Pas betalen na €100 verdiend';
+  static const String featureTour4Kicker = 'Platformbalans';
+  static const String featureTour4Heading = 'Werk eerst, vereffen later';
   static const String featureTour4Body =
-      'Als founding member betaal je pas voor je abonnement wanneer je €100 op het platform hebt verdiend. '
-      'Daarna kies je: €10 (+ 21% BTW) per dag, €60 (+ 21% BTW) per week of €200 (+ 21% BTW) per maand.';
+      'HeyCaby toont alleen een openstaand platformsaldo wanneer er echt iets te vereffenen is. '
+      'Nieuwe ritverzoeken pauzeren pas als dat saldo na de betaaltermijn open blijft.';
   static const String featureTour5Kicker = 'Founding-leden';
   static const String featureTour5Heading = 'Foundingplaatsen zijn beperkt';
   static const String featureTour5Body =

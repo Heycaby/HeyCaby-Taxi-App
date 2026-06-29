@@ -116,7 +116,9 @@ export async function mollieCreatePayment(input: {
   return JSON.parse(raw) as MolliePayment;
 }
 
-export async function mollieFetchPayment(paymentId: string): Promise<MolliePayment> {
+export async function mollieFetchPayment(
+  paymentId: string,
+): Promise<MolliePayment> {
   const key = mollieApiKey();
   const res = await fetch(
     `https://api.mollie.com/v2/payments/${encodeURIComponent(paymentId)}`,
@@ -184,54 +186,6 @@ export async function settlePaidPayment(
     parseFloat(payment.amount?.value ?? "0") * 100,
   );
 
-  if (intent.checkout_kind === "subscription") {
-    const planCode = String(intent.plan_code ?? "weekly");
-    const plan = subscriptionPlan(planCode);
-    const days = plan?.durationDays ?? 7;
-    const { data: driverRow } = await admin
-      .from("drivers")
-      .select("subscription_expires_at")
-      .eq("id", intent.driver_id)
-      .maybeSingle();
-    const baseMs = Math.max(
-      Date.now(),
-      driverRow?.subscription_expires_at
-        ? new Date(String(driverRow.subscription_expires_at)).getTime()
-        : 0,
-    );
-    const expiresAt = new Date(baseMs + days * 24 * 60 * 60 * 1000).toISOString();
-    const { error: updateErr } = await admin
-      .from("drivers")
-      .update({ subscription_expires_at: expiresAt })
-      .eq("id", intent.driver_id);
-    if (updateErr) {
-      return json({ ok: false, error: updateErr.message }, 500);
-    }
-    await admin.from("driver_payment_events").insert({
-      driver_id: intent.driver_id,
-      amount_cents: amountCents,
-      currency: "EUR",
-      status: "paid",
-      provider: "mollie",
-      mollie_payment_id: paymentId,
-      metadata: {
-        plan_code: planCode,
-        duration_days: days,
-        checkout_kind: "subscription",
-      },
-    });
-    await admin
-      .from("billing_checkout_intents")
-      .update({ status: "paid", updated_at: new Date().toISOString() })
-      .eq("provider", "mollie")
-      .eq("external_payment_id", paymentId);
-    return json({
-      ok: true,
-      subscription_expires_at: expiresAt,
-      checkout_kind: "subscription",
-    });
-  }
-
   const settleRes = await admin.rpc("fn_driver_billing_apply_settlement", {
     p_driver_id: intent.driver_id,
     p_paid_cents: amountCents,
@@ -246,17 +200,4 @@ export async function settlePaidPayment(
     return json({ ok: false, error: settleRes.error.message }, 500);
   }
   return json(settleRes.data as object);
-}
-
-const SUBSCRIPTION_PLANS: Record<
-  string,
-  { amountCents: number; durationDays: number; title: string }
-> = {
-  daily: { amountCents: 1210, durationDays: 1, title: "daily" },
-  weekly: { amountCents: 7260, durationDays: 7, title: "weekly" },
-  monthly: { amountCents: 24200, durationDays: 30, title: "monthly" },
-};
-
-export function subscriptionPlan(code: string) {
-  return SUBSCRIPTION_PLANS[code.trim().toLowerCase()] ?? null;
 }

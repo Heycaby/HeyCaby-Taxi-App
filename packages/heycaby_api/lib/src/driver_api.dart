@@ -57,29 +57,9 @@ class DriverApi {
     throw UnsupportedError('Billing status unavailable from Supabase.');
   }
 
-  /// Apple receipt validation via Supabase Edge (Phase C/E).
-  Future<void> verifyAppleDriverReceipt({
-    required String receiptData,
-    String planCode = '',
-  }) async {
-    final ok = await _billingEdge.verifyAppleReceiptOrNull(
-      receiptData: receiptData,
-      planCode: planCode,
-    );
-    if (!ok) {
-      throw UnsupportedError('Apple receipt verification failed.');
-    }
-  }
-
-  /// Mollie checkout — Supabase Edge (settlement or legacy subscription).
-  Future<Map<String, dynamic>> createDriverPlatformPayment(
-      {String? plan}) async {
-    final ledgerStatus = await _billingEdge.fetchBillingStatusOrNull();
-    final isLedger = DriverBillingEdgeService.isLedgerV1(ledgerStatus);
-    final edge = await _billingEdge.createCheckoutOrNull(
-      kind: isLedger ? 'settlement' : 'subscription',
-      plan: isLedger ? null : plan,
-    );
+  /// Mollie checkout — Supabase Edge settlement for the current Platform Balance.
+  Future<Map<String, dynamic>> createDriverPlatformPayment() async {
+    final edge = await _billingEdge.createCheckoutOrNull();
     if (edge != null) {
       return edge;
     }
@@ -89,21 +69,6 @@ class DriverApi {
   /// Confirm Mollie payment after checkout redirect (Edge webhook fallback).
   Future<bool> syncDriverBillingPayment(String molliePaymentId) =>
       _billingEdge.syncMolliePayment(molliePaymentId);
-
-  /// Legacy Mollie subscription controls — disabled after Phase E cutover.
-  Future<Map<String, dynamic>> cancelDriverPlatformSubscription() async {
-    throw UnsupportedError(
-        'Legacy subscription cancel is no longer available.');
-  }
-
-  Future<Map<String, dynamic>> pauseDriverPlatformSubscription() async {
-    throw UnsupportedError('Legacy subscription pause is no longer available.');
-  }
-
-  Future<Map<String, dynamic>> resumeDriverPlatformSubscription() async {
-    throw UnsupportedError(
-        'Legacy subscription resume is no longer available.');
-  }
 
   /// Ledger history from [fn_driver_billing_ledger_history].
   Future<List<Map<String, dynamic>>> fetchDriverPaymentLedger() async {

@@ -5,7 +5,11 @@ class DriverBillingEdgeService {
   const DriverBillingEdgeService();
 
   static bool isLedgerV1(Map<String, dynamic>? status) =>
-      status?['billing_model'] == 'ledger_v1';
+      status?['billing_model'] == 'ledger_v1' ||
+      status?['billing_model'] == 'platform_balance_v1';
+
+  static bool isPlatformBalanceV1(Map<String, dynamic>? status) =>
+      status?['billing_model'] == 'platform_balance_v1';
 
   Future<Map<String, dynamic>?> fetchBillingStatusOrNull() async {
     try {
@@ -19,18 +23,11 @@ class DriverBillingEdgeService {
     }
   }
 
-  Future<Map<String, dynamic>?> createCheckoutOrNull({
-    String kind = 'settlement',
-    String? plan,
-  }) async {
+  Future<Map<String, dynamic>?> createCheckoutOrNull() async {
     try {
-      final body = <String, dynamic>{
-        'kind': kind,
-        if (plan != null && plan.trim().isNotEmpty) 'plan': plan.trim().toLowerCase(),
-      };
       final res = await HeyCabySupabase.client.functions.invoke(
         'driver-billing-checkout',
-        body: body,
+        body: const <String, dynamic>{},
       );
       final data = res.data;
       if (data is! Map) return null;
@@ -48,26 +45,6 @@ class DriverBillingEdgeService {
       final res = await HeyCabySupabase.client.functions.invoke(
         'driver-billing-sync',
         body: {'mollie_payment_id': molliePaymentId.trim()},
-      );
-      final data = res.data;
-      return data is Map && data['ok'] == true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<bool> verifyAppleReceiptOrNull({
-    required String receiptData,
-    String planCode = '',
-  }) async {
-    if (receiptData.trim().isEmpty) return false;
-    try {
-      final res = await HeyCabySupabase.client.functions.invoke(
-        'driver-billing-apple-verify',
-        body: {
-          'receipt_data': receiptData,
-          'plan_code': planCode.trim().toLowerCase(),
-        },
       );
       final data = res.data;
       return data is Map && data['ok'] == true;

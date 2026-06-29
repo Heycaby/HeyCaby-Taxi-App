@@ -9,168 +9,54 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
-import '../services/driver_billing_service.dart';
-import '../utils/driver_runtime_refresh.dart';
-import '../services/driver_apple_iap_billing.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../ui/driver_status_badge.dart';
-import '../widgets/driver_billing_plan_picker.dart';
+import '../utils/driver_runtime_refresh.dart';
 import '../widgets/driver_mollie_checkout_screen.dart';
-import '../widgets/driver_subscription_gate_body.dart';
+import '../widgets/driver_platform_balance_body.dart';
 
-int? _weeklyFeeCents(Map<String, dynamic>? s) {
-  if (s == null) return null;
-  final a = s['weekly_fee_cents'];
-  if (a is num) return a.toInt();
-  final b = s['weekly_fee_incl_vat_cents'];
-  if (b is num) return b.toInt();
-  return null;
+String _money(Map<String, dynamic>? status, int cents) {
+  final currency = (status?['currency'] as String?)?.trim().toUpperCase();
+  final prefix = currency == null || currency == 'EUR' ? '€' : '$currency ';
+  return '$prefix${(cents / 100).toStringAsFixed(2)}';
 }
 
-String? _weeklyFeeEuro(Map<String, dynamic>? s) {
-  final c = _weeklyFeeCents(s);
-  if (c == null) return null;
-  return (c / 100).toStringAsFixed(2);
+DateTime? _dateFrom(Map<String, dynamic>? status, String key) {
+  final raw = status?[key];
+  if (raw is! String || raw.trim().isEmpty) return null;
+  return DateTime.tryParse(raw.trim())?.toLocal();
 }
 
-String? _ledgerOutstandingLabel(Map<String, dynamic>? s) {
-  if (s == null || !DriverBillingService.isLedgerV1(s)) return null;
-  final outstanding = s['outstanding_cents'];
-  final limit = s['limit_cents'];
-  if (outstanding is! num || limit is! num) return null;
-  final cur = (s['currency'] as String?)?.trim().toUpperCase();
-  final sym = cur == 'EUR' || cur == null ? '€' : '$cur ';
-  return '$sym${(outstanding / 100).toStringAsFixed(2)} / $sym${(limit / 100).toStringAsFixed(2)}';
+String? _dueLine(Map<String, dynamic>? status) {
+  final state = (status?['balance_state'] as String?)?.trim();
+  final dueAt = _dateFrom(status, 'due_at');
+  final graceUntil = _dateFrom(status, 'grace_until_at');
+  final now = DateTime.now();
+
+  if (state == 'current') return DriverStrings.platformBalanceCurrentBody;
+  if (state == 'paused') return DriverStrings.platformBalancePausedBody;
+
+  final target = graceUntil ?? dueAt;
+  if (target == null) return DriverStrings.platformBalanceDueBody;
+  final days = target.difference(DateTime(now.year, now.month, now.day)).inDays;
+  if (days <= 0) return DriverStrings.platformBalanceDueToday;
+  if (days == 1) return DriverStrings.platformBalanceDueTomorrow;
+  return DriverStrings.platformBalanceDueInDays(days);
 }
 
-String _ledgerFeePerRideLabel(Map<String, dynamic>? s) {
-  final cents = s?['platform_fee_cents'];
-  if (cents is num) {
-    return '€${(cents / 100).toStringAsFixed(2)} ${DriverStrings.billingPerRideSuffix}';
-  }
-  return DriverStrings.billingDash;
+DriverStatusTone _statusTone(Map<String, dynamic>? status) {
+  final state = (status?['balance_state'] as String?)?.trim();
+  if (state == 'paused') return DriverStatusTone.error;
+  if (state == 'due') return DriverStatusTone.warning;
+  return DriverStatusTone.success;
 }
 
-void _refreshAfterBillingMutation(WidgetRef ref) {
+void _refreshAfterBalanceMutation(WidgetRef ref) {
   ref.invalidate(driverBillingStatusProvider);
   ref.invalidate(driverProfileProvider);
   ref.invalidate(driverPaymentLedgerProvider);
   unawaited(refreshDriverRuntime(ref));
-}
-
-String _paymentStatusLine(Map<String, dynamic>? s, bool paymentRequired) {
-  if (s == null) return DriverStrings.billingDash;
-  if (DriverBillingService.isLedgerV1(s)) {
-    final st = (s['status'] as String?)?.toUpperCase();
-    if (st == 'LOCKED' || paymentRequired) {
-      return DriverStrings.billingStatusPaymentRequired;
-    }
-    if (st == 'WARNING') return DriverStrings.billingStatusOverdue;
-    return DriverStrings.billingStatusNoPaymentDue;
-  }
-  final explicit = s['billing_status_label'] as String? ??
-      s['subscription_status'] as String?;
-  if (explicit != null && explicit.trim().isNotEmpty) return explicit.trim();
-  final st = (s['subscription_status'] as String?)?.toLowerCase();
-  if (st == 'paused' || st == 'suspended') {
-    return DriverStrings.billingStatusPaused;
-  }
-  if (st == 'canceled' || st == 'cancelled') {
-    return DriverStrings.billingStatusCanceled;
-  }
-  if (paymentRequired) return DriverStrings.billingStatusPaymentRequired;
-  return DriverStrings.billingStatusNoPaymentDue;
-}
-
-Color _paymentStatusColor(
-  HeyCabyColorTokens colors,
-  Map<String, dynamic>? s,
-  bool paymentRequired,
-) {
-  if (s == null) return colors.textSoft;
-  final st = (s['subscription_status'] as String?)?.toLowerCase();
-  if (st == 'paused' || st == 'suspended') return colors.warning;
-  if (st == 'canceled' || st == 'cancelled') return colors.textSoft;
-  if (paymentRequired) return colors.error;
-  return colors.success;
-}
-
-bool _hasSubscriptionControls(Map<String, dynamic>? s) {
-  if (s == null) return false;
-  if (s['show_subscription_controls'] == true) return true;
-  final id = s['mollie_subscription_id'];
-  if (id is String && id.trim().isNotEmpty) return true;
-  if (s['has_mollie_subscription'] == true) return true;
-  final st = (s['subscription_status'] as String?)?.toLowerCase();
-  return st == 'active' ||
-      st == 'pending' ||
-      st == 'suspended' ||
-      st == 'paused';
-}
-
-bool _subscriptionPaused(Map<String, dynamic>? s) {
-  if (s == null) return false;
-  if (s['subscription_paused'] == true) return true;
-  final st = (s['subscription_status'] as String?)?.toLowerCase();
-  return st == 'paused' || st == 'suspended';
-}
-
-bool _subscriptionCanceled(Map<String, dynamic>? s) {
-  if (s == null) return false;
-  final st = (s['subscription_status'] as String?)?.toLowerCase();
-  return st == 'canceled' || st == 'cancelled';
-}
-
-String? _starterBody(Map<String, dynamic>? s) {
-  if (s == null) return null;
-  if (s['starter_message'] is String) {
-    final t = (s['starter_message'] as String).trim();
-    if (t.isNotEmpty) return t;
-  }
-  if (s['starter_period_active'] == true) {
-    final rides = s['starter_rides_remaining'];
-    final cap = s['starter_earnings_cap_cents'];
-    final used = s['starter_earnings_used_cents'];
-    final parts = <String>[];
-    if (rides is num) parts.add('Starter rides left: ${rides.toInt()}');
-    if (cap is num && used is num) {
-      parts.add(
-        'Starter earnings: €${(used / 100).toStringAsFixed(2)} of €${(cap / 100).toStringAsFixed(2)}',
-      );
-    } else if (cap is num) {
-      parts.add('Starter cap: €${(cap / 100).toStringAsFixed(2)}');
-    }
-    if (parts.isEmpty) {
-      return 'Starter benefits apply — see HeyCaby for details.';
-    }
-    return parts.join('\n');
-  }
-  return null;
-}
-
-DateTime? _firstDateFromKeys(Map<String, dynamic>? map, List<String> keys) {
-  if (map == null) return null;
-  for (final k in keys) {
-    final v = map[k];
-    if (v is String && v.trim().isNotEmpty) {
-      final d = DateTime.tryParse(v.trim());
-      if (d != null) return d.toLocal();
-    }
-  }
-  return null;
-}
-
-DriverStatusTone _paymentStatusTone(
-  HeyCabyColorTokens colors,
-  Map<String, dynamic>? s,
-  bool paymentRequired,
-) {
-  final c = _paymentStatusColor(colors, s, paymentRequired);
-  if (c == colors.error) return DriverStatusTone.error;
-  if (c == colors.success) return DriverStatusTone.success;
-  if (c == colors.warning) return DriverStatusTone.warning;
-  return DriverStatusTone.neutral;
 }
 
 class DriverBillingScreen extends ConsumerWidget {
@@ -182,11 +68,10 @@ class DriverBillingScreen extends ConsumerWidget {
     final colors = DriverColors.fromTheme(tokens);
     final typography =
         DriverTypography.fromTheme(ref.watch(typographyProvider));
-    final profileAsync = ref.watch(driverProfileProvider);
     final billingStatusAsync = ref.watch(driverBillingStatusProvider);
 
-    if (profileAsync.isLoading || billingStatusAsync.isLoading) {
-      return DriverSubscriptionGateBody(
+    if (billingStatusAsync.isLoading) {
+      return DriverPlatformBalanceBody(
         colors: colors,
         typography: typography,
         summary: null,
@@ -194,15 +79,12 @@ class DriverBillingScreen extends ConsumerWidget {
         errorMessage: null,
         onBack: () => context.pop(),
         onViewHistory: () {},
-        onPayNow: () {},
-        onPauseSubscription: () {},
-        onResumeSubscription: () {},
-        onCancelSubscription: () {},
+        onSettleBalance: null,
       );
     }
 
-    if (profileAsync.hasError || billingStatusAsync.hasError) {
-      return DriverSubscriptionGateBody(
+    if (billingStatusAsync.hasError) {
+      return DriverPlatformBalanceBody(
         colors: colors,
         typography: typography,
         summary: null,
@@ -210,74 +92,34 @@ class DriverBillingScreen extends ConsumerWidget {
         errorMessage: DriverStrings.platformFeeStatusError,
         onBack: () => context.pop(),
         onViewHistory: () {},
-        onPayNow: () {},
-        onPauseSubscription: () {},
-        onResumeSubscription: () {},
-        onCancelSubscription: () {},
+        onSettleBalance: null,
       );
     }
 
-    final profile = profileAsync.valueOrNull;
-    final billingStatus = billingStatusAsync.valueOrNull;
-    final paymentRequired = billingStatus?['payment_required'] == true;
-    final ledgerV1 = DriverBillingService.isLedgerV1(billingStatus);
-    final weeklyEuro = ledgerV1 ? null : _weeklyFeeEuro(billingStatus);
-    final weeklyFeeDisplay = ledgerV1
-        ? _ledgerFeePerRideLabel(billingStatus)
-        : (weeklyEuro != null ? '€$weeklyEuro' : DriverStrings.billingDash);
-    final paidUntil = ledgerV1
-        ? null
-        : _firstDateFromKeys(
-            billingStatus,
-            const ['next_payment_due_at', 'subscription_expires_at'],
-          );
-    final daysRemaining = paidUntil == null
-        ? null
-        : (paidUntil.difference(DateTime.now()).inHours / 24).ceil();
-    final statusLine = _paymentStatusLine(billingStatus, paymentRequired);
-    final starterBody = _starterBody(billingStatus);
-    final showSub = !ledgerV1 &&
-        _hasSubscriptionControls(billingStatus) &&
-        !_subscriptionCanceled(billingStatus) &&
-        !driverStatusUsesAppleBilling(
-          Map<String, dynamic>.from(billingStatus ?? const {}),
-        );
-    final prepay = billingStatus?['allow_one_off_checkout'] == true;
-    final appleIapUi = driverStatusUsesAppleBilling(
-          Map<String, dynamic>.from(billingStatus ?? const {}),
-        ) &&
-        driverAppleIapSupportedOnDevice;
+    final status = billingStatusAsync.valueOrNull;
+    final outstanding = status?['outstanding_cents'] is num
+        ? (status!['outstanding_cents'] as num).toInt()
+        : 0;
+    final state = (status?['balance_state'] as String?)?.trim() ?? 'current';
+    final rideRequestsPaused = status?['ride_requests_paused'] == true;
+    final canSettle =
+        outstanding > 0 && status?['can_settle_outstanding'] == true;
 
-    String? nextPaymentLabel;
-    if (ledgerV1) {
-      nextPaymentLabel = _ledgerOutstandingLabel(billingStatus);
-    } else if (paidUntil != null) {
-      final value = (daysRemaining != null && daysRemaining > 0)
-          ? DriverStrings.billingDaysRemaining(daysRemaining)
-          : DriverStrings.billingNextPaymentDueSoon;
-      nextPaymentLabel = '${DriverStrings.billingNextPayment}: $value';
-    }
-
-    final summary = DriverSubscriptionSummary(
-      isFounding: profile?.isFoundingDriver == true,
-      foundingNumber: profile?.foundingNumber,
-      weeklyFeeDisplay: weeklyFeeDisplay,
-      weeklyFeeUnknown: ledgerV1 ? false : weeklyEuro == null,
-      statusLine: statusLine,
-      statusTone: _paymentStatusTone(tokens, billingStatus, paymentRequired),
-      nextPaymentLabel: nextPaymentLabel,
-      starterBody: starterBody,
-      showSubscriptionControls: showSub,
-      subscriptionPaused: _subscriptionPaused(billingStatus),
-      paymentRequired: paymentRequired,
-      showOptionalCheckout: prepay && !paymentRequired,
-      showAppleRestore: appleIapUi,
-      showPaymentMethods: !appleIapUi && !ledgerV1,
+    final summary = DriverPlatformBalanceSummary(
+      outstandingDisplay: _money(status, outstanding),
+      statusLine: switch (state) {
+        'paused' => DriverStrings.platformBalanceRequestsPaused,
+        'due' => DriverStrings.platformBalanceOutstanding,
+        _ => DriverStrings.platformBalanceCurrent,
+      },
+      statusTone: _statusTone(status),
+      dueLine: _dueLine(status),
+      rideRequestsPaused: rideRequestsPaused,
+      canSettle: canSettle,
+      isCurrent: outstanding <= 0,
     );
 
-    void invalidateBilling() => _refreshAfterBillingMutation(ref);
-
-    return DriverSubscriptionGateBody(
+    return DriverPlatformBalanceBody(
       colors: colors,
       typography: typography,
       summary: summary,
@@ -285,139 +127,18 @@ class DriverBillingScreen extends ConsumerWidget {
       errorMessage: null,
       onBack: () => context.pop(),
       onViewHistory: () => context.push('/driver/billing/history'),
-      onPayNow: () => _handlePayment(context, ref, billingStatus),
-      onOptionalPay:
-          prepay ? () => _handlePayment(context, ref, billingStatus) : null,
-      onPaymentMethods:
-          appleIapUi ? null : () => _openPaymentMethodsPortal(context, ref),
-      onRestoreApple:
-          appleIapUi ? () => _restoreAppleIapPurchases(context, ref) : null,
-      onPauseSubscription: () => _runSubscriptionAction(
-        context,
-        ref,
-        () => ref.read(driverApiProvider).pauseDriverPlatformSubscription(),
-        invalidateBilling,
-      ),
-      onResumeSubscription: () => _runSubscriptionAction(
-        context,
-        ref,
-        () => ref.read(driverApiProvider).resumeDriverPlatformSubscription(),
-        invalidateBilling,
-      ),
-      onCancelSubscription: () => _confirmCancelSubscription(
-        context,
-        ref,
-        invalidateBilling,
-      ),
+      onSettleBalance:
+          canSettle ? () => _handleSettleBalance(context, ref) : null,
     );
   }
 
-  Future<void> _runSubscriptionAction(
+  Future<void> _handleSettleBalance(
     BuildContext context,
     WidgetRef ref,
-    Future<Map<String, dynamic>> Function() apiCall,
-    VoidCallback onAfterAction,
-  ) async {
-    final typo = ref.read(typographyProvider);
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        content: Row(
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Text(
-                DriverStrings.billingSubscriptionWorking,
-                style: typo.bodyMedium,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-    try {
-      await apiCall();
-      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(DriverStrings.billingSubscriptionDone)),
-        );
-        onAfterAction();
-      }
-    } catch (e) {
-      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-      if (context.mounted) {
-        final msg = e is DioException && e.response?.data is Map
-            ? (e.response!.data['error']?.toString() ??
-                DriverStrings.billingSubscriptionError)
-            : DriverStrings.billingSubscriptionError;
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(msg)));
-      }
-    }
-  }
-
-  Future<void> _confirmCancelSubscription(
-    BuildContext context,
-    WidgetRef ref,
-    VoidCallback onAfterAction,
-  ) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text(DriverStrings.billingSubscriptionCancelConfirmTitle),
-        content: const Text(DriverStrings.billingSubscriptionCancelConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(DriverStrings.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(DriverStrings.billingSubscriptionConfirm),
-          ),
-        ],
-      ),
-    );
-    if (ok == true && context.mounted) {
-      await _runSubscriptionAction(
-        context,
-        ref,
-        () => ref.read(driverApiProvider).cancelDriverPlatformSubscription(),
-        onAfterAction,
-      );
-    }
-  }
-
-  Future<void> _handlePayment(
-    BuildContext context,
-    WidgetRef ref,
-    Map<String, dynamic>? billingStatus,
   ) async {
     final colors = ref.read(colorsProvider);
     final typo = ref.read(typographyProvider);
     final api = ref.read(driverApiProvider);
-    final ledgerV1 = DriverBillingService.isLedgerV1(billingStatus);
-
-    String? selectedPlan;
-    if (!ledgerV1) {
-      selectedPlan = await _pickBillingPlan(context, ref, billingStatus);
-      if (selectedPlan == null || !context.mounted) return;
-    }
-
-    final bs = billingStatus ?? const <String, dynamic>{};
-    if (driverStatusUsesAppleBilling(bs) && !driverAppleIapSupportedOnDevice) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(DriverStrings.iapOnlyAvailableOnIos)),
-        );
-      }
-      return;
-    }
-    final useApple =
-        driverStatusUsesAppleBilling(bs) && driverAppleIapSupportedOnDevice;
 
     showDialog<void>(
       context: context,
@@ -429,9 +150,7 @@ class DriverBillingScreen extends ConsumerWidget {
             const SizedBox(width: 20),
             Expanded(
               child: Text(
-                useApple
-                    ? DriverStrings.platformFeeStartingAppleIap
-                    : DriverStrings.billingPayPreparing,
+                DriverStrings.platformBalancePreparingSettlement,
                 style: typo.bodyMedium,
               ),
             ),
@@ -440,29 +159,9 @@ class DriverBillingScreen extends ConsumerWidget {
       ),
     );
 
-    if (useApple) {
-      final plan = selectedPlan;
-      if (plan == null) {
-        if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-        return;
-      }
-      final ok = await purchaseDriverPlatformAccessWithAppleIap(
-        context: context,
-        api: api,
-        planCode: plan,
-      );
-      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-      if (ok && context.mounted) {
-        _refreshAfterBillingMutation(ref);
-      }
-      return;
-    }
-
     Map<String, dynamic> created;
     try {
-      created = await api.createDriverPlatformPayment(
-        plan: ledgerV1 ? null : selectedPlan,
-      );
+      created = await api.createDriverPlatformPayment();
     } catch (e) {
       if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
       if (context.mounted) {
@@ -497,6 +196,7 @@ class DriverBillingScreen extends ConsumerWidget {
           checkoutUrl: url,
           colors: colors,
           typo: typo,
+          appBarTitle: DriverStrings.platformBalanceSettleBalance,
         ),
       ),
     );
@@ -506,137 +206,12 @@ class DriverBillingScreen extends ConsumerWidget {
       if (paymentId != null && paymentId.isNotEmpty) {
         await api.syncDriverBillingPayment(paymentId);
       }
-      _refreshAfterBillingMutation(ref);
-    }
-  }
-
-  Future<String?> _pickBillingPlan(
-    BuildContext context,
-    WidgetRef ref,
-    Map<String, dynamic>? billingStatus,
-  ) async {
-    final colors = ref.read(colorsProvider);
-    final typo = ref.read(typographyProvider);
-    final plans = parseServerBillingPlans(billingStatus);
-    return pickDriverBillingPlanCode(
-      context,
-      colors: colors,
-      typo: typo,
-      plans: plans,
-    );
-  }
-
-  Future<void> _openPaymentMethodsPortal(
-      BuildContext context, WidgetRef ref) async {
-    final colors = ref.read(colorsProvider);
-    final typo = ref.read(typographyProvider);
-    final api = ref.read(driverApiProvider);
-
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        content: Row(
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Text(
-                DriverStrings.billingPayPreparing,
-                style: typo.bodyMedium,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    String? url;
-    try {
-      url = await api.fetchDriverPaymentMethodsPortalUrl();
-    } catch (e) {
-      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-      if (context.mounted) {
-        final msg = e is DioException && e.response?.data is Map
-            ? (e.response!.data['error']?.toString() ??
-                DriverStrings.billingPaymentMethodsUnavailable)
-            : DriverStrings.billingPaymentMethodsUnavailable;
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(msg)));
-      }
-      return;
-    }
-
-    if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-
-    final portal = url;
-    if (portal == null || portal.isEmpty) {
+      _refreshAfterBalanceMutation(ref);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text(DriverStrings.billingPaymentMethodsUnavailable)),
+          SnackBar(content: Text(DriverStrings.platformBalanceVerifyPayment)),
         );
       }
-      return;
-    }
-
-    if (!context.mounted) return;
-
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) => DriverMollieCheckoutScreen(
-          checkoutUrl: portal,
-          colors: colors,
-          typo: typo,
-          appBarTitle: DriverStrings.billingPaymentMethodsPortalTitle,
-          successUrlContains: null,
-          autoPopOnSuccessUrlMatch: false,
-        ),
-      ),
-    );
-    if (context.mounted) {
-      ref.invalidate(driverBillingStatusProvider);
-      ref.invalidate(driverPaymentLedgerProvider);
-      unawaited(refreshDriverRuntime(ref));
-    }
-  }
-
-  Future<void> _restoreAppleIapPurchases(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
-    final typo = ref.read(typographyProvider);
-    final api = ref.read(driverApiProvider);
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        content: Row(
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Text(
-                DriverStrings.billingPayPreparing,
-                style: typo.bodyMedium,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-    final ok = await restoreDriverPlatformAccessAppleIap(
-      context: context,
-      api: api,
-    );
-    if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
-    if (ok && context.mounted) {
-      ref.invalidate(driverBillingStatusProvider);
-      ref.invalidate(driverProfileProvider);
-      ref.invalidate(driverPaymentLedgerProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.billingRestoreDone)),
-      );
     }
   }
 }

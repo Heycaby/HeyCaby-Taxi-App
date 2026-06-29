@@ -69,14 +69,14 @@ class DriverBillingHistoryScreen extends ConsumerWidget {
 
     if (DriverBillingService.isLedgerV1(status)) {
       final outstanding = status?['outstanding_cents'];
-      final limit = status?['limit_cents'];
-      if (outstanding is num && limit is num) {
+      if (outstanding is num) {
         return [
           DriverPaymentHistoryEntry(
-            title: DriverStrings.billingOutstandingLimit,
-            subtitle: DriverStrings.billingDash,
-            amountLabel:
-                '€${(outstanding / 100).toStringAsFixed(2)} / €${(limit / 100).toStringAsFixed(2)}',
+            title: DriverStrings.platformBalanceTitle,
+            subtitle: outstanding > 0
+                ? DriverStrings.platformBalanceOutstanding
+                : DriverStrings.platformBalanceCurrent,
+            amountLabel: '€${(outstanding / 100).toStringAsFixed(2)}',
           ),
         ];
       }
@@ -95,10 +95,9 @@ class DriverBillingHistoryScreen extends ConsumerWidget {
         out.add(DriverPaymentHistoryEntry(title: title, subtitle: sub));
       }
 
-      addDate('subscription_started_at', 'Subscription started');
       addDate('last_payment_at', 'Last payment');
-      addDate('next_payment_due_at', 'Next payment due');
-      addDate('subscription_expires_at', 'Access until');
+      addDate('due_at', DriverStrings.platformBalanceOutstanding);
+      addDate('grace_until_at', DriverStrings.platformBalanceSettleBalance);
     }
     return out;
   }

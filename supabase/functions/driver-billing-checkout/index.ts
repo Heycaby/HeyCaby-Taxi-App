@@ -5,7 +5,6 @@ import {
   json,
   mollieCreatePayment,
   serviceClient,
-  subscriptionPlan,
 } from "../_shared/driver_billing_shared.ts";
 
 Deno.serve(async (req: Request) => {
@@ -18,34 +17,16 @@ Deno.serve(async (req: Request) => {
     const auth = await authDriverId(req);
     if (auth instanceof Response) return auth;
 
-    const body = await req.json().catch(() => ({})) as Record<string, unknown>;
-    const kind = String(body.kind ?? "settlement").trim().toLowerCase();
-    const planCode = String(body.plan ?? body.plan_code ?? "").trim().toLowerCase();
+    await req.json().catch(() => ({}));
 
     const admin = serviceClient();
     const summary = await billingSummary(admin, auth.driverId);
 
-    let amountCents = 0;
-    let checkoutKind = "settlement";
-    let description = "HeyCaby platform fee settlement";
-    let plan: string | null = null;
-
-    if (kind === "subscription" && planCode) {
-      const def = subscriptionPlan(planCode);
-      if (!def) {
-        return json({ ok: false, error: "invalid_plan" }, 400);
-      }
-      amountCents = def.amountCents;
-      checkoutKind = "subscription";
-      plan = planCode;
-      description = `HeyCaby ${def.title} plan`;
-    } else {
-      if (summary.outstanding <= 0) {
-        return json({ ok: false, error: "nothing_to_settle" }, 400);
-      }
-      amountCents = summary.outstanding;
-      checkoutKind = "settlement";
+    if (summary.outstanding <= 0) {
+      return json({ ok: false, error: "nothing_to_settle" }, 400);
     }
+    const amountCents = summary.outstanding;
+    const checkoutKind = "settlement";
 
     const supabaseUrl = (Deno.env.get("SUPABASE_URL") ?? "").replace(/\/$/, "");
     const webhookUrl =
@@ -53,11 +34,10 @@ Deno.serve(async (req: Request) => {
 
     const payment = await mollieCreatePayment({
       amountCents,
-      description,
+      description: "HeyCaby platform balance settlement",
       metadata: {
         driver_id: auth.driverId,
         checkout_kind: checkoutKind,
-        plan_code: plan,
       },
       webhookUrl,
     });
@@ -72,12 +52,11 @@ Deno.serve(async (req: Request) => {
       p_amount_cents: amountCents,
       p_external_payment_id: payment.id,
       p_checkout_kind: checkoutKind,
-      p_plan_code: plan,
+      p_plan_code: null,
       p_currency: summary.currency,
       p_country_code: summary.countryCode,
       p_metadata: {
         checkout_kind: checkoutKind,
-        plan_code: plan,
       },
     });
     if (record.error) {
