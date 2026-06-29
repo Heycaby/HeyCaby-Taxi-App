@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
+import '../providers/driver_locale_provider.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_legal_trust_body.dart';
@@ -21,18 +22,21 @@ const _termsCopyEn = _TermsCopy(
   sections: [
     (
       heading: 'Introduction',
-      body: 'These Terms apply to your use of the HeyCaby platform as a Driver. By using the platform, you agree to these Terms.',
+      body:
+          'These Terms apply to your use of the HeyCaby platform as a Driver. By using the platform, you agree to these Terms.',
     ),
     (
       heading: '1. Platform role only',
-      body: 'HeyCaby provides a digital platform that enables independent drivers and riders to connect.\n\n'
+      body:
+          'HeyCaby provides a digital platform that enables independent drivers and riders to connect.\n\n'
           'HeyCaby is not a transport provider, taxi operator, employer, agent, or intermediary in any transport service.\n\n'
           'HeyCaby does not provide rides, does not employ drivers, and does not control pricing, routes, availability, or how services are delivered.\n\n'
           'All transport services are provided independently by Drivers under their own responsibility.',
     ),
     (
       heading: '2. Independent business responsibility',
-      body: 'You operate as an independent self-employed professional (ZZP).\n\n'
+      body:
+          'You operate as an independent self-employed professional (ZZP).\n\n'
           'You are solely responsible for the operation of your business, including:\n\n'
           '• Administration and record-keeping\n'
           '• Invoicing and financial management\n'
@@ -42,7 +46,8 @@ const _termsCopyEn = _TermsCopy(
     ),
     (
       heading: '3. Taxes and financial obligations',
-      body: 'You are fully and solely responsible for all taxes and financial obligations, including:\n\n'
+      body:
+          'You are fully and solely responsible for all taxes and financial obligations, including:\n\n'
           '• VAT (if applicable)\n'
           '• Income tax\n'
           '• Business taxes and filings\n'
@@ -59,18 +64,21 @@ const _termsCopyEn = _TermsCopy(
     ),
     (
       heading: '5. Driver information and data accuracy',
-      body: 'You must provide accurate, complete, and up-to-date information at all times.\n\n'
+      body:
+          'You must provide accurate, complete, and up-to-date information at all times.\n\n'
           'HeyCaby may perform checks using publicly available or third-party sources.\n\n'
           'If your information is found to be false, misleading, expired, or non-compliant, HeyCaby may restrict, suspend, or terminate your access to the platform.',
     ),
     (
       heading: '6. Legal compliance and enforcement',
-      body: 'You are responsible for complying with all applicable laws and regulations related to your activities.\n\n'
+      body:
+          'You are responsible for complying with all applicable laws and regulations related to your activities.\n\n'
           'Where required by law, court order, or competent authority, HeyCaby may disclose relevant data in accordance with its legal obligations.',
     ),
     (
       heading: '7. Identity verification (third-party)',
-      body: 'Identity and licence verification may be performed through third-party providers such as Veriff.\n\n'
+      body:
+          'Identity and licence verification may be performed through third-party providers such as Veriff.\n\n'
           'These providers process and secure verification data within their own systems.\n\n'
           'HeyCaby stores only the minimum verification data necessary to confirm compliance status and does not retain full identity document copies within the app.\n\n'
           'HeyCaby is not responsible for outages, errors, or security incidents arising from third-party verification systems outside its control.',
@@ -90,7 +98,8 @@ const _termsCopyEn = _TermsCopy(
     ),
     (
       heading: '10. Indemnification and Liability Declaration',
-      body: 'As a Driver, you are required to review and accept the separate "Indemnification and Liability Declaration" provided during registration.\n\n'
+      body:
+          'As a Driver, you are required to review and accept the separate "Indemnification and Liability Declaration" provided during registration.\n\n'
           'This document contains important legal provisions regarding:\n\n'
           '• Your responsibility for transport services\n'
           '• Your obligation to indemnify HeyCaby against claims\n'
@@ -120,11 +129,13 @@ const _termsCopyNl = _TermsCopy(
   sections: [
     (
       heading: 'Introductie',
-      body: 'Deze Voorwaarden zijn van toepassing op uw gebruik van het HeyCaby-platform als Chauffeur. Door het platform te gebruiken, gaat u akkoord met deze Voorwaarden.',
+      body:
+          'Deze Voorwaarden zijn van toepassing op uw gebruik van het HeyCaby-platform als Chauffeur. Door het platform te gebruiken, gaat u akkoord met deze Voorwaarden.',
     ),
     (
       heading: '1. Alleen platform/software',
-      body: 'HeyCaby levert een digitaal platform dat zelfstandige chauffeurs en passagiers met elkaar verbindt.\n\n'
+      body:
+          'HeyCaby levert een digitaal platform dat zelfstandige chauffeurs en passagiers met elkaar verbindt.\n\n'
           'HeyCaby is geen vervoersprovider, taxioperator, werkgever, agent of intermediair in enige vervoersdienst.\n\n'
           'HeyCaby biedt geen ritten aan, neemt geen chauffeurs in dienst en bepaalt/geeft geen prijzen, routes, beschikbaarheid of hoe diensten worden geleverd.\n\n'
           'Alle vervoersdiensten worden onafhankelijk door Chauffeurs verleend onder hun eigen verantwoordelijkheid.',
@@ -141,7 +152,8 @@ const _termsCopyNl = _TermsCopy(
     ),
     (
       heading: '3. Belastingen en financiële verplichtingen',
-      body: 'U bent volledig en uitsluitend verantwoordelijk voor alle belastingen en financiële verplichtingen, inclusief:\n\n'
+      body:
+          'U bent volledig en uitsluitend verantwoordelijk voor alle belastingen en financiële verplichtingen, inclusief:\n\n'
           '• BTW (indien van toepassing)\n'
           '• Inkomstenbelasting\n'
           '• Bedrijfsbelastingen en aangiftes\n'
@@ -158,18 +170,21 @@ const _termsCopyNl = _TermsCopy(
     ),
     (
       heading: '5. Chauffeursinformatie en gegevensnauwkeurigheid',
-      body: 'U moet te allen tijde nauwkeurige, volledige en actuele informatie verstrekken.\n\n'
+      body:
+          'U moet te allen tijde nauwkeurige, volledige en actuele informatie verstrekken.\n\n'
           'HeyCaby kan controles uitvoeren met behulp van publiek beschikbare of externe bronnen.\n\n'
           'Als uw informatie onwaar, misleidend, verlopen of non-compliant blijkt, kan HeyCaby uw toegang tot het platform beperken, schorsen of beëindigen.',
     ),
     (
       heading: '6. Wettelijke naleving en handhaving',
-      body: 'U bent verantwoordelijk voor het naleven van alle toepasselijke wetten en regelgeving met betrekking tot uw activiteiten.\n\n'
+      body:
+          'U bent verantwoordelijk voor het naleven van alle toepasselijke wetten en regelgeving met betrekking tot uw activiteiten.\n\n'
           'Waar wettelijk vereist, bij gerechtelijk bevel of door bevoegde autoriteit, kan HeyCaby relevante gegevens openbaren in overeenstemming met haar wettelijke verplichtingen.',
     ),
     (
       heading: '7. Identiteitsverificatie (derde partij)',
-      body: 'Identiteits- en rijbewijsverificatie kan worden uitgevoerd via externe providers zoals Veriff.\n\n'
+      body:
+          'Identiteits- en rijbewijsverificatie kan worden uitgevoerd via externe providers zoals Veriff.\n\n'
           'Deze providers verwerken en beveiligen verificatiegegevens binnen hun eigen systemen.\n\n'
           'HeyCaby slaat alleen de minimale verificatiegegevens op die nodig zijn om nalevingsstatus te bevestigen en bewaart geen volledige identiteitsdocumentkopieën binnen de app.\n\n'
           'HeyCaby is niet verantwoordelijk voor uitval, fouten of beveiligingsincidenten die voortvloeien uit externe verificatiesystemen buiten haar controle.',
@@ -189,7 +204,8 @@ const _termsCopyNl = _TermsCopy(
     ),
     (
       heading: '10. Vrijwaring en Aansprakelijkheidsverklaring',
-      body: 'Als Chauffeur bent u verplicht om de afzonderlijke "Vrijwarings- en Aansprakelijkheidsverklaring" te reviewen en accepteren die tijdens registratie wordt verstrekt.\n\n'
+      body:
+          'Als Chauffeur bent u verplicht om de afzonderlijke "Vrijwarings- en Aansprakelijkheidsverklaring" te reviewen en accepteren die tijdens registratie wordt verstrekt.\n\n'
           'Dit document bevat belangrijke juridische bepalingen met betrekking tot:\n\n'
           '• Uw verantwoordelijkheid voor vervoersdiensten\n'
           '• Uw verplichting om HeyCaby te vrijwaren tegen claims\n'
@@ -203,7 +219,8 @@ const _termsCopyNl = _TermsCopy(
     ),
     (
       heading: '11. Erkenning en Vrijwaring',
-      body: 'Door het HeyCaby-platform te gebruiken, erkent u uitdrukkelijk dat:\n\n'
+      body:
+          'Door het HeyCaby-platform te gebruiken, erkent u uitdrukkelijk dat:\n\n'
           '• U de gelegenheid hebt gehad om deze Gebruiksvoorwaarden te lezen\n'
           '• U de gelegenheid hebt gehad om de Vrijwarings- en Aansprakelijkheidsverklaring te lezen\n'
           '• U uw rechten en verplichtingen onder beide documenten begrijpt\n\n'
@@ -223,6 +240,13 @@ class DriverTermsScreen extends ConsumerStatefulWidget {
 
 class _DriverTermsScreenState extends ConsumerState<DriverTermsScreen> {
   bool _isDutch = false;
+  bool _hasManualLanguageChoice = false;
+
+  void _syncDocumentLanguage() {
+    if (_hasManualLanguageChoice) return;
+    final locale = ref.watch(localeProvider);
+    _isDutch = locale?.languageCode != 'en';
+  }
 
   void _handleBack() {
     if (context.canPop()) {
@@ -234,7 +258,9 @@ class _DriverTermsScreenState extends ConsumerState<DriverTermsScreen> {
 
   _TermsCopy get _copy => _isDutch ? _termsCopyNl : _termsCopyEn;
 
-  String get _fullText => _copy.sections.map((s) => '${s.heading}\n\n${s.body}').join('\n\n---\n\n');
+  String get _fullText => _copy.sections
+      .map((s) => '${s.heading}\n\n${s.body}')
+      .join('\n\n---\n\n');
 
   Future<void> _copyToClipboard() async {
     await Clipboard.setData(ClipboardData(text: _fullText));
@@ -248,7 +274,9 @@ class _DriverTermsScreenState extends ConsumerState<DriverTermsScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
+    _syncDocumentLanguage();
     final copy = _copy;
 
     return DriverLegalTrustBody(
@@ -257,9 +285,18 @@ class _DriverTermsScreenState extends ConsumerState<DriverTermsScreen> {
       typography: typography,
       isDutch: _isDutch,
       onBack: _handleBack,
-      onSelectEnglish: () => setState(() => _isDutch = false),
-      onSelectDutch: () => setState(() => _isDutch = true),
-      onToggleLanguage: () => setState(() => _isDutch = !_isDutch),
+      onSelectEnglish: () => setState(() {
+        _hasManualLanguageChoice = true;
+        _isDutch = false;
+      }),
+      onSelectDutch: () => setState(() {
+        _hasManualLanguageChoice = true;
+        _isDutch = true;
+      }),
+      onToggleLanguage: () => setState(() {
+        _hasManualLanguageChoice = true;
+        _isDutch = !_isDutch;
+      }),
       onCopy: _copyToClipboard,
       sections: [
         for (var i = 0; i < copy.sections.length; i++)

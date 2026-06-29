@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
+import '../providers/driver_locale_provider.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_liability_acknowledgment_body.dart';
@@ -603,12 +604,21 @@ class DriverIndemnificationScreen extends ConsumerStatefulWidget {
   const DriverIndemnificationScreen({super.key});
 
   @override
-  ConsumerState<DriverIndemnificationScreen> createState() => _DriverIndemnificationScreenState();
+  ConsumerState<DriverIndemnificationScreen> createState() =>
+      _DriverIndemnificationScreenState();
 }
 
-class _DriverIndemnificationScreenState extends ConsumerState<DriverIndemnificationScreen> {
+class _DriverIndemnificationScreenState
+    extends ConsumerState<DriverIndemnificationScreen> {
   bool _isDutch = false;
+  bool _hasManualLanguageChoice = false;
   bool _isChecked = false;
+
+  void _syncDocumentLanguage() {
+    if (_hasManualLanguageChoice) return;
+    final locale = ref.watch(localeProvider);
+    _isDutch = locale?.languageCode != 'en';
+  }
 
   void _handleBack() {
     if (context.canPop()) {
@@ -620,7 +630,8 @@ class _DriverIndemnificationScreenState extends ConsumerState<DriverIndemnificat
 
   String get _fullDocumentText => _isDutch ? _fullTermsNl : _fullTermsEn;
 
-  String get _title => _isDutch ? 'Vrijwaringsverklaring' : 'Indemnification Declaration';
+  String get _title =>
+      _isDutch ? 'Vrijwaringsverklaring' : 'Indemnification Declaration';
 
   String get _fullText => _fullDocumentText;
 
@@ -644,7 +655,9 @@ class _DriverIndemnificationScreenState extends ConsumerState<DriverIndemnificat
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
+    _syncDocumentLanguage();
 
     return DriverLiabilityAcknowledgmentBody(
       title: _title,
@@ -656,9 +669,18 @@ class _DriverIndemnificationScreenState extends ConsumerState<DriverIndemnificat
       isDutch: _isDutch,
       isChecked: _isChecked,
       onBack: _handleBack,
-      onSelectEnglish: () => setState(() => _isDutch = false),
-      onSelectDutch: () => setState(() => _isDutch = true),
-      onToggleLanguage: () => setState(() => _isDutch = !_isDutch),
+      onSelectEnglish: () => setState(() {
+        _hasManualLanguageChoice = true;
+        _isDutch = false;
+      }),
+      onSelectDutch: () => setState(() {
+        _hasManualLanguageChoice = true;
+        _isDutch = true;
+      }),
+      onToggleLanguage: () => setState(() {
+        _hasManualLanguageChoice = true;
+        _isDutch = !_isDutch;
+      }),
       onCopy: _copyToClipboard,
       onCheckedChanged: (checked) => setState(() => _isChecked = checked),
     );

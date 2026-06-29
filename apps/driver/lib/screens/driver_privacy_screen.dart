@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
+import '../providers/driver_locale_provider.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_legal_trust_body.dart';
@@ -37,7 +38,8 @@ const List<_PrivacySection> _privacySectionsEn = [
   ),
   _PrivacySection(
     title: '2. Location data',
-    body: 'Your location is processed only when necessary for driver operations, '
+    body:
+        'Your location is processed only when necessary for driver operations, '
         'including when you are online, receiving ride requests, or actively completing a trip.\n\n'
         'Location data is used for:\n\n'
         '• Matching riders and drivers\n'
@@ -144,7 +146,8 @@ const List<_PrivacySection> _privacySectionsEn = [
 const List<_PrivacySection> _privacySectionsNl = [
   _PrivacySection(
     title: 'Ingangsdatum',
-    body: '1 mei 2026\n\nDit Privacybeleid legt uit hoe HeyCaby uw persoonsgegevens verwerkt '
+    body:
+        '1 mei 2026\n\nDit Privacybeleid legt uit hoe HeyCaby uw persoonsgegevens verwerkt '
         'wanneer u het platform gebruikt als chauffeur.',
   ),
   _PrivacySection(
@@ -162,7 +165,8 @@ const List<_PrivacySection> _privacySectionsNl = [
   ),
   _PrivacySection(
     title: '2. Locatiegegevens',
-    body: 'Uw locatie wordt alleen verwerkt wanneer nodig voor chauffeursoperaties, '
+    body:
+        'Uw locatie wordt alleen verwerkt wanneer nodig voor chauffeursoperaties, '
         'inclusief wanneer u online bent, ritverzoeken ontvangt, of actief een rit voltooit.\n\n'
         'Locatiegegevens worden gebruikt voor:\n\n'
         '• Het matchen van passagiers en chauffeurs\n'
@@ -204,7 +208,8 @@ const List<_PrivacySection> _privacySectionsNl = [
   ),
   _PrivacySection(
     title: '6. Veriff-verificatiegegevens (derde partij)',
-    body: 'Identiteits- en rijbewijsverificatie wordt uitgevoerd door Veriff als onafhankelijke verwerkingsverantwoordelijke.\n\n'
+    body:
+        'Identiteits- en rijbewijsverificatie wordt uitgevoerd door Veriff als onafhankelijke verwerkingsverantwoordelijke.\n\n'
         'Veriff verwerkt en slaat verificatiegegevens op binnen zijn eigen beveiligde systemen.\n\n'
         'HeyCaby ontvangt en slaat alleen beperkte verificatiemetagegevens op die nodig zijn om nalevingsstatus te bevestigen.\n\n'
         'HeyCaby slaat geen volledige identiteitsdocumentkopieën op binnen de app-database.\n\n'
@@ -266,17 +271,27 @@ class DriverPrivacyScreen extends ConsumerStatefulWidget {
   const DriverPrivacyScreen({super.key});
 
   @override
-  ConsumerState<DriverPrivacyScreen> createState() => _DriverPrivacyScreenState();
+  ConsumerState<DriverPrivacyScreen> createState() =>
+      _DriverPrivacyScreenState();
 }
 
 class _DriverPrivacyScreenState extends ConsumerState<DriverPrivacyScreen> {
   bool _isDutch = false;
+  bool _hasManualLanguageChoice = false;
 
-  List<_PrivacySection> get _sections => _isDutch ? _privacySectionsNl : _privacySectionsEn;
+  void _syncDocumentLanguage() {
+    if (_hasManualLanguageChoice) return;
+    final locale = ref.watch(localeProvider);
+    _isDutch = locale?.languageCode != 'en';
+  }
+
+  List<_PrivacySection> get _sections =>
+      _isDutch ? _privacySectionsNl : _privacySectionsEn;
 
   String get _title => _isDutch ? 'Privacybeleid' : 'Privacy Policy';
 
-  String get _fullText => _sections.map((s) => '${s.title}\n\n${s.body}').join('\n\n---\n\n');
+  String get _fullText =>
+      _sections.map((s) => '${s.title}\n\n${s.body}').join('\n\n---\n\n');
 
   Future<void> _copyToClipboard() async {
     await Clipboard.setData(ClipboardData(text: _fullText));
@@ -290,7 +305,9 @@ class _DriverPrivacyScreenState extends ConsumerState<DriverPrivacyScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
+    _syncDocumentLanguage();
     final sections = _sections;
 
     return DriverLegalTrustBody(
@@ -299,9 +316,18 @@ class _DriverPrivacyScreenState extends ConsumerState<DriverPrivacyScreen> {
       typography: typography,
       isDutch: _isDutch,
       onBack: () => context.pop(),
-      onSelectEnglish: () => setState(() => _isDutch = false),
-      onSelectDutch: () => setState(() => _isDutch = true),
-      onToggleLanguage: () => setState(() => _isDutch = !_isDutch),
+      onSelectEnglish: () => setState(() {
+        _hasManualLanguageChoice = true;
+        _isDutch = false;
+      }),
+      onSelectDutch: () => setState(() {
+        _hasManualLanguageChoice = true;
+        _isDutch = true;
+      }),
+      onToggleLanguage: () => setState(() {
+        _hasManualLanguageChoice = true;
+        _isDutch = !_isDutch;
+      }),
       onCopy: _copyToClipboard,
       sections: [
         for (var i = 0; i < sections.length; i++)

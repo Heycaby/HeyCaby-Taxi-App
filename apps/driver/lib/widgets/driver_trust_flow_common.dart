@@ -75,6 +75,9 @@ class DriverLegalLanguageToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final copyLabel =
+        isDutch ? 'Kopieer voor vertaling' : 'Copy for translation';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -103,7 +106,7 @@ class DriverLegalLanguageToolbar extends StatelessWidget {
             onPressed: onCopy,
             icon: Icon(Icons.copy_rounded, size: 18, color: colors.textMuted),
             label: Text(
-              'Copy for translation',
+              copyLabel,
               style: typography.bodySmall.copyWith(color: colors.textMuted),
             ),
           ),
@@ -121,6 +124,8 @@ List<Widget> driverLegalTrustAppBarActions({
   required VoidCallback onToggleLanguage,
   required VoidCallback onCopy,
 }) {
+  final copyTooltip = isDutch ? 'Alle tekst kopiëren' : 'Copy all text';
+
   return [
     TextButton.icon(
       onPressed: onToggleLanguage,
@@ -136,7 +141,7 @@ List<Widget> driverLegalTrustAppBarActions({
     IconButton(
       icon: Icon(Icons.copy_rounded, color: colors.primary),
       onPressed: onCopy,
-      tooltip: 'Copy all text',
+      tooltip: copyTooltip,
     ),
     const SizedBox(width: DriverSpacing.sm),
   ];
