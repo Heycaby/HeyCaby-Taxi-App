@@ -13,13 +13,16 @@ from __future__ import annotations
 
 import argparse
 import base64
+import csv
 import concurrent.futures
 import hashlib
 import hmac
+import http.client
 import json
 import math
 import os
 import random
+import resource
 import statistics
 import subprocess
 import threading
@@ -74,6 +77,50 @@ def random_point_near(lat: float, lng: float, radius_km: float) -> Tuple[float, 
     return lat + dlat, lng + dlng
 
 
+def psql_env_from_url(database_url: str) -> Dict[str, str]:
+    parsed = urllib.parse.urlparse(database_url)
+    if not parsed.hostname or not parsed.path:
+        raise ValueError("Invalid database URL")
+    env = os.environ.copy()
+    env.update(
+        {
+            "PGHOST": parsed.hostname,
+            "PGPORT": str(parsed.port or 5432),
+            "PGDATABASE": parsed.path.lstrip("/") or "postgres",
+            "PGUSER": urllib.parse.unquote(parsed.username or "postgres"),
+            "PGPASSWORD": urllib.parse.unquote(parsed.password or ""),
+        }
+    )
+    return env
+
+
+def process_resource_snapshot(previous: Optional[Dict[str, float]] = None) -> Dict[str, Any]:
+    usage = resource.getrusage(resource.RUSAGE_SELF)
+    now = time.monotonic()
+    cpu_time = float(usage.ru_utime + usage.ru_stime)
+    snapshot: Dict[str, Any] = {
+        "monotonic_sec": now,
+        "user_cpu_sec": round(float(usage.ru_utime), 4),
+        "system_cpu_sec": round(float(usage.ru_stime), 4),
+        "cpu_time_sec": round(cpu_time, 4),
+        "max_rss_raw": int(usage.ru_maxrss),
+        "max_rss_note": "macOS reports bytes; Linux reports kilobytes",
+        "active_threads": threading.active_count(),
+        "network_bytes": "not_captured_by_python_stdlib",
+    }
+    if usage.ru_maxrss > 10_000_000:
+        snapshot["max_rss_mb_estimate"] = round(float(usage.ru_maxrss) / (1024.0 * 1024.0), 2)
+    else:
+        snapshot["max_rss_mb_estimate"] = round(float(usage.ru_maxrss) / 1024.0, 2)
+    if previous:
+        elapsed = max(0.001, now - float(previous["monotonic_sec"]))
+        cpu_delta = max(0.0, cpu_time - float(previous["cpu_time_sec"]))
+        snapshot["cpu_pct_since_previous"] = round((cpu_delta / elapsed) * 100.0, 2)
+    else:
+        snapshot["cpu_pct_since_previous"] = None
+    return snapshot
+
+
 @dataclass(frozen=True)
 class DriverActor:
     driver_id: str
@@ -120,8 +167,33 @@ class RollingMetrics:
 class SupabaseRest:
     def __init__(self, url: str, anon_key: str, service_key: Optional[str]) -> None:
         self.base = url.rstrip("/")
+        self.parsed_base = urllib.parse.urlparse(self.base)
         self.anon_key = anon_key
         self.service_key = service_key
+        self._thread_local = threading.local()
+
+    def _connection(self, timeout: float) -> http.client.HTTPConnection:
+        conn = getattr(self._thread_local, "connection", None)
+        if conn is None:
+            if self.parsed_base.scheme != "https" or not self.parsed_base.hostname:
+                raise RuntimeError("Persistent connections require an https Supabase URL")
+            conn = http.client.HTTPSConnection(
+                self.parsed_base.hostname,
+                self.parsed_base.port or 443,
+                timeout=timeout,
+            )
+            self._thread_local.connection = conn
+        conn.timeout = timeout
+        return conn
+
+    def _reset_connection(self) -> None:
+        conn = getattr(self._thread_local, "connection", None)
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
+        self._thread_local.connection = None
 
     def request(
         self,
@@ -138,10 +210,23 @@ class SupabaseRest:
             "apikey": key,
             "Authorization": f"Bearer {bearer}",
             "Content-Type": "application/json",
+            "Connection": "keep-alive",
         }
         if headers:
             req_headers.update(headers)
         data = json.dumps(body).encode() if body is not None else None
+        if self.parsed_base.scheme == "https":
+            for attempt in range(2):
+                try:
+                    conn = self._connection(timeout)
+                    conn.request(method, path, body=data, headers=req_headers)
+                    resp = conn.getresponse()
+                    return resp.status, resp.read().decode()
+                except Exception as e:
+                    self._reset_connection()
+                    if attempt == 1:
+                        return 0, str(e)
+
         req = urllib.request.Request(
             self.base + path,
             method=method,
@@ -178,19 +263,26 @@ class SupabaseRest:
         )
 
     def fetch_drivers(self, country_code: str, limit: int) -> List[Dict[str, Any]]:
-        query = urllib.parse.urlencode(
-            {
-                "select": "id,user_id",
-                "country_code": f"eq.{country_code}",
-                "status": "in.(available,on_ride,offline,on_break)",
-                "user_id": "not.is.null",
-                "limit": str(limit),
-            }
-        )
-        code, raw = self.service_request("GET", f"/rest/v1/drivers?{query}")
-        if code != 200:
-            raise RuntimeError(f"fetch_drivers failed ({code}): {raw}")
-        rows = json.loads(raw or "[]")
+        rows: List[Dict[str, Any]] = []
+        page_size = 1000
+        for offset in range(0, limit, page_size):
+            query = urllib.parse.urlencode(
+                {
+                    "select": "id,user_id",
+                    "country_code": f"eq.{country_code}",
+                    "status": "in.(available,on_ride,offline,on_break)",
+                    "user_id": "not.is.null",
+                    "limit": str(min(page_size, limit - offset)),
+                    "offset": str(offset),
+                }
+            )
+            code, raw = self.service_request("GET", f"/rest/v1/drivers?{query}")
+            if code != 200:
+                raise RuntimeError(f"fetch_drivers failed ({code}): {raw}")
+            page = json.loads(raw or "[]")
+            rows.extend(page)
+            if len(page) < min(page_size, limit - offset):
+                break
         if len(rows) < limit:
             raise RuntimeError(f"Only found {len(rows)} drivers; need {limit}. Seed staging or lower --drivers.")
         return rows[:limit]
@@ -263,6 +355,150 @@ class SupabaseRest:
         self.insert_driver_rows(clean)
 
 
+def seed_drivers_via_db(
+    *,
+    database_url: str,
+    output_dir: Path,
+    count: int,
+    country_code: str,
+    center_lat: float,
+    center_lng: float,
+    spread_km: float,
+) -> List[Dict[str, Any]]:
+    """Bulk seed staging-only synthetic auth users and drivers through Postgres."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    stamp = int(time.time())
+    csv_path = output_dir / f"db_seed_drivers_{stamp}.csv"
+    rows: List[Dict[str, Any]] = []
+    with csv_path.open("w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["id", "email", "full_name", "lat", "lng"])
+        writer.writeheader()
+        for idx in range(count):
+            user_id = str(uuid.uuid4())
+            lat, lng = random_point_near(center_lat, center_lng, spread_km)
+            row = {
+                "id": user_id,
+                "user_id": user_id,
+                "email": f"scale-db-{stamp}-{idx}-{uuid.uuid4().hex[:8]}@heycaby.local",
+                "full_name": f"Scale Driver {idx}",
+                "status": "available",
+                "country_code": country_code,
+                "pickup_distance_max_km": random.choice([3, 5, 10, 25]),
+                "profile_photo_url": "https://example.com/heycaby-scale-driver.png",
+                "_seed_lat": lat,
+                "_seed_lng": lng,
+            }
+            rows.append(row)
+            writer.writerow(
+                {
+                    "id": user_id,
+                    "email": row["email"],
+                    "full_name": row["full_name"],
+                    "lat": lat,
+                    "lng": lng,
+                }
+            )
+
+    sql_path = output_dir / f"db_seed_drivers_{stamp}.sql"
+    escaped_csv = str(csv_path).replace("'", "''")
+    sql_path.write_text(
+        f"""
+create temp table scale_seed_drivers (
+  id uuid primary key,
+  email text not null,
+  full_name text not null,
+  lat double precision not null,
+  lng double precision not null
+);
+\\copy scale_seed_drivers(id, email, full_name, lat, lng) from '{escaped_csv}' with (format csv, header true);
+
+insert into auth.users (
+  id,
+  aud,
+  role,
+  email,
+  email_confirmed_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  created_at,
+  updated_at,
+  is_sso_user,
+  is_anonymous
+)
+select
+  id,
+  'authenticated',
+  'authenticated',
+  email,
+  now(),
+  '{{"provider":"loadtest","providers":["loadtest"]}}'::jsonb,
+  '{{"load_test":true}}'::jsonb,
+  now(),
+  now(),
+  false,
+  false
+from scale_seed_drivers
+on conflict (id) do nothing;
+
+insert into public.drivers (
+  id,
+  user_id,
+  full_name,
+  email,
+  status,
+  country_code,
+  pickup_distance_max_km,
+  profile_photo_url,
+  subscription_active,
+  is_verified_badge,
+  profile_setup_completed,
+  min_profile_requirements_met,
+  personal_info_completed,
+  vehicle_info_completed,
+  rates_completed,
+  legal_declarations_completed,
+  updated_at
+)
+select
+  id,
+  id,
+  full_name,
+  email,
+  'available',
+  '{country_code}',
+  10,
+  'https://example.com/heycaby-scale-driver.png',
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  now()
+from scale_seed_drivers
+on conflict (user_id) do update set
+  status = excluded.status,
+  subscription_active = true,
+  is_verified_badge = true,
+  updated_at = now();
+""",
+        encoding="utf-8",
+    )
+    try:
+        subprocess.check_output(
+            ["psql", "-v", "ON_ERROR_STOP=1", "-f", str(sql_path)],
+            env=psql_env_from_url(database_url),
+            stderr=subprocess.STDOUT,
+            text=True,
+            timeout=120,
+        )
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"db seed failed: {e.output}") from e
+    return rows
+
+
 def load_manifest(path: Path, jwt_secret: str, center_lat: float, center_lng: float, spread_km: float) -> List[DriverActor]:
     actors: List[DriverActor] = []
     for line in path.read_text().splitlines():
@@ -308,7 +544,7 @@ def actors_from_rows(rows: List[Dict[str, Any]], jwt_secret: str, center_lat: fl
     return actors
 
 
-def upsert_driver_location(rest: SupabaseRest, actor: DriverActor, country_code: str, timeout: float) -> Tuple[bool, str]:
+def upsert_driver_location(rest: SupabaseRest, actor: DriverActor, country_code: str, timeout: float) -> Tuple[bool, str, float]:
     lat, lng = random_point_near(actor.lat, actor.lng, 0.15)
     body = {
         "user_id": actor.user_id,
@@ -320,6 +556,7 @@ def upsert_driver_location(rest: SupabaseRest, actor: DriverActor, country_code:
         "updated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
     qs = urllib.parse.urlencode({"on_conflict": "user_id"})
+    started = time.perf_counter()
     code, raw = rest.request(
         "POST",
         f"/rest/v1/driver_locations?{qs}",
@@ -329,7 +566,8 @@ def upsert_driver_location(rest: SupabaseRest, actor: DriverActor, country_code:
         headers={"Prefer": "resolution=merge-duplicates,return=minimal"},
         timeout=timeout,
     )
-    return code in (200, 201, 204), f"{code} {raw[:180]}"
+    elapsed_ms = (time.perf_counter() - started) * 1000.0
+    return code in (200, 201, 204), f"{code} {raw[:180]}", elapsed_ms
 
 
 def rider_nearby_supply(rest: SupabaseRest, center_lat: float, center_lng: float, timeout: float) -> Tuple[bool, str]:
@@ -415,7 +653,8 @@ where sd.datname = current_database();
 """
     try:
         out = subprocess.check_output(
-            ["psql", database_url, "-At", "-v", "ON_ERROR_STOP=1", "-c", sql],
+            ["psql", "-At", "-v", "ON_ERROR_STOP=1", "-c", sql],
+            env=psql_env_from_url(database_url),
             stderr=subprocess.STDOUT,
             text=True,
             timeout=10,
@@ -432,6 +671,8 @@ def run_interval(args: argparse.Namespace, rest: SupabaseRest, actors: List[Driv
     next_driver_due = {actor.user_id: time.monotonic() + random.random() * interval_sec for actor in actors}
     actor_by_user = {actor.user_id: actor for actor in actors}
     db_url = os.getenv("SUPABASE_DB_URL") or os.getenv("DATABASE_URL") or ""
+    max_driver_futures = args.max_driver_futures or args.driver_workers
+    previous_resource = process_resource_snapshot()
 
     def rider_loop(kind: str, rate_per_sec: float) -> None:
         if rate_per_sec <= 0:
@@ -454,32 +695,50 @@ def run_interval(args: argparse.Namespace, rest: SupabaseRest, actors: List[Driv
         for thread in rider_threads:
             thread.start()
 
-        futures: Dict[concurrent.futures.Future[Tuple[bool, str]], float] = {}
+        futures: Dict[concurrent.futures.Future[Tuple[bool, str, float]], float] = {}
         next_sample = time.monotonic()
         while time.monotonic() < stop_at or futures:
             now = time.monotonic()
+            due_count = 0
+            submitted_count = 0
             if now < stop_at:
                 due_users = [uid for uid, due in next_driver_due.items() if due <= now]
-                for uid in due_users[: args.max_driver_dispatch_per_tick]:
+                due_count = len(due_users)
+                available_slots = max(0, max_driver_futures - len(futures))
+                dispatch_limit = min(args.max_driver_dispatch_per_tick, available_slots)
+                for uid in due_users[:dispatch_limit]:
                     actor = actor_by_user[uid]
                     started = time.perf_counter()
                     fut = pool.submit(upsert_driver_location, rest, actor, args.country_code, args.timeout_sec)
                     futures[fut] = started
                     next_driver_due[uid] = now + interval_sec
+                    submitted_count += 1
 
             done = [fut for fut in futures if fut.done()]
             for fut in done:
                 started = futures.pop(fut)
                 try:
-                    ok, detail = fut.result()
+                    ok, detail, http_elapsed_ms = fut.result()
                 except Exception as e:
-                    ok, detail = False, str(e)
-                metrics.record("driver_location", ok, (time.perf_counter() - started) * 1000.0, detail)
+                    ok, detail, http_elapsed_ms = False, str(e), 0.0
+                total_elapsed_ms = (time.perf_counter() - started) * 1000.0
+                queue_elapsed_ms = max(0.0, total_elapsed_ms - http_elapsed_ms)
+                metrics.record("driver_location", ok, total_elapsed_ms, detail)
+                metrics.record("driver_location_http", ok, http_elapsed_ms, detail)
+                metrics.record("driver_location_queue", ok, queue_elapsed_ms, detail)
 
             if now >= next_sample:
+                resource_snapshot = process_resource_snapshot(previous_resource)
+                previous_resource = resource_snapshot
                 snap = {
                     "interval_sec": interval_sec,
                     "elapsed_sec": round(args.duration_sec - max(0.0, stop_at - now), 2),
+                    "driver_futures_inflight": len(futures),
+                    "driver_due_ready": due_count,
+                    "driver_due_submitted": submitted_count,
+                    "driver_backpressure_limited": due_count > submitted_count,
+                    "max_driver_futures": max_driver_futures,
+                    "generator": resource_snapshot,
                     "client": metrics.snapshot(),
                     "db": db_metric_snapshot(db_url) if db_url else {"error": "SUPABASE_DB_URL/DATABASE_URL not set"},
                     "supabase_dashboard_required": {
@@ -504,6 +763,7 @@ def run_interval(args: argparse.Namespace, rest: SupabaseRest, actors: List[Driv
             "duration_sec": args.duration_sec,
             "drivers": len(actors),
             "target_driver_writes_per_sec": round(len(actors) / interval_sec, 2),
+            "max_driver_futures": max_driver_futures,
             "sample_file": str(sample_path),
         }
     )
@@ -527,13 +787,19 @@ def main() -> int:
     parser.add_argument("--center-lng", type=float, default=4.4777)
     parser.add_argument("--driver-spread-km", type=float, default=18.0)
     parser.add_argument("--driver-workers", type=int, default=1000)
+    parser.add_argument(
+        "--max-driver-futures",
+        type=int,
+        default=0,
+        help="Maximum in-flight submitted driver writes. Defaults to --driver-workers to avoid unbounded local queueing.",
+    )
     parser.add_argument("--max-driver-dispatch-per-tick", type=int, default=10000)
     parser.add_argument("--tick-sec", type=float, default=0.05)
     parser.add_argument("--timeout-sec", type=float, default=10.0)
     parser.add_argument("--sample-sec", type=float, default=10.0)
     parser.add_argument("--rider-nearby-rps", type=float, default=25.0)
     parser.add_argument("--rider-booking-rps", type=float, default=1.0)
-    parser.add_argument("--driver-source", choices=["existing", "seed", "manifest"], default="existing")
+    parser.add_argument("--driver-source", choices=["existing", "seed", "db-seed", "manifest"], default="existing")
     parser.add_argument("--manifest", default="build/load/scale_drivers.jsonl")
     parser.add_argument("--seed-batch-size", type=int, default=250)
     parser.add_argument("--output-dir", default="build/load")
@@ -552,8 +818,8 @@ def main() -> int:
     jwt_secret = os.getenv("SUPABASE_JWT_SECRET", "")
     if not supabase_url or not anon_key or not jwt_secret:
         raise SystemExit("SUPABASE_URL, SUPABASE_ANON_KEY, and SUPABASE_JWT_SECRET are required")
-    if args.driver_source in ("existing", "seed") and not service_key:
-        raise SystemExit("SUPABASE_SERVICE_KEY is required for --driver-source existing|seed")
+    if args.driver_source in ("existing", "seed", "db-seed") and not service_key:
+        raise SystemExit("SUPABASE_SERVICE_KEY is required for --driver-source existing|seed|db-seed")
     if not (os.getenv("SUPABASE_DB_URL") or os.getenv("DATABASE_URL")) and not args.allow_missing_db_url:
         raise SystemExit(
             "SUPABASE_DB_URL for staging is required for measured load runs. "
@@ -567,8 +833,23 @@ def main() -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
     rest = SupabaseRest(supabase_url, anon_key, service_key or None)
 
+    db_url = os.getenv("SUPABASE_DB_URL") or os.getenv("DATABASE_URL") or ""
+
     if args.driver_source == "manifest":
         actors = load_manifest(Path(args.manifest), jwt_secret, args.center_lat, args.center_lng, args.driver_spread_km)
+    elif args.driver_source == "db-seed":
+        if not db_url:
+            raise SystemExit("SUPABASE_DB_URL/DATABASE_URL is required for --driver-source db-seed")
+        rows = seed_drivers_via_db(
+            database_url=db_url,
+            output_dir=output_dir,
+            count=args.drivers,
+            country_code=args.country_code,
+            center_lat=args.center_lat,
+            center_lng=args.center_lng,
+            spread_km=args.driver_spread_km,
+        )
+        actors = actors_from_rows(rows, jwt_secret, args.center_lat, args.center_lng, args.driver_spread_km)
     elif args.driver_source == "seed":
         rows = rest.seed_drivers(
             count=args.drivers,

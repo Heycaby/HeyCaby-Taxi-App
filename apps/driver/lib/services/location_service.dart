@@ -5,6 +5,8 @@ import 'package:heycaby_api/heycaby_api.dart';
 
 import '../providers/driver_state_provider.dart';
 
+const Duration kDriverLocationUploadInterval = Duration(seconds: 10);
+
 /// Request location permission and get current position.
 /// Returns null if permission denied or location unavailable.
 /// Use on app open — driver cannot use the app without location.
@@ -58,9 +60,10 @@ bool shouldTrackDriverLocation(DriverAppState appState) {
 }
 
 /// Driver location tracking service
-/// Updates driver GPS position to backend every 5 seconds when online
+/// Updates driver GPS position to backend on the certified launch interval.
 class DriverLocationService {
-  static final DriverLocationService _instance = DriverLocationService._internal();
+  static final DriverLocationService _instance =
+      DriverLocationService._internal();
   factory DriverLocationService() => _instance;
   DriverLocationService._internal();
 
@@ -86,7 +89,7 @@ class DriverLocationService {
     }
   }
 
-  /// Start tracking and uploading driver location every 5 seconds
+  /// Start tracking and uploading driver location on the certified launch interval.
   Future<void> startTracking() async {
     if (_isTracking) return;
 
@@ -101,7 +104,7 @@ class DriverLocationService {
 
     _isTracking = true;
     _locationTimer?.cancel();
-    _locationTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+    _locationTimer = Timer.periodic(kDriverLocationUploadInterval, (_) {
       unawaited(_uploadLocation());
     });
 

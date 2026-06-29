@@ -4,6 +4,26 @@ This runbook moves scale readiness from review confidence to measured evidence.
 Run it before any App Store / physical-device certification pass that depends on
 the current backend shape.
 
+## Current Certification Status
+
+- 10-second driver location updates with 5,000 drivers: **CERTIFIED**
+- 5-second driver location updates with 5,000 drivers: **NOT CERTIFIED**
+- 3-second driver density: **BLOCKED**
+- rider worst-case / combined driver+rider load: **BLOCKED**
+
+Certified launch baseline:
+
+```text
+Idle online drivers: 10s updates
+5,000 drivers
+~500 writes/sec
+0 errors
+```
+
+Do not run every idle driver at 5s or 3s. Do not rerun 5s unchanged. The next
+workstream is Supabase API/request-path capacity and staging plan/tier
+investigation.
+
 ## Goal
 
 Prove or disprove that the platform can sustain:
@@ -86,6 +106,29 @@ The harness writes:
 
 Do not commit generated `build/load/*` output.
 
+Driver write samples include split latency metrics:
+
+- `driver_location`: total observed latency from scheduling to completion
+- `driver_location_http`: HTTP request latency inside the worker
+- `driver_location_queue`: local load-generator backlog / scheduling latency
+- `driver_futures_inflight`: in-flight driver write futures at sample time
+- `driver_due_ready`: driver writes ready to be submitted at sample time
+- `driver_due_submitted`: driver writes submitted at sample time
+- `driver_backpressure_limited`: whether the harness intentionally held back
+  submissions to avoid unbounded local queueing
+- `max_driver_futures`: the in-flight cap for submitted driver writes
+- `generator`: local process telemetry including CPU time, estimated CPU percent
+  between samples, max RSS, active Python thread count, and a marker that
+  per-process network bytes are not captured by the stdlib harness
+
+Use these fields before blaming the database or Supabase API layer. A 5s run
+with high total latency but low HTTP latency is a load-generator bottleneck, not
+a backend certification failure.
+
+For certification runs, keep `driver_location_queue` bounded. If
+`driver_backpressure_limited` is true for most samples, the run measured the
+generator/request-path throughput ceiling, not a clean backend pass.
+
 ## Staging Representativeness Gate
 
 Document staging vs production before the first run:
@@ -106,11 +149,13 @@ and included in the CTO scale review.
 
 ## Staging Driver Pool
 
-Prefer a staging project seeded with synthetic drivers:
+Prefer a staging project seeded with synthetic drivers. For the first large
+staging seed, use the Postgres-backed seed path so Auth Admin provisioning does
+not dominate the load-test setup time:
 
 ```bash
 python3 scripts/supabase_scale_swarm.py \
-  --driver-source seed \
+  --driver-source db-seed \
   --drivers 5000 \
   --intervals 10 \
   --duration-sec 300 \
@@ -138,6 +183,67 @@ python3 scripts/supabase_scale_swarm.py \
 
 ## Required Runs
 
+## k6 Certification Harness
+
+The Python harness is a discovery tool. It certified the 10-second baseline, but
+it plateaued around 500 writes/sec on a single machine and must not be used as
+the final certification tool for 5-second, 3-second, or rider worst-case scale.
+
+Use k6 for the next 5-second certification attempt.
+
+Install k6:
+
+```bash
+brew install k6
+```
+
+Export a k6 driver manifest from staging:
+
+```bash
+set -a
+source .env.scale.staging
+set +a
+python3 scripts/export_k6_driver_manifest.py \
+  --drivers 5000 \
+  --output build/load/k6_scale_drivers.json
+```
+
+The manifest contains signed synthetic driver tokens. Keep it under
+`build/load/` and do not commit it.
+
+Run the 5-second driver-only k6 test:
+
+```bash
+./scripts/run_k6_driver_5s_certification.sh
+```
+
+The wrapper captures pre/post `pg_stat_statements` snapshots and writes a k6
+summary under `build/load/<run-label>/`. It still requires the Supabase dashboard
+to be open for CPU, API, WAL, slow-query, and Realtime metrics.
+
+Required interpretation:
+
+- If k6 sustains ~1,000 writes/sec with acceptable HTTP p95/p99 and error rate,
+  the 5-second driver-only path can move toward certification.
+- If k6 also plateaus around ~500 writes/sec while the generator machine is not
+  CPU/network bound, investigate Supabase/API request path limits.
+- If k6 itself becomes CPU/network bound, move to distributed generators before
+  making backend claims.
+
+Capture alongside the k6 JSON summary:
+
+- Supabase dashboard CPU
+- Supabase API metrics
+- DB connections
+- `pg_stat_statements` deltas
+- WAL delta
+- generator CPU/memory/network
+
+Do not run 3-second or rider worst-case tests until the k6 5-second driver-only
+test is clean.
+
+## Python Discovery Runs
+
 Run each interval separately. Start with 10s to validate the harness and metrics
 capture, then step up only after the previous run produced a clean summary and DB
 stats.
@@ -157,6 +263,7 @@ python3 scripts/supabase_scale_swarm.py \
   --manifest build/load/scale_drivers.jsonl \
   --intervals 5 \
   --duration-sec 300 \
+  --max-driver-futures 1000 \
   --rider-nearby-rps 0 \
   --rider-booking-rps 0 \
   --run-label 5s_driver_only
