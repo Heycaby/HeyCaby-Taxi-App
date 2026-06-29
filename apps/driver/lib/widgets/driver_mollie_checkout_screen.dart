@@ -3,6 +3,9 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../l10n/driver_strings.dart';
+import '../theme/driver_colors.dart';
+import '../theme/driver_typography.dart';
+import '../ui/driver_app_bar.dart';
 
 /// Full-screen Mollie hosted checkout or customer portal; pops with `true` when user hits return URL.
 class DriverMollieCheckoutScreen extends StatefulWidget {
@@ -12,8 +15,10 @@ class DriverMollieCheckoutScreen extends StatefulWidget {
     required this.colors,
     required this.typo,
     this.appBarTitle,
+
     /// When non-null and [autoPopOnSuccessUrlMatch] is true, navigation to a URL containing this substring pops `true`.
     this.successUrlContains = 'driver/payment/return',
+
     /// If false, only the close button dismisses (e.g. mandate portal where return URL is unpredictable).
     this.autoPopOnSuccessUrlMatch = true,
   });
@@ -30,7 +35,8 @@ class DriverMollieCheckoutScreen extends StatefulWidget {
       _DriverMollieCheckoutScreenState();
 }
 
-class _DriverMollieCheckoutScreenState extends State<DriverMollieCheckoutScreen> {
+class _DriverMollieCheckoutScreenState
+    extends State<DriverMollieCheckoutScreen> {
   late final WebViewController _controller;
   var _loading = true;
 
@@ -72,15 +78,17 @@ class _DriverMollieCheckoutScreenState extends State<DriverMollieCheckoutScreen>
   Widget build(BuildContext context) {
     final colors = widget.colors;
     final typo = widget.typo;
+    final driverColors = DriverColors.fromTheme(colors);
+    final driverTypography = DriverTypography.fromTheme(typo);
     return Scaffold(
-      appBar: AppBar(
-        foregroundColor: colors.text,
-        title: Text(
-          widget.appBarTitle ?? DriverStrings.platformFeeCheckoutTitle,
-          style: typo.titleMedium,
-        ),
+      backgroundColor: driverColors.background,
+      appBar: DriverAppBar(
+        title: widget.appBarTitle ?? DriverStrings.platformFeeCheckoutTitle,
+        colors: driverColors,
+        typography: driverTypography,
+        centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: Icon(Icons.close_rounded, color: driverColors.text),
           onPressed: () => Navigator.of(context).pop(false),
         ),
       ),
@@ -102,7 +110,9 @@ class _DriverMollieCheckoutScreenState extends State<DriverMollieCheckoutScreen>
           if (_loading)
             ColoredBox(
               color: colors.bg.withValues(alpha: 0.6),
-              child: const Center(child: CircularProgressIndicator()),
+              child: Center(
+                child: CircularProgressIndicator(color: driverColors.primary),
+              ),
             ),
         ],
       ),

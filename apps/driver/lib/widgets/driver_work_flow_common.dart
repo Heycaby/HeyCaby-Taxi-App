@@ -48,9 +48,10 @@ class DriverWorkFlowScaffold extends StatelessWidget {
               ),
               actions: actions,
             )
-          : AppBar(
-              backgroundColor: colors.card,
-              elevation: 0,
+          : DriverAppBar(
+              title: '',
+              colors: colors,
+              typography: typography,
               leading: IconButton(
                 icon: Icon(Icons.arrow_back_rounded, color: colors.text),
                 onPressed: onBack,

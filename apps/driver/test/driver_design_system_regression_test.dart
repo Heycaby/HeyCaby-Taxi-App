@@ -29,6 +29,14 @@ void main() {
     final shiftCommandFlowSource =
         File('lib/widgets/driver_shift_command_flow_common.dart')
             .readAsStringSync();
+    final workFlowSource =
+        File('lib/widgets/driver_work_flow_common.dart').readAsStringSync();
+    final tripPlanningFlowSource =
+        File('lib/widgets/driver_trip_planning_flow_common.dart')
+            .readAsStringSync();
+    final mollieCheckoutSource =
+        File('lib/widgets/driver_mollie_checkout_screen.dart')
+            .readAsStringSync();
     final logoSource =
         File('lib/widgets/heycaby_driver_logo.dart').readAsStringSync();
     final brandAssetsSource =
@@ -84,6 +92,9 @@ void main() {
         fleetAllowlistVehicleSource,
         shiftAuditSource,
         shiftCommandFlowSource,
+        workFlowSource,
+        tripPlanningFlowSource,
+        mollieCheckoutSource,
       ]) {
         expect(source, contains('DriverAppBar('));
         expect(source, isNot(contains('appBar: AppBar(')));

@@ -45,38 +45,21 @@ class DriverTripPlanningFlowScaffold extends StatelessWidget {
               centerTitle: centerTitle,
               leading: IconButton(
                 icon: Icon(
-                  leadingClose
-                      ? Icons.close_rounded
-                      : Icons.arrow_back_rounded,
+                  leadingClose ? Icons.close_rounded : Icons.arrow_back_rounded,
                   color: colors.text,
                 ),
                 onPressed: onBack,
               ),
             )
-          : AppBar(
-              backgroundColor: colors.card,
-              elevation: 0,
+          : DriverAppBar(
+              title: title,
+              subtitle: subtitle,
+              colors: colors,
+              typography: typography,
+              centerTitle: false,
               leading: IconButton(
                 icon: Icon(Icons.arrow_back_rounded, color: colors.text),
                 onPressed: onBack,
-              ),
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: typography.titleLarge.copyWith(
-                      color: colors.text,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    subtitle!,
-                    style: typography.bodySmall.copyWith(
-                      color: colors.textMuted,
-                    ),
-                  ),
-                ],
               ),
             ),
       body: body,
