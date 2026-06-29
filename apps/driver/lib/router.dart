@@ -24,6 +24,7 @@ import 'screens/driver_community_channel_feed_screen.dart';
 import 'screens/driver_tell_friend_screen.dart';
 import 'screens/driver_preferences_screen.dart';
 import 'screens/driver_profile_screen.dart';
+import 'screens/driver_settings_screen.dart';
 import 'screens/driver_documents_screen.dart';
 import 'screens/driver_veriff_screen.dart';
 import 'screens/driver_fleet_allowlist_screen.dart';
@@ -218,6 +219,11 @@ final appRouter = GoRouter(
               _shellPage(state, const DriverProfileScreen()),
         ),
         GoRoute(
+          path: '/driver/settings',
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverSettingsScreen()),
+        ),
+        GoRoute(
           path: '/driver/community',
           pageBuilder: (_, state) =>
               _shellPage(state, const DriverCommunityHubScreen()),
@@ -226,7 +232,8 @@ final appRouter = GoRouter(
           path: '/driver/community/feed',
           pageBuilder: (_, state) {
             final raw = state.uri.queryParameters['channel'] ?? 'general';
-            final channel = raw == 'announcements' ? 'announcements' : 'general';
+            final channel =
+                raw == 'announcements' ? 'announcements' : 'general';
             return _shellPage(
               state,
               DriverCommunityChannelFeedScreen(channel: channel),
@@ -246,7 +253,9 @@ final appRouter = GoRouter(
         GoRoute(
           path: '/driver/my-rides/:rideId',
           redirect: (_, state) {
-            if (!isValidUuid(state.pathParameters['rideId'])) return '/driver/my-rides';
+            if (!isValidUuid(state.pathParameters['rideId'])) {
+              return '/driver/my-rides';
+            }
             return null;
           },
           pageBuilder: (_, state) => _shellPage(
@@ -317,7 +326,8 @@ final appRouter = GoRouter(
           },
           pageBuilder: (_, state) {
             final vehicleId = state.pathParameters['vehicleId']!;
-            final plate = state.extra is String ? state.extra! as String : vehicleId;
+            final plate =
+                state.extra is String ? state.extra! as String : vehicleId;
             return _shellPage(
               state,
               DriverFleetAllowlistVehicleScreen(
@@ -482,8 +492,7 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: '/driver/ride-swap',
-          pageBuilder: (_, state) =>
-              _shellPage(state, const RideSwapScreen()),
+          pageBuilder: (_, state) => _shellPage(state, const RideSwapScreen()),
         ),
         GoRoute(
           path: '/driver/score',

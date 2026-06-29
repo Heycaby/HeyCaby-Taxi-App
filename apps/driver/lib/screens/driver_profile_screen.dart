@@ -510,8 +510,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                   );
                 },
                 onOpenVehicle: () => context.push('/driver/vehicle'),
-                onOpenPreferences: () => context.push('/driver/preferences'),
-                onOpenFinance: () => context.push('/driver/finance'),
+                onOpenSettings: () => context.push('/driver/settings'),
               );
             },
             loading: () => Center(

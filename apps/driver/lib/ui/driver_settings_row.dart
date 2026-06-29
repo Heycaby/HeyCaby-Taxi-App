@@ -74,6 +74,7 @@ class DriverSettingsNavRow extends StatelessWidget {
     this.onTap,
     this.showDivider = true,
     this.boldTitle = false,
+    this.destructive = false,
   });
 
   final IconData icon;
@@ -84,9 +85,12 @@ class DriverSettingsNavRow extends StatelessWidget {
   final VoidCallback? onTap;
   final bool showDivider;
   final bool boldTitle;
+  final bool destructive;
 
   @override
   Widget build(BuildContext context) {
+    final accent = destructive ? colors.error : colors.primary;
+    final titleColor = destructive ? colors.error : colors.text;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -101,10 +105,10 @@ class DriverSettingsNavRow extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(DriverSpacing.sm),
                     decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.1),
+                      color: accent.withValues(alpha: 0.1),
                       borderRadius: DriverRadius.smAll,
                     ),
-                    child: Icon(icon, size: 20, color: colors.primary),
+                    child: Icon(icon, size: 20, color: accent),
                   ),
                   const SizedBox(width: DriverSpacing.md),
                   Expanded(
@@ -114,7 +118,7 @@ class DriverSettingsNavRow extends StatelessWidget {
                         Text(
                           title,
                           style: typography.bodyMedium.copyWith(
-                            color: colors.text,
+                            color: titleColor,
                             fontWeight:
                                 boldTitle ? FontWeight.w800 : FontWeight.w600,
                           ),

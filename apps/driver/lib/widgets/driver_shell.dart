@@ -75,7 +75,8 @@ class _DriverShellState extends ConsumerState<DriverShell>
       currentIndex = 1;
     } else if (location.startsWith('/driver/my-rides')) {
       currentIndex = 2;
-    } else if (location.startsWith('/driver/me')) {
+    } else if (location.startsWith('/driver/me') ||
+        location.startsWith('/driver/settings')) {
       currentIndex = 3;
     }
 

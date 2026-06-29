@@ -16,6 +16,7 @@ import '../services/driver_data_service.dart' show ZoneDemand;
 import '../ui/driver_map_controls_column.dart';
 import '../ui/driver_map_demand_chip.dart';
 import 'driver_break_reminder_banner.dart';
+import 'driver_community_overlay_bodies.dart';
 import 'driver_verification_status_banner.dart';
 import 'driver_earnings_modal.dart';
 import 'driver_earnings_modal_parts.dart';
@@ -83,7 +84,8 @@ class DriverMapFloating extends ConsumerWidget {
             ? stats.shiftStartAt
             : stats.lastBreakStartAt)
         : null;
-    final badgeCount = ref.watch(driverHubBadgeCountProvider).valueOrNull ?? 0;
+    final badgeCount =
+        ref.watch(communityUnreadNotificationsCountProvider).valueOrNull ?? 0;
     final driverColors = DriverColors.fromTheme(colors);
     final driverTypography = DriverTypography.fromTheme(typo);
     final zones =
@@ -155,10 +157,10 @@ class DriverMapFloating extends ConsumerWidget {
             recenterIcon: AppIcons.mapRecenter,
             recenterTooltip: DriverStrings.recenterMap,
             onRecenter: onRecenter,
-            hubIcon: onDriverHub != null ? AppIcons.hubGrid : null,
-            hubTooltip: DriverStrings.driverHub,
+            hubIcon: AppIcons.bellRing,
+            hubTooltip: DriverStrings.communityNotificationsTitle,
             hubBadge: badgeCount,
-            onHub: onDriverHub,
+            onHub: () => _showNotifications(context, ref),
           ).driverMapChromeEnter(staggerIndex: 3),
         ),
         if (isOnline)
@@ -245,6 +247,24 @@ class DriverMapFloating extends ConsumerWidget {
           if (context.mounted) Navigator.of(dialogContext).pop();
         },
       ),
+    );
+  }
+
+  void _showNotifications(BuildContext context, WidgetRef ref) {
+    showDriverCommunityNotificationsSheet(
+      context,
+      ref,
+      onNotificationTap: (notification) {
+        final colors = DriverColors.fromTheme(ref.read(colorsProvider));
+        final typography =
+            DriverTypography.fromTheme(ref.read(typographyProvider));
+        showDriverCommunityNotificationDetailDialog(
+          context,
+          notification: notification,
+          colors: colors,
+          typography: typography,
+        );
+      },
     );
   }
 

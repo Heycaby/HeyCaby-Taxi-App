@@ -51,8 +51,7 @@ class DriverIdentityBody extends StatelessWidget {
     required this.model,
     required this.onEditProfile,
     required this.onOpenVehicle,
-    required this.onOpenPreferences,
-    required this.onOpenFinance,
+    required this.onOpenSettings,
   });
 
   final DriverColors colors;
@@ -60,8 +59,7 @@ class DriverIdentityBody extends StatelessWidget {
   final DriverIdentityViewModel model;
   final VoidCallback onEditProfile;
   final VoidCallback onOpenVehicle;
-  final VoidCallback onOpenPreferences;
-  final VoidCallback onOpenFinance;
+  final VoidCallback onOpenSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -101,32 +99,17 @@ class DriverIdentityBody extends StatelessWidget {
                   onTap: onOpenVehicle,
                 ).driverFadeSlideIn(staggerIndex: 2),
                 const SizedBox(height: DriverSpacing.xl),
-                Text(
-                  DriverStrings.preferences,
-                  style: typography.labelMedium.copyWith(
-                    color: colors.textSecondary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: DriverSpacing.sm),
                 DriverSettingsGroupCard(
                   colors: colors,
                   children: [
                     DriverSettingsNavRow(
-                      icon: Icons.tune_rounded,
-                      title: DriverStrings.preferences,
+                      icon: Icons.settings_rounded,
+                      title: DriverStrings.settings,
                       colors: colors,
                       typography: typography,
-                      onTap: onOpenPreferences,
-                    ),
-                    DriverSettingsNavRow(
-                      icon: Icons.bar_chart_rounded,
-                      title: DriverStrings.financeAndTax,
-                      colors: colors,
-                      typography: typography,
-                      onTap: onOpenFinance,
                       boldTitle: true,
                       showDivider: false,
+                      onTap: onOpenSettings,
                     ),
                   ],
                 ).driverFadeSlideIn(staggerIndex: 3),
