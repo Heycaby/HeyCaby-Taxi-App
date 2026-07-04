@@ -111,97 +111,132 @@ class _DriverRideCommunicationSheetState
       top: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: widget.colors.card,
-            borderRadius: DriverRadius.sheetTop,
-            border: Border.all(color: widget.colors.border),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.86,
           ),
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              DriverSpacing.lg,
-              DriverSpacing.lg,
-              DriverSpacing.lg,
-              DriverSpacing.lg + bottom,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: widget.colors.card,
+              borderRadius: DriverRadius.sheetTop,
+              border: Border.all(color: widget.colors.border),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.14),
+                  blurRadius: 30,
+                  offset: const Offset(0, -10),
+                ),
+              ],
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  DriverStrings.communicationCenterTitle,
-                  style: widget.typography.titleLarge.copyWith(
-                    color: widget.colors.text,
-                    fontWeight: FontWeight.w800,
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                DriverSpacing.lg,
+                DriverSpacing.md,
+                DriverSpacing.lg,
+                DriverSpacing.lg + bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 48,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: widget.colors.border,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: DriverSpacing.sm),
-                Text(
-                  DriverStrings.communicationCenterSubtitle,
-                  style: widget.typography.bodyMedium.copyWith(
-                    color: widget.colors.textSecondary,
-                    height: 1.35,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                if (commContext.nearPickup) ...[
-                  const SizedBox(height: DriverSpacing.sm),
+                  const SizedBox(height: DriverSpacing.lg),
                   Text(
-                    DriverStrings.communicationNearPickupHint,
-                    style: widget.typography.bodySmall.copyWith(
-                      color: widget.colors.textMuted,
+                    DriverStrings.communicationCenterTitle,
+                    style: widget.typography.titleLarge.copyWith(
+                      color: widget.colors.text,
+                      fontWeight: FontWeight.w800,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                ],
-                const SizedBox(height: DriverSpacing.lg),
-                FilledButton.icon(
-                  onPressed: widget.onOpenChat,
-                  icon: const Icon(Icons.chat_bubble_outline_rounded),
-                  label: const Text(DriverStrings.communicationChat),
-                ),
-                const SizedBox(height: DriverSpacing.lg),
-                Divider(color: widget.colors.border),
-                const SizedBox(height: DriverSpacing.sm),
-                Text(
-                  DriverStrings.communicationQuickActions,
-                  style: widget.typography.labelLarge.copyWith(
-                    color: widget.colors.textMuted,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.4,
+                  const SizedBox(height: DriverSpacing.sm),
+                  Text(
+                    DriverStrings.communicationCenterSubtitle,
+                    style: widget.typography.bodyMedium.copyWith(
+                      color: widget.colors.textSecondary,
+                      height: 1.35,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                ),
-                const SizedBox(height: DriverSpacing.md),
-                ...pings.map((type) {
-                  final remaining = DriverPingCooldown.remaining(
-                    widget.rideRequestId,
-                    type.apiKind,
-                  );
-                  final onCooldown = remaining != null;
-                  final busy = _sending == type;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: DriverSpacing.sm),
-                    child: OutlinedButton.icon(
-                      onPressed:
-                          onCooldown || busy ? null : () => _sendPing(type),
-                      icon: Icon(_iconForPing(type)),
-                      label: Text(
-                        onCooldown
+                  if (commContext.nearPickup) ...[
+                    const SizedBox(height: DriverSpacing.sm),
+                    Text(
+                      DriverStrings.communicationNearPickupHint,
+                      style: widget.typography.bodySmall.copyWith(
+                        color: widget.colors.textMuted,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                  const SizedBox(height: DriverSpacing.lg),
+                  FilledButton.icon(
+                    onPressed: widget.onOpenChat,
+                    icon: const Icon(Icons.chat_bubble_outline_rounded),
+                    label: const Text(DriverStrings.communicationChat),
+                  ),
+                  const SizedBox(height: DriverSpacing.lg),
+                  Divider(color: widget.colors.border),
+                  const SizedBox(height: DriverSpacing.sm),
+                  Text(
+                    DriverStrings.communicationQuickActions,
+                    style: widget.typography.labelLarge.copyWith(
+                      color: widget.colors.textMuted,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                  const SizedBox(height: DriverSpacing.md),
+                  ...pings.map((type) {
+                    final remaining = DriverPingCooldown.remaining(
+                      widget.rideRequestId,
+                      type.apiKind,
+                    );
+                    final onCooldown = remaining != null;
+                    final busy = _sending == type;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: DriverSpacing.sm),
+                      child: _PingActionButton(
+                        colors: widget.colors,
+                        typography: widget.typography,
+                        enabled: !onCooldown && !busy,
+                        busy: busy,
+                        icon: _iconForPing(type),
+                        label: onCooldown
                             ? DriverStrings.pingCooldownButton(
                                 remaining.inSeconds,
                               )
                             : _labelForPing(type),
+                        onTap: () => _sendPing(type),
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: DriverSpacing.sm),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: widget.colors.surface,
+                      borderRadius: DriverRadius.mdAll,
+                      border: Border.all(color: widget.colors.border),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(DriverSpacing.md),
+                      child: DriverPingHistorySection(
+                        rideRequestId: widget.rideRequestId,
+                        colors: widget.colors,
+                        typography: widget.typography,
                       ),
                     ),
-                  );
-                }),
-                DriverPingHistorySection(
-                  rideRequestId: widget.rideRequestId,
-                  colors: widget.colors,
-                  typography: widget.typography,
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -245,5 +280,83 @@ class _DriverRideCommunicationSheetState
       case DriverPingType.thanks:
         return DriverStrings.pingThanks;
     }
+  }
+}
+
+class _PingActionButton extends StatelessWidget {
+  const _PingActionButton({
+    required this.colors,
+    required this.typography,
+    required this.enabled,
+    required this.busy,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final DriverColors colors;
+  final DriverTypography typography;
+  final bool enabled;
+  final bool busy;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: enabled ? colors.card : colors.surface,
+      borderRadius: DriverRadius.smAll,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: DriverRadius.smAll,
+        child: Container(
+          constraints:
+              const BoxConstraints(minHeight: DriverSpacing.touchTarget),
+          padding: const EdgeInsets.symmetric(
+            horizontal: DriverSpacing.md,
+            vertical: DriverSpacing.sm,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: DriverRadius.smAll,
+            border: Border.all(
+              color: enabled
+                  ? colors.primary.withValues(alpha: 0.18)
+                  : colors.border,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: enabled ? colors.primary : colors.textMuted),
+              const SizedBox(width: DriverSpacing.sm),
+              Expanded(
+                child: Text(
+                  label,
+                  style: typography.labelLarge.copyWith(
+                    color: enabled ? colors.text : colors.textMuted,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (busy)
+                SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: colors.primary,
+                  ),
+                )
+              else
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: enabled ? colors.textMuted : colors.border,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../services/location_service.dart';
 import '../services/rider_device_permission_snapshot.dart';
 import '../services/rider_permission_backend_sync.dart';
 
@@ -29,7 +30,11 @@ class LocationNotifier extends AsyncNotifier<Position?> {
       final pos = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-      state = AsyncData(pos);
+      state = AsyncData(
+        LocationService.isInNetherlands(pos.latitude, pos.longitude)
+            ? pos
+            : null,
+      );
     } else {
       state = const AsyncData(null);
     }
@@ -47,7 +52,11 @@ class LocationNotifier extends AsyncNotifier<Position?> {
         final pos = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
         );
-        state = AsyncData(pos);
+        state = AsyncData(
+          LocationService.isInNetherlands(pos.latitude, pos.longitude)
+              ? pos
+              : null,
+        );
         return;
       } catch (_) {}
     }
@@ -56,7 +65,11 @@ class LocationNotifier extends AsyncNotifier<Position?> {
 
   /// Set position from an external flow (e.g. splash after [LocationService.requestAndGetLocation]).
   void setPosition(Position position) {
-    state = AsyncData(position);
+    state = AsyncData(
+      LocationService.isInNetherlands(position.latitude, position.longitude)
+          ? position
+          : null,
+    );
   }
 }
 

@@ -45,7 +45,7 @@
   "homeRecentPlacesTitle": "Recente plaatsen",
   "homeRecentPlacesEdit": "Bewerken",
   "homeCompleteProfile": "Profiel aanvullen",
-  "vehicleCategoryTitle": "Welk type rit wil je?",
+  "vehicleCategoryTitle": "Heb je een specifiek voertuig nodig?",
   "homeAirportChipSchiphol": "Schiphol",
   "homeAirportChipRotterdam": "Rotterdam Airport",
   "homeAirportChipEindhoven": "Eindhoven",
@@ -778,14 +778,39 @@
       "count": { "type": "int" }
     }
   },
-  "vehicleStandard": "Standaard",
-  "vehicleStandardDesc": "Betaalbare ritten voor dagelijks gebruik",
+  "vehicleStandard": "Standaard taxi",
+  "vehicleStandardDesc": "Dagelijkse taxi voor maximaal 4 passagiers.",
   "vehicleComfort": "Comfort",
   "vehicleComfortDesc": "Premium voertuigen met extra ruimte",
   "vehicleTaxibus": "Taxibus",
   "vehicleTaxibusDesc": "Tot 8 passagiers met bagage",
-  "vehicleWheelchair": "Rolstoel",
+  "vehicleWheelchair": "Rolstoeltoegankelijk",
   "vehicleWheelchairDesc": "Toegankelijke voertuigen met oprijplaten",
+  "vehicleNearbyMarketTitle": "Taxiaanbod in de buurt",
+  "vehicleNearbyMarketChecking": "Live beschikbaarheid controleren...",
+  "vehicleNearbyDriverCount": "{count} chauffeurs dichtbij",
+  "@vehicleNearbyDriverCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "vehicleFareRangeLabel": "Prijsrange",
+  "vehiclePickupRangeLabel": "Ophaaltijd",
+  "vehicleOptionalPreferencesTitle": "Optionele voorkeuren",
+  "vehicleOptionalPreferencesSubtitle": "Bepaal wie je aanvraag eerst ziet.",
+  "vehicleSupplyNearbyCount": "{count} dichtbij",
+  "@vehicleSupplyNearbyCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "vehiclePetsWelcome": "Huisdieren welkom",
+  "vehicleIndependentPricingTitle": "Prijzen van zelfstandige chauffeurs",
+  "vehicleIndependentPricingBody": "Chauffeurs bepalen hun eigen prijzen. Deze range komt van taxi's in de buurt en kan nog wijzigen voordat je boekt.",
   "petFriendly": "Huisdieren welkom",
   "petFriendlyDesc": "Chauffeurs die huisdieren accepteren",
   "vehicleSupplyCountCaption": "chauffeurs beschikbaar",
@@ -1025,12 +1050,68 @@
   "searchingTitle": "We zoeken de dichtstbijzijnde Caby…",
   "matchingTitleMarketplace": "We zoeken een marketplace-Caby…",
   "matchingTitleScheduled": "We zoeken een Caby voor je geplande rit…",
+  "matchingStatusLive": "Live",
+  "matchingStatusWindow": "Tijdvak",
+  "matchingStatusOffers": "Biedingen",
   "homeNearTermTitleInstant": "We zoeken je Caby",
   "homeNearTermTitleMarketplace": "Marketplace-aanvraag",
   "homeNearTermTitleScheduled": "Geplande rit",
   "homeNearTermOpenMatching": "We matchen je nog met een chauffeur. Tik om voortgang te zien.",
   "homeNearTermOpenMatchingHint": "Nog aan het matchen — tik voor ritdetails",
   "homeNearTermTripDetails": "Ritdetails",
+  "activeBookingSearchingTitle": "We zoeken je chauffeur",
+  "activeBookingMarketplaceTitle": "We zoeken biedingen",
+  "activeBookingScheduledTitle": "Geplande rit actief",
+  "activeBookingTapForDetails": "Tik om de voortgang te zien zonder de kaart kwijt te raken.",
+  "activeBookingDriversNotified": "{count, plural, =0{0 chauffeurs ontvingen je aanvraag} one{1 chauffeur ontving je aanvraag} other{{count} chauffeurs ontvingen je aanvraag}}",
+  "@activeBookingDriversNotified": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activeBookingOffersReceived": "{count, plural, =0{Nog geen biedingen} one{1 bod ontvangen} other{{count} biedingen ontvangen}}",
+  "@activeBookingOffersReceived": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activeBookingInstantBody": "Verwachte wachttijd: 1–2 min. We melden het zodra een chauffeur accepteert.",
+  "activeBookingMarketplaceBody": "Onafhankelijke chauffeurs kunnen accepteren, tegenbieden of negeren. Jij kiest met wie je rijdt.",
+  "activeBookingOffersBody": "{count, plural, one{Bekijk het bod en kies je chauffeur.} other{Vergelijk biedingen en kies je chauffeur.}}",
+  "@activeBookingOffersBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activeBookingBestOffer": "Beste bod €{price} · {minutes} min weg",
+  "@activeBookingBestOffer": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "activeBookingScheduledBody": "Ophalen {pickup}. Chauffeur zoeken start {searchStarts}.",
+  "@activeBookingScheduledBody": {
+    "placeholders": {
+      "pickup": {
+        "type": "String"
+      },
+      "searchStarts": {
+        "type": "String"
+      }
+    }
+  },
+  "activeBookingScheduledSearchingBody": "We zoeken nu een chauffeur voor je geplande rit.",
   "rideMatchingTypeLabelInstant": "Directe rit",
   "rideMatchingTypeLabelMarketplace": "Marktplaats",
   "rideMatchingTypeLabelScheduled": "Gepland",
@@ -1083,6 +1164,60 @@
   "activeRideWaitForDriver": "Wacht op chauffeur",
   "activeRidePickupNotes": "Nog ophaalnotities?",
   "activeRideChatSubtitle": "Stuur snel een bericht naar je chauffeur",
+  "activeRidePingDriver": "Ping chauffeur",
+  "activeRidePingSubtitle": "Stuur snelle melding",
+  "activeRidePickupNote": "Ophaalnotitie",
+  "activeRidePingSheetSubtitle": "Stuur snel een update over het ophalen. Je chauffeur krijgt dit als ritbericht.",
+  "activeRidePingAtPickup": "Ik ben bij de ophaalplek",
+  "activeRidePingWalkingThere": "Ik loop ernaartoe",
+  "activeRidePingCantFindYou": "Ik kan je niet vinden",
+  "activeRidePingRunningLate": "Ik ben 2 min later",
+  "activeRidePingConfirmPlate": "Bevestig het kenteken",
+  "activeRidePingSent": "Ping verstuurd: {message}",
+  "@activeRidePingSent": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRidePingFailed": "Ping versturen lukt niet. Probeer opnieuw.",
+  "activeRideLastPing": "Ping verstuurd: {message} · nu",
+  "@activeRideLastPing": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRidePickupIn": "Ophalen over {minutes} min",
+  "@activeRidePickupIn": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideArrivingIn": "Aankomst over {minutes} min",
+  "@activeRideArrivingIn": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideDriverOutside": "Je chauffeur is buiten",
+  "activeRideMaxFourSeats": "Max 4 zitplaatsen",
+  "activeRideSeatsMax": "Max {seats} zitplaatsen",
+  "@activeRideSeatsMax": {
+    "placeholders": {
+      "seats": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideVerifiedTaxi": "Geverifieerde taxichauffeur",
+  "safety": "Veiligheid",
   "activeRideFoundingShort": "Founding",
   "activeRideShareSubtitle": "Deel je live ritlink",
   "activeRideReportSubtitle": "Dien een ritmelding in",

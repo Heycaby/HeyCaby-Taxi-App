@@ -75,6 +75,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
       ref: ref,
       lat: driver.pickupLat,
       lng: driver.pickupLng,
+      addressFallback: driver.pickupAddress,
       coordinatesUnavailableMessage: DriverStrings.pickupCoordinatesUnavailable,
     );
   }

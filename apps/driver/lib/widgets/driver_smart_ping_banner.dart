@@ -147,70 +147,97 @@ class _DriverSmartPingBannerState extends ConsumerState<DriverSmartPingBanner> {
         ),
     };
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-      child: Material(
-        color: colors.success.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.notifications_active_rounded,
-                      color: colors.success),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: typography.titleSmall.copyWith(
-                            color: colors.text,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          body,
-                          style: typography.bodySmall.copyWith(
-                            color: colors.textSecondary,
-                            height: 1.3,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+        child: Material(
+          color: colors.card,
+          elevation: 0,
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: colors.success.withValues(alpha: 0.22)),
+              gradient: LinearGradient(
+                colors: [
+                  colors.success.withValues(alpha: 0.10),
+                  colors.card,
                 ],
               ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  TextButton(
-                    onPressed: _busy ? null : _dismiss,
-                    child: const Text(DriverStrings.smartPingDismiss),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 22,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: colors.success.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
                   ),
-                  const Spacer(),
-                  FilledButton(
-                    onPressed: _busy ? null : _send,
-                    child: _busy
-                        ? SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: colors.onPrimary,
-                            ),
-                          )
-                        : const Text(DriverStrings.smartPingSend),
+                  child: Icon(
+                    Icons.notifications_active_rounded,
+                    color: colors.success,
+                    size: 22,
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        style: typography.titleSmall.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w800,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        body,
+                        style: typography.bodySmall.copyWith(
+                          color: colors.textSecondary,
+                          height: 1.25,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                TextButton(
+                  onPressed: _busy ? null : _dismiss,
+                  child: const Text(DriverStrings.smartPingDismiss),
+                ),
+                const SizedBox(width: 4),
+                FilledButton(
+                  onPressed: _busy ? null : _send,
+                  child: _busy
+                      ? SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: colors.onPrimary,
+                          ),
+                        )
+                      : const Text(DriverStrings.smartPingSend),
+                ),
+              ],
+            ),
           ),
         ),
       ),

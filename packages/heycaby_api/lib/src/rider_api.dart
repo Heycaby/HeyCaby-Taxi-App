@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'app_notifications_service.dart';
-import 'supabase_client.dart';
+import 'package:heycaby_api/src/app_notifications_service.dart';
+import 'package:heycaby_api/src/supabase_client.dart';
 
 class RiderApi {
   static const _notifications = AppNotificationsService();
@@ -34,6 +34,13 @@ class RiderApi {
   Future<void> markAllNotificationsRead(
       {required String riderIdentityId}) async {
     await _notifications.markAllRead(
+      userType: 'rider',
+      riderIdentityId: riderIdentityId,
+    );
+  }
+
+  Future<void> clearReadNotifications({required String riderIdentityId}) async {
+    await _notifications.clearRead(
       userType: 'rider',
       riderIdentityId: riderIdentityId,
     );

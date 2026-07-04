@@ -10,10 +10,10 @@ abstract final class DriverRidePremiumStyle {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          colors.primary.withValues(alpha: 0.06),
+          colors.primary.withValues(alpha: 0.035),
           colors.background,
           colors.background,
         ],
-        stops: const [0.0, 0.22, 1.0],
+        stops: const [0.0, 0.18, 1.0],
       );
 }

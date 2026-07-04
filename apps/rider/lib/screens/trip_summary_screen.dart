@@ -13,6 +13,7 @@ import '../providers/recent_destinations_provider.dart';
 import '../providers/ride_request_provider.dart';
 import '../services/booking_draft_storage.dart';
 import '../services/booking_flow_navigation.dart';
+import 'location_required_screen.dart';
 import '../widgets/booking/trip_summary_map_view.dart';
 import '../widgets/booking/trip_summary_sheet.dart';
 import '../widgets/primary_cancel_row.dart';
@@ -37,7 +38,15 @@ class _TripSummaryScreenState extends ConsumerState<TripSummaryScreen> {
     });
   }
 
-  void _editAddress(bool isPickup) => context.go('/search');
+  void _editAddress(bool isPickup) => context.push(
+        '/search',
+        extra: BookingSearchRouteArgs(
+          returnToSummaryAfterSave: true,
+          initialEditTarget: isPickup
+              ? BookingAddressEditTarget.pickup
+              : BookingAddressEditTarget.destination,
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -85,32 +94,33 @@ class _TripSummaryScreenState extends ConsumerState<TripSummaryScreen> {
           Positioned(
             top: MediaQuery.paddingOf(context).top + 12,
             left: 16,
-              child: Material(
-                color: colors.card,
-                elevation: 2,
-                shadowColor: colors.text.withValues(alpha: 0.12),
-                shape: const CircleBorder(),
-                child: InkWell(
-                  onTap: () async {
-                    HapticService.lightTap();
-                    final shouldCancel = await showCancelBookingDialog(
-                      context,
-                      colors: colors,
-                      typography: typo,
-                    );
-                    if (!context.mounted || !shouldCancel) return;
-                    ref.read(bookingProvider.notifier).reset();
-                    ref.read(rideRequestProvider.notifier).reset();
-                    context.go('/home');
-                  },
-                  customBorder: const CircleBorder(),
-                  child: SizedBox(
-                    width: 44,
-                    height: 44,
-                    child: Icon(Icons.close_rounded, color: colors.text, size: 22),
-                  ),
+            child: Material(
+              color: colors.card,
+              elevation: 2,
+              shadowColor: colors.text.withValues(alpha: 0.12),
+              shape: const CircleBorder(),
+              child: InkWell(
+                onTap: () async {
+                  HapticService.lightTap();
+                  final shouldCancel = await showCancelBookingDialog(
+                    context,
+                    colors: colors,
+                    typography: typo,
+                  );
+                  if (!context.mounted || !shouldCancel) return;
+                  ref.read(bookingProvider.notifier).reset();
+                  ref.read(rideRequestProvider.notifier).reset();
+                  context.go('/home');
+                },
+                customBorder: const CircleBorder(),
+                child: SizedBox(
+                  width: 44,
+                  height: 44,
+                  child:
+                      Icon(Icons.close_rounded, color: colors.text, size: 22),
                 ),
               ),
+            ),
           ),
           Positioned(
             top: mapH - 28,
@@ -143,7 +153,7 @@ class _TripSummaryScreenState extends ConsumerState<TripSummaryScreen> {
                 if (!context.mounted) return;
                 context.go('/home');
               },
-              onConfirm: () {
+              onConfirm: () async {
                 HapticService.mediumTap();
                 if (!mounted) return;
                 final bookingNotifier = ref.read(bookingProvider.notifier);
@@ -167,6 +177,11 @@ class _TripSummaryScreenState extends ConsumerState<TripSummaryScreen> {
                   bookingNotifier.setInstant();
                   bookingNow = ref.read(bookingProvider);
                 }
+                final locationOk = await ensureLocationForBooking(
+                  context: context,
+                  ref: ref,
+                );
+                if (!context.mounted || !locationOk) return;
                 ref.read(rideRequestProvider.notifier).reset();
                 if (_saveTripForNextTime) {
                   final pu = bookingNow.pickup;

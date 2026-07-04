@@ -29,7 +29,11 @@ class AtPickupScreen extends ConsumerStatefulWidget {
 
 class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
   bool _loading = false;
+  bool _waivingWaitingFee = false;
+  bool _waitingFeeWaived = false;
   int _waitSeconds = 0;
+  int _waitingGraceSeconds = 120;
+  double _waitingRatePerMinute = 0;
   Timer? _waitTimer;
   static const int _noShowAfterSeconds = 300;
   static const _pickupWaitService = DriverPickupWaitService();
@@ -49,6 +53,7 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
   }
 
   Future<void> _bootstrapWaitTimer() async {
+    await _loadWaitingContract();
     final started = await _pickupWaitService.resolveStartedAt(widget.rideId);
     if (started != null) {
       _waitSeconds = _pickupWaitService.elapsedSeconds(started);
@@ -62,6 +67,32 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
       setState(() => _waitSeconds++);
     });
     setState(() {});
+  }
+
+  Future<void> _loadWaitingContract() async {
+    try {
+      final row = await HeyCabySupabase.client
+          .from('ride_requests')
+          .select(
+            'waiting_grace_seconds, waiting_rate_per_minute, waiting_fee_waived',
+          )
+          .eq('id', widget.rideId)
+          .maybeSingle();
+      if (!mounted || row == null) return;
+      final grace = row['waiting_grace_seconds'];
+      final rate = row['waiting_rate_per_minute'];
+      setState(() {
+        _waitingGraceSeconds = grace is num
+            ? grace.toInt().clamp(0, 3600).toInt()
+            : _waitingGraceSeconds;
+        _waitingRatePerMinute = rate is num
+            ? rate.toDouble().clamp(0, 9999).toDouble()
+            : _waitingRatePerMinute;
+        _waitingFeeWaived = row['waiting_fee_waived'] == true;
+      });
+    } catch (_) {
+      // Staging/prod may not have the migration yet; keep the existing wait UI.
+    }
   }
 
   @override
@@ -132,6 +163,31 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
     }
   }
 
+  Future<void> _waiveWaitingFee() async {
+    if (_loading || _waivingWaitingFee || _waitingFeeWaived) return;
+    setState(() => _waivingWaitingFee = true);
+    try {
+      await ref.read(driverApiProvider).waiveWaitingFee(
+            rideRequestId: widget.rideId,
+            reason: 'driver_discretion',
+          );
+      if (!mounted) return;
+      setState(() => _waitingFeeWaived = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Waiting fee waived. Rider has been notified.'),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(DriverStrings.rideActionFailedMessage)),
+      );
+    } finally {
+      if (mounted) setState(() => _waivingWaitingFee = false);
+    }
+  }
+
   void _openCommunication() {
     unawaited(showDriverRideCommunicationSheet(
       context: context,
@@ -178,11 +234,15 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
                 driver.destinationAddress ?? DriverStrings.destination,
             riderName: driver.riderContactName,
             waitSeconds: _waitSeconds,
+            waitingGraceSeconds: _waitingGraceSeconds,
+            waitingRatePerMinute: _waitingRatePerMinute,
+            waitingFeeWaived: _waitingFeeWaived,
             canReportNoShow: _waitSeconds >= _noShowAfterSeconds,
-            loading: _loading,
+            loading: _loading || _waivingWaitingFee,
             onBack: _handleBack,
             onStartRide: _startRide,
             onOpenCommunication: _openCommunication,
+            onWaiveWaitingFee: _waiveWaitingFee,
             onReportNoShow: _reportNoShow,
             onCancelRide: _cancelRide,
           ),

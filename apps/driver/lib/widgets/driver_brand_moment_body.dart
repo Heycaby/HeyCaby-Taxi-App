@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../theme/driver_typography.dart';
-import 'heycaby_driver_logo.dart';
 
 /// Localized copy for the brand moment splash.
 class DriverBrandMomentCopy {
@@ -71,7 +70,7 @@ class DriverBrandMomentBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = isIOS ? 22.0 : 16.0;
+    final radius = isIOS ? 22.0 : 18.0;
     final buttonHeight = isIOS ? 54.0 : 52.0;
 
     return Scaffold(
@@ -84,26 +83,25 @@ class DriverBrandMomentBody extends StatelessWidget {
             child: Stack(
               children: [
                 Positioned(
-                  top: MediaQuery.sizeOf(context).height * 0.22,
+                  top: MediaQuery.sizeOf(context).height * 0.28,
                   left: 0,
                   right: 0,
                   child: IgnorePointer(
                     child: Center(
                       child: Container(
-                        width: 280,
-                        height: 280,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color:
-                                  _splashAccent.withValues(alpha: glowOpacity),
-                              blurRadius: 80,
-                              spreadRadius: 20,
-                            ),
-                          ],
-                        ),
-                      ),
+                          width: 210,
+                          height: 210,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: _splashAccent.withValues(
+                                    alpha: glowOpacity),
+                                blurRadius: 80,
+                                spreadRadius: 20,
+                              ),
+                            ],
+                          )),
                     ),
                   ),
                 ),
@@ -113,76 +111,38 @@ class DriverBrandMomentBody extends StatelessWidget {
                     children: [
                       const Spacer(flex: 3),
                       Opacity(
-                        opacity: logoFade,
-                        child: Transform.scale(
-                          scale: logoScale,
-                          child: const HeyCabyDriverLogo(
-                            width: 260,
-                            color: _splashAccent,
-                          ),
-                        ),
-                      ),
-                      const Spacer(flex: 2),
-                      _pillarLine(
-                        opacity: pillar1Opacity,
-                        slide: pillar1Slide,
-                        text: copy.pillar1,
-                        accentLast: false,
-                      ),
-                      SizedBox(height: isIOS ? 14 : 12),
-                      _pillarLine(
-                        opacity: pillar2Opacity,
-                        slide: pillar2Slide,
-                        text: copy.pillar2,
-                        accentLast: false,
-                      ),
-                      SizedBox(height: isIOS ? 14 : 12),
-                      _pillarLine(
-                        opacity: pillar3Opacity,
-                        slide: pillar3Slide,
-                        text: copy.pillar3,
-                        accentLast: false,
-                      ),
-                      SizedBox(height: isIOS ? 16 : 14),
-                      _pillarLine(
-                        opacity: pillar4Opacity,
-                        slide: pillar4Slide,
-                        text: copy.pillar4,
-                        accentLast: true,
-                      ),
-                      const Spacer(),
-                      if (canContinue)
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: onContinue,
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: _splashText,
-                                  side: BorderSide(
-                                    color: _splashText.withValues(alpha: 0.35),
-                                  ),
-                                  minimumSize: Size.fromHeight(buttonHeight),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(radius),
-                                  ),
-                                ),
-                                child: Text(
-                                  copy.skipLabel,
-                                  style: typography.labelLarge.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: _splashText,
-                                  ),
+                          opacity: logoFade,
+                          child: Column(
+                            children: [
+                              Transform.scale(
+                                scale: logoScale,
+                                child: const _DriverSplashWordmark(
+                                  accent: _splashAccent,
+                                  text: _splashText,
                                 ),
                               ),
-                            ),
-                            SizedBox(width: isIOS ? 12 : 10),
-                            Expanded(
+                              const SizedBox(height: 16),
+                              Text(
+                                copy.pillar4,
+                                textAlign: TextAlign.center,
+                                style: typography.titleMedium.copyWith(
+                                  color: _splashText.withValues(alpha: 0.72),
+                                  height: 1.25,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0,
+                                ),
+                              ),
+                            ],
+                          )),
+                      const Spacer(flex: 2),
+                      canContinue
+                          ? SizedBox(
+                              width: double.infinity,
                               child: FilledButton(
                                 onPressed: onContinue,
                                 style: FilledButton.styleFrom(
                                   backgroundColor: _splashAccent,
-                                  foregroundColor: _splashText,
+                                  foregroundColor: Colors.white,
                                   minimumSize: Size.fromHeight(buttonHeight),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(radius),
@@ -191,20 +151,17 @@ class DriverBrandMomentBody extends StatelessWidget {
                                 child: Text(
                                   copy.continueLabel,
                                   style: typography.labelLarge.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    color: _splashText,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
                                   ),
                                 ),
                               ),
+                            )
+                          : DriverBrandMomentLoadingRow(
+                              progress: loadingProgress,
+                              isIOS: isIOS,
                             ),
-                          ],
-                        )
-                      else
-                        DriverBrandMomentLoadingRow(
-                          progress: loadingProgress,
-                          isIOS: isIOS,
-                        ),
-                      const Spacer(flex: 2),
+                      const Spacer(flex: 3),
                     ],
                   ),
                 ),
@@ -215,30 +172,44 @@ class DriverBrandMomentBody extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _pillarLine({
-    required double opacity,
-    required double slide,
-    required String text,
-    required bool accentLast,
-  }) {
-    const textColor = Color(0xFF111827);
-    return Opacity(
-      opacity: opacity.clamp(0.0, 1.0),
-      child: Transform.translate(
-        offset: Offset(0, slide),
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: typography.titleMedium.copyWith(
-            color:
-                accentLast ? _splashAccent : textColor.withValues(alpha: 0.92),
-            height: 1.28,
-            letterSpacing: 0,
-            fontWeight: FontWeight.w700,
-            fontSize: accentLast ? 19.5 : 18,
+class _DriverSplashWordmark extends StatelessWidget {
+  const _DriverSplashWordmark({
+    required this.accent,
+    required this.text,
+  });
+
+  final Color accent;
+  final Color text;
+
+  @override
+  Widget build(BuildContext context) {
+    return RichText(
+      textAlign: TextAlign.center,
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: 'Hey',
+            style: TextStyle(
+              color: text,
+              fontSize: 40,
+              fontWeight: FontWeight.w800,
+              height: 1,
+              letterSpacing: 0,
+            ),
           ),
-        ),
+          TextSpan(
+            text: 'Caby',
+            style: TextStyle(
+              color: accent,
+              fontSize: 40,
+              fontWeight: FontWeight.w900,
+              height: 1,
+              letterSpacing: 0,
+            ),
+          ),
+        ],
       ),
     );
   }

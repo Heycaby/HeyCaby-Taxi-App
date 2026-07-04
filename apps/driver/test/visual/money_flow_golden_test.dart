@@ -44,15 +44,15 @@ void main() {
       );
     });
 
-    testWidgets('subscription_gate_light', (tester) async {
+    testWidgets('platform_balance_light', (tester) async {
       await pumpPreview(
         tester,
-        DriverSubscriptionGatePreview(colors: colors, typography: typography),
+        DriverPlatformBalancePreview(colors: colors, typography: typography),
       );
 
       await expectLater(
-        find.byType(DriverSubscriptionGatePreview),
-        matchesGoldenFile('goldens/subscription_gate_light.png'),
+        find.byType(DriverPlatformBalancePreview),
+        matchesGoldenFile('goldens/platform_balance_light.png'),
       );
     });
 

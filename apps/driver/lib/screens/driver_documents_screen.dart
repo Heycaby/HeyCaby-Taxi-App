@@ -926,6 +926,87 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
     return vs == 'approved' || vs == 'success' || vs == 'completed';
   }
 
+  Widget _progressiveDocumentCard({
+    required HeyCabyColorTokens colors,
+    required HeyCabyTypography typo,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String chipLabel,
+    required Color chipColor,
+    required Color chipBg,
+    required Widget child,
+    bool initiallyExpanded = false,
+    VoidCallback? onTap,
+  }) {
+    return PremiumSettingsCard(
+      colors: colors,
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: initiallyExpanded,
+          tilePadding: const EdgeInsetsDirectional.fromSTEB(14, 10, 10, 10),
+          childrenPadding: const EdgeInsetsDirectional.fromSTEB(14, 0, 14, 14),
+          leading: DecoratedBox(
+            decoration: BoxDecoration(
+              color: colors.accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Icon(icon, size: 22, color: colors.accent),
+            ),
+          ),
+          title: Text(
+            title,
+            style: typo.bodyLarge.copyWith(
+              color: colors.text,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              subtitle,
+              style: typo.bodySmall.copyWith(
+                color: colors.textMid,
+                height: 1.35,
+              ),
+            ),
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: chipBg,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  chipLabel,
+                  style: typo.labelSmall.copyWith(
+                    color: chipColor,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(Icons.expand_more_rounded, color: colors.textSoft),
+            ],
+          ),
+          onExpansionChanged: (expanded) {
+            if (expanded && onTap != null) onTap();
+          },
+          children: [child],
+        ),
+      ),
+    );
+  }
+
   List<Widget> _complianceDocumentSections({
     required BuildContext context,
     required DriverComplianceSnapshot? snap,
@@ -1119,497 +1200,458 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
       ),
       const SizedBox(height: 20),
       PremiumSettingsSectionLabel(
-        text: DriverStrings.docChauffeurspas,
+        text: DriverStrings.complianceRecommendedNextLabel,
         colors: colors,
         typo: typo,
       ),
-      PremiumSettingsCard(
-        colors: colors,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Builder(
-              builder: (context) {
-                final c = chipChauffeurspas(snap, colors);
-                return DriverComplianceDocRow(
-                  icon: Icons.badge_rounded,
-                  title: DriverStrings.docChauffeurspas,
-                  subtitle: subtitleChauffeurspas(snap),
-                  chipLabel: c.$1,
-                  chipColor: c.$2,
-                  chipBg: c.$3,
-                  colors: colors,
-                  typo: typo,
-                );
-              },
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(
-                    controller: _chauffeurspasCtrl,
-                    readOnly: pasLocked,
-                    keyboardType: TextInputType.text,
-                    maxLength: 14,
-                    decoration: InputDecoration(
-                      labelText: DriverStrings.chauffeurspasHintV2,
-                      counterText: '',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _chauffeurspasExpiryCtrl,
-                    readOnly: pasLocked,
-                    decoration: InputDecoration(
-                      labelText: DriverStrings.chauffeurspasExpiryLabel,
-                      hintText: DriverStrings.dateFormatHint,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
-                  if (pasLocked) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      DriverStrings.fieldLockedContactSupport,
-                      style: typo.bodySmall.copyWith(
-                        color: colors.textSoft,
-                        height: 1.35,
-                      ),
-                    ),
-                  ] else ...[
-                    const SizedBox(height: 12),
-                    FilledButton(
-                      onPressed: _savingPas ? null : _saveChauffeurspas,
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 14,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: _savingPas
-                          ? SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: colors.onAccent,
-                              ),
-                            )
-                          : Text(
-                              DriverStrings.chauffeurspasSave,
-                              style: typo.labelLarge.copyWith(
-                                color: colors.onAccent,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-      const SizedBox(height: 20),
-      PremiumSettingsSectionLabel(
-        text: DriverStrings.docRijbewijs,
-        colors: colors,
-        typo: typo,
-      ),
-      PremiumSettingsCard(
-        colors: colors,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Builder(
-                builder: (context) {
-                  final c = chipRijbewijs(snap, colors);
-                  return DriverComplianceDocRow(
-                    icon: Icons.credit_card_rounded,
-                    title: DriverStrings.docRijbewijs,
-                    subtitle: subtitleRijbewijs(snap),
-                    chipLabel: c.$1,
-                    chipColor: c.$2,
-                    chipBg: c.$3,
-                    colors: colors,
-                    typo: typo,
-                  );
-                },
-              ),
-              if (rijbewijsOk) ...[
-                if (_veriffMetaLine(snap).isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    _veriffMetaLine(snap),
-                    style: typo.bodySmall.copyWith(
-                      color: colors.textSoft,
-                    ),
-                  ),
-                ],
-              ] else if (approvedVeriff) ...[
-                const SizedBox(height: 8),
-                Text(
-                  DriverStrings.licenceSubmittedPendingReview,
-                  style: typo.bodySmall.copyWith(
-                    color: colors.text,
-                    height: 1.35,
-                  ),
-                ),
-                if (_veriffMetaLine(snap).isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    _veriffMetaLine(snap),
-                    style: typo.bodySmall.copyWith(
-                      color: colors.textSoft,
-                    ),
-                  ),
-                ],
-              ] else ...[
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: () => context.push('/driver/veriff'),
-                  child: const Text(DriverStrings.veriffStart),
-                ),
-              ],
-            ],
+      Padding(
+        padding: const EdgeInsetsDirectional.only(start: 6, bottom: 12),
+        child: Text(
+          DriverStrings.complianceRecommendedNextHint,
+          style: typo.bodySmall.copyWith(
+            color: colors.textSoft,
+            height: 1.35,
           ),
         ),
       ),
-      const SizedBox(height: 20),
-      PremiumSettingsSectionLabel(
-        text: DriverStrings.docTaxiInsurance,
-        colors: colors,
-        typo: typo,
-      ),
-      PremiumSettingsCard(
-        colors: colors,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Builder(
-                builder: (context) {
-                  bool hasText(String? v) => (v ?? '').trim().isNotEmpty;
-                  final expiry = snap?.taxiInsuranceExpiry;
-                  final now = DateTime.now();
-                  final expired = expiry != null && expiry.isBefore(now);
-                  final hasInsuranceOnFile =
-                      hasText(snap?.taxiInsuranceProvider) &&
-                          hasText(snap?.taxiInsurancePolicyNumber) &&
-                          expiry != null &&
-                          hasText(snap?.taxiInsurancePhotoUrl);
-                  final c = expired
-                      ? (
-                          DriverStrings.statusExpired,
-                          colors.error,
-                          colors.error.withValues(alpha: 0.12),
-                        )
-                      : hasInsuranceOnFile
-                          ? (
-                              DriverStrings.statusVerified,
-                              colors.success,
-                              colors.success.withValues(alpha: 0.12),
-                            )
-                          : (
-                              DriverStrings.statusActionNeeded,
-                              colors.warning,
-                              colors.warning.withValues(alpha: 0.14),
-                            );
-                  return DriverComplianceDocRow(
-                    icon: Icons.shield_rounded,
-                    title: DriverStrings.docTaxiInsurance,
-                    subtitle: subtitleInsurance(snap),
-                    chipLabel: c.$1,
-                    chipColor: c.$2,
-                    chipBg: c.$3,
-                    colors: colors,
-                    typo: typo,
-                  );
-                },
-              ),
-              if (insLocked)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Text(
+      Builder(
+        builder: (context) {
+          final c = chipChauffeurspas(snap, colors);
+          return _progressiveDocumentCard(
+            colors: colors,
+            typo: typo,
+            icon: Icons.badge_rounded,
+            title: DriverStrings.docChauffeurspas,
+            subtitle: subtitleChauffeurspas(snap),
+            chipLabel: c.$1,
+            chipColor: c.$2,
+            chipBg: c.$3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: _chauffeurspasCtrl,
+                  readOnly: pasLocked,
+                  keyboardType: TextInputType.text,
+                  maxLength: 14,
+                  decoration: InputDecoration(
+                    labelText: DriverStrings.chauffeurspasHintV2,
+                    counterText: '',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _chauffeurspasExpiryCtrl,
+                  readOnly: pasLocked,
+                  decoration: InputDecoration(
+                    labelText: DriverStrings.chauffeurspasExpiryLabel,
+                    hintText: DriverStrings.dateFormatHint,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+                if (pasLocked) ...[
+                  const SizedBox(height: 10),
+                  Text(
                     DriverStrings.fieldLockedContactSupport,
                     style: typo.bodySmall.copyWith(
                       color: colors.textSoft,
                       height: 1.35,
                     ),
                   ),
-                )
-              else
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Text(
-                    DriverStrings.insuranceAccuracyWarning,
-                    style: typo.bodySmall.copyWith(
-                      color: colors.textSoft,
-                      height: 1.35,
-                    ),
-                  ),
-                ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Text(
-                  DriverStrings.insuranceCanEditAnytime,
-                  style: typo.bodySmall.copyWith(
-                    color: colors.textSoft,
-                    height: 1.35,
-                  ),
-                ),
-              ),
-              if (!insLocked)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Text(
-                    DriverStrings.insuranceLiabilityDisclaimer,
-                    style: typo.bodySmall.copyWith(
-                      color: colors.textSoft,
-                      height: 1.35,
-                    ),
-                  ),
-                ),
-              if (insurancePhotoReady)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: InkWell(
-                    onTap: insurancePreviewUrl.isEmpty
-                        ? null
-                        : () async {
-                            final resolved = await _resolveInsurancePreviewUrl(
-                              insurancePreviewUrl,
-                            );
-                            if (!context.mounted) return;
-                            if (resolved == null || resolved.trim().isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    DriverStrings.insurancePreviewFailed,
-                                  ),
-                                ),
-                              );
-                              return;
-                            }
-                            _openInsurancePreview(resolved);
-                          },
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
+                ] else ...[
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    onPressed: _savingPas ? null : _saveChauffeurspas,
+                    style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                        vertical: 4,
-                        horizontal: 2,
+                        vertical: 14,
                       ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.verified_outlined,
-                            size: 16,
-                            color: colors.success,
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              DriverStrings.insurancePhotoTapToView,
-                              style: typo.bodySmall.copyWith(
-                                color: colors.success,
-                                fontWeight: FontWeight.w700,
-                              ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: _savingPas
+                        ? SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: colors.onAccent,
+                            ),
+                          )
+                        : Text(
+                            DriverStrings.chauffeurspasSave,
+                            style: typo.labelLarge.copyWith(
+                              color: colors.onAccent,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
-                        ],
+                  ),
+                ],
+              ],
+            ),
+          );
+        },
+      ),
+      const SizedBox(height: 12),
+      Builder(
+        builder: (context) {
+          final c = chipRijbewijs(snap, colors);
+          return _progressiveDocumentCard(
+            colors: colors,
+            typo: typo,
+            icon: Icons.credit_card_rounded,
+            title: DriverStrings.docRijbewijs,
+            subtitle: subtitleRijbewijs(snap),
+            chipLabel: c.$1,
+            chipColor: c.$2,
+            chipBg: c.$3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (rijbewijsOk) ...[
+                  if (_veriffMetaLine(snap).isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _veriffMetaLine(snap),
+                      style: typo.bodySmall.copyWith(
+                        color: colors.textSoft,
+                      ),
+                    ),
+                  ],
+                ] else if (approvedVeriff) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    DriverStrings.licenceSubmittedPendingReview,
+                    style: typo.bodySmall.copyWith(
+                      color: colors.text,
+                      height: 1.35,
+                    ),
+                  ),
+                  if (_veriffMetaLine(snap).isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      _veriffMetaLine(snap),
+                      style: typo.bodySmall.copyWith(
+                        color: colors.textSoft,
+                      ),
+                    ),
+                  ],
+                ] else ...[
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    onPressed: () => context.push('/driver/veriff'),
+                    child: const Text(DriverStrings.veriffStart),
+                  ),
+                ],
+              ],
+            ),
+          );
+        },
+      ),
+      const SizedBox(height: 12),
+      Builder(
+        builder: (context) {
+          bool hasText(String? v) => (v ?? '').trim().isNotEmpty;
+          final expiry = snap?.taxiInsuranceExpiry;
+          final now = DateTime.now();
+          final expired = expiry != null && expiry.isBefore(now);
+          final hasInsuranceOnFile = hasText(snap?.taxiInsuranceProvider) &&
+              hasText(snap?.taxiInsurancePolicyNumber) &&
+              expiry != null &&
+              hasText(snap?.taxiInsurancePhotoUrl);
+          final c = expired
+              ? (
+                  DriverStrings.statusExpired,
+                  colors.error,
+                  colors.error.withValues(alpha: 0.12),
+                )
+              : hasInsuranceOnFile
+                  ? (
+                      DriverStrings.statusVerified,
+                      colors.success,
+                      colors.success.withValues(alpha: 0.12),
+                    )
+                  : (
+                      DriverStrings.statusActionNeeded,
+                      colors.warning,
+                      colors.warning.withValues(alpha: 0.14),
+                    );
+          return _progressiveDocumentCard(
+            colors: colors,
+            typo: typo,
+            icon: Icons.shield_rounded,
+            title: DriverStrings.docTaxiInsurance,
+            subtitle: subtitleInsurance(snap),
+            chipLabel: c.$1,
+            chipColor: c.$2,
+            chipBg: c.$3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (insLocked)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Text(
+                      DriverStrings.fieldLockedContactSupport,
+                      style: typo.bodySmall.copyWith(
+                        color: colors.textSoft,
+                        height: 1.35,
+                      ),
+                    ),
+                  )
+                else
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Text(
+                      DriverStrings.insuranceAccuracyWarning,
+                      style: typo.bodySmall.copyWith(
+                        color: colors.textSoft,
+                        height: 1.35,
                       ),
                     ),
                   ),
-                ),
-              OutlinedButton.icon(
-                onPressed: (_savingInsurance || insLocked)
-                    ? null
-                    : _pickInsurancePhoto,
-                icon: const Icon(Icons.photo_camera_outlined),
-                label: const Text(
-                  DriverStrings.insurancePickPhotoGreenCard,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _insuranceProviderCtrl,
-                readOnly: insLocked,
-                decoration: InputDecoration(
-                  labelText: DriverStrings.insuranceProviderLabel,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Text(
+                    DriverStrings.insuranceCanEditAnytime,
+                    style: typo.bodySmall.copyWith(
+                      color: colors.textSoft,
+                      height: 1.35,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _insurancePolicyCtrl,
-                readOnly: insLocked,
-                decoration: InputDecoration(
-                  labelText: DriverStrings.insurancePolicyLabel,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                if (!insLocked)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Text(
+                      DriverStrings.insuranceLiabilityDisclaimer,
+                      style: typo.bodySmall.copyWith(
+                        color: colors.textSoft,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                if (insurancePhotoReady)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: InkWell(
+                      onTap: insurancePreviewUrl.isEmpty
+                          ? null
+                          : () async {
+                              final resolved =
+                                  await _resolveInsurancePreviewUrl(
+                                insurancePreviewUrl,
+                              );
+                              if (!context.mounted) return;
+                              if (resolved == null || resolved.trim().isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      DriverStrings.insurancePreviewFailed,
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+                              _openInsurancePreview(resolved);
+                            },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 4,
+                          horizontal: 2,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.verified_outlined,
+                              size: 16,
+                              color: colors.success,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                DriverStrings.insurancePhotoTapToView,
+                                style: typo.bodySmall.copyWith(
+                                  color: colors.success,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                OutlinedButton.icon(
+                  onPressed: (_savingInsurance || insLocked)
+                      ? null
+                      : _pickInsurancePhoto,
+                  icon: const Icon(Icons.photo_camera_outlined),
+                  label: const Text(
+                    DriverStrings.insurancePickPhotoGreenCard,
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _insuranceExpiryCtrl,
-                readOnly: insLocked,
-                keyboardType: TextInputType.datetime,
-                decoration: InputDecoration(
-                  labelText: DriverStrings.insuranceExpiryLabel,
-                  hintText: DriverStrings.dateFormatHint,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _insuranceProviderCtrl,
+                  readOnly: insLocked,
+                  decoration: InputDecoration(
+                    labelText: DriverStrings.insuranceProviderLabel,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
-              ),
-              if (!insLocked) ...[
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed:
-                      _savingInsurance ? null : () => _saveInsurance(snap),
-                  child: _savingInsurance
-                      ? SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: colors.onAccent,
-                          ),
-                        )
-                      : const Text(DriverStrings.insuranceSave),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _insurancePolicyCtrl,
+                  readOnly: insLocked,
+                  decoration: InputDecoration(
+                    labelText: DriverStrings.insurancePolicyLabel,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
-              ],
-            ],
-          ),
-        ),
-      ),
-      const SizedBox(height: 20),
-      PremiumSettingsSectionLabel(
-        text: DriverStrings.docKvk,
-        colors: colors,
-        typo: typo,
-      ),
-      PremiumSettingsCard(
-        colors: colors,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Builder(
-                builder: (context) {
-                  bool hasText(String? v) => (v ?? '').trim().isNotEmpty;
-                  final hasKvkOnFile =
-                      hasText(snap?.kvkNumber) && hasText(snap?.kvkAddress);
-                  final c = hasKvkOnFile
-                      ? (
-                          DriverStrings.statusVerified,
-                          colors.success,
-                          colors.success.withValues(alpha: 0.12),
-                        )
-                      : (
-                          DriverStrings.statusActionNeeded,
-                          colors.warning,
-                          colors.warning.withValues(alpha: 0.14),
-                        );
-                  return DriverComplianceDocRow(
-                    icon: Icons.apartment_rounded,
-                    title: DriverStrings.docKvk,
-                    subtitle: DriverStrings.kvkManualVerifyDetailed,
-                    chipLabel: c.$1,
-                    chipColor: c.$2,
-                    chipBg: c.$3,
-                    colors: colors,
-                    typo: typo,
-                  );
-                },
-              ),
-              TextField(
-                controller: _kvkNumberCtrl,
-                readOnly: kvkLocked,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(8),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _insuranceExpiryCtrl,
+                  readOnly: insLocked,
+                  keyboardType: TextInputType.datetime,
+                  decoration: InputDecoration(
+                    labelText: DriverStrings.insuranceExpiryLabel,
+                    hintText: DriverStrings.dateFormatHint,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                if (!insLocked) ...[
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    onPressed:
+                        _savingInsurance ? null : () => _saveInsurance(snap),
+                    child: _savingInsurance
+                        ? SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: colors.onAccent,
+                            ),
+                          )
+                        : const Text(DriverStrings.insuranceSave),
+                  ),
                 ],
-                decoration: InputDecoration(
-                  labelText: DriverStrings.kvkNumberLabel,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _kvkNameCtrl,
-                readOnly: kvkLocked,
-                decoration: InputDecoration(
-                  labelText: DriverStrings.kvkBusinessNameLabel,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _kvkAddressCtrl,
-                readOnly: kvkLocked,
-                decoration: InputDecoration(
-                  labelText: DriverStrings.kvkBusinessAddressLabel,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              if (kvkLocked) ...[
-                const SizedBox(height: 10),
-                Text(
-                  DriverStrings.fieldLockedContactSupport,
-                  style: typo.bodySmall.copyWith(
-                    color: colors.textSoft,
-                    height: 1.35,
-                  ),
-                ),
-              ] else ...[
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: _savingKvk ? null : _saveKvk,
-                  child: _savingKvk
-                      ? SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: colors.onAccent,
-                          ),
-                        )
-                      : const Text(DriverStrings.kvkSave),
-                ),
               ],
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
-      const SizedBox(height: 20),
-      PremiumSettingsSectionLabel(
-        text: DriverStrings.docApkVehicle,
-        colors: colors,
-        typo: typo,
+      const SizedBox(height: 12),
+      Builder(
+        builder: (context) {
+          bool hasText(String? v) => (v ?? '').trim().isNotEmpty;
+          final hasKvkOnFile =
+              hasText(snap?.kvkNumber) && hasText(snap?.kvkAddress);
+          final c = hasKvkOnFile
+              ? (
+                  DriverStrings.statusVerified,
+                  colors.success,
+                  colors.success.withValues(alpha: 0.12),
+                )
+              : (
+                  DriverStrings.statusActionNeeded,
+                  colors.warning,
+                  colors.warning.withValues(alpha: 0.14),
+                );
+          return _progressiveDocumentCard(
+            colors: colors,
+            typo: typo,
+            icon: Icons.apartment_rounded,
+            title: DriverStrings.docKvk,
+            subtitle: DriverStrings.kvkManualVerifyDetailed,
+            chipLabel: c.$1,
+            chipColor: c.$2,
+            chipBg: c.$3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: _kvkNumberCtrl,
+                  readOnly: kvkLocked,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(8),
+                  ],
+                  decoration: InputDecoration(
+                    labelText: DriverStrings.kvkNumberLabel,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _kvkNameCtrl,
+                  readOnly: kvkLocked,
+                  decoration: InputDecoration(
+                    labelText: DriverStrings.kvkBusinessNameLabel,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _kvkAddressCtrl,
+                  readOnly: kvkLocked,
+                  decoration: InputDecoration(
+                    labelText: DriverStrings.kvkBusinessAddressLabel,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                if (kvkLocked) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    DriverStrings.fieldLockedContactSupport,
+                    style: typo.bodySmall.copyWith(
+                      color: colors.textSoft,
+                      height: 1.35,
+                    ),
+                  ),
+                ] else ...[
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    onPressed: _savingKvk ? null : _saveKvk,
+                    child: _savingKvk
+                        ? SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: colors.onAccent,
+                            ),
+                          )
+                        : const Text(DriverStrings.kvkSave),
+                  ),
+                ],
+              ],
+            ),
+          );
+        },
       ),
+      const SizedBox(height: 12),
       PremiumSettingsCard(
         colors: colors,
         child: Column(

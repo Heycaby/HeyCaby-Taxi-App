@@ -35,6 +35,11 @@ class _DriverShiftTimerWidgetState
   Timer? _ticker;
   bool _busy = false;
   int _tickCount = 0;
+  DriverAppState? _lastObservedState;
+  DateTime? _localOnlineStartedAt;
+  DateTime? _localBreakStartedAt;
+  DateTime? _breakTargetStartedAt;
+  int? _breakTargetMinutes;
 
   @override
   void initState() {
@@ -66,6 +71,10 @@ class _DriverShiftTimerWidgetState
             lng: pos?.longitude,
           );
       ref.read(driverStateProvider.notifier).setStatus(next);
+      if (next != DriverAppState.onBreak) {
+        _breakTargetStartedAt = null;
+        _breakTargetMinutes = null;
+      }
       if (status == 'available') {
         SoundService().playStatusOnline();
       } else if (status == 'on_break') {
@@ -86,6 +95,75 @@ class _DriverShiftTimerWidgetState
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<void> _chooseAndStartBreak() async {
+    final minutes = await _showBreakLengthSheet();
+    if (minutes == null || !mounted) return;
+    setState(() {
+      _breakTargetMinutes = minutes;
+      _breakTargetStartedAt = DateTime.now();
+    });
+    await _setStatus('on_break', DriverAppState.onBreak);
+  }
+
+  Future<int?> _showBreakLengthSheet() async {
+    final colors = ref.read(colorsProvider);
+    final typo = ref.read(typographyProvider);
+    final options = <int>[5, 10, 15, 20, 30, 45];
+    return showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: colors.card,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  DriverStrings.shiftChooseBreak,
+                  style: typo.titleMedium.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    for (final option in options)
+                      ChoiceChip(
+                        label: Text(DriverStrings.shiftBreakMinutes(option)),
+                        selected: option == (_breakTargetMinutes ?? 15),
+                        onSelected: (_) => Navigator.pop(ctx, option),
+                        selectedColor: colors.success.withValues(alpha: 0.14),
+                        backgroundColor: colors.bgAlt,
+                        labelStyle: typo.labelLarge.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        side: BorderSide(
+                          color: option == (_breakTargetMinutes ?? 15)
+                              ? colors.success.withValues(alpha: 0.55)
+                              : colors.border,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _onStop() async {
@@ -147,6 +225,8 @@ class _DriverShiftTimerWidgetState
       ref
           .read(driverStateProvider.notifier)
           .setStatus(DriverAppState.onlineAvailable);
+      _breakTargetStartedAt = null;
+      _breakTargetMinutes = null;
       SoundService().playStatusOnline();
       ref.invalidate(driverShiftStatsProvider);
       ref.invalidate(driverEarningsProvider);
@@ -167,16 +247,26 @@ class _DriverShiftTimerWidgetState
     final onBreak = driver.appState == DriverAppState.onBreak;
 
     if (!isOnline && !onBreak) return const SizedBox.shrink();
+    _syncLocalTimerFallback(driver.appState, stats);
 
     final e = earningsAsync.valueOrNull;
     final todayEuros = e != null ? e.formatEuros(e.todayEuros) : '€0.00';
     final rides = stats?.shiftRidesToday ?? 0;
     final earnings = stats?.shiftEarningsToday ?? 0.0;
 
-    final totalShiftMin = _totalShiftMinutes(stats);
-    final arcProgress = (totalShiftMin / _shiftArcMinutes).clamp(0.0, 1.0);
-    final drivingMin = _drivingMinutesLive(stats, onBreak);
-    final breakMin = _breakMinutesLive(stats, onBreak);
+    final totalShiftSeconds = _totalShiftSeconds(stats);
+    final arcProgress =
+        (totalShiftSeconds / (_shiftArcMinutes * 60)).clamp(0.0, 1.0);
+    final drivingSeconds = _drivingSecondsLive(stats, onBreak);
+    final breakSeconds = _breakSecondsLive(stats, onBreak);
+    final primaryClock = onBreak
+        ? _formatClock(_currentBreakSeconds(stats))
+        : _formatClock(drivingSeconds);
+    final breakAssist = _breakAssistModel(
+      stats: stats,
+      drivingSeconds: drivingSeconds,
+      onBreak: onBreak,
+    );
 
     final accent = onBreak ? colors.warning : colors.success;
     final statusLabel = onBreak
@@ -223,13 +313,12 @@ class _DriverShiftTimerWidgetState
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              onBreak
-                                  ? _formatHm(_currentBreakMinutes(stats))
-                                  : _formatHm(drivingMin),
+                              primaryClock,
+                              maxLines: 1,
                               style: typo.titleMedium.copyWith(
                                 fontWeight: FontWeight.w800,
                                 color: colors.text,
-                                fontSize: 18,
+                                fontSize: primaryClock.length > 5 ? 15 : 18,
                               ),
                             ),
                             Text(
@@ -282,8 +371,7 @@ class _DriverShiftTimerWidgetState
                                 busy: _busy,
                                 onTap: onBreak
                                     ? _resumeFromBreakOnline
-                                    : () => _setStatus(
-                                        'on_break', DriverAppState.onBreak),
+                                    : _chooseAndStartBreak,
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -303,6 +391,31 @@ class _DriverShiftTimerWidgetState
                   ),
                 ],
               ),
+              if (breakAssist != null) ...[
+                const SizedBox(height: 12),
+                _BreakAssistCard(
+                  model: breakAssist,
+                  colors: colors,
+                  typo: typo,
+                  accent: accent,
+                  busy: _busy,
+                  onAction: () {
+                    if (onBreak && breakAssist.isComplete) {
+                      _resumeFromBreakOnline();
+                    } else if (onBreak) {
+                      _showBreakLengthSheet().then((minutes) {
+                        if (minutes == null || !mounted) return;
+                        setState(() {
+                          _breakTargetMinutes = minutes;
+                          _breakTargetStartedAt = DateTime.now();
+                        });
+                      });
+                    } else {
+                      _chooseAndStartBreak();
+                    }
+                  },
+                ),
+              ],
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -313,14 +426,14 @@ class _DriverShiftTimerWidgetState
                 child: Row(
                   children: [
                     _StatCell(
-                      value: '${drivingMin}m',
+                      value: _formatCompactDuration(drivingSeconds),
                       label: DriverStrings.shiftStatDriving,
                       typo: typo,
                       colors: colors,
                     ),
                     _VLine(colors: colors),
                     _StatCell(
-                      value: '${breakMin}m',
+                      value: _formatCompactDuration(breakSeconds),
                       label: DriverStrings.shiftStatBreak,
                       typo: typo,
                       colors: colors,
@@ -349,38 +462,249 @@ class _DriverShiftTimerWidgetState
     );
   }
 
-  int _totalShiftMinutes(DriverShiftStats? stats) {
-    final start = stats?.shiftStartAt;
-    if (start == null) return 0;
-    return DateTime.now().difference(start).inMinutes;
-  }
+  void _syncLocalTimerFallback(DriverAppState state, DriverShiftStats? stats) {
+    final stateChanged = _lastObservedState != state;
+    _lastObservedState = state;
 
-  int _drivingMinutesLive(DriverShiftStats? stats, bool onBreak) {
-    if (stats == null) return 0;
-    if (onBreak) return stats.shiftTotalOnlineMinutes;
-    final start = stats.continuousDrivingStartedAt ?? stats.shiftStartAt;
-    if (start == null) return stats.shiftTotalOnlineMinutes;
-    return DateTime.now().difference(start).inMinutes;
-  }
-
-  int _breakMinutesLive(DriverShiftStats? stats, bool onBreak) {
-    if (stats == null) return 0;
-    var b = stats.shiftBreakMinutes;
-    if (onBreak && stats.lastBreakStartAt != null) {
-      b += DateTime.now().difference(stats.lastBreakStartAt!).inMinutes;
+    if (stateChanged) {
+      if (state == DriverAppState.onlineAvailable &&
+          stats?.shiftStartAt == null &&
+          stats?.continuousDrivingStartedAt == null) {
+        _localOnlineStartedAt = DateTime.now();
+      }
+      if (state == DriverAppState.onBreak && stats?.lastBreakStartAt == null) {
+        _localBreakStartedAt = DateTime.now();
+      }
+      if (state != DriverAppState.onlineAvailable &&
+          state != DriverAppState.onBreak) {
+        _localOnlineStartedAt = null;
+        _localBreakStartedAt = null;
+        _breakTargetStartedAt = null;
+        _breakTargetMinutes = null;
+      }
     }
-    return b;
+
+    if (stats?.shiftStartAt != null ||
+        stats?.continuousDrivingStartedAt != null) {
+      _localOnlineStartedAt = null;
+    }
+    if (stats?.lastBreakStartAt != null) {
+      _localBreakStartedAt = null;
+    }
   }
 
-  int _currentBreakMinutes(DriverShiftStats? stats) {
-    if (stats?.lastBreakStartAt == null) return 0;
-    return DateTime.now().difference(stats!.lastBreakStartAt!).inMinutes;
+  int _totalShiftSeconds(DriverShiftStats? stats) {
+    final start = stats?.shiftStartAt ?? _localOnlineStartedAt;
+    if (start == null) return 0;
+    return DateTime.now().difference(start).inSeconds.clamp(0, 1 << 31);
   }
 
-  String _formatHm(int minutes) {
-    final h = minutes ~/ 60;
-    final m = minutes % 60;
-    return '$h:${m.toString().padLeft(2, '0')}';
+  int _drivingSecondsLive(DriverShiftStats? stats, bool onBreak) {
+    final persistedSeconds = (stats?.shiftTotalOnlineMinutes ?? 0) * 60;
+    if (onBreak) return persistedSeconds;
+    final start = stats?.continuousDrivingStartedAt ??
+        stats?.shiftStartAt ??
+        _localOnlineStartedAt;
+    if (start == null) return persistedSeconds;
+    return DateTime.now().difference(start).inSeconds.clamp(0, 1 << 31);
+  }
+
+  int _breakSecondsLive(DriverShiftStats? stats, bool onBreak) {
+    var seconds = (stats?.shiftBreakMinutes ?? 0) * 60;
+    final start = stats?.lastBreakStartAt ?? _localBreakStartedAt;
+    if (onBreak && start != null) {
+      seconds += DateTime.now().difference(start).inSeconds.clamp(0, 1 << 31);
+    }
+    return seconds;
+  }
+
+  int _currentBreakSeconds(DriverShiftStats? stats) {
+    final start = stats?.lastBreakStartAt ?? _localBreakStartedAt;
+    if (start == null) return 0;
+    return DateTime.now().difference(start).inSeconds.clamp(0, 1 << 31);
+  }
+
+  String _formatClock(int seconds) {
+    final safeSeconds = seconds < 0 ? 0 : seconds;
+    final h = safeSeconds ~/ 3600;
+    final m = (safeSeconds % 3600) ~/ 60;
+    final s = safeSeconds % 60;
+    if (h > 0) {
+      return '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    }
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
+
+  String _formatCompactDuration(int seconds) {
+    final safeSeconds = seconds < 0 ? 0 : seconds;
+    if (safeSeconds < 60) return '${safeSeconds}s';
+    final h = safeSeconds ~/ 3600;
+    final m = (safeSeconds % 3600) ~/ 60;
+    final s = safeSeconds % 60;
+    if (h > 0) return '${h}h ${m}m';
+    return '${m}m ${s.toString().padLeft(2, '0')}s';
+  }
+
+  _BreakAssistModel? _breakAssistModel({
+    required DriverShiftStats? stats,
+    required int drivingSeconds,
+    required bool onBreak,
+  }) {
+    if (onBreak) {
+      final minutes = _breakTargetMinutes;
+      final startedAt = _breakTargetStartedAt;
+      if (minutes == null || startedAt == null) return null;
+      final elapsed = DateTime.now().difference(startedAt).inSeconds;
+      final remaining = (minutes * 60 - elapsed).clamp(0, 1 << 31);
+      final complete = remaining == 0;
+      return _BreakAssistModel(
+        title: complete
+            ? DriverStrings.shiftBreakComplete
+            : '${DriverStrings.shiftBreakTarget} · ${DriverStrings.shiftBreakMinutes(minutes)}',
+        body: complete
+            ? DriverStrings.shiftBreakCompleteBody
+            : DriverStrings.shiftBreakRemaining(_formatClock(remaining)),
+        actionLabel:
+            complete ? DriverStrings.goOnline : DriverStrings.shiftChooseBreak,
+        isComplete: complete,
+      );
+    }
+
+    final reminderMinutes = stats?.breakReminderIntervalMinutes ?? 0;
+    if (reminderMinutes <= 0) return null;
+    final reminderSeconds = reminderMinutes * 60;
+    final leadSeconds = (reminderSeconds * 0.2).round().clamp(10 * 60, 30 * 60);
+    final shouldRecommend = drivingSeconds >= reminderSeconds - leadSeconds;
+    if (!shouldRecommend) return null;
+
+    final overReminder = drivingSeconds >= reminderSeconds;
+    final duration = _formatDurationWords(drivingSeconds);
+    return _BreakAssistModel(
+      title: DriverStrings.shiftBreakReminderTitle,
+      body: overReminder
+          ? DriverStrings.shiftBreakDueAfter(duration)
+          : DriverStrings.shiftBreakConsiderAfter(duration),
+      actionLabel: DriverStrings.shiftStartBreak,
+      isComplete: false,
+    );
+  }
+
+  String _formatDurationWords(int seconds) {
+    final safeSeconds = seconds < 0 ? 0 : seconds;
+    final h = safeSeconds ~/ 3600;
+    final m = (safeSeconds % 3600) ~/ 60;
+    if (h <= 0) return DriverStrings.shiftBreakMinutes(m);
+    if (m == 0) return '${h}h';
+    return '${h}h ${m}m';
+  }
+}
+
+class _BreakAssistModel {
+  const _BreakAssistModel({
+    required this.title,
+    required this.body,
+    required this.actionLabel,
+    required this.isComplete,
+  });
+
+  final String title;
+  final String body;
+  final String actionLabel;
+  final bool isComplete;
+}
+
+class _BreakAssistCard extends StatelessWidget {
+  const _BreakAssistCard({
+    required this.model,
+    required this.colors,
+    required this.typo,
+    required this.accent,
+    required this.busy,
+    required this.onAction,
+  });
+
+  final _BreakAssistModel model;
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final Color accent;
+  final bool busy;
+  final VoidCallback onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: colors.card.withValues(alpha: 0.88),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              model.isComplete ? Icons.check_rounded : Icons.local_cafe_rounded,
+              color: accent,
+              size: 19,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  model.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: typo.labelLarge.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  model.body,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: typo.labelSmall.copyWith(
+                    color: colors.textMid,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: busy
+                ? null
+                : () {
+                    HapticService.lightTap();
+                    onAction();
+                  },
+            style: TextButton.styleFrom(
+              foregroundColor: accent,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              minimumSize: const Size(0, 36),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(
+              model.actionLabel,
+              style: typo.labelSmall.copyWith(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

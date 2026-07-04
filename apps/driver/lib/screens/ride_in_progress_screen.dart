@@ -163,6 +163,7 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
       ref: ref,
       lat: driver.destinationLat,
       lng: driver.destinationLng,
+      addressFallback: driver.destinationAddress,
       coordinatesUnavailableMessage:
           DriverStrings.destinationCoordinatesUnavailable,
     );

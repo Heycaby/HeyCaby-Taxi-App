@@ -6,9 +6,26 @@ import 'package:heycaby_driver/l10n/driver_strings.dart';
 void main() {
   tearDown(() => DriverStrings.useLocale(const Locale('nl')));
 
-  test('DriverStrings defaults to Dutch for unsupported or missing locales',
+  test('DriverStrings defaults to English for unsupported or missing locales',
       () {
     DriverStrings.useLocale(null);
+    expect(DriverStrings.home, 'Home');
+    expect(DriverStrings.goOnline, 'Go online');
+    expect(
+      DriverStrings.statusControlOfflineHint,
+      'Go online to see live ride requests in your zone.',
+    );
+    expect(DriverStrings.mapDemandWaiting(12), '12 waiting');
+
+    DriverStrings.useLocale(const Locale('fr'));
+    expect(DriverStrings.home, 'Home');
+    expect(DriverStrings.goOnline, 'Go online');
+    expect(DriverStrings.goBreakFailed,
+        'Could not start break. Check your connection and try again.');
+  });
+
+  test('DriverStrings supports Dutch driver labels explicitly', () {
+    DriverStrings.useLocale(const Locale('nl'));
     expect(DriverStrings.home, 'Start');
     expect(DriverStrings.goOnline, 'Ga online');
     expect(
@@ -16,12 +33,6 @@ void main() {
       'Ga online om live ritaanvragen in jouw zone te zien.',
     );
     expect(DriverStrings.mapDemandWaiting(12), '12 wachtend');
-
-    DriverStrings.useLocale(const Locale('fr'));
-    expect(DriverStrings.home, 'Start');
-    expect(DriverStrings.goOnline, 'Ga online');
-    expect(DriverStrings.goBreakFailed,
-        'Pauze starten mislukt. Controleer je verbinding en probeer opnieuw.');
   });
 
   test('DriverStrings switches core driver labels by supported locale', () {
@@ -52,7 +63,6 @@ void main() {
     );
     expect(DriverStrings.matchChanceSummary(30), 'Match chance: high');
     expect(DriverStrings.appSuggestion, 'Suggestion for the app');
-    expect(DriverStrings.homeAutoAcceptReturnRides, 'Auto-accept return rides');
     expect(DriverStrings.homeTodayRidesCount(0), 'No rides yet');
     expect(DriverStrings.homeAvailableCount(3), '3 available');
     expect(DriverStrings.profilePhotoConfirmTitle, 'Use this photo?');
@@ -84,6 +94,38 @@ void main() {
     expect(DriverStrings.thanksForRating, 'Thanks for your rating!');
     expect(DriverStrings.actionFailedPrefix, 'Failed:');
     expect(DriverStrings.returnTrips, 'Return rides');
+    expect(DriverStrings.returnMode, 'Return Mode');
+    expect(DriverStrings.returnModeOff, 'Off');
+    expect(
+      DriverStrings.returnModeOffBody,
+      'Heading home? View rides that move toward your home area.',
+    );
+    expect(
+      DriverStrings.returnModeAvailableCount(3),
+      '3 suitable return rides available',
+    );
+    expect(
+        DriverStrings.returnModeHeadingTo('Rotterdam'), 'Heading to Rotterdam');
+    expect(
+      DriverStrings.returnModeActiveBody(
+        pickupRadiusKm: 10,
+        discountPct: 15,
+      ),
+      '10 km pickup range · 15% discount',
+    );
+    expect(
+      DriverStrings.returnModeNoMatchesYet,
+      "No return rides yet. We'll keep looking while you drive.",
+    );
+    expect(DriverStrings.returnModeActivate, 'Activate');
+    expect(DriverStrings.returnModeManage, 'Manage');
+    expect(DriverStrings.returnModeDisable, 'Disable');
+    expect(DriverStrings.returnModeHeadingHomeTitle, 'Heading home?');
+    expect(
+      DriverStrings.returnModeHeadingHomeBody('Rotterdam'),
+      'We can find rides that move you toward Rotterdam.',
+    );
+    expect(DriverStrings.notNow, 'Not now');
     expect(DriverStrings.returnTripsEmpty, 'No return rides available.');
     expect(DriverStrings.ridesThisWeek, 'Rides this week');
     expect(DriverStrings.vehicleRdwTitle, 'Your vehicle');
@@ -207,10 +249,8 @@ void main() {
     expect(
         DriverStrings.matchChanceSummary(20), 'Probabilidad de match: media');
     expect(DriverStrings.appSuggestion, 'Sugerencia para la app');
-    expect(
-      DriverStrings.homeAutoAcceptReturnRides,
-      'Aceptar viajes de vuelta automáticamente',
-    );
+    expect(DriverStrings.returnModeOff, 'Desactivado');
+    expect(DriverStrings.returnModeManage, 'Gestionar');
     expect(DriverStrings.homeTodayRidesCount(0), 'Aún no hay viajes');
     expect(DriverStrings.homeAvailableCount(3), '3 disponibles');
     expect(DriverStrings.profilePhotoConfirmTitle, '¿Usar esta foto?');
@@ -242,6 +282,7 @@ void main() {
     expect(DriverStrings.thanksForRating, '¡Gracias por tu valoración!');
     expect(DriverStrings.actionFailedPrefix, 'Error:');
     expect(DriverStrings.returnTrips, 'Viajes de vuelta');
+    expect(DriverStrings.returnMode, 'Modo de vuelta');
     expect(
       DriverStrings.returnTripsEmpty,
       'No hay viajes de vuelta disponibles.',
@@ -360,8 +401,8 @@ void main() {
     );
     expect(DriverStrings.matchChanceSummary(8), 'فرصة المطابقة: منخفضة');
     expect(DriverStrings.appSuggestion, 'اقتراح للتطبيق');
-    expect(
-        DriverStrings.homeAutoAcceptReturnRides, 'قبول رحلات العودة تلقائيا');
+    expect(DriverStrings.returnModeOff, 'متوقف');
+    expect(DriverStrings.returnModeManage, 'إدارة');
     expect(DriverStrings.homeTodayRidesCount(0), 'لا توجد رحلات بعد');
     expect(DriverStrings.homeAvailableCount(3), '3 متاحة');
     expect(DriverStrings.profilePhotoConfirmTitle, 'استخدام هذه الصورة؟');
@@ -392,6 +433,7 @@ void main() {
     expect(DriverStrings.thanksForRating, 'شكرا على تقييمك!');
     expect(DriverStrings.actionFailedPrefix, 'فشل:');
     expect(DriverStrings.returnTrips, 'رحلات العودة');
+    expect(DriverStrings.returnMode, 'وضع العودة');
     expect(DriverStrings.returnTripsEmpty, 'لا توجد رحلات عودة متاحة.');
     expect(DriverStrings.ridesThisWeek, 'رحلات هذا الأسبوع');
     expect(DriverStrings.vehicleRdwTitle, 'مركبتك');

@@ -40,7 +40,9 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
     super.initState();
     _loadRide();
     HapticService.heavyTap();
-    SoundService().playRideRequest();
+    SoundService().playRideRequest(
+      duration: const Duration(seconds: _countdownTotal),
+    );
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() {

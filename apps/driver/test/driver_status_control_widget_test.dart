@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:heycaby_driver/l10n/driver_strings.dart';
 import 'package:heycaby_driver/widgets/three_state_toggle.dart';
 
 import 'visual/visual_harness.dart';
@@ -7,6 +8,7 @@ import 'visual/visual_harness.dart';
 void main() {
   testWidgets('renders redesigned status control in every status',
       (tester) async {
+    DriverStrings.useLocale(const Locale('en'));
     final semantics = tester.ensureSemantics();
 
     await tester.pumpWidget(
@@ -23,13 +25,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Offline'), findsOneWidget);
-    expect(find.text('Pauze'), findsOneWidget);
-    expect(find.text('Online'), findsOneWidget);
-    expect(
-      find.text('Ga online om live ritaanvragen in jouw zone te zien.'),
-      findsOneWidget,
-    );
+    expect(find.text(DriverStrings.offline), findsOneWidget);
+    expect(find.text(DriverStrings.onBreak), findsOneWidget);
+    expect(find.text(DriverStrings.online), findsOneWidget);
+    expect(find.text(DriverStrings.statusControlOfflineHint), findsOneWidget);
     expect(
       find.bySemanticsLabel(RegExp('Driver status offline')),
       findsOneWidget,
@@ -57,10 +56,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(
-      find.text('Je pauze is actief. Ga online om ritten te zien.'),
-      findsOneWidget,
-    );
+    expect(find.text(DriverStrings.statusControlBreakHint), findsOneWidget);
 
     await tester.pumpWidget(
       const DriverVisualHarness(
@@ -76,7 +72,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Je bent live in jouw zone.'), findsOneWidget);
+    expect(find.text(DriverStrings.statusControlOnlineHint), findsOneWidget);
     semantics.dispose();
   });
 }

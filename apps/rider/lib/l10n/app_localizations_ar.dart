@@ -132,7 +132,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeCompleteProfile => 'أكمل الملف';
 
   @override
-  String get vehicleCategoryTitle => 'أي نوع رحلة تريد؟';
+  String get vehicleCategoryTitle => 'هل تحتاج إلى مركبة محددة؟';
 
   @override
   String get homeAirportChipSchiphol => 'سخيبول';
@@ -1835,10 +1835,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get vehicleStandard => 'عادي';
+  String get vehicleStandard => 'تاكسي عادي';
 
   @override
-  String get vehicleStandardDesc => 'رحلات بأسعار معقولة للاستخدام اليومي';
+  String get vehicleStandardDesc => 'تاكسي يومي حتى 4 ركاب.';
 
   @override
   String get vehicleComfort => 'مريح';
@@ -1853,10 +1853,48 @@ class AppLocalizationsAr extends AppLocalizations {
   String get vehicleTaxibusDesc => 'حتى 8 ركاب مع الأمتعة';
 
   @override
-  String get vehicleWheelchair => 'كرسي متحرك';
+  String get vehicleWheelchair => 'مناسب للكراسي المتحركة';
 
   @override
   String get vehicleWheelchairDesc => 'مركبات يمكن الوصول إليها بمنحدرات';
+
+  @override
+  String get vehicleNearbyMarketTitle => 'سوق التاكسي القريب';
+
+  @override
+  String get vehicleNearbyMarketChecking => 'جارٍ التحقق من التوفر المباشر...';
+
+  @override
+  String vehicleNearbyDriverCount(int count) {
+    return '$count سائقون قريبون';
+  }
+
+  @override
+  String get vehicleFareRangeLabel => 'نطاق السعر';
+
+  @override
+  String get vehiclePickupRangeLabel => 'الوصول';
+
+  @override
+  String get vehicleOptionalPreferencesTitle => 'تفضيلات اختيارية';
+
+  @override
+  String get vehicleOptionalPreferencesSubtitle => 'اضبط من يرى طلبك.';
+
+  @override
+  String vehicleSupplyNearbyCount(int count) {
+    return '$count قريب';
+  }
+
+  @override
+  String get vehiclePetsWelcome => 'الحيوانات الأليفة مرحب بها';
+
+  @override
+  String get vehicleIndependentPricingTitle => 'تسعير السائقين المستقلين';
+
+  @override
+  String get vehicleIndependentPricingBody =>
+      'يحدد السائقون أسعارهم بأنفسهم. يأتي هذا النطاق من سيارات الأجرة القريبة وقد يتغير قبل الحجز.';
 
   @override
   String get petFriendly => 'صديق للحيوانات';
@@ -2544,6 +2582,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get matchingTitleScheduled => 'نبحث عن Caby لرحلتك المجدولة…';
 
   @override
+  String get matchingStatusLive => 'مباشر';
+
+  @override
+  String get matchingStatusWindow => 'الوقت';
+
+  @override
+  String get matchingStatusOffers => 'العروض';
+
+  @override
   String get homeNearTermTitleInstant => 'جارٍ العثور على Caby';
 
   @override
@@ -2562,6 +2609,76 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get homeNearTermTripDetails => 'تفاصيل الرحلة';
+
+  @override
+  String get activeBookingSearchingTitle => 'جارٍ البحث عن سائقك';
+
+  @override
+  String get activeBookingMarketplaceTitle => 'جارٍ البحث عن عروض';
+
+  @override
+  String get activeBookingScheduledTitle => 'الرحلة المجدولة نشطة';
+
+  @override
+  String get activeBookingTapForDetails =>
+      'اضغط لعرض التقدم مع بقاء الخريطة أمامك.';
+
+  @override
+  String activeBookingDriversNotified(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'استلم $count سائقين طلبك',
+      one: 'استلم سائق واحد طلبك',
+      zero: 'لم يستلم أي سائق طلبك',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String activeBookingOffersReceived(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'تم استلام $count عروض',
+      one: 'تم استلام عرض واحد',
+      zero: 'لا توجد عروض بعد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get activeBookingInstantBody =>
+      'وقت الانتظار المتوقع: 1–2 دقيقة. سنخبرك عندما يقبل سائق.';
+
+  @override
+  String get activeBookingMarketplaceBody =>
+      'يمكن للسائقين المستقلين القبول أو تقديم عرض مقابل أو تجاهل الطلب. أنت تختار من تركب معه.';
+
+  @override
+  String activeBookingOffersBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'قارن العروض واختر سائقك.',
+      one: 'راجع العرض واختر سائقك.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String activeBookingBestOffer(String price, int minutes) {
+    return 'أفضل عرض €$price · على بعد $minutes دقيقة';
+  }
+
+  @override
+  String activeBookingScheduledBody(String pickup, String searchStarts) {
+    return 'الاستلام $pickup. يبدأ البحث عن سائق $searchStarts.';
+  }
+
+  @override
+  String get activeBookingScheduledSearchingBody =>
+      'بدأ البحث عن سائق لرحلتك المجدولة.';
 
   @override
   String get rideMatchingTypeLabelInstant => 'رحلة فورية';
@@ -2666,6 +2783,74 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get activeRideChatSubtitle => 'راسل سائقك بسرعة';
+
+  @override
+  String get activeRidePingDriver => 'تنبيه السائق';
+
+  @override
+  String get activeRidePingSubtitle => 'أرسل تنبيهًا سريعًا';
+
+  @override
+  String get activeRidePickupNote => 'ملاحظة الالتقاط';
+
+  @override
+  String get activeRidePingSheetSubtitle =>
+      'أرسل تحديثًا سريعًا عن الالتقاط. سيصل إلى سائقك كرسالة رحلة.';
+
+  @override
+  String get activeRidePingAtPickup => 'أنا عند نقطة الالتقاط';
+
+  @override
+  String get activeRidePingWalkingThere => 'أنا في الطريق إلى هناك';
+
+  @override
+  String get activeRidePingCantFindYou => 'لا أستطيع العثور عليك';
+
+  @override
+  String get activeRidePingRunningLate => 'سأتأخر دقيقتين';
+
+  @override
+  String get activeRidePingConfirmPlate => 'يرجى تأكيد اللوحة';
+
+  @override
+  String activeRidePingSent(String message) {
+    return 'تم إرسال التنبيه: $message';
+  }
+
+  @override
+  String get activeRidePingFailed => 'تعذر إرسال التنبيه. حاول مرة أخرى.';
+
+  @override
+  String activeRideLastPing(String message) {
+    return 'تم إرسال التنبيه: $message · الآن';
+  }
+
+  @override
+  String activeRidePickupIn(String minutes) {
+    return 'الالتقاط خلال $minutes دقيقة';
+  }
+
+  @override
+  String activeRideArrivingIn(String minutes) {
+    return 'الوصول خلال $minutes دقيقة';
+  }
+
+  @override
+  String get activeRideDriverOutside => 'سائقك بالخارج';
+
+  @override
+  String get activeRideMaxFourSeats => 'حتى 4 مقاعد';
+
+  @override
+  String activeRideSeatsMax(String seats) {
+    return 'حتى $seats مقاعد';
+  }
+
+  @override
+  String get activeRideVerifiedTaxi => 'سائق تاكسي موثّق';
+
+  @override
+  String get safety => 'السلامة';
 
   @override
   String get activeRideFoundingShort => 'مؤسس';

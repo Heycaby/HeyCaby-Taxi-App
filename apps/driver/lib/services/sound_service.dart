@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Sound service for playing audio in the driver app
-/// 
+///
 /// Sound structure:
 /// - assets/sounds/driver/...
 /// - assets/sounds/shared/...
@@ -43,8 +43,10 @@ class SoundService {
     _enabled = enabled;
   }
 
-  /// Plays incoming ride request ringtone for a short attention window.
-  Future<void> playRideRequest() async {
+  /// Plays incoming ride request ringtone for the active offer window.
+  Future<void> playRideRequest({
+    Duration duration = const Duration(seconds: 30),
+  }) async {
     if (!_enabled) return;
     final session = ++_rideRequestSession;
     try {
@@ -52,13 +54,15 @@ class SoundService {
       await _player.setVolume(1.0);
       await _player.setReleaseMode(ReleaseMode.loop);
       await _player.play(AssetSource(_selectedRideRequestRingtoneAsset));
-      await Future<void>.delayed(const Duration(seconds: 10));
+      await Future<void>.delayed(duration);
       if (session == _rideRequestSession) {
         await _player.stop();
         await _player.setReleaseMode(ReleaseMode.stop);
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('SoundService: Failed to play incoming ride - $e');
+      if (kDebugMode) {
+        debugPrint('SoundService: Failed to play incoming ride - $e');
+      }
       // Missing sound should be silent by design.
     }
   }
@@ -69,7 +73,8 @@ class SoundService {
     _player.stop();
   }
 
-  String get selectedRideRequestRingtoneAsset => _selectedRideRequestRingtoneAsset;
+  String get selectedRideRequestRingtoneAsset =>
+      _selectedRideRequestRingtoneAsset;
 
   Future<void> setRideRequestRingtoneByKey(String key) async {
     final path = rideRequestRingtoneOptions[key];
@@ -180,7 +185,8 @@ class SoundService {
   /// Feedback cue when an action is blocked (e.g. cannot go online yet).
   Future<void> playActionBlocked() async {
     if (!_enabled) return;
-    await _playSoundOnce('sounds/shared/general_notification.mp3', volume: 0.42);
+    await _playSoundOnce('sounds/shared/general_notification.mp3',
+        volume: 0.42);
   }
 
   /// Premium short cue for quick tariff switching interactions.
@@ -194,8 +200,7 @@ class SoundService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final key = prefs.getString(_rideRequestRingtonePrefKey);
-      final savedPath =
-          key != null ? rideRequestRingtoneOptions[key] : null;
+      final savedPath = key != null ? rideRequestRingtoneOptions[key] : null;
       if (savedPath != null) {
         _selectedRideRequestRingtoneAsset = savedPath;
       }

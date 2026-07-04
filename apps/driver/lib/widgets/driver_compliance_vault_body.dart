@@ -86,7 +86,46 @@ class DriverComplianceVaultBody extends StatelessWidget {
                     DriverCard(
                       colors: colors,
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        colors.primary.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(
+                                    DriverStrings.complianceRequiredNowLabel,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: typography.labelSmall.copyWith(
+                                      color: colors.primary,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: DriverSpacing.sm),
+                              Text(
+                                DriverStrings.profileCompletionProgress(
+                                  items.where((item) => item.complete).length,
+                                  items.length,
+                                ),
+                                style: typography.labelSmall.copyWith(
+                                  color: colors.textMuted,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: DriverSpacing.md),
                           for (final item in items) ...[
                             Row(
                               children: [

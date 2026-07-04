@@ -15,7 +15,6 @@ import '../providers/driver_state_provider.dart';
 import '../services/driver_data_service.dart' show ZoneDemand;
 import '../ui/driver_map_controls_column.dart';
 import '../ui/driver_map_demand_chip.dart';
-import 'driver_break_reminder_banner.dart';
 import 'driver_community_overlay_bodies.dart';
 import 'driver_verification_status_banner.dart';
 import 'driver_earnings_modal.dart';
@@ -24,8 +23,6 @@ import 'driver_shift_timer_widget.dart';
 import '../services/sound_service.dart';
 import '../utils/driver_go_online_runtime_action.dart';
 import 'driver_go_online_guidance_sheet.dart';
-import 'driver_online_panel.dart';
-import 'driver_online_status_widget.dart';
 
 ZoneDemand? _currentZoneDemand(List<ZoneDemand> zones, String? zoneId) {
   if (zoneId == null || zones.isEmpty) return null;
@@ -105,8 +102,6 @@ class DriverMapFloating extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const DriverBreakReminderBanner(),
-              const SizedBox(height: DriverSpacing.sm),
               const DriverVerificationStatusBanner(),
               const SizedBox(height: DriverSpacing.sm),
               Center(
@@ -123,28 +118,18 @@ class DriverMapFloating extends ConsumerWidget {
                   ).driverMapChromeEnter(staggerIndex: 0),
                 ),
               ),
-              if (isOnline) ...[
+              if (isOnline && showDemandChip) ...[
                 const SizedBox(height: DriverSpacing.sm),
-                DriverOnlineStatusWidget(
-                  zoneName: zoneAsync.valueOrNull ?? '—',
-                  isOnBreak: driver.appState == DriverAppState.onBreak,
-                  colors: colors,
-                  typo: typo,
-                  onTap: () => _showOnlinePanel(context, ref),
+                Center(
+                  child: DriverMapDemandChip(
+                    zoneName: demandZoneName,
+                    waitingCount: waitingCount,
+                    highDemand:
+                        currentZone != null && _isHighMapDemand(currentZone),
+                    colors: driverColors,
+                    typography: driverTypography,
+                  ).driverMapChromeEnter(staggerIndex: 2),
                 ),
-                if (showDemandChip) ...[
-                  const SizedBox(height: DriverSpacing.sm),
-                  Center(
-                    child: DriverMapDemandChip(
-                      zoneName: demandZoneName,
-                      waitingCount: waitingCount,
-                      highDemand:
-                          currentZone != null && _isHighMapDemand(currentZone),
-                      colors: driverColors,
-                      typography: driverTypography,
-                    ).driverMapChromeEnter(staggerIndex: 2),
-                  ),
-                ],
               ],
             ],
           ),
@@ -263,125 +248,6 @@ class DriverMapFloating extends ConsumerWidget {
           notification: notification,
           colors: colors,
           typography: typography,
-        );
-      },
-    );
-  }
-
-  void _showOnlinePanel(BuildContext context, WidgetRef ref) {
-    ref.invalidate(driverShiftStatsProvider);
-    final themeColors = ref.read(colorsProvider);
-    final typography = ref.read(typographyProvider);
-    final api = ref.read(driverApiProvider);
-    final stateNotifier = ref.read(driverStateProvider.notifier);
-    final stats = ref.read(driverShiftStatsProvider).valueOrNull;
-    final onlineMins = stats?.shiftTotalOnlineMinutes ?? 0;
-    final rides = stats?.shiftRidesToday ?? 0;
-    final earned = stats != null
-        ? '€${stats.shiftEarningsToday.toStringAsFixed(2)}'
-        : '€0.00';
-    String? breakNotice;
-    Color? breakNoticeColor;
-    if (stats != null && stats.continuousDrivingMinutes >= 180) {
-      final mins = stats.continuousDrivingMinutes;
-      breakNotice = DriverStrings.dutchBreakNotice.replaceFirst(
-        'X',
-        '${mins ~/ 60}',
-      );
-      breakNoticeColor = stats.hasExceededBreakLimit
-          ? ref.read(colorsProvider).error
-          : stats.isApproachingBreakLimit
-              ? ref.read(colorsProvider).warning
-              : null;
-    }
-    final controller = ScrollController();
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierColor: themeColors.text.withValues(alpha: 0.54),
-      transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (_, __, ___) => Dialog(
-        insetPadding: EdgeInsets.zero,
-        backgroundColor: Colors.transparent,
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: Container(
-            width: double.infinity,
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.6,
-            ),
-            child: DriverOnlinePanel(
-              fromTop: true,
-              isOnBreak: ref.read(driverStateProvider).appState ==
-                  DriverAppState.onBreak,
-              colors: themeColors,
-              typo: typography,
-              scrollController: controller,
-              onlineMinutes: onlineMins,
-              ridesToday: rides,
-              earnedToday: earned,
-              breakNotice: breakNotice,
-              breakNoticeColor: breakNoticeColor,
-              onTakeBreak: () async {
-                try {
-                  await api.setStatus(status: 'on_break');
-                  stateNotifier.setStatus(DriverAppState.onBreak);
-                  SoundService().playStatusOnBreak();
-                  if (context.mounted) Navigator.of(context).pop();
-                } catch (_) {}
-              },
-              onEndShift: () async {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (_) => _EndShiftConfirmDialog(
-                    hours: '${onlineMins ~/ 60}',
-                    rides: '$rides',
-                    colors: themeColors,
-                    typo: typography,
-                  ),
-                );
-                if (confirmed == true) {
-                  try {
-                    await api.setStatus(status: 'offline');
-                    stateNotifier.setStatus(DriverAppState.offline);
-                    SoundService().playStatusOffline();
-                    if (context.mounted) Navigator.of(context).pop();
-                  } catch (_) {}
-                }
-              },
-              onResume: () async {
-                final attempt =
-                    await attemptDriverGoOnlineWithLocationGuard(context, ref);
-                if (!context.mounted) return;
-                if (attempt.isBlocked) {
-                  HapticService.mediumTap();
-                  SoundService().playActionBlocked();
-                  await showDriverGoOnlineGuidanceSheet(
-                    context,
-                    ref,
-                    args: attempt.gateArgs!,
-                  );
-                  return;
-                }
-                if (!attempt.succeeded) return;
-                stateNotifier.setStatus(DriverAppState.onlineAvailable);
-                SoundService().playStatusOnline();
-                if (context.mounted) Navigator.of(context).pop();
-              },
-            ),
-          ),
-        ),
-      ),
-      transitionBuilder: (_, animation, __, child) {
-        return SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(0, -1),
-            end: Offset.zero,
-          ).animate(CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutCubic,
-          )),
-          child: child,
         );
       },
     );

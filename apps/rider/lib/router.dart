@@ -146,7 +146,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/search',
-        pageBuilder: (_, state) => _page(state, const SearchScreen()),
+        pageBuilder: (_, state) {
+          final extra = state.extra;
+          final args = extra is BookingSearchRouteArgs ? extra : null;
+          return _page(state, SearchScreen(args: args));
+        },
       ),
       GoRoute(
         path: '/marketplace',

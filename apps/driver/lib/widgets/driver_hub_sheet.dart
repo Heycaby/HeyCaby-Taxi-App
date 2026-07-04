@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -132,24 +130,53 @@ class DriverHubSheet extends ConsumerWidget {
               SliverToBoxAdapter(
                 child: _Divider(colors: colors),
               ),
-              // Removed redundant cards:
-              // - Earnings (functionality in Live Stats)
-              // - Set your tariff (move to Preferences)
-              // - Set your driving preference (already in Preferences)
-              // - Suggestion for the app (moved to Support section)
-
-              // Grouped Quick Access - Settings & Support
-              // Documents removed (available in sidebar)
+              SliverToBoxAdapter(
+                child: DriverHubRatesSection(colors: colors, typo: typo),
+              ),
+              SliverToBoxAdapter(
+                child: _Divider(colors: colors),
+              ),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: _HubQuickActionCard(
-                    icon: Icons.settings_outlined,
-                    title: DriverStrings.preferences,
-                    subtitle: DriverStrings.preferencesSubtitle,
-                    colors: colors,
-                    typo: typo,
-                    onTap: () => context.push('/driver/preferences'),
+                  child: Column(
+                    children: [
+                      _HubQuickActionCard(
+                        icon: Icons.tune_rounded,
+                        title: DriverStrings.driverHubBusinessControls,
+                        subtitle: DriverStrings.driverHubBusinessControlsHint,
+                        colors: colors,
+                        typo: typo,
+                        onTap: () => context.push('/driver/preferences'),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _HubQuickActionCard(
+                              icon: Icons.directions_car_rounded,
+                              title: DriverStrings.vehicle,
+                              subtitle:
+                                  DriverStrings.vehicleVerifiedTaxiEnglish,
+                              colors: colors,
+                              typo: typo,
+                              onTap: () => context.push('/driver/vehicle'),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _HubQuickActionCard(
+                              icon: Icons.receipt_long_rounded,
+                              title: DriverStrings.platformBalanceTitle,
+                              subtitle: DriverStrings.platformBalanceCurrent,
+                              colors: colors,
+                              typo: typo,
+                              onTap: () => context.push('/driver/billing'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -202,78 +229,6 @@ class _HubLiveStrip extends ConsumerStatefulWidget {
 }
 
 class _HubLiveStripState extends ConsumerState<_HubLiveStrip> {
-  Timer? _discountDebounce;
-  Timer? _pickupDebounce;
-  bool _didInitDiscount = false;
-  bool _didInitPickup = false;
-  double _returnDiscountPct = 0;
-  double _pickupDistanceKm = 20;
-
-  /// Avoid haptic spam: last snapped value we already ticked for.
-  double? _lastDiscountSnapHaptic;
-  double? _lastPickupSnapHaptic;
-
-  @override
-  void dispose() {
-    _discountDebounce?.cancel();
-    _pickupDebounce?.cancel();
-    super.dispose();
-  }
-
-  Color _chanceColor(HeyCabyColorTokens colors, double pct) {
-    if (pct <= 10) return colors.error;
-    if (pct <= 25) return colors.warning;
-    return colors.success;
-  }
-
-  void _onDiscountChanged(double v, dynamic profile) {
-    final snapped = ((v / 5).round() * 5.0).clamp(0, 40).toDouble();
-    if (_lastDiscountSnapHaptic != snapped) {
-      _lastDiscountSnapHaptic = snapped;
-      HapticService.selectionClick();
-    }
-    setState(() => _returnDiscountPct = snapped);
-    _discountDebounce?.cancel();
-    _discountDebounce = Timer(const Duration(milliseconds: 700), () async {
-      if (profile == null) return;
-      final ok =
-          await ref.read(driverDataServiceProvider).updateReturnDiscountPct(
-                rateProfileId: profile.id,
-                returnDiscountPct: _returnDiscountPct,
-              );
-      if (!mounted) return;
-      if (ok) {
-        HapticService.mediumTap();
-        ref.invalidate(driverRateProfilesProvider);
-        ref.invalidate(activeRateProfileProvider);
-        ref.invalidate(driverProfileProvider);
-      }
-    });
-  }
-
-  void _onPickupDistanceChanged(double v) {
-    final snapped = ((v / 5).round() * 5.0).clamp(5, 50).toDouble();
-    if (_lastPickupSnapHaptic != snapped) {
-      _lastPickupSnapHaptic = snapped;
-      HapticService.selectionClick();
-    }
-    setState(() => _pickupDistanceKm = snapped);
-    _pickupDebounce?.cancel();
-    _pickupDebounce = Timer(const Duration(milliseconds: 700), () async {
-      final driverId = await ref.read(driverIdProvider.future);
-      if (driverId == null) return;
-      final ok = await ref.read(driverDataServiceProvider).updateDriverPrefs(
-            driverId,
-            pickupDistanceMaxKm: _pickupDistanceKm,
-          );
-      if (!mounted) return;
-      if (ok) {
-        HapticService.mediumTap();
-        ref.invalidate(driverProfileProvider);
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = widget.colors;
@@ -281,40 +236,9 @@ class _HubLiveStripState extends ConsumerState<_HubLiveStrip> {
     final earnings = ref.watch(driverEarningsProvider).valueOrNull;
     final shift = ref.watch(driverShiftStatsProvider).valueOrNull;
     final zones = ref.watch(zoneDemandProvider).valueOrNull ?? const [];
-    final activeRate = ref.watch(activeRateProfileProvider).valueOrNull;
-    final profile = ref.watch(driverProfileProvider).valueOrNull;
     final todayEuros = earnings?.todayEuros ?? 0.0;
     final rides = shift?.shiftRidesToday ?? earnings?.todayRides ?? 0;
     final hasHighDemand = zones.any((z) => z.waitingPassengers >= 20);
-    final pct = _returnDiscountPct.clamp(0, 40).toDouble();
-    final pickupKm = _pickupDistanceKm.clamp(5, 50).toDouble();
-
-    if (activeRate != null && !_didInitDiscount) {
-      _didInitDiscount = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        final fromServer = ((activeRate.returnDiscountPct ?? 0).toDouble())
-            .clamp(0, 40)
-            .toDouble();
-        setState(() {
-          _returnDiscountPct = fromServer;
-          _lastDiscountSnapHaptic = fromServer;
-        });
-      });
-    }
-    if (profile != null && !_didInitPickup) {
-      _didInitPickup = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        final fromServer = ((profile.pickupDistanceMaxKm ?? 20).toDouble())
-            .clamp(5, 50)
-            .toDouble();
-        setState(() {
-          _pickupDistanceKm = fromServer;
-          _lastPickupSnapHaptic = fromServer;
-        });
-      });
-    }
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
@@ -363,117 +287,14 @@ class _HubLiveStripState extends ConsumerState<_HubLiveStrip> {
             Row(
               children: [
                 Expanded(
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: colors.card.withValues(alpha: 0.55),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                          color: colors.border.withValues(alpha: 0.75)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Return discount',
-                          style: typo.labelSmall.copyWith(
-                            color: colors.textSoft,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${pct.toStringAsFixed(0)}%',
-                          style: typo.titleSmall.copyWith(
-                            color: colors.text,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: colors.card.withValues(alpha: 0.55),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                          color: colors.border.withValues(alpha: 0.75)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          DriverStrings.pickupDistance,
-                          style: typo.labelSmall.copyWith(
-                            color: colors.textSoft,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${pickupKm.toStringAsFixed(0)} km',
-                          style: typo.titleSmall.copyWith(
-                            color: colors.text,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Container(height: 1, color: colors.border.withValues(alpha: 0.75)),
-            const SizedBox(height: 10),
-            Slider(
-              min: 0,
-              max: 40,
-              divisions: 8,
-              value: pct,
-              activeColor: colors.accent,
-              inactiveColor: colors.border,
-              onChanged: activeRate == null
-                  ? null
-                  : (v) => _onDiscountChanged(v, activeRate),
-            ),
-            const SizedBox(height: 4),
-            Slider(
-              min: 5,
-              max: 50,
-              divisions: 9,
-              value: pickupKm,
-              activeColor: colors.accent,
-              inactiveColor: colors.border,
-              onChanged: profile == null ? null : _onPickupDistanceChanged,
-            ),
-            Row(
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: _chanceColor(colors, pct).withValues(alpha: 0.13),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                        color:
-                            _chanceColor(colors, pct).withValues(alpha: 0.28)),
-                  ),
                   child: Text(
-                    DriverStrings.matchChanceSummary(pct),
+                    DriverStrings.driverHubReturnModeHint,
                     style: typo.bodySmall.copyWith(
-                      color: _chanceColor(colors, pct),
-                      fontWeight: FontWeight.w700,
+                      color: colors.textMid,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-                const Spacer(),
                 TextButton(
                   onPressed: () => context.push('/driver/return-trips'),
                   child: const Text(DriverStrings.openReturnRides),

@@ -45,7 +45,7 @@
   "homeRecentPlacesTitle": "Recent places",
   "homeRecentPlacesEdit": "Edit",
   "homeCompleteProfile": "Complete profile",
-  "vehicleCategoryTitle": "What kind of ride do you want?",
+  "vehicleCategoryTitle": "Do you need a specific vehicle?",
   "homeAirportChipSchiphol": "Schiphol",
   "homeAirportChipRotterdam": "Rotterdam Airport",
   "homeAirportChipEindhoven": "Eindhoven",
@@ -780,14 +780,39 @@
       "count": { "type": "int" }
     }
   },
-  "vehicleStandard": "Standard",
-  "vehicleStandardDesc": "Affordable rides for everyday trips",
+  "vehicleStandard": "Standard taxi",
+  "vehicleStandardDesc": "Everyday taxi for up to 4 passengers.",
   "vehicleComfort": "Comfort",
   "vehicleComfortDesc": "Premium vehicles with extra space",
   "vehicleTaxibus": "Taxibus",
   "vehicleTaxibusDesc": "Up to 8 passengers with luggage",
-  "vehicleWheelchair": "Wheelchair",
+  "vehicleWheelchair": "Wheelchair accessible",
   "vehicleWheelchairDesc": "Accessible vehicles with ramps",
+  "vehicleNearbyMarketTitle": "Nearby taxi market",
+  "vehicleNearbyMarketChecking": "Checking live availability...",
+  "vehicleNearbyDriverCount": "{count} nearby drivers",
+  "@vehicleNearbyDriverCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "vehicleFareRangeLabel": "Fare range",
+  "vehiclePickupRangeLabel": "Pickup",
+  "vehicleOptionalPreferencesTitle": "Optional preferences",
+  "vehicleOptionalPreferencesSubtitle": "Fine-tune who sees your request.",
+  "vehicleSupplyNearbyCount": "{count} nearby",
+  "@vehicleSupplyNearbyCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "vehiclePetsWelcome": "Pets welcome",
+  "vehicleIndependentPricingTitle": "Independent driver pricing",
+  "vehicleIndependentPricingBody": "Drivers set their own prices. This range comes from nearby taxis and may update before booking.",
   "petFriendly": "Pet-friendly",
   "petFriendlyDesc": "Drivers who accept pets",
   "vehicleSupplyCountCaption": "drivers available",
@@ -1027,12 +1052,68 @@
   "searchingTitle": "Finding you a Caby…",
   "matchingTitleMarketplace": "Finding a marketplace Caby…",
   "matchingTitleScheduled": "Finding a Caby for your scheduled ride…",
+  "matchingStatusLive": "Live",
+  "matchingStatusWindow": "Window",
+  "matchingStatusOffers": "Offers",
   "homeNearTermTitleInstant": "Finding your Caby",
   "homeNearTermTitleMarketplace": "Marketplace request",
   "homeNearTermTitleScheduled": "Scheduled ride",
   "homeNearTermOpenMatching": "We’re still matching you with a driver. Tap to view progress.",
   "homeNearTermOpenMatchingHint": "Still matching — tap for trip details",
   "homeNearTermTripDetails": "Trip details",
+  "activeBookingSearchingTitle": "Searching for your driver",
+  "activeBookingMarketplaceTitle": "Searching for offers",
+  "activeBookingScheduledTitle": "Scheduled ride active",
+  "activeBookingTapForDetails": "Tap to view progress without losing the map.",
+  "activeBookingDriversNotified": "{count, plural, =0{0 drivers received your request} one{1 driver received your request} other{{count} drivers received your request}}",
+  "@activeBookingDriversNotified": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activeBookingOffersReceived": "{count, plural, =0{No offers yet} one{1 offer received} other{{count} offers received}}",
+  "@activeBookingOffersReceived": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activeBookingInstantBody": "Expected wait: 1 – 2 min. We'll notify you when a driver accepts.",
+  "activeBookingMarketplaceBody": "Independent drivers can accept, counter, or ignore. You choose who to ride with.",
+  "activeBookingOffersBody": "{count, plural, one{Review the offer and choose your driver.} other{Compare offers and choose your driver.}}",
+  "@activeBookingOffersBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activeBookingBestOffer": "Best offer €{price} · {minutes} min away",
+  "@activeBookingBestOffer": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "activeBookingScheduledBody": "Pickup {pickup}. Driver search starts {searchStarts}.",
+  "@activeBookingScheduledBody": {
+    "placeholders": {
+      "pickup": {
+        "type": "String"
+      },
+      "searchStarts": {
+        "type": "String"
+      }
+    }
+  },
+  "activeBookingScheduledSearchingBody": "Driver search has started for your scheduled ride.",
   "rideMatchingTypeLabelInstant": "Instant ride",
   "rideMatchingTypeLabelMarketplace": "Marketplace",
   "rideMatchingTypeLabelScheduled": "Scheduled",
@@ -1085,6 +1166,60 @@
   "activeRideWaitForDriver": "Wait for driver",
   "activeRidePickupNotes": "Any pickup notes?",
   "activeRideChatSubtitle": "Message your driver fast",
+  "activeRidePingDriver": "Ping driver",
+  "activeRidePingSubtitle": "Send a quick alert",
+  "activeRidePickupNote": "Pickup note",
+  "activeRidePingSheetSubtitle": "Send a quick pickup update. Your driver gets it as a ride message.",
+  "activeRidePingAtPickup": "I’m at pickup",
+  "activeRidePingWalkingThere": "I’m walking there",
+  "activeRidePingCantFindYou": "I can’t find you",
+  "activeRidePingRunningLate": "Running 2 min late",
+  "activeRidePingConfirmPlate": "Please confirm plate",
+  "activeRidePingSent": "Ping sent: {message}",
+  "@activeRidePingSent": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRidePingFailed": "Could not send ping. Try again.",
+  "activeRideLastPing": "Ping sent: {message} · now",
+  "@activeRideLastPing": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRidePickupIn": "Pickup in {minutes} min",
+  "@activeRidePickupIn": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideArrivingIn": "Arriving in {minutes} min",
+  "@activeRideArrivingIn": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideDriverOutside": "Your driver is outside",
+  "activeRideMaxFourSeats": "4 seats max",
+  "activeRideSeatsMax": "{seats} seats max",
+  "@activeRideSeatsMax": {
+    "placeholders": {
+      "seats": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideVerifiedTaxi": "Verified taxi driver",
+  "safety": "Safety",
   "activeRideFoundingShort": "Founding",
   "activeRideShareSubtitle": "Share live trip link",
   "activeRideReportSubtitle": "Submit ride report",

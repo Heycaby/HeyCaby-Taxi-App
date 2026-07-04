@@ -21,8 +21,6 @@ import '../utils/driver_logout.dart';
 import '../widgets/driver_home_sheet.dart';
 import '../widgets/driver_hub_sheet.dart';
 import '../widgets/driver_map_floating.dart';
-import '../widgets/feature_tour_modal.dart';
-import '../widgets/founding_driver_welcome_dialog.dart';
 
 const _zoneLabelsSourceId = 'zone-labels';
 const _zoneLabelsLayerId = 'zone-labels-layer';
@@ -59,8 +57,6 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   bool _lastShowZones = false;
   String? _lastCurrentZoneId;
   bool _congratsScheduled = false;
-  bool _tourScheduled = false;
-  bool _foundingWelcomeScheduled = false;
   MapboxMap? _mapboxMap;
   CircleAnnotationManager? _circleManager;
 
@@ -70,47 +66,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(driverLocationProvider.notifier).refresh();
       ref.invalidate(zoneDemandProvider);
-      unawaited(_maybeShowFoundingDriverWelcome());
-      _maybeShowFeatureTour();
       _maybeShowCongratulationsModal();
     });
-  }
-
-  Future<void> _maybeShowFoundingDriverWelcome() async {
-    if (!mounted || _foundingWelcomeScheduled) return;
-    final pending = ref.read(foundingDriverPostClaimProvider);
-    if (pending == null || !pending.isFoundingDriver) return;
-    _foundingWelcomeScheduled = true;
-    await showFoundingDriverWelcomeDialog(context, ref, pending);
-  }
-
-  Future<void> _maybeShowFeatureTour() async {
-    if (_tourScheduled) return;
-    _tourScheduled = true;
-    final profile = await ref.read(driverProfileProvider.future);
-    if (!mounted) {
-      _tourScheduled = false;
-      return;
-    }
-    if (profile?.onboardingFeatureTourShown == true) {
-      _tourScheduled = false;
-      return;
-    }
-
-    final driverId = await ref.read(driverIdProvider.future);
-    if (!mounted) {
-      _tourScheduled = false;
-      return;
-    }
-
-    final hideTour = await showFeatureTourModal(context);
-
-    // Mark as shown when completed or when driver opted out.
-    if (hideTour && driverId != null) {
-      await ref.read(driverDataServiceProvider).markFeatureTourShown(driverId);
-      ref.invalidate(driverProfileProvider);
-    }
-    _tourScheduled = false;
   }
 
   Future<void> _maybeShowCongratulationsModal() async {
@@ -582,6 +539,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
               controller: controller,
               colors: colors,
               typo: typo,
+              onOpenDriverHub: _showDriverHub,
             ),
           ),
         ],
@@ -615,16 +573,12 @@ class _DriverDrawerHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isFounding = profile?.isFoundingDriver == true;
-    final int? foundingNumber = profile?.foundingNumber as int?;
     final String rawName = (profile?.fullName as String? ?? '').trim();
     final String profilePhotoUrl =
         (profile?.profilePhotoUrl as String? ?? '').trim();
     final String displayName =
         rawName.isEmpty ? DriverStrings.drawerDefaultName : rawName;
-    final String memberLabel = isFounding
-        ? DriverStrings.drawerFoundingMemberLine(foundingNumber)
-        : DriverStrings.drawerMember;
+    final String memberLabel = DriverStrings.drawerMember;
     final bool? paymentRequired = billingStatus == null
         ? null
         : (billingStatus?['payment_required'] == true);
@@ -712,7 +666,7 @@ class _DriverDrawerHeader extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: typo.bodySmall.copyWith(
-                        color: isFounding ? colors.success : colors.textSoft,
+                        color: colors.textSoft,
                         fontWeight: FontWeight.w700,
                       ),
                     ),

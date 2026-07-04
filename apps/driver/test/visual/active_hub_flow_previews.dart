@@ -155,7 +155,7 @@ class DriverMeCommunityPreview extends StatelessWidget {
   final DriverColors colors;
   final DriverTypography typography;
 
-  static const _channels = [
+  static final _channels = [
     DriverMeCommunityChannel(
       id: 'announcements',
       label: DriverStrings.announcements,
@@ -172,7 +172,8 @@ class DriverMeCommunityPreview extends StatelessWidget {
     DriverMeCommunityPostItem(
       initials: 'HC',
       timeLabel: '19 May, 09:14',
-      body: 'Tip: stand near Rotterdam Centraal between 07:30–09:00 for airport runs.',
+      body:
+          'Tip: stand near Rotterdam Centraal between 07:30–09:00 for airport runs.',
     ),
     DriverMeCommunityPostItem(
       initials: 'DR',

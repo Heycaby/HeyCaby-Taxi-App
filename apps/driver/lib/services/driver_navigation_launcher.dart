@@ -18,6 +18,20 @@ class DriverNavigationLauncher {
         'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving',
       );
 
+  static Uri googleWebSearchUri(String destination) => Uri.https(
+        'www.google.com',
+        '/maps/dir/',
+        {
+          'api': '1',
+          'destination': destination,
+          'travelmode': 'driving',
+        },
+      );
+
+  static Uri wazeWebSearchUri(String destination) => Uri.parse(
+        'https://waze.com/ul?q=${Uri.encodeComponent(destination)}&navigate=yes',
+      );
+
   static Uri wazeNativeUri(double lat, double lng) =>
       Uri.parse('waze://?ll=$lat,$lng&navigate=yes');
 
@@ -35,6 +49,40 @@ class DriverNavigationLauncher {
         return _launchWaze(lat, lng);
       case DriverNavApp.google:
         return _launchGoogle(lat, lng);
+    }
+  }
+
+  /// Address fallback for older rows that have labels but no stored coordinates.
+  static Future<bool> launchAddress({
+    required String destination,
+    required DriverNavApp app,
+  }) async {
+    final query = destination.trim();
+    if (query.isEmpty) return false;
+
+    switch (app) {
+      case DriverNavApp.waze:
+        final native = Uri.parse(
+          'waze://?q=${Uri.encodeComponent(query)}&navigate=yes',
+        );
+        if (await launchUrl(native, mode: LaunchMode.externalApplication)) {
+          return true;
+        }
+        return launchUrl(
+          wazeWebSearchUri(query),
+          mode: LaunchMode.externalApplication,
+        );
+      case DriverNavApp.google:
+        final native = Uri.parse(
+          'comgooglemaps://?daddr=${Uri.encodeComponent(query)}&directionsmode=driving',
+        );
+        if (await launchUrl(native, mode: LaunchMode.externalApplication)) {
+          return true;
+        }
+        return launchUrl(
+          googleWebSearchUri(query),
+          mode: LaunchMode.externalApplication,
+        );
     }
   }
 

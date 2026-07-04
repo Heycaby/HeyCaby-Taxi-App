@@ -7,6 +7,18 @@ import '../providers/booking_provider.dart';
 /// so Continue returns to [TripSummaryScreen] instead of stacking another summary.
 const String kBookingReturnToSummaryExtra = 'booking_return_summary';
 
+enum BookingAddressEditTarget { pickup, destination }
+
+class BookingSearchRouteArgs {
+  const BookingSearchRouteArgs({
+    this.returnToSummaryAfterSave = false,
+    this.initialEditTarget = BookingAddressEditTarget.destination,
+  });
+
+  final bool returnToSummaryAfterSave;
+  final BookingAddressEditTarget initialEditTarget;
+}
+
 /// Routes and profile merge for the book-a-ride stack (skip steps when data exists).
 ///
 /// Use [routeAfterAddressesComplete] after both addresses are set — from search,

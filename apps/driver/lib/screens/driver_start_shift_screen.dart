@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 
 import '../l10n/driver_strings.dart';
+import '../models/driver_runtime_models.dart';
 import '../models/driver_start_shift_args.dart';
 import '../providers/driver_data_providers.dart';
+import '../providers/driver_runtime_providers.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
@@ -13,6 +16,7 @@ import '../ui/driver_button.dart';
 import '../ui/driver_card.dart';
 import '../ui/driver_status_badge.dart';
 import '../utils/driver_go_online_onboarding.dart';
+import '../utils/driver_readiness_routes.dart';
 import '../widgets/driver_shift_handover_step_up_sheet.dart';
 import '../screens/driver_shift_handover_waiting_screen.dart';
 import '../widgets/driver_settings_flow_common.dart';
@@ -34,6 +38,14 @@ class DriverStartShiftScreen extends ConsumerStatefulWidget {
 class _DriverStartShiftScreenState
     extends ConsumerState<DriverStartShiftScreen> {
   bool _starting = false;
+
+  void _openFirstMissingRequirement(List<DriverReadinessItem> missing) {
+    if (missing.isEmpty) return;
+    final route = flutterRouteForReadinessItem(missing.first);
+    if (route == null || route.isEmpty) return;
+    HapticService.selectionClick();
+    context.push(route);
+  }
 
   Future<void> _startShift() async {
     if (_starting) return;
@@ -114,6 +126,10 @@ class _DriverStartShiftScreenState
 
   String _handoverErrorMessage(Map<String, dynamic>? res) {
     final err = res?['error']?.toString() ?? '';
+    final missing = _missingItemsFromResponse(res);
+    if (missing.isNotEmpty) {
+      return _messageForRequirement(missing.first);
+    }
     if (err == 'active_ride_in_progress') {
       return DriverStrings.shiftHandoverActiveRideMessage;
     }
@@ -141,6 +157,48 @@ class _DriverStartShiftScreenState
     return DriverStrings.onboardingPlateSaveFailed;
   }
 
+  List<DriverReadinessItem> _missingItemsFromResponse(
+    Map<String, dynamic>? res,
+  ) {
+    final readinessRaw = res?['readiness'];
+    final filtered = res?['missing_requirements'];
+    final raw = filtered is List
+        ? filtered
+        : readinessRaw is Map
+            ? readinessRaw['checklist']
+            : null;
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((item) => DriverReadinessItem.fromJson(
+              item.cast<String, dynamic>(),
+            ))
+        .where((item) => !item.complete)
+        .toList(growable: false);
+  }
+
+  String _messageForRequirement(DriverReadinessItem item) {
+    switch (item.key.trim()) {
+      case 'profile_photo':
+        return DriverStrings.runtimeMissingProfilePhoto;
+      case 'vehicle_photos':
+        return DriverStrings.runtimeMissingVehiclePhoto;
+      case 'vehicle_plate':
+        return DriverStrings.runtimeMissingTaxiVerification;
+      case 'terms_of_service':
+      case 'indemnification_quiz':
+        return DriverStrings.runtimeMissingTerms;
+      case 'rijbewijs_verified':
+        return DriverStrings.runtimeMissingIdentity;
+      case 'initial_tariff':
+        return DriverStrings.runtimeMissingInitialTariff;
+      default:
+        return item.label.trim().isEmpty
+            ? DriverStrings.shiftHandoverNotEligibleMessage
+            : DriverStrings.runtimeMissingGeneric(item.label);
+    }
+  }
+
   void _cancel() {
     if (_starting) return;
     Navigator.of(context).pop(false);
@@ -156,6 +214,12 @@ class _DriverStartShiftScreenState
       args.vehicleMake,
       args.vehicleModel,
     ].whereType<String>().where((s) => s.trim().isNotEmpty).join(' ');
+    final runtimeAsync = ref.watch(driverRuntimeSnapshotProvider);
+    final runtime = runtimeAsync.valueOrNull;
+    final checkingReadiness = runtimeAsync.isLoading && !runtimeAsync.hasValue;
+    final missing =
+        runtime?.readiness.missingItems ?? const <DriverReadinessItem>[];
+    final blockedByReadiness = runtime?.ok == true && missing.isNotEmpty;
 
     return DriverSettingsFlowScaffold(
       title: DriverStrings.startShiftFlowTitle,
@@ -264,6 +328,16 @@ class _DriverStartShiftScreenState
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+                    if (blockedByReadiness) ...[
+                      const SizedBox(height: DriverSpacing.xl),
+                      _HandoverRequirementsCard(
+                        missing: missing,
+                        colors: colors,
+                        typography: typography,
+                        onOpen: _openFirstMissingRequirement,
+                        messageForRequirement: _messageForRequirement,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -279,13 +353,23 @@ class _DriverStartShiftScreenState
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   DriverButton(
-                    label: DriverStrings.startShiftPrimary,
-                    onPressed: _starting ? null : _startShift,
-                    loading: _starting,
+                    label: checkingReadiness
+                        ? DriverStrings.shiftHandoverCheckingRequirements
+                        : blockedByReadiness
+                            ? DriverStrings.shiftHandoverCompleteRequirements
+                            : DriverStrings.startShiftPrimary,
+                    onPressed: _starting || checkingReadiness
+                        ? null
+                        : blockedByReadiness
+                            ? () => _openFirstMissingRequirement(missing)
+                            : _startShift,
+                    loading: _starting || checkingReadiness,
                     colors: colors,
                     typography: typography,
                     size: DriverButtonSize.lg,
-                    icon: LucideIcons.play,
+                    icon: blockedByReadiness
+                        ? LucideIcons.listChecks
+                        : LucideIcons.play,
                   ),
                   const SizedBox(height: DriverSpacing.sm),
                   DriverButton(
@@ -301,6 +385,111 @@ class _DriverStartShiftScreenState
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _HandoverRequirementsCard extends StatelessWidget {
+  const _HandoverRequirementsCard({
+    required this.missing,
+    required this.colors,
+    required this.typography,
+    required this.onOpen,
+    required this.messageForRequirement,
+  });
+
+  final List<DriverReadinessItem> missing;
+  final DriverColors colors;
+  final DriverTypography typography;
+  final ValueChanged<List<DriverReadinessItem>> onOpen;
+  final String Function(DriverReadinessItem item) messageForRequirement;
+
+  @override
+  Widget build(BuildContext context) {
+    return DriverCard(
+      colors: colors,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: colors.warning.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  LucideIcons.shieldAlert,
+                  color: colors.warning,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: DriverSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      DriverStrings.shiftHandoverRequirementsTitle,
+                      style: typography.titleSmall.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: DriverSpacing.xs),
+                    Text(
+                      DriverStrings.shiftHandoverRequirementsBody,
+                      style: typography.bodySmall.copyWith(
+                        color: colors.textSecondary,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: DriverSpacing.lg),
+          ...missing.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: DriverSpacing.sm),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    LucideIcons.circleAlert,
+                    color: colors.warning,
+                    size: 18,
+                  ),
+                  const SizedBox(width: DriverSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      messageForRequirement(item),
+                      style: typography.bodyMedium.copyWith(
+                        color: colors.text,
+                        height: 1.35,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: DriverSpacing.md),
+          DriverButton(
+            label: DriverStrings.shiftHandoverResolveFirstRequirement,
+            onPressed: () => onOpen(missing),
+            colors: colors,
+            typography: typography,
+            size: DriverButtonSize.md,
+            icon: LucideIcons.arrowRight,
+          ),
+        ],
       ),
     );
   }

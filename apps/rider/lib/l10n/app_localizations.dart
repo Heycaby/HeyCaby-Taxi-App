@@ -337,7 +337,7 @@ abstract class AppLocalizations {
   /// No description provided for @vehicleCategoryTitle.
   ///
   /// In en, this message translates to:
-  /// **'What kind of ride do you want?'**
+  /// **'Do you need a specific vehicle?'**
   String get vehicleCategoryTitle;
 
   /// No description provided for @homeAirportChipSchiphol.
@@ -3398,13 +3398,13 @@ abstract class AppLocalizations {
   /// No description provided for @vehicleStandard.
   ///
   /// In en, this message translates to:
-  /// **'Standard'**
+  /// **'Standard taxi'**
   String get vehicleStandard;
 
   /// No description provided for @vehicleStandardDesc.
   ///
   /// In en, this message translates to:
-  /// **'Affordable rides for everyday trips'**
+  /// **'Everyday taxi for up to 4 passengers.'**
   String get vehicleStandardDesc;
 
   /// No description provided for @vehicleComfort.
@@ -3434,7 +3434,7 @@ abstract class AppLocalizations {
   /// No description provided for @vehicleWheelchair.
   ///
   /// In en, this message translates to:
-  /// **'Wheelchair'**
+  /// **'Wheelchair accessible'**
   String get vehicleWheelchair;
 
   /// No description provided for @vehicleWheelchairDesc.
@@ -3442,6 +3442,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Accessible vehicles with ramps'**
   String get vehicleWheelchairDesc;
+
+  /// No description provided for @vehicleNearbyMarketTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby taxi market'**
+  String get vehicleNearbyMarketTitle;
+
+  /// No description provided for @vehicleNearbyMarketChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking live availability...'**
+  String get vehicleNearbyMarketChecking;
+
+  /// No description provided for @vehicleNearbyDriverCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} nearby drivers'**
+  String vehicleNearbyDriverCount(int count);
+
+  /// No description provided for @vehicleFareRangeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fare range'**
+  String get vehicleFareRangeLabel;
+
+  /// No description provided for @vehiclePickupRangeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup'**
+  String get vehiclePickupRangeLabel;
+
+  /// No description provided for @vehicleOptionalPreferencesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional preferences'**
+  String get vehicleOptionalPreferencesTitle;
+
+  /// No description provided for @vehicleOptionalPreferencesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fine-tune who sees your request.'**
+  String get vehicleOptionalPreferencesSubtitle;
+
+  /// No description provided for @vehicleSupplyNearbyCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} nearby'**
+  String vehicleSupplyNearbyCount(int count);
+
+  /// No description provided for @vehiclePetsWelcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Pets welcome'**
+  String get vehiclePetsWelcome;
+
+  /// No description provided for @vehicleIndependentPricingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Independent driver pricing'**
+  String get vehicleIndependentPricingTitle;
+
+  /// No description provided for @vehicleIndependentPricingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Drivers set their own prices. This range comes from nearby taxis and may update before booking.'**
+  String get vehicleIndependentPricingBody;
 
   /// No description provided for @petFriendly.
   ///
@@ -4655,6 +4721,24 @@ abstract class AppLocalizations {
   /// **'Finding a Caby for your scheduled ride…'**
   String get matchingTitleScheduled;
 
+  /// No description provided for @matchingStatusLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Live'**
+  String get matchingStatusLive;
+
+  /// No description provided for @matchingStatusWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Window'**
+  String get matchingStatusWindow;
+
+  /// No description provided for @matchingStatusOffers.
+  ///
+  /// In en, this message translates to:
+  /// **'Offers'**
+  String get matchingStatusOffers;
+
   /// No description provided for @homeNearTermTitleInstant.
   ///
   /// In en, this message translates to:
@@ -4690,6 +4774,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Trip details'**
   String get homeNearTermTripDetails;
+
+  /// No description provided for @activeBookingSearchingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching for your driver'**
+  String get activeBookingSearchingTitle;
+
+  /// No description provided for @activeBookingMarketplaceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching for offers'**
+  String get activeBookingMarketplaceTitle;
+
+  /// No description provided for @activeBookingScheduledTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled ride active'**
+  String get activeBookingScheduledTitle;
+
+  /// No description provided for @activeBookingTapForDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to view progress without losing the map.'**
+  String get activeBookingTapForDetails;
+
+  /// No description provided for @activeBookingDriversNotified.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{0 drivers received your request} one{1 driver received your request} other{{count} drivers received your request}}'**
+  String activeBookingDriversNotified(int count);
+
+  /// No description provided for @activeBookingOffersReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No offers yet} one{1 offer received} other{{count} offers received}}'**
+  String activeBookingOffersReceived(int count);
+
+  /// No description provided for @activeBookingInstantBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected wait: 1 – 2 min. We\'ll notify you when a driver accepts.'**
+  String get activeBookingInstantBody;
+
+  /// No description provided for @activeBookingMarketplaceBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Independent drivers can accept, counter, or ignore. You choose who to ride with.'**
+  String get activeBookingMarketplaceBody;
+
+  /// No description provided for @activeBookingOffersBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Review the offer and choose your driver.} other{Compare offers and choose your driver.}}'**
+  String activeBookingOffersBody(int count);
+
+  /// No description provided for @activeBookingBestOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'Best offer €{price} · {minutes} min away'**
+  String activeBookingBestOffer(String price, int minutes);
+
+  /// No description provided for @activeBookingScheduledBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup {pickup}. Driver search starts {searchStarts}.'**
+  String activeBookingScheduledBody(String pickup, String searchStarts);
+
+  /// No description provided for @activeBookingScheduledSearchingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver search has started for your scheduled ride.'**
+  String get activeBookingScheduledSearchingBody;
 
   /// No description provided for @rideMatchingTypeLabelInstant.
   ///
@@ -4876,6 +5032,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Message your driver fast'**
   String get activeRideChatSubtitle;
+
+  /// No description provided for @activeRidePingDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Ping driver'**
+  String get activeRidePingDriver;
+
+  /// No description provided for @activeRidePingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a quick alert'**
+  String get activeRidePingSubtitle;
+
+  /// No description provided for @activeRidePickupNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup note'**
+  String get activeRidePickupNote;
+
+  /// No description provided for @activeRidePingSheetSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a quick pickup update. Your driver gets it as a ride message.'**
+  String get activeRidePingSheetSubtitle;
+
+  /// No description provided for @activeRidePingAtPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'I’m at pickup'**
+  String get activeRidePingAtPickup;
+
+  /// No description provided for @activeRidePingWalkingThere.
+  ///
+  /// In en, this message translates to:
+  /// **'I’m walking there'**
+  String get activeRidePingWalkingThere;
+
+  /// No description provided for @activeRidePingCantFindYou.
+  ///
+  /// In en, this message translates to:
+  /// **'I can’t find you'**
+  String get activeRidePingCantFindYou;
+
+  /// No description provided for @activeRidePingRunningLate.
+  ///
+  /// In en, this message translates to:
+  /// **'Running 2 min late'**
+  String get activeRidePingRunningLate;
+
+  /// No description provided for @activeRidePingConfirmPlate.
+  ///
+  /// In en, this message translates to:
+  /// **'Please confirm plate'**
+  String get activeRidePingConfirmPlate;
+
+  /// No description provided for @activeRidePingSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Ping sent: {message}'**
+  String activeRidePingSent(String message);
+
+  /// No description provided for @activeRidePingFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not send ping. Try again.'**
+  String get activeRidePingFailed;
+
+  /// No description provided for @activeRideLastPing.
+  ///
+  /// In en, this message translates to:
+  /// **'Ping sent: {message} · now'**
+  String activeRideLastPing(String message);
+
+  /// No description provided for @activeRidePickupIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup in {minutes} min'**
+  String activeRidePickupIn(String minutes);
+
+  /// No description provided for @activeRideArrivingIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Arriving in {minutes} min'**
+  String activeRideArrivingIn(String minutes);
+
+  /// No description provided for @activeRideDriverOutside.
+  ///
+  /// In en, this message translates to:
+  /// **'Your driver is outside'**
+  String get activeRideDriverOutside;
+
+  /// No description provided for @activeRideMaxFourSeats.
+  ///
+  /// In en, this message translates to:
+  /// **'4 seats max'**
+  String get activeRideMaxFourSeats;
+
+  /// No description provided for @activeRideSeatsMax.
+  ///
+  /// In en, this message translates to:
+  /// **'{seats} seats max'**
+  String activeRideSeatsMax(String seats);
+
+  /// No description provided for @activeRideVerifiedTaxi.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified taxi driver'**
+  String get activeRideVerifiedTaxi;
+
+  /// No description provided for @safety.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety'**
+  String get safety;
 
   /// No description provided for @activeRideFoundingShort.
   ///

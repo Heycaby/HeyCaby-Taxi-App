@@ -7,7 +7,7 @@ const _kLocaleKey = 'driver_locale';
 const _kLocaleFollowsDeviceKey = 'driver_locale_follows_device';
 
 const supportedLanguageCodes = ['nl', 'en', 'es', 'ar'];
-const driverFallbackLocale = Locale('en');
+const driverFallbackLocale = Locale('nl');
 
 Locale resolveDriverSupportedLocale(Locale? candidate) {
   if (candidate == null) return driverFallbackLocale;
@@ -20,7 +20,7 @@ Locale resolveDriverDeviceLocale() {
   return resolveDriverSupportedLocale(PlatformDispatcher.instance.locale);
 }
 
-/// Auto-detects phone language on first launch. Falls back to English.
+/// Auto-detects phone language on first launch. Falls back to Dutch.
 /// If user manually overrides, that preference is persisted.
 class LocaleNotifier extends Notifier<Locale?> {
   final _storage = const FlutterSecureStorage();

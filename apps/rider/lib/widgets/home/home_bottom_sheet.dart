@@ -3,11 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
-import '../active_notify_search_card.dart';
-import '../active_search_stop_dialog.dart';
 import '../booking_draft_resume_card.dart';
-import '../near_term_ride_home_banner.dart';
-import '../../providers/active_search_provider.dart';
 import '../../providers/rider_home_banners_provider.dart';
 import 'home_announcement_banner.dart';
 import 'home_booking_options_grid.dart';
@@ -34,15 +30,13 @@ class HomeBottomSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final active = ref.watch(activeSearchProvider).valueOrNull;
     final bannersAsync = ref.watch(riderHomeBannersProvider);
     final banners = bannersAsync.valueOrNull ?? const [];
     final announcement = pickRiderHomeBanner(
       banners: banners,
       nearbyTaxiCount: nearbyTaxiCount,
     );
-    final showFallbackNoSupply =
-        announcement == null && nearbyTaxiCount == 0;
+    final showFallbackNoSupply = announcement == null && nearbyTaxiCount == 0;
 
     return DraggableScrollableSheet(
       controller: sheetController,
@@ -68,35 +62,7 @@ class HomeBottomSheet extends ConsumerWidget {
           padding: EdgeInsets.zero,
           children: [
             _DragHandle(colors: colors),
-            if (active != null)
-              Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 8),
-                child: ActiveNotifySearchCard(
-                  colors: colors,
-                  typo: typo,
-                  l10n: l10n,
-                  startedAt: active.startedAt,
-                  bookingMode: active.bookingMode,
-                  pickupSummary: active.pickupSummary,
-                  destinationSummary: active.destinationSummary,
-                  onClosePressed: () async {
-                    final stop = await showActiveSearchStopDialog(
-                      context: context,
-                      colors: colors,
-                      typo: typo,
-                      l10n: l10n,
-                    );
-                    if (!context.mounted) return;
-                    if (stop) {
-                      await ref
-                          .read(activeSearchProvider.notifier)
-                          .stopSearchAndCancelRide();
-                    }
-                  },
-                ),
-              ),
             const BookingDraftResumeCard(),
-            if (active == null) const NearTermRideHomeBanner(),
             HomeSearchHeroCard(colors: colors, typo: typo, l10n: l10n),
             if (announcement != null)
               HomeAnnouncementBanner(

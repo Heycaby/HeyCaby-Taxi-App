@@ -1,6 +1,8 @@
+import 'dart:ui';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:heycaby_driver/l10n/driver_strings.dart';
 
 void main() {
   group('driver legal locale regression', () {
@@ -22,16 +24,24 @@ void main() {
       ]) {
         expect(source, contains('driver_locale_provider.dart'));
         expect(source, contains('ref.watch(localeProvider)'));
-        expect(source, contains("locale?.languageCode != 'en'"));
+        expect(
+            source, contains("locale == null || locale.languageCode == 'nl'"));
         expect(source, contains('_hasManualLanguageChoice'));
       }
     });
 
     test('legal copy controls stay localized for Dutch and English docs', () {
-      expect(trustCommonSource, contains('Kopieer voor vertaling'));
-      expect(trustCommonSource, contains('Copy for translation'));
-      expect(trustCommonSource, contains('Alle tekst kopiëren'));
-      expect(trustCommonSource, contains('Copy all text'));
+      expect(
+          trustCommonSource, contains('DriverStrings.legalCopyForTranslation'));
+      expect(trustCommonSource, contains('DriverStrings.legalCopyAllText'));
+
+      DriverStrings.useLocale(const Locale('nl'));
+      expect(DriverStrings.legalCopyForTranslation, 'Kopieer voor vertaling');
+      expect(DriverStrings.legalCopyAllText, 'Alle tekst kopiëren');
+
+      DriverStrings.useLocale(const Locale('en'));
+      expect(DriverStrings.legalCopyForTranslation, 'Copy for translation');
+      expect(DriverStrings.legalCopyAllText, 'Copy all text');
     });
   });
 }

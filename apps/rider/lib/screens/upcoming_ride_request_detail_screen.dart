@@ -12,6 +12,7 @@ import '../models/ride_matching_variant.dart';
 import '../providers/active_search_provider.dart';
 import '../providers/near_term_ride_request_provider.dart';
 import '../providers/ride_request_provider.dart';
+import '../services/booking_flow_navigation.dart';
 import '../services/sound_service.dart';
 import '../services/stale_ride_cleanup.dart';
 
@@ -108,7 +109,8 @@ class _UpcomingRideRequestDetailScreenState
       );
       return;
     }
-    final mode = ref.read(rideRequestProvider).bookingMode ?? widget.snap.bookingMode;
+    final mode =
+        ref.read(rideRequestProvider).bookingMode ?? widget.snap.bookingMode;
     final path = rideMatchingVariantForBookingModeString(mode).routePath;
     context.push(path);
   }
@@ -215,7 +217,15 @@ class _UpcomingRideRequestDetailScreenState
     ref.read(rideRequestProvider.notifier).reset();
     ref.invalidate(ridesTabUpcomingRequestsProvider);
     ref.invalidate(nearTermRideRequestProvider);
-    if (mounted) context.go('/search');
+    if (mounted) {
+      context.push(
+        '/search',
+        extra: const BookingSearchRouteArgs(
+          returnToSummaryAfterSave: true,
+          initialEditTarget: BookingAddressEditTarget.destination,
+        ),
+      );
+    }
   }
 
   @override
@@ -247,9 +257,10 @@ class _UpcomingRideRequestDetailScreenState
     }
 
     final status = (row['status'] as String?) ?? widget.snap.status;
-    final pickup = (row['pickup_address'] as String?) ?? widget.snap.pickupAddress;
-    final dest =
-        (row['destination_address'] as String?) ?? widget.snap.destinationAddress;
+    final pickup =
+        (row['pickup_address'] as String?) ?? widget.snap.pickupAddress;
+    final dest = (row['destination_address'] as String?) ??
+        widget.snap.destinationAddress;
     final isMatching = status == 'pending' || status == 'bidding';
     final isDriverAssigned = status == 'assigned' ||
         status == 'accepted' ||
@@ -272,187 +283,193 @@ class _UpcomingRideRequestDetailScreenState
             ),
             Expanded(
               child: RefreshIndicator(
-        color: colors.accent,
-        onRefresh: _refresh,
-        child: ListView(
-          padding: const EdgeInsetsDirectional.fromSTEB(20, 4, 20, 32),
-          children: [
-            if (isMatching) ...[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsetsDirectional.all(16),
-                decoration: BoxDecoration(
-                  color: colors.card,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: colors.border),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.text.withValues(alpha: 0.05),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                color: colors.accent,
+                onRefresh: _refresh,
+                child: ListView(
+                  padding: const EdgeInsetsDirectional.fromSTEB(20, 4, 20, 32),
                   children: [
-                    Row(
-                      children: [
-                        SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: colors.accent,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            l10n.upcomingRideMatchingProgressTitle,
-                            style: typo.titleSmall.copyWith(
-                              color: colors.text,
-                              fontWeight: FontWeight.w800,
+                    if (isMatching) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsetsDirectional.all(16),
+                        decoration: BoxDecoration(
+                          color: colors.card,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: colors.border),
+                          boxShadow: [
+                            BoxShadow(
+                              color: colors.text.withValues(alpha: 0.05),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
                             ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: colors.accent,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    l10n.upcomingRideMatchingProgressTitle,
+                                    style: typo.titleSmall.copyWith(
+                                      color: colors.text,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              l10n.upcomingRideMatchingProgressBody,
+                              style: typo.bodyMedium.copyWith(
+                                color: colors.textMid,
+                                height: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            FilledButton.icon(
+                              onPressed: _openLiveSearch,
+                              icon: const Icon(Icons.radar_rounded),
+                              label: Text(l10n.upcomingRideOpenLiveSearch),
+                              style: FilledButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                  horizontal: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                    if (isDriverAssigned) ...[
+                      FilledButton.icon(
+                        onPressed: _goActive,
+                        icon: const Icon(Icons.directions_car_rounded),
+                        label: Text(l10n.upcomingRideGoToActive),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
                     Text(
-                      l10n.upcomingRideMatchingProgressBody,
-                      style: typo.bodyMedium.copyWith(
+                      l10n.yourRoute,
+                      style: typo.labelLarge.copyWith(
                         color: colors.textMid,
-                        height: 1.4,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 14),
-                    FilledButton.icon(
-                      onPressed: _openLiveSearch,
-                      icon: const Icon(Icons.radar_rounded),
-                      label: Text(l10n.upcomingRideOpenLiveSearch),
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                          horizontal: 16,
+                    const SizedBox(height: 10),
+                    _AddressCard(
+                      colors: colors,
+                      typo: typo,
+                      icon: Icons.trip_origin_rounded,
+                      address: pickup,
+                    ),
+                    const SizedBox(height: 10),
+                    _AddressCard(
+                      colors: colors,
+                      typo: typo,
+                      icon: Icons.flag_rounded,
+                      address: dest,
+                    ),
+                    if (_driver != null) ...[
+                      const SizedBox(height: 24),
+                      Text(
+                        l10n.upcomingRideDriverSection,
+                        style: typo.labelLarge.copyWith(
+                          color: colors.textMid,
+                          fontWeight: FontWeight.w700,
                         ),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsetsDirectional.all(14),
+                        decoration: BoxDecoration(
+                          color: colors.card,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: colors.border),
+                        ),
+                        child: Row(
+                          children: [
+                            if ((_driver!['photo_url'] as String?)
+                                    ?.isNotEmpty ==
+                                true)
+                              CircleAvatar(
+                                radius: 24,
+                                backgroundImage: NetworkImage(
+                                  _driver!['photo_url'] as String,
+                                ),
+                              )
+                            else
+                              CircleAvatar(
+                                radius: 24,
+                                backgroundColor: colors.accentL,
+                                child: Icon(Icons.person, color: colors.accent),
+                              ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                (_driver!['name'] as String?)
+                                            ?.trim()
+                                            .isNotEmpty ==
+                                        true
+                                    ? (_driver!['name'] as String).trim()
+                                    : l10n.driver,
+                                style: typo.bodyLarge.copyWith(
+                                  color: colors.text,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 28),
+                    OutlinedButton.icon(
+                      onPressed: _editAddresses,
+                      icon: Icon(Icons.edit_location_alt_rounded,
+                          color: colors.accent),
+                      label: Text(l10n.upcomingRideEditBookAgain),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-            if (isDriverAssigned) ...[
-              FilledButton.icon(
-                onPressed: _goActive,
-                icon: const Icon(Icons.directions_car_rounded),
-                label: Text(l10n.upcomingRideGoToActive),
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-            Text(
-              l10n.yourRoute,
-              style: typo.labelLarge.copyWith(
-                color: colors.textMid,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 10),
-            _AddressCard(
-              colors: colors,
-              typo: typo,
-              icon: Icons.trip_origin_rounded,
-              address: pickup,
-            ),
-            const SizedBox(height: 10),
-            _AddressCard(
-              colors: colors,
-              typo: typo,
-              icon: Icons.flag_rounded,
-              address: dest,
-            ),
-            if (_driver != null) ...[
-              const SizedBox(height: 24),
-              Text(
-                l10n.upcomingRideDriverSection,
-                style: typo.labelLarge.copyWith(
-                  color: colors.textMid,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsetsDirectional.all(14),
-                decoration: BoxDecoration(
-                  color: colors.card,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: colors.border),
-                ),
-                child: Row(
-                  children: [
-                    if ((_driver!['photo_url'] as String?)?.isNotEmpty == true)
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundImage: NetworkImage(
-                          _driver!['photo_url'] as String,
-                        ),
-                      )
-                    else
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundColor: colors.accentL,
-                        child: Icon(Icons.person, color: colors.accent),
-                      ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        (_driver!['name'] as String?)?.trim().isNotEmpty == true
-                            ? (_driver!['name'] as String).trim()
-                            : l10n.driver,
-                        style: typo.bodyLarge.copyWith(
-                          color: colors.text,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    const SizedBox(height: 10),
+                    TextButton.icon(
+                      onPressed: _confirmCancel,
+                      icon: Icon(Icons.cancel_outlined, color: colors.error),
+                      label: Text(
+                        l10n.cancelRide,
+                        style: typo.labelLarge.copyWith(color: colors.error),
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
-            const SizedBox(height: 28),
-            OutlinedButton.icon(
-              onPressed: _editAddresses,
-              icon: Icon(Icons.edit_location_alt_rounded, color: colors.accent),
-              label: Text(l10n.upcomingRideEditBookAgain),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextButton.icon(
-              onPressed: _confirmCancel,
-              icon: Icon(Icons.cancel_outlined, color: colors.error),
-              label: Text(
-                l10n.cancelRide,
-                style: typo.labelLarge.copyWith(color: colors.error),
-              ),
-            ),
-          ],
-        ),
-      ),
             ),
           ],
         ),

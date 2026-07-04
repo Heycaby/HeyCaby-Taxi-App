@@ -34,8 +34,11 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
   PointAnnotationManager? _driverAnnotationManager;
   RealtimeChannel? _rideStatusChannel;
   _DriverSheetInfo? _driverInfo;
+  _RideWaitingInfo? _waitingInfo;
   Timer? _statusRefreshTimer;
+  Timer? _waitingUiTimer;
   int _lastStaleStatusMinuteTracked = -1;
+  String? _lastRiderPing;
 
   @override
   void initState() {
@@ -47,9 +50,22 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
       if (rideId != null) {
         ref.read(driverTrackingProvider.notifier).startTracking(rideId);
         _loadDriverInfo(rideId);
+        _loadWaitingInfo(rideId);
       }
       _startStatusRefreshTimer();
+      _startWaitingUiTimer();
       _syncRidePhaseWidgets();
+    });
+  }
+
+  void _startWaitingUiTimer() {
+    _waitingUiTimer?.cancel();
+    _waitingUiTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || _waitingInfo == null) return;
+      final status = ref.read(rideRequestProvider).status ?? '';
+      if (status == 'driver_arrived' || status == 'arrived') {
+        setState(() {});
+      }
     });
   }
 
@@ -58,7 +74,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
       final row = await HeyCabySupabase.client
           .from('ride_requests')
           .select(
-            'driver_id, drivers(full_name, avg_rating, vehicle_plate, profile_photo_url, vehicle_category, vehicle_make, vehicle_model, vehicle_color, vehicle_photo_urls, is_founding_driver, founding_number)',
+            'driver_id, drivers(full_name, avg_rating, vehicle_plate, profile_photo_url, vehicle_category, vehicle_make, vehicle_model, vehicle_colour, vehicle_photo_urls, is_founding_driver, founding_number)',
           )
           .eq('id', rideId)
           .maybeSingle();
@@ -73,6 +89,28 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     } catch (_) {
       // Best-effort; UI still works without profile card details.
     }
+  }
+
+  Future<void> _loadWaitingInfo(String rideId) async {
+    try {
+      final row = await HeyCabySupabase.client
+          .from('ride_requests')
+          .select(
+            'driver_arrived_at, waiting_grace_seconds, waiting_rate_per_minute, chargeable_wait_seconds, waiting_fee_cents, waiting_fee_waived',
+          )
+          .eq('id', rideId)
+          .maybeSingle();
+      if (!mounted || row == null) return;
+      _applyWaitingRecord(Map<String, dynamic>.from(row));
+    } catch (_) {
+      // Older environments may not have the waiting-fee contract yet.
+    }
+  }
+
+  void _applyWaitingRecord(Map<String, dynamic> row) {
+    final parsed = _RideWaitingInfo.fromJson(row);
+    if (!mounted || parsed == null) return;
+    setState(() => _waitingInfo = parsed);
   }
 
   Future<void> _syncRidePhaseWidgets() async {
@@ -122,6 +160,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
           ),
           callback: (payload) {
             final newStatus = payload.newRecord['status'] as String?;
+            _applyWaitingRecord(Map<String, dynamic>.from(payload.newRecord));
             if (newStatus == null) return;
             ref.read(rideRequestProvider.notifier).updateStatus(newStatus);
             final rideId = ref.read(rideRequestProvider).rideRequestId;
@@ -177,10 +216,13 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     try {
       final row = await HeyCabySupabase.client
           .from('ride_requests')
-          .select('status, updated_at')
+          .select(
+            'status, updated_at, driver_arrived_at, waiting_grace_seconds, waiting_rate_per_minute, chargeable_wait_seconds, waiting_fee_cents, waiting_fee_waived',
+          )
           .eq('id', rideId)
           .maybeSingle();
       if (row == null) return;
+      _applyWaitingRecord(Map<String, dynamic>.from(row));
       final remoteStatus = row['status'] as String?;
       if (remoteStatus == null || remoteStatus.isEmpty) return;
       final localStatus = ref.read(rideRequestProvider).status;
@@ -240,6 +282,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
       final rideId = ref.read(rideRequestProvider).rideRequestId;
       if (rideId != null) {
         ref.read(driverTrackingProvider.notifier).startTracking(rideId);
+        _loadWaitingInfo(rideId);
       }
     }
   }
@@ -248,6 +291,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _statusRefreshTimer?.cancel();
+    _waitingUiTimer?.cancel();
     _rideStatusChannel?.unsubscribe();
     ref.read(driverTrackingProvider.notifier).stopTracking();
     super.dispose();
@@ -450,15 +494,86 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
               booking: booking,
               onComplete: () => context.go('/home'),
               onShare: () => _shareRide(context),
-              onChat: () => context.push('/chat'),
+              onPingDriver: () => _openPingDriverSheet(context),
+              onPickupNote: () => context.push('/chat'),
               onCancelRide: () => _openCancelFlow(context),
               driverInfo: _driverInfo,
               etaMinutes: etaMinutes,
+              lastRiderPing: _lastRiderPing,
+              waitingInfo: _waitingInfo,
             ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _openPingDriverSheet(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    final message = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => _PingDriverSheet(
+        colors: ref.read(colorsProvider),
+        typo: ref.read(typographyProvider),
+        options: [
+          l10n.activeRidePingAtPickup,
+          l10n.activeRidePingWalkingThere,
+          l10n.activeRidePingCantFindYou,
+          l10n.activeRidePingRunningLate,
+          l10n.activeRidePingConfirmPlate,
+        ],
+      ),
+    );
+    if (message == null || !context.mounted) return;
+    await _sendRiderPing(context, message);
+  }
+
+  Future<void> _sendRiderPing(BuildContext context, String message) async {
+    final rideId = ref.read(rideRequestProvider).rideRequestId;
+    if (rideId == null) return;
+    final colors = ref.read(colorsProvider);
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final identity = await ref.read(riderIdentityProvider.future);
+      final senderId = identity.identityId ??
+          HeyCabySupabase.client.auth.currentUser?.id ??
+          '';
+      if (senderId.isEmpty) return;
+      await HeyCabySupabase.client.from('messages').insert({
+        'ride_request_id': rideId,
+        'sender_id': senderId,
+        'sender_type': 'rider',
+        'content': message,
+      });
+      if (!mounted) return;
+      setState(() => _lastRiderPing = message);
+      unawaited(HapticService.pingStandard());
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.activeRidePingSent(message),
+            style: TextStyle(color: colors.text),
+          ),
+          backgroundColor: colors.surface,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n.activeRidePingFailed,
+            style: TextStyle(color: colors.text),
+          ),
+          backgroundColor: colors.surface,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   int? _estimateEtaMinutes({
@@ -467,7 +582,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     required DriverLocation? driverLocation,
   }) {
     if (driverLocation == null) return null;
-    final target = status == 'in_progress' ? booking.destination : booking.pickup;
+    final target =
+        status == 'in_progress' ? booking.destination : booking.pickup;
     if (target == null) return null;
     final km = NearbySupplyService.distanceKm(
       driverLocation.lat,
@@ -500,7 +616,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
         final typo = ref.read(typographyProvider);
         return AlertDialog(
           backgroundColor: colors.card,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(
             l10n.cancelBookingTitle,
             style: typo.titleLarge.copyWith(color: colors.text),
@@ -564,10 +681,13 @@ class _ActiveRideSheet extends StatelessWidget {
   final BookingState booking;
   final VoidCallback onComplete;
   final VoidCallback onShare;
-  final VoidCallback onChat;
+  final VoidCallback onPingDriver;
+  final VoidCallback onPickupNote;
   final VoidCallback onCancelRide;
   final _DriverSheetInfo? driverInfo;
   final int? etaMinutes;
+  final String? lastRiderPing;
+  final _RideWaitingInfo? waitingInfo;
 
   const _ActiveRideSheet({
     required this.status,
@@ -577,10 +697,13 @@ class _ActiveRideSheet extends StatelessWidget {
     required this.booking,
     required this.onComplete,
     required this.onShare,
-    required this.onChat,
+    required this.onPingDriver,
+    required this.onPickupNote,
     required this.onCancelRide,
     required this.driverInfo,
     required this.etaMinutes,
+    required this.lastRiderPing,
+    required this.waitingInfo,
   });
 
   String _statusLabel(AppLocalizations l10n) {
@@ -601,7 +724,7 @@ class _ActiveRideSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCompleted = status == 'completed';
-    final sheetHeight = MediaQuery.of(context).size.height * 0.66;
+    final sheetHeight = MediaQuery.of(context).size.height * 0.72;
     String paymentLabel() {
       if (booking.paymentMethods.isEmpty) return l10n.pinSubtitle;
       return booking.paymentMethods.first.replaceAll('_', ' ');
@@ -651,15 +774,16 @@ class _ActiveRideSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            _StatusBadge(
+            _RideConfidenceHeader(
               status: status,
               label: _statusLabel(l10n),
               colors: colors,
               typo: typo,
               l10n: l10n,
               etaMinutes: etaMinutes,
+              driverInfo: driverInfo,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             if (driverInfo != null) ...[
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 260),
@@ -676,12 +800,30 @@ class _ActiveRideSheet extends StatelessWidget {
                   );
                 },
                 child: _DriverInfoCard(
-                  key: ValueKey<String>('${driverInfo!.vehiclePlate}_${driverInfo!.fullName}_$status'),
+                  key: ValueKey<String>(
+                      '${driverInfo!.vehiclePlate}_${driverInfo!.fullName}_$status'),
                   driverInfo: driverInfo!,
                   colors: colors,
                   typo: typo,
                   l10n: l10n,
                 ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            if (lastRiderPing != null && lastRiderPing!.trim().isNotEmpty) ...[
+              _LastPingStrip(
+                text: l10n.activeRideLastPing(lastRiderPing!),
+                colors: colors,
+                typo: typo,
+              ),
+              const SizedBox(height: 12),
+            ],
+            if ((status == 'driver_arrived' || status == 'arrived') &&
+                waitingInfo != null) ...[
+              _RiderWaitingFeeCard(
+                colors: colors,
+                typo: typo,
+                info: waitingInfo!,
               ),
               const SizedBox(height: 12),
             ],
@@ -694,7 +836,8 @@ class _ActiveRideSheet extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.chat_bubble_outline, color: colors.textMid, size: 19),
+                  Icon(Icons.chat_bubble_outline,
+                      color: colors.textMid, size: 19),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -703,55 +846,62 @@ class _ActiveRideSheet extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    onPressed: onChat,
-                    icon: Icon(Icons.arrow_forward_rounded, color: colors.textSoft),
+                    onPressed: onPickupNote,
+                    icon: Icon(Icons.arrow_forward_rounded,
+                        color: colors.textSoft),
                     visualDensity: VisualDensity.compact,
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 16),
-            Row(
+            GridView.count(
+              crossAxisCount: 2,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              childAspectRatio: 1.55,
               children: [
-                Expanded(
-                  child: _ActionButton(
-                    icon: Icons.chat_bubble_outline,
-                    label: l10n.chat,
-                    subtitle: l10n.activeRideChatSubtitle,
-                    colors: colors,
-                    typo: typo,
-                    onTap: onChat,
-                    badgeLabel:
-                        (driverInfo?.isFoundingDriver ?? false) ? l10n.activeRideFoundingShort : null,
-                  ),
+                _ActionButton(
+                  icon: Icons.touch_app_rounded,
+                  label: l10n.activeRidePingDriver,
+                  subtitle: l10n.activeRidePingSubtitle,
+                  colors: colors,
+                  typo: typo,
+                  onTap: onPingDriver,
+                  isPrimary: true,
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _ActionButton(
-                    icon: Icons.share_outlined,
-                    label: l10n.shareRide,
-                    subtitle: l10n.activeRideShareSubtitle,
-                    colors: colors,
-                    typo: typo,
-                    onTap: onShare,
-                  ),
+                _ActionButton(
+                  icon: Icons.chat_bubble_outline,
+                  label: l10n.activeRidePickupNote,
+                  subtitle: l10n.activeRideChatSubtitle,
+                  colors: colors,
+                  typo: typo,
+                  onTap: onPickupNote,
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _ActionButton(
-                    icon: isCompleted ? Icons.flag_outlined : Icons.support_agent,
-                    label: isCompleted ? l10n.reportIssue : l10n.support,
-                    subtitle: isCompleted
-                        ? l10n.activeRideReportSubtitle
-                        : l10n.activeRideSupportSubtitle,
-                    colors: colors,
-                    typo: typo,
-                    onTap: () => context.push(
-                      isCompleted ? '/report' : '/support',
-                      extra: isCompleted
-                          ? const ReportRouteArgs(fromActiveRide: true)
-                          : null,
-                    ),
+                _ActionButton(
+                  icon: Icons.share_outlined,
+                  label: l10n.shareRide,
+                  subtitle: l10n.activeRideShareSubtitle,
+                  colors: colors,
+                  typo: typo,
+                  onTap: onShare,
+                ),
+                _ActionButton(
+                  icon:
+                      isCompleted ? Icons.flag_outlined : Icons.shield_outlined,
+                  label: isCompleted ? l10n.reportIssue : l10n.safety,
+                  subtitle: isCompleted
+                      ? l10n.activeRideReportSubtitle
+                      : l10n.activeRideSupportSubtitle,
+                  colors: colors,
+                  typo: typo,
+                  onTap: () => context.push(
+                    isCompleted ? '/report' : '/support',
+                    extra: isCompleted
+                        ? const ReportRouteArgs(fromActiveRide: true)
+                        : null,
                   ),
                 ),
               ],
@@ -768,7 +918,8 @@ class _ActiveRideSheet extends StatelessWidget {
                   _RouteRow(
                     icon: Icons.place_rounded,
                     iconColor: colors.success,
-                    text: booking.pickup?.fullAddress ?? l10n.activeRidePickupNotSet,
+                    text: booking.pickup?.fullAddress ??
+                        l10n.activeRidePickupNotSet,
                     typo: typo,
                     colors: colors,
                   ),
@@ -799,7 +950,8 @@ class _ActiveRideSheet extends StatelessWidget {
                   const SizedBox(height: 10),
                   Row(
                     children: [
-                      Icon(Icons.contactless_rounded, color: colors.textMid, size: 20),
+                      Icon(Icons.contactless_rounded,
+                          color: colors.textMid, size: 20),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -839,7 +991,7 @@ class _ActiveRideSheet extends StatelessWidget {
                     label: l10n.activeRideContactDriver,
                     colors: colors,
                     typo: typo,
-                    onTap: onChat,
+                    onTap: onPickupNote,
                   ),
                   if (!isCompleted) ...[
                     const SizedBox(height: 10),
@@ -1037,8 +1189,9 @@ class _MoreActionRowState extends State<_MoreActionRow> {
             children: [
               Icon(
                 widget.icon,
-                color:
-                    widget.isDanger ? widget.colors.error : widget.colors.textMid,
+                color: widget.isDanger
+                    ? widget.colors.error
+                    : widget.colors.textMid,
                 size: 20,
               ),
               const SizedBox(width: 10),
@@ -1046,8 +1199,9 @@ class _MoreActionRowState extends State<_MoreActionRow> {
                 child: Text(
                   widget.label,
                   style: widget.typo.bodyMedium.copyWith(
-                    color:
-                        widget.isDanger ? widget.colors.error : widget.colors.text,
+                    color: widget.isDanger
+                        ? widget.colors.error
+                        : widget.colors.text,
                     fontWeight:
                         widget.isDanger ? FontWeight.w700 : FontWeight.w600,
                   ),
@@ -1138,7 +1292,8 @@ class _CancelReasonSheetState extends State<_CancelReasonSheet> {
                 contentPadding: EdgeInsets.zero,
                 title: Text(
                   reason,
-                  style: widget.typo.bodyMedium.copyWith(color: widget.colors.text),
+                  style: widget.typo.bodyMedium
+                      .copyWith(color: widget.colors.text),
                 ),
                 trailing: Icon(
                   reason == _selectedReason
@@ -1169,107 +1324,376 @@ class _CancelReasonSheetState extends State<_CancelReasonSheet> {
   }
 }
 
-class _AnimatedEtaLabel extends StatelessWidget {
-  final String label;
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-
-  const _AnimatedEtaLabel({
-    required this.label,
-    required this.colors,
-    required this.typo,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0.92, end: 1.0),
-      duration: const Duration(milliseconds: 320),
-      curve: Curves.easeOutCubic,
-      builder: (context, value, child) => Transform.scale(
-        scale: value,
-        child: child,
-      ),
-      child: Text(
-        label,
-        style: typo.labelSmall.copyWith(
-          color: colors.textMid,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
+class _RideConfidenceHeader extends StatelessWidget {
   final String status;
   final String label;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
   final AppLocalizations l10n;
   final int? etaMinutes;
+  final _DriverSheetInfo? driverInfo;
 
-  const _StatusBadge({
+  const _RideConfidenceHeader({
     required this.status,
     required this.label,
     required this.colors,
     required this.typo,
     required this.l10n,
     required this.etaMinutes,
+    required this.driverInfo,
   });
 
   @override
   Widget build(BuildContext context) {
     final isComplete = status == 'completed';
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+    final title = switch (status) {
+      'driver_arrived' || 'arrived' => l10n.activeRideDriverOutside,
+      'in_progress' => etaMinutes != null
+          ? l10n.activeRideArrivingIn(etaMinutes!.toString())
+          : l10n.tripInProgress,
+      'completed' => l10n.tripComplete,
+      _ => etaMinutes != null
+          ? l10n.activeRidePickupIn(etaMinutes!.toString())
+          : label,
+    };
+    final vehicle = driverInfo?.naturalVehicleLabel.trim() ?? '';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: isComplete
-                ? colors.success.withValues(alpha: 0.12)
-                : colors.accentL,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isComplete ? colors.success : colors.accent,
+        Row(
+          children: [
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 240),
+                child: Text(
+                  title,
+                  key: ValueKey(title),
+                  style: typo.headingMedium.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: typo.labelSmall.copyWith(
-                  color: isComplete ? colors.success : colors.accent,
-                  fontWeight: FontWeight.w600,
-                ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: isComplete
+                    ? colors.success.withValues(alpha: 0.12)
+                    : colors.accentL,
+                borderRadius: BorderRadius.circular(99),
               ),
-            ],
-          ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isComplete ? colors.success : colors.accent,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    label,
+                    style: typo.labelSmall.copyWith(
+                      color: isComplete ? colors.success : colors.accent,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        if (etaMinutes != null && status != 'completed')
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: colors.bgAlt,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: colors.border),
-            ),
-            child: _AnimatedEtaLabel(
-              label: l10n.eta(etaMinutes!.toString()),
-              colors: colors,
-              typo: typo,
+        if (vehicle.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Text(
+            vehicle,
+            style: typo.bodyMedium.copyWith(
+              color: colors.textMid,
+              fontWeight: FontWeight.w600,
             ),
           ),
+        ],
       ],
+    );
+  }
+}
+
+class _LastPingStrip extends StatelessWidget {
+  final String text;
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+
+  const _LastPingStrip({
+    required this.text,
+    required this.colors,
+    required this.typo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: colors.accentL,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.accent.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle_rounded, color: colors.accent, size: 19),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              text,
+              style: typo.bodySmall.copyWith(
+                color: colors.accent,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RiderWaitingFeeCard extends StatelessWidget {
+  const _RiderWaitingFeeCard({
+    required this.colors,
+    required this.typo,
+    required this.info,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final _RideWaitingInfo info;
+
+  String _duration(int seconds) {
+    final safe = seconds < 0 ? 0 : seconds;
+    final h = safe ~/ 3600;
+    final m = (safe % 3600) ~/ 60;
+    final s = (safe % 60).toString().padLeft(2, '0');
+    if (h > 0) return '$h:${m.toString().padLeft(2, '0')}:$s';
+    return '$m:$s';
+  }
+
+  String _money(int cents) => '€${(cents / 100).toStringAsFixed(2)}';
+
+  @override
+  Widget build(BuildContext context) {
+    final elapsed = info.elapsedSinceArrivalSeconds();
+    final chargeable = info.chargeableSecondsNow();
+    final remainingGrace = info.remainingGraceSecondsNow();
+    final feeCents = info.waitingFeeCentsNow();
+    final isGrace = !info.waived && chargeable == 0;
+    final title = info.waived
+        ? 'Waiting fee waived'
+        : isGrace
+            ? 'Free pickup time'
+            : 'Waiting time';
+    final main = info.waived
+        ? _money(0)
+        : isGrace
+            ? _duration(remainingGrace)
+            : _duration(chargeable);
+    final subtitle = info.waived
+        ? 'Your driver waived the waiting fee.'
+        : isGrace
+            ? 'Waiting may be added after 2 minutes.'
+            : '${_money(feeCents)} added so far';
+    final rate = info.ratePerMinute > 0
+        ? 'Rate after grace: €${info.ratePerMinute.toStringAsFixed(2)}/min'
+        : 'Waiting rate not set';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: info.waived
+            ? colors.success.withValues(alpha: 0.1)
+            : colors.warning.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: info.waived
+              ? colors.success.withValues(alpha: 0.24)
+              : colors.warning.withValues(alpha: 0.24),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: colors.card,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: info.waived ? colors.success : colors.warning,
+                width: 2,
+              ),
+            ),
+            child: Icon(
+              info.waived
+                  ? Icons.volunteer_activism_rounded
+                  : Icons.timer_outlined,
+              color: info.waived ? colors.success : colors.warning,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: typo.titleMedium.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      main,
+                      style: typo.titleMedium.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w900,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: typo.bodySmall.copyWith(color: colors.textMid),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  elapsed < info.graceSeconds ? rate : '$rate · live',
+                  style: typo.labelSmall.copyWith(
+                    color: colors.textSoft,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PingDriverSheet extends StatelessWidget {
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final List<String> options;
+
+  const _PingDriverSheet({
+    required this.colors,
+    required this.typo,
+    required this.options,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SafeArea(
+      top: false,
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              l10n.activeRidePingDriver,
+              style: typo.titleLarge.copyWith(
+                color: colors.text,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              l10n.activeRidePingSheetSubtitle,
+              style: typo.bodyMedium.copyWith(color: colors.textMid),
+            ),
+            const SizedBox(height: 14),
+            ...options.map((message) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: InkWell(
+                  onTap: () {
+                    HapticService.selectionClick();
+                    Navigator.of(context).pop(message);
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.bgAlt,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: colors.border),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.touch_app_rounded,
+                          color: colors.accent,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            message,
+                            style: typo.bodyMedium.copyWith(
+                              color: colors.text,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          Icons.send_rounded,
+                          color: colors.textSoft,
+                          size: 18,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -1281,7 +1705,7 @@ class _ActionButton extends StatefulWidget {
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
   final VoidCallback onTap;
-  final String? badgeLabel;
+  final bool isPrimary;
 
   const _ActionButton({
     required this.icon,
@@ -1290,7 +1714,7 @@ class _ActionButton extends StatefulWidget {
     required this.colors,
     required this.typo,
     required this.onTap,
-    this.badgeLabel,
+    this.isPrimary = false,
   });
 
   @override
@@ -1320,45 +1744,42 @@ class _ActionButtonState extends State<_ActionButton> {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
           decoration: BoxDecoration(
             color: _pressed
-                ? widget.colors.bgAlt.withValues(
-                    alpha: HeyCabyMotion.pressedBackgroundAlpha,
-                  )
-                : widget.colors.bgAlt,
+                ? (widget.isPrimary
+                    ? widget.colors.accent.withValues(alpha: 0.9)
+                    : widget.colors.bgAlt.withValues(
+                        alpha: HeyCabyMotion.pressedBackgroundAlpha,
+                      ))
+                : (widget.isPrimary
+                    ? widget.colors.accent
+                    : widget.colors.bgAlt),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: _pressed
-                  ? widget.colors.accent.withValues(
-                      alpha: HeyCabyMotion.pressedBorderAlpha,
-                    )
-                  : widget.colors.border,
+              color: widget.isPrimary
+                  ? widget.colors.accent
+                  : (_pressed
+                      ? widget.colors.accent.withValues(
+                          alpha: HeyCabyMotion.pressedBorderAlpha,
+                        )
+                      : widget.colors.border),
             ),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (widget.badgeLabel != null) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: widget.colors.accentL,
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                  child: Text(
-                    widget.badgeLabel!,
-                    style: widget.typo.labelSmall.copyWith(
-                      color: widget.colors.accent,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-              Icon(widget.icon, color: widget.colors.textMid, size: 19),
+              Icon(
+                widget.icon,
+                color: widget.isPrimary
+                    ? widget.colors.onAccent
+                    : widget.colors.textMid,
+                size: 19,
+              ),
               const SizedBox(height: 7),
               Text(
                 widget.label,
                 style: widget.typo.labelMedium.copyWith(
-                  color: widget.colors.text,
+                  color: widget.isPrimary
+                      ? widget.colors.onAccent
+                      : widget.colors.text,
                   fontWeight: FontWeight.w700,
                 ),
                 textAlign: TextAlign.center,
@@ -1369,7 +1790,11 @@ class _ActionButtonState extends State<_ActionButton> {
                 opacity: _pressed ? HeyCabyMotion.pressedSubtitleOpacity : 1,
                 child: Text(
                   widget.subtitle,
-                  style: widget.typo.bodySmall.copyWith(color: widget.colors.textSoft),
+                  style: widget.typo.bodySmall.copyWith(
+                    color: widget.isPrimary
+                        ? widget.colors.onAccent.withValues(alpha: 0.82)
+                        : widget.colors.textSoft,
+                  ),
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -1380,6 +1805,70 @@ class _ActionButtonState extends State<_ActionButton> {
         ),
       ),
     );
+  }
+}
+
+class _RideWaitingInfo {
+  const _RideWaitingInfo({
+    required this.arrivedAt,
+    required this.graceSeconds,
+    required this.ratePerMinute,
+    required this.frozenChargeableSeconds,
+    required this.frozenFeeCents,
+    required this.waived,
+  });
+
+  final DateTime arrivedAt;
+  final int graceSeconds;
+  final double ratePerMinute;
+  final int frozenChargeableSeconds;
+  final int frozenFeeCents;
+  final bool waived;
+
+  static _RideWaitingInfo? fromJson(Map<String, dynamic> json) {
+    final arrivedRaw = json['driver_arrived_at']?.toString();
+    final arrivedAt = arrivedRaw == null ? null : DateTime.tryParse(arrivedRaw);
+    if (arrivedAt == null) return null;
+    final graceRaw = json['waiting_grace_seconds'];
+    final rateRaw = json['waiting_rate_per_minute'];
+    final chargeableRaw = json['chargeable_wait_seconds'];
+    final feeRaw = json['waiting_fee_cents'];
+    return _RideWaitingInfo(
+      arrivedAt: arrivedAt.toUtc(),
+      graceSeconds:
+          graceRaw is num ? graceRaw.toInt().clamp(0, 3600).toInt() : 120,
+      ratePerMinute:
+          rateRaw is num ? rateRaw.toDouble().clamp(0, 9999).toDouble() : 0,
+      frozenChargeableSeconds: chargeableRaw is num
+          ? chargeableRaw.toInt().clamp(0, 86400).toInt()
+          : 0,
+      frozenFeeCents:
+          feeRaw is num ? feeRaw.toInt().clamp(0, 99999999).toInt() : 0,
+      waived: json['waiting_fee_waived'] == true,
+    );
+  }
+
+  int elapsedSinceArrivalSeconds({DateTime? now}) {
+    final end = (now ?? DateTime.now()).toUtc();
+    final seconds = end.difference(arrivedAt).inSeconds;
+    return seconds < 0 ? 0 : seconds;
+  }
+
+  int remainingGraceSecondsNow() {
+    final remaining = graceSeconds - elapsedSinceArrivalSeconds();
+    return remaining < 0 ? 0 : remaining;
+  }
+
+  int chargeableSecondsNow() {
+    if (frozenChargeableSeconds > 0) return frozenChargeableSeconds;
+    final chargeable = elapsedSinceArrivalSeconds() - graceSeconds;
+    return chargeable < 0 ? 0 : chargeable;
+  }
+
+  int waitingFeeCentsNow() {
+    if (waived) return 0;
+    if (frozenFeeCents > 0) return frozenFeeCents;
+    return ((chargeableSecondsNow() / 60) * ratePerMinute * 100).round();
   }
 }
 
@@ -1433,12 +1922,26 @@ class _DriverSheetInfo {
       vehicleCategory: json['vehicle_category'] as String?,
       vehicleMake: json['vehicle_make'] as String?,
       vehicleModel: json['vehicle_model'] as String?,
-      vehicleColor: json['vehicle_color'] as String?,
+      vehicleColor:
+          (json['vehicle_colour'] ?? json['vehicle_color']) as String?,
       vehiclePhotoUrl: firstPhoto,
       isFoundingDriver: (json['is_founding_driver'] as bool?) ?? false,
       foundingNumber: (json['founding_number'] as num?)?.toInt(),
       rating: rating,
     );
+  }
+
+  String get naturalVehicleLabel {
+    final color = (vehicleColor ?? '').trim();
+    final make = (vehicleMake ?? '').trim();
+    final model = (vehicleModel ?? '').trim();
+    final parts = [
+      if (color.isNotEmpty) color,
+      if (make.isNotEmpty) make,
+      if (model.isNotEmpty) model,
+    ];
+    if (parts.isNotEmpty) return parts.join(' ');
+    return (vehicleCategory ?? '').trim();
   }
 }
 
@@ -1458,54 +1961,138 @@ class _DriverInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final carLine = [
-      if ((driverInfo.vehicleMake ?? '').trim().isNotEmpty) driverInfo.vehicleMake!.trim(),
-      if ((driverInfo.vehicleModel ?? '').trim().isNotEmpty)
-        driverInfo.vehicleModel!.trim(),
-      if ((driverInfo.vehicleColor ?? '').trim().isNotEmpty)
-        '(${driverInfo.vehicleColor!.trim()})',
-    ].join(' ');
-    final fallbackCarLine = (driverInfo.vehicleCategory ?? '').trim();
+    final carLine = driverInfo.naturalVehicleLabel;
+    final category = (driverInfo.vehicleCategory ?? '').trim();
+    final seatCount = category.toLowerCase().contains('taxibus') ? '8' : '4';
     final plate = (driverInfo.vehiclePlate ?? '').trim();
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: colors.bgAlt,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: colors.border),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: colors.accent.withValues(alpha: 0.16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.activeRidePlateNumber,
-            style: typo.labelSmall.copyWith(color: colors.textSoft),
-          ),
-          const SizedBox(height: 6),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: colors.accent.withValues(alpha: 0.45), width: 1.4),
-            ),
-            child: Text(
-              plate.isEmpty ? l10n.activeRideUnknownPlate : plate.toUpperCase(),
-              style: typo.titleLarge.copyWith(
-                color: colors.text,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.6,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.activeRidePlateNumber,
+                      style: typo.labelSmall.copyWith(
+                        color: colors.textSoft,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: colors.text.withValues(alpha: 0.16),
+                          width: 1.2,
+                        ),
+                      ),
+                      child: FittedBox(
+                        alignment: Alignment.centerLeft,
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          plate.isEmpty
+                              ? l10n.activeRideUnknownPlate
+                              : plate.toUpperCase(),
+                          style: typo.titleLarge.copyWith(
+                            color: colors.text,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.8,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      carLine.isNotEmpty ? carLine : l10n.vehicleStandard,
+                      style: typo.titleMedium.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w800,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 5),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        _VehicleChip(
+                          label: category.isNotEmpty
+                              ? category[0].toUpperCase() +
+                                  category.substring(1)
+                              : l10n.vehicleStandard,
+                          colors: colors,
+                          typo: typo,
+                        ),
+                        _VehicleChip(
+                          label: l10n.activeRideSeatsMax(seatCount),
+                          colors: colors,
+                          typo: typo,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              Container(
+                width: 116,
+                height: 86,
+                decoration: BoxDecoration(
+                  color: colors.surface,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.text.withValues(alpha: 0.08),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: (driverInfo.vehiclePhotoUrl != null &&
+                        driverInfo.vehiclePhotoUrl!.isNotEmpty)
+                    ? Image.network(
+                        driverInfo.vehiclePhotoUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.directions_car_filled_rounded,
+                          color: colors.textSoft,
+                          size: 28,
+                        ),
+                      )
+                    : Icon(
+                        Icons.directions_car_filled_rounded,
+                        color: colors.textSoft,
+                        size: 40,
+                      ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Row(
             children: [
               Stack(
                 children: [
                   CircleAvatar(
-                    radius: 24,
+                    radius: 23,
                     backgroundColor: colors.accentL,
                     backgroundImage: (driverInfo.profilePhotoUrl != null &&
                             driverInfo.profilePhotoUrl!.isNotEmpty)
@@ -1537,7 +2124,7 @@ class _DriverInfoCard extends StatelessWidget {
                     ),
                 ],
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 11),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1546,60 +2133,42 @@ class _DriverInfoCard extends StatelessWidget {
                       driverInfo.fullName,
                       style: typo.bodyLarge.copyWith(
                         color: colors.text,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w800,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
-                      carLine.isNotEmpty ? carLine : fallbackCarLine,
+                      l10n.activeRideVerifiedTaxi,
                       style: typo.bodySmall.copyWith(color: colors.textMid),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                width: 72,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: colors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: (driverInfo.vehiclePhotoUrl != null &&
-                        driverInfo.vehiclePhotoUrl!.isNotEmpty)
-                    ? Image.network(
-                        driverInfo.vehiclePhotoUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Icon(
-                          Icons.directions_car_filled_rounded,
-                          color: colors.textSoft,
-                          size: 28,
+              if (driverInfo.rating != null)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    borderRadius: BorderRadius.circular(99),
+                    border: Border.all(color: colors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.star_rounded, size: 17, color: colors.warning),
+                      const SizedBox(width: 3),
+                      Text(
+                        driverInfo.rating!.toStringAsFixed(1),
+                        style: typo.labelMedium.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w800,
                         ),
-                      )
-                    : Icon(
-                        Icons.directions_car_filled_rounded,
-                        color: colors.textSoft,
-                        size: 28,
                       ),
-              ),
-              if (driverInfo.rating != null) ...[
-                const SizedBox(width: 8),
-                Row(
-                  children: [
-                    Icon(Icons.star_rounded, size: 18, color: colors.warning),
-                    const SizedBox(width: 2),
-                    Text(
-                      driverInfo.rating!.toStringAsFixed(1),
-                      style: typo.labelMedium.copyWith(color: colors.text),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ],
             ],
           ),
           if (driverInfo.isFoundingDriver) ...[
@@ -1627,6 +2196,37 @@ class _DriverInfoCard extends StatelessWidget {
             style: typo.displayMedium.copyWith(color: colors.textSoft),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _VehicleChip extends StatelessWidget {
+  final String label;
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+
+  const _VehicleChip({
+    required this.label,
+    required this.colors,
+    required this.typo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: colors.border),
+      ),
+      child: Text(
+        label,
+        style: typo.labelSmall.copyWith(
+          color: colors.textMid,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

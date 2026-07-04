@@ -87,6 +87,7 @@ class DriverCommunityNotificationsSheetBody extends StatelessWidget {
     required this.error,
     required this.items,
     required this.onMarkAllRead,
+    required this.onClearRead,
     required this.onNotificationTap,
   });
 
@@ -96,6 +97,7 @@ class DriverCommunityNotificationsSheetBody extends StatelessWidget {
   final String? error;
   final List<DriverCommunityNotificationPreviewItem> items;
   final VoidCallback onMarkAllRead;
+  final VoidCallback onClearRead;
   final ValueChanged<int> onNotificationTap;
 
   @override
@@ -123,13 +125,26 @@ class DriverCommunityNotificationsSheetBody extends StatelessWidget {
                     ),
                   ),
                 ),
-                TextButton(
-                  onPressed: onMarkAllRead,
-                  child: Text(
-                    DriverStrings.communityMarkAllRead,
-                    style:
-                        typography.labelMedium.copyWith(color: colors.primary),
-                  ),
+                Wrap(
+                  spacing: DriverSpacing.xs,
+                  children: [
+                    TextButton(
+                      onPressed: onClearRead,
+                      child: Text(
+                        DriverStrings.communityClearRead,
+                        style: typography.labelMedium
+                            .copyWith(color: colors.textMuted),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: onMarkAllRead,
+                      child: Text(
+                        DriverStrings.communityMarkAllRead,
+                        style: typography.labelMedium
+                            .copyWith(color: colors.primary),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -960,7 +975,11 @@ Future<void> showDriverCommunityNotificationsSheet(
               await ref.read(driverApiProvider).markAllNotificationsRead();
               ref.invalidate(communityNotificationsProvider);
               ref.invalidate(communityUnreadNotificationsCountProvider);
-              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            onClearRead: () async {
+              await ref.read(driverApiProvider).clearReadNotifications();
+              ref.invalidate(communityNotificationsProvider);
+              ref.invalidate(communityUnreadNotificationsCountProvider);
             },
             onNotificationTap: (index) {
               final notification = items[index];
@@ -982,6 +1001,7 @@ Future<void> showDriverCommunityNotificationsSheet(
             error: null,
             items: const [],
             onMarkAllRead: () {},
+            onClearRead: () {},
             onNotificationTap: (_) {},
           ),
           error: (_, __) => DriverCommunityNotificationsSheetBody(
@@ -991,6 +1011,7 @@ Future<void> showDriverCommunityNotificationsSheet(
             error: DriverStrings.communityNotificationsLoadFailed,
             items: const [],
             onMarkAllRead: () {},
+            onClearRead: () {},
             onNotificationTap: (_) {},
           ),
         );

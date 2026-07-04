@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../providers/booking_provider.dart';
 import 'booking/trip_summary_details_section.dart';
 import 'booking/trip_summary_route_section.dart';
+
 /// Full-screen scheduled matching: premium layout, clear home + options (no delayed FAB).
 class ScheduledMatchingFullscreen extends StatelessWidget {
   const ScheduledMatchingFullscreen({
@@ -34,7 +35,9 @@ class ScheduledMatchingFullscreen extends StatelessWidget {
     final locale = Localizations.localeOf(context).toString();
     final whenText = booking.scheduledAt == null
         ? null
-        : DateFormat.yMMMEd(locale).add_Hm().format(booking.scheduledAt!.toLocal());
+        : DateFormat.yMMMEd(locale)
+            .add_Hm()
+            .format(booking.scheduledAt!.toLocal());
     final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
@@ -369,11 +372,147 @@ class _StatusHeroGlass extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
+                const SizedBox(height: 18),
+                _ScheduledProgressRail(
+                  colors: colors,
+                  typo: typo,
+                  l10n: l10n,
+                ),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ScheduledProgressRail extends StatelessWidget {
+  const _ScheduledProgressRail({
+    required this.colors,
+    required this.typo,
+    required this.l10n,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsetsDirectional.fromSTEB(12, 12, 12, 12),
+      decoration: BoxDecoration(
+        color: colors.card.withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colors.border.withValues(alpha: 0.55)),
+      ),
+      child: Column(
+        children: [
+          _ScheduledProgressStep(
+            colors: colors,
+            typo: typo,
+            icon: Icons.check_rounded,
+            title: l10n.scheduledRideQueuedTitle,
+            body: l10n.ridesUpcomingScheduledBadge,
+            isDone: true,
+            showConnector: true,
+          ),
+          _ScheduledProgressStep(
+            colors: colors,
+            typo: typo,
+            icon: Icons.groups_2_rounded,
+            title: l10n.ridesUpcomingMatchingBadge,
+            body: l10n.scheduledMatchingHeadline,
+            isDone: false,
+            showConnector: false,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScheduledProgressStep extends StatelessWidget {
+  const _ScheduledProgressStep({
+    required this.colors,
+    required this.typo,
+    required this.icon,
+    required this.title,
+    required this.body,
+    required this.isDone,
+    required this.showConnector,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final IconData icon;
+  final String title;
+  final String body;
+  final bool isDone;
+  final bool showConnector;
+
+  @override
+  Widget build(BuildContext context) {
+    final iconColor = isDone ? colors.onAccent : colors.accent;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Column(
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isDone ? colors.accent : colors.accentL,
+                border: Border.all(
+                  color: colors.accent.withValues(alpha: 0.28),
+                ),
+              ),
+              child: Icon(icon, size: 17, color: iconColor),
+            ),
+            if (showConnector)
+              Container(
+                width: 2,
+                height: 22,
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                decoration: BoxDecoration(
+                  color: colors.accent.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(bottom: showConnector ? 10 : 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: typo.titleSmall.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  body,
+                  style: typo.bodySmall.copyWith(
+                    color: colors.textMid,
+                    height: 1.35,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -420,7 +559,8 @@ class _BottomActionBar extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: colors.text,
                     side: BorderSide(color: colors.border, width: 1.2),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     shape: RoundedRectangleBorder(
@@ -429,7 +569,8 @@ class _BottomActionBar extends StatelessWidget {
                   ),
                   child: Text(
                     l10n.scheduledMatchingBackToHome,
-                    style: typo.labelLarge.copyWith(fontWeight: FontWeight.w700),
+                    style:
+                        typo.labelLarge.copyWith(fontWeight: FontWeight.w700),
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -449,7 +590,8 @@ class _BottomActionBar extends StatelessWidget {
                   style: FilledButton.styleFrom(
                     backgroundColor: colors.accent,
                     foregroundColor: colors.onAccent,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     shape: RoundedRectangleBorder(
@@ -458,7 +600,8 @@ class _BottomActionBar extends StatelessWidget {
                   ),
                   child: Text(
                     l10n.matchingAlternativesFabTooltip,
-                    style: typo.labelLarge.copyWith(fontWeight: FontWeight.w800),
+                    style:
+                        typo.labelLarge.copyWith(fontWeight: FontWeight.w800),
                     textAlign: TextAlign.center,
                     maxLines: 3,
                   ),

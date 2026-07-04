@@ -1,6 +1,5 @@
+import 'package:heycaby_api/src/supabase_client.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import 'supabase_client.dart';
 
 /// Supabase-first in-app notifications (Phase D — Backend Consolidation).
 class AppNotificationsService {
@@ -83,6 +82,25 @@ class AppNotificationsService {
     try {
       final raw = await HeyCabySupabase.client.rpc(
         'fn_app_notifications_mark_all_read',
+        params: {
+          'p_user_type': userType,
+          if (riderIdentityId != null && riderIdentityId.isNotEmpty)
+            'p_rider_identity_id': riderIdentityId,
+        },
+      );
+      return raw is Map && raw['ok'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> clearRead({
+    required String userType,
+    String? riderIdentityId,
+  }) async {
+    try {
+      final raw = await HeyCabySupabase.client.rpc(
+        'fn_app_notifications_clear_read',
         params: {
           'p_user_type': userType,
           if (riderIdentityId != null && riderIdentityId.isNotEmpty)

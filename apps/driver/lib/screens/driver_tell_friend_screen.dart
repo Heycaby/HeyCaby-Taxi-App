@@ -139,67 +139,6 @@ class DriverTellFriendScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: DriverSpacing.xl),
-          cityStatsAsync.when(
-            data: (stats) => DriverCommunityProgressCard(
-              stats: stats,
-              colors: colors,
-              typography: typography,
-              strings: strings,
-            ),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (_, __) => DriverCommunityProgressCard(
-              stats: CommunityGrowthStats.empty,
-              colors: colors,
-              typography: typography,
-              strings: strings,
-            ),
-          ),
-          const SizedBox(height: DriverSpacing.xl),
-          impactAsync.when(
-            data: (impact) => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                DriverYourImpactCard(
-                  impact: impact,
-                  loading: false,
-                  colors: colors,
-                  typography: typography,
-                  strings: strings,
-                ),
-                const SizedBox(height: DriverSpacing.lg),
-                DriverCommunityBadgesRow(
-                  joined: impact.joined,
-                  colors: colors,
-                  typography: typography,
-                  strings: strings,
-                ),
-              ],
-            ),
-            loading: () => DriverYourImpactCard(
-              impact: DriverInviteImpact.empty,
-              loading: true,
-              colors: colors,
-              typography: typography,
-              strings: strings,
-            ),
-            error: (_, __) => DriverYourImpactCard(
-              impact: DriverInviteImpact.empty,
-              loading: false,
-              colors: colors,
-              typography: typography,
-              strings: strings,
-            ),
-          ),
-          const SizedBox(height: DriverSpacing.xl),
-          Text(
-            strings.sharePrompt,
-            textAlign: TextAlign.center,
-            style: typography.bodyMedium.copyWith(
-              color: colors.textSecondary,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: DriverSpacing.xl),
           FilledButton.icon(
             onPressed: shareReady
                 ? () async {
@@ -226,50 +165,22 @@ class DriverTellFriendScreen extends ConsumerWidget {
             label: Text(strings.shareLink),
           ),
           const SizedBox(height: 10),
-          Center(
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: shareReady
-                    ? () async {
-                        await Clipboard.setData(
-                          ClipboardData(text: shareUrl),
-                        );
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(strings.linkCopied)),
-                        );
-                      }
-                    : null,
-                icon: Icon(Icons.link_rounded, color: colors.primary),
-                label: Text(strings.copyLink),
-              ),
-            ),
-          ),
-          const SizedBox(height: DriverSpacing.xl),
-          Text(
-            strings.inviteLinkLabel,
-            style: typography.labelLarge.copyWith(
-              color: colors.text,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: colors.card,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: colors.border.withValues(alpha: 0.85)),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: SelectableText(
-                shareUrl,
-                style: typography.bodySmall.copyWith(
-                  color: colors.text,
-                  height: 1.4,
-                ),
-              ),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: shareReady
+                  ? () async {
+                      await Clipboard.setData(
+                        ClipboardData(text: shareUrl),
+                      );
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(strings.linkCopied)),
+                      );
+                    }
+                  : null,
+              icon: Icon(Icons.link_rounded, color: colors.primary),
+              label: Text(strings.copyLink),
             ),
           ),
           if (!shareReady) ...[
@@ -289,13 +200,74 @@ class DriverTellFriendScreen extends ConsumerWidget {
               ),
             ),
           ],
-          const SizedBox(height: DriverSpacing.xxl),
-          DriverGrowCityWhyHelpCard(
-            colors: colors,
-            typography: typography,
-            strings: strings,
+          const SizedBox(height: DriverSpacing.xl),
+          cityStatsAsync.when(
+            data: (stats) => DriverCommunityProgressCard(
+              stats: stats,
+              colors: colors,
+              typography: typography,
+              strings: strings,
+            ),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (_, __) => DriverCommunityProgressCard(
+              stats: CommunityGrowthStats.empty,
+              colors: colors,
+              typography: typography,
+              strings: strings,
+            ),
           ),
           const SizedBox(height: DriverSpacing.lg),
+          impactAsync.when(
+            data: (impact) {
+              final hasImpact = impact.driversInvited > 0 ||
+                  impact.joined > 0 ||
+                  impact.completedRides > 0;
+              if (!hasImpact) return const SizedBox.shrink();
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  DriverYourImpactCard(
+                    impact: impact,
+                    loading: false,
+                    colors: colors,
+                    typography: typography,
+                    strings: strings,
+                  ),
+                  if (impact.joined > 0) ...[
+                    const SizedBox(height: DriverSpacing.lg),
+                    DriverCommunityBadgesRow(
+                      joined: impact.joined,
+                      colors: colors,
+                      typography: typography,
+                      strings: strings,
+                    ),
+                  ],
+                  const SizedBox(height: DriverSpacing.lg),
+                ],
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+          TextButton.icon(
+            onPressed: () => _showWhyHelpSheet(
+              context,
+              colors,
+              typography,
+              strings,
+            ),
+            icon: Icon(
+              Icons.info_outline_rounded,
+              size: 20,
+              color: colors.primary,
+            ),
+            label: Text(strings.whyHelpTitle),
+            style: TextButton.styleFrom(
+              foregroundColor: colors.primary,
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            ),
+          ),
+          const SizedBox(height: DriverSpacing.sm),
           Text(
             strings.socialProof,
             textAlign: TextAlign.center,
@@ -305,6 +277,32 @@ class DriverTellFriendScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showWhyHelpSheet(
+    BuildContext context,
+    DriverColors colors,
+    DriverTypography typography,
+    DriverGrowCityStrings strings,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: colors.card,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          child: DriverGrowCityWhyHelpCard(
+            colors: colors,
+            typography: typography,
+            strings: strings,
+          ),
+        ),
       ),
     );
   }

@@ -31,11 +31,13 @@ class DriverHubEarningsTargetSection extends ConsumerWidget {
     final targets = targetsAsync.valueOrNull ?? {};
     final todayEuros = earnings?.todayEuros ?? 0;
     final period = ref.watch(_earningsTargetPeriodProvider);
-    final targetAmount = period == 'daily'
-        ? (targets['daily'] ?? 0)
-        : (targets['weekly'] ?? 0);
-    final displayedEarned = period == 'daily' ? todayEuros : (earnings?.weekEuros ?? 0);
-    final remaining = targetAmount > 0 ? (targetAmount - displayedEarned).clamp(0.0, double.infinity) : 0.0;
+    final targetAmount =
+        period == 'daily' ? (targets['daily'] ?? 0) : (targets['weekly'] ?? 0);
+    final displayedEarned =
+        period == 'daily' ? todayEuros : (earnings?.weekEuros ?? 0);
+    final remaining = targetAmount > 0
+        ? (targetAmount - displayedEarned).clamp(0.0, double.infinity)
+        : 0.0;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -44,12 +46,14 @@ class DriverHubEarningsTargetSection extends ConsumerWidget {
         children: [
           Text(
             DriverStrings.goalsSectionTitle,
-            style: typo.titleMedium.copyWith(color: colors.text, fontWeight: FontWeight.w600),
+            style: typo.titleMedium
+                .copyWith(color: colors.text, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 4),
           Text(
             DriverStrings.goalsSectionHelper,
-            style: typo.bodySmall.copyWith(color: colors.textSoft, fontSize: 13),
+            style:
+                typo.bodySmall.copyWith(color: colors.textSoft, fontSize: 13),
           ),
           const SizedBox(height: 16),
           Row(
@@ -61,7 +65,8 @@ class DriverHubEarningsTargetSection extends ConsumerWidget {
                 typo: typo,
                 onTap: () {
                   HapticService.selectionClick();
-                  ref.read(_earningsTargetPeriodProvider.notifier).state = 'daily';
+                  ref.read(_earningsTargetPeriodProvider.notifier).state =
+                      'daily';
                 },
               ),
               const SizedBox(width: 8),
@@ -72,7 +77,8 @@ class DriverHubEarningsTargetSection extends ConsumerWidget {
                 typo: typo,
                 onTap: () {
                   HapticService.selectionClick();
-                  ref.read(_earningsTargetPeriodProvider.notifier).state = 'weekly';
+                  ref.read(_earningsTargetPeriodProvider.notifier).state =
+                      'weekly';
                 },
               ),
             ],
@@ -93,7 +99,8 @@ class DriverHubEarningsTargetSection extends ConsumerWidget {
               const SizedBox(width: 6),
               Text(
                 DriverStrings.earnedLabel,
-                style: typo.bodyMedium.copyWith(color: colors.textSoft, fontSize: 15),
+                style: typo.bodyMedium
+                    .copyWith(color: colors.textSoft, fontSize: 15),
               ),
             ],
           ),
@@ -101,18 +108,21 @@ class DriverHubEarningsTargetSection extends ConsumerWidget {
             const SizedBox(height: 6),
             Text(
               DriverStrings.remainingToGoal(remaining.toStringAsFixed(0)),
-              style: typo.bodyMedium.copyWith(color: colors.textMid, fontSize: 15),
+              style:
+                  typo.bodyMedium.copyWith(color: colors.textMid, fontSize: 15),
             ),
           ],
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: () => _showSetTargetSheet(context, ref, period, targetAmount, colors, typo),
+              onPressed: () => _showSetTargetSheet(
+                  context, ref, period, targetAmount, colors, typo),
               style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
               child: const Text(DriverStrings.setGoalButton),
             ),
           ),
@@ -129,7 +139,8 @@ class DriverHubEarningsTargetSection extends ConsumerWidget {
     HeyCabyColorTokens colors,
     HeyCabyTypography typo,
   ) {
-    final controller = TextEditingController(text: current > 0 ? current.toInt().toString() : '');
+    final controller = TextEditingController(
+        text: current > 0 ? current.toInt().toString() : '');
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -156,7 +167,8 @@ class DriverHubEarningsTargetSection extends ConsumerWidget {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: '€',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
             const SizedBox(height: 16),
@@ -164,22 +176,25 @@ class DriverHubEarningsTargetSection extends ConsumerWidget {
               width: double.infinity,
               child: FilledButton(
                 onPressed: () async {
-                  final amount = double.tryParse(controller.text.replaceAll(',', '.'));
+                  final amount =
+                      double.tryParse(controller.text.replaceAll(',', '.'));
                   if (amount != null && amount > 0) {
                     final id = await ref.read(driverIdProvider.future);
                     if (id != null) {
-                      await ref.read(driverDataServiceProvider).upsertEarningsTarget(id, period, amount);
+                      await ref
+                          .read(driverDataServiceProvider)
+                          .upsertEarningsTarget(id, period, amount);
                       ref.invalidate(driverEarningsTargetsProvider);
                     }
                   }
                   if (ctx.mounted) Navigator.of(ctx).pop();
                 },
                 style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                ),
                 child: Text(
                   DriverStrings.save,
                   style: typo.labelLarge.copyWith(fontWeight: FontWeight.w600),
@@ -235,7 +250,8 @@ class _PeriodChip extends StatelessWidget {
 
 /// Section 2 — Jouw tarieven: chip row (strong selected), 4 metric pills, manage link.
 class DriverHubRatesSection extends ConsumerWidget {
-  const DriverHubRatesSection({super.key, required this.colors, required this.typo});
+  const DriverHubRatesSection(
+      {super.key, required this.colors, required this.typo});
 
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
@@ -249,7 +265,9 @@ class DriverHubRatesSection extends ConsumerWidget {
 
     Future<void> onChipTap(String profileId) async {
       if (driverId == null) return;
-      final ok = await ref.read(driverDataServiceProvider).switchRateProfile(driverId, profileId);
+      final ok = await ref
+          .read(driverDataServiceProvider)
+          .switchRateProfile(driverId, profileId);
       if (ok) {
         ref.invalidate(driverRateProfilesProvider);
         ref.invalidate(activeRateProfileProvider);
@@ -263,12 +281,14 @@ class DriverHubRatesSection extends ConsumerWidget {
         children: [
           Text(
             DriverStrings.ratesSectionTitle,
-            style: typo.titleMedium.copyWith(color: colors.text, fontWeight: FontWeight.w600),
+            style: typo.titleMedium
+                .copyWith(color: colors.text, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 4),
           Text(
             DriverStrings.ratesSectionHelper,
-            style: typo.bodySmall.copyWith(color: colors.textSoft, fontSize: 13),
+            style:
+                typo.bodySmall.copyWith(color: colors.textSoft, fontSize: 13),
           ),
           const SizedBox(height: 12),
           if (isLoading)
@@ -278,7 +298,8 @@ class DriverHubRatesSection extends ConsumerWidget {
                 child: SizedBox(
                   height: 24,
                   width: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: colors.accent),
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: colors.accent),
                 ),
               ),
             )
@@ -286,7 +307,9 @@ class DriverHubRatesSection extends ConsumerWidget {
             GestureDetector(
               onTap: () async {
                 if (driverId == null) return;
-                await ref.read(driverDataServiceProvider).createFirstRateProfile(driverId);
+                await ref
+                    .read(driverDataServiceProvider)
+                    .createFirstRateProfile(driverId);
                 if (context.mounted) {
                   ref.invalidate(driverRateProfilesProvider);
                   ref.invalidate(activeRateProfileProvider);
@@ -294,7 +317,8 @@ class DriverHubRatesSection extends ConsumerWidget {
               },
               child: Text(
                 DriverStrings.setUpRates,
-                style: typo.bodyMedium.copyWith(color: colors.accent, fontWeight: FontWeight.w600),
+                style: typo.bodyMedium.copyWith(
+                    color: colors.accent, fontWeight: FontWeight.w600),
               ),
             )
           else ...[
@@ -353,7 +377,8 @@ class DriverHubRatesSection extends ConsumerWidget {
                   Expanded(
                     child: _RatePill(
                       label: DriverStrings.rateWaiting,
-                      value: '€${activeProfile.waitingRate.toStringAsFixed(2)}/min',
+                      value:
+                          '€${activeProfile.waitingRate.toStringAsFixed(2)}/min',
                       colors: colors,
                       typo: typo,
                     ),
@@ -363,11 +388,12 @@ class DriverHubRatesSection extends ConsumerWidget {
               const SizedBox(height: 12),
               GestureDetector(
                 onTap: () {
-                  // TODO: navigate to full rate management
+                  context.push('/driver/tariffs');
                 },
                 child: Text(
                   DriverStrings.manageRatesLink,
-                  style: typo.bodySmall.copyWith(color: colors.accent, fontWeight: FontWeight.w600),
+                  style: typo.bodySmall.copyWith(
+                      color: colors.accent, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -443,12 +469,14 @@ class _RatePill extends StatelessWidget {
         children: [
           Text(
             label,
-            style: typo.labelSmall.copyWith(color: colors.textSoft, fontSize: 11),
+            style:
+                typo.labelSmall.copyWith(color: colors.textSoft, fontSize: 11),
           ),
           const SizedBox(height: 2),
           Text(
             value,
-            style: typo.bodyMedium.copyWith(color: colors.text, fontWeight: FontWeight.w600, fontSize: 14),
+            style: typo.bodyMedium.copyWith(
+                color: colors.text, fontWeight: FontWeight.w600, fontSize: 14),
           ),
         ],
       ),
@@ -458,7 +486,8 @@ class _RatePill extends StatelessWidget {
 
 /// Section 3 — Veiligheid: 112 prominent red CTA, share/audio with clear disabled state.
 class DriverHubSafetySection extends ConsumerWidget {
-  const DriverHubSafetySection({super.key, required this.colors, required this.typo});
+  const DriverHubSafetySection(
+      {super.key, required this.colors, required this.typo});
 
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
@@ -481,7 +510,8 @@ class DriverHubSafetySection extends ConsumerWidget {
         children: [
           Text(
             DriverStrings.safetySectionTitle,
-            style: typo.titleMedium.copyWith(color: colors.text, fontWeight: FontWeight.w600),
+            style: typo.titleMedium
+                .copyWith(color: colors.text, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
           // Prominent 112 button - full width, larger for emergency access
@@ -494,10 +524,10 @@ class DriverHubSafetySection extends ConsumerWidget {
                 if (driverId != null && driverId.isNotEmpty) {
                   try {
                     await ref.read(driverDataServiceProvider).insertSafetyEvent(
-                      driverId,
-                      'emergency_call',
-                      rideRequestId: driver.activeRideId,
-                    );
+                          driverId,
+                          'emergency_call',
+                          rideRequestId: driver.activeRideId,
+                        );
                   } catch (e) {
                     if (kDebugMode) debugPrint('Safety event error: $e');
                   }
@@ -515,7 +545,8 @@ class DriverHubSafetySection extends ConsumerWidget {
                 backgroundColor: colors.error,
                 foregroundColor: colors.card,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
               ),
             ),
           ),
@@ -533,7 +564,9 @@ class DriverHubSafetySection extends ConsumerWidget {
             active: canShareRideDetails,
             onTap: canShareRideDetails && driver.activeRideId != null
                 ? () async {
-                    final url = await ref.read(driverDataServiceProvider).getOrCreateRideShareUrl(driver.activeRideId!);
+                    final url = await ref
+                        .read(driverDataServiceProvider)
+                        .getOrCreateRideShareUrl(driver.activeRideId!);
                     if (url != null && context.mounted) {
                       await Share.share(url);
                     }
@@ -613,7 +646,8 @@ class _SafetyRow extends StatelessWidget {
                 else
                   Text(
                     '—',
-                    style: typo.bodySmall.copyWith(color: colors.border, fontSize: 12),
+                    style: typo.bodySmall
+                        .copyWith(color: colors.border, fontSize: 12),
                   ),
               ],
             ),
@@ -626,7 +660,8 @@ class _SafetyRow extends StatelessWidget {
 
 /// Section 4 — Hulp: Chat met support first, Help artikelen, tickets secondary.
 class DriverHubHelpSection extends ConsumerWidget {
-  const DriverHubHelpSection({super.key, required this.colors, required this.typo});
+  const DriverHubHelpSection(
+      {super.key, required this.colors, required this.typo});
 
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
@@ -643,21 +678,24 @@ class DriverHubHelpSection extends ConsumerWidget {
         children: [
           Text(
             DriverStrings.helpSectionTitle,
-            style: typo.titleMedium.copyWith(color: colors.text, fontWeight: FontWeight.w600),
+            style: typo.titleMedium
+                .copyWith(color: colors.text, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-          Text(
-            DriverStrings.recentTickets,
-            style: typo.labelSmall.copyWith(color: colors.textSoft, fontSize: 12),
-          ),
+              Text(
+                DriverStrings.recentTickets,
+                style: typo.labelSmall
+                    .copyWith(color: colors.textSoft, fontSize: 12),
+              ),
               GestureDetector(
                 onTap: () => context.push('/driver/support'),
                 child: Text(
                   DriverStrings.seeAllTickets,
-                  style: typo.bodySmall.copyWith(color: colors.accent, fontWeight: FontWeight.w500),
+                  style: typo.bodySmall.copyWith(
+                      color: colors.accent, fontWeight: FontWeight.w500),
                 ),
               ),
             ],
@@ -666,56 +704,60 @@ class DriverHubHelpSection extends ConsumerWidget {
             const SizedBox(height: 8),
             ...tickets.map((t) {
               final resolved = t.status == 'resolved' || t.status == 'closed';
-              final title = (t.category != null && t.category!.trim().isNotEmpty)
+              final title = (t.category != null &&
+                      t.category!.trim().isNotEmpty)
                   ? t.category!.trim()
                   : (t.rideRequestId != null ? 'Rit' : DriverStrings.overige);
               return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Material(
-                color: colors.surface,
-                borderRadius: BorderRadius.circular(10),
-                child: InkWell(
-                  onTap: () => openDriverSupportTicketOrRide(
-                    context,
-                    ticketId: t.id,
-                    rideRequestId: t.rideRequestId,
-                  ),
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Material(
+                  color: colors.surface,
                   borderRadius: BorderRadius.circular(10),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                title,
-                                style: typo.bodyMedium.copyWith(color: colors.text, fontSize: 14),
-                              ),
-                              Text(
-                                t.createdAt != null
-                                    ? '${t.createdAt!.day}/${t.createdAt!.month}/${t.createdAt!.year} · ${t.statusLabel}'
-                                    : t.statusLabel,
-                                style: typo.bodySmall.copyWith(
-                                  color: resolved
-                                      ? colors.success
-                                      : t.hasDriverReplied
-                                          ? colors.warning
-                                          : colors.error,
-                                  fontSize: 12,
+                  child: InkWell(
+                    onTap: () => openDriverSupportTicketOrRide(
+                      context,
+                      ticketId: t.id,
+                      rideRequestId: t.rideRequestId,
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  title,
+                                  style: typo.bodyMedium.copyWith(
+                                      color: colors.text, fontSize: 14),
                                 ),
-                              ),
-                            ],
+                                Text(
+                                  t.createdAt != null
+                                      ? '${t.createdAt!.day}/${t.createdAt!.month}/${t.createdAt!.year} · ${t.statusLabel}'
+                                      : t.statusLabel,
+                                  style: typo.bodySmall.copyWith(
+                                    color: resolved
+                                        ? colors.success
+                                        : t.hasDriverReplied
+                                            ? colors.warning
+                                            : colors.error,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        Icon(AppIcons.chevronRight, color: colors.textSoft, size: 18),
-                      ],
+                          Icon(AppIcons.chevronRight,
+                              color: colors.textSoft, size: 18),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            );
+              );
             }),
           ],
           const SizedBox(height: 12),
@@ -727,10 +769,12 @@ class DriverHubHelpSection extends ConsumerWidget {
               onTap: () => context.push('/driver/app-suggestion'),
               borderRadius: BorderRadius.circular(10),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 child: Row(
                   children: [
-                    Icon(Icons.lightbulb_outline_rounded, color: colors.accent, size: 20),
+                    Icon(Icons.lightbulb_outline_rounded,
+                        color: colors.accent, size: 20),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -738,16 +782,21 @@ class DriverHubHelpSection extends ConsumerWidget {
                         children: [
                           Text(
                             DriverStrings.appSuggestion,
-                            style: typo.bodyMedium.copyWith(color: colors.text, fontSize: 14, fontWeight: FontWeight.w600),
+                            style: typo.bodyMedium.copyWith(
+                                color: colors.text,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600),
                           ),
                           Text(
                             DriverStrings.appSuggestionSubtitle,
-                            style: typo.bodySmall.copyWith(color: colors.textSoft, fontSize: 12),
+                            style: typo.bodySmall
+                                .copyWith(color: colors.textSoft, fontSize: 12),
                           ),
                         ],
                       ),
                     ),
-                    Icon(AppIcons.chevronRight, color: colors.textSoft, size: 18),
+                    Icon(AppIcons.chevronRight,
+                        color: colors.textSoft, size: 18),
                   ],
                 ),
               ),
@@ -758,4 +807,3 @@ class DriverHubHelpSection extends ConsumerWidget {
     );
   }
 }
-

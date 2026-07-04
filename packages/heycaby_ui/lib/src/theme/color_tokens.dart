@@ -175,6 +175,24 @@ const kHeyCabyTaxi4 = HeyCabyColorTokens(
   previewDots: [Color(0xFF3A3630), Color(0xFFE8C547), Color(0xFF3A3630)],
 );
 
+/// Rider brand orange — extracted from the HeyCaby identity card.
+const kHeyCabyBrandOrange = HeyCabyColorTokens(
+  bg: Color(0xFFFFFBF8),
+  bgAlt: Color(0xFFFFF1E8),
+  surface: Color(0xFFFFF6EF),
+  card: Color(0xFFFFFFFF),
+  border: Color(0xFFF1D4C2),
+  accent: Color(0xFFFF6A00),
+  accentL: Color(0xFFFFE8D8),
+  text: Color(0xFF0D0D0F),
+  textMid: Color(0xFF4B5563),
+  textSoft: Color(0xFF9CA3AF),
+  success: Color(0xFF248A3D),
+  warning: Color(0xFFFF6A00),
+  error: Color(0xFFD70015),
+  previewDots: [Color(0xFF0D0D0F), Color(0xFFFF6A00), Color(0xFFFFFFFF)],
+);
+
 /// Driver — premium green (Phase 1 default). Money, growth, go.
 const kHeyCabyDriverPro = HeyCabyColorTokens(
   bg: Color(0xFFF5F7F6),

@@ -19,7 +19,9 @@ import '../widgets/booking/search_quick_picks_section.dart';
 import '../widgets/schedule_picker.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
-  const SearchScreen({super.key});
+  const SearchScreen({super.key, this.args});
+
+  final BookingSearchRouteArgs? args;
 
   @override
   ConsumerState<SearchScreen> createState() => _SearchScreenState();
@@ -36,13 +38,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Timer? _debounce;
   bool _isLoading = false;
   bool _isResolvingPickup = false;
+
   /// When true, [_suggestions] come from on-device recents only (no Mapbox call).
   bool _suggestionsFromLocal = false;
 
   @override
   void initState() {
     super.initState();
-    _destinationFocus.requestFocus();
+
+    final initialTarget = widget.args?.initialEditTarget;
+    if (initialTarget == BookingAddressEditTarget.pickup) {
+      _activeFocus = SearchAddressFocus.pickup;
+    } else {
+      _activeFocus = SearchAddressFocus.destination;
+    }
 
     ref.read(geocodingServiceProvider).startSession();
 
@@ -57,6 +66,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_activeFocus == SearchAddressFocus.pickup) {
+        _pickupFocus.requestFocus();
+      } else {
+        _destinationFocus.requestFocus();
+      }
       unawaited(_bootstrapPickupAndIdentity());
     });
 
@@ -211,6 +226,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     if (booking.pickup == null || booking.destination == null) return;
     if (!mounted) return;
     HapticService.lightTap();
+    if (widget.args?.returnToSummaryAfterSave ?? false) {
+      context.go('/summary');
+      return;
+    }
     context.push(BookingFlowNavigation.routeAfterAddressesComplete(booking));
   }
 
@@ -265,6 +284,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     await BookingFlowNavigation.prefillBookingFromIdentity(ref);
     if (!mounted) return;
     booking = ref.read(bookingProvider);
+    if (widget.args?.returnToSummaryAfterSave ?? false) {
+      context.go('/summary');
+      return;
+    }
     context.push(BookingFlowNavigation.routeAfterAddressesComplete(booking));
   }
 
@@ -275,8 +298,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final l10n = AppLocalizations.of(context);
     final booking = ref.watch(bookingProvider);
 
-    final canContinue =
-        booking.pickup != null && booking.destination != null;
+    final canContinue = booking.pickup != null && booking.destination != null;
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -297,6 +319,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               onDestinationChanged: _onQueryChanged,
               onSwap: _swapLocations,
               onBack: () {
+                if (widget.args?.returnToSummaryAfterSave ?? false) {
+                  context.go('/summary');
+                  return;
+                }
                 if (context.canPop()) {
                   context.pop();
                 } else {
@@ -306,6 +332,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               onWhenTap: _showDateTimePicker,
               scheduledAt: booking.scheduledAt,
               pickupLoading: _isResolvingPickup,
+              isEditingExistingRoute:
+                  widget.args?.returnToSummaryAfterSave ?? false,
             ),
             Expanded(
               child: CustomScrollView(

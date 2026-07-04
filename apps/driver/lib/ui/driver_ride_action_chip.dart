@@ -27,13 +27,13 @@ class DriverRideActionChip extends StatelessWidget {
     final enabled = onTap != null;
 
     return Material(
-      color: colors.card,
+      color: enabled ? colors.card : colors.surface,
       borderRadius: DriverRadius.smAll,
       child: InkWell(
         onTap: onTap,
         borderRadius: DriverRadius.smAll,
         child: Container(
-          constraints: const BoxConstraints(minHeight: DriverSpacing.touchTarget),
+          constraints: const BoxConstraints(minHeight: 72),
           padding: const EdgeInsets.symmetric(
             horizontal: DriverSpacing.md,
             vertical: DriverSpacing.sm,
@@ -41,15 +41,27 @@ class DriverRideActionChip extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: DriverRadius.smAll,
             border: Border.all(
-              color: enabled ? colors.border : colors.border.withValues(alpha: 0.5),
+              color: enabled
+                  ? colors.primary.withValues(alpha: 0.16)
+                  : colors.border.withValues(alpha: 0.5),
             ),
           ),
           child: Row(
             children: [
-              Icon(
-                icon,
-                size: 18,
-                color: enabled ? colors.primary : colors.textMuted,
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: enabled
+                      ? colors.primary.withValues(alpha: 0.10)
+                      : colors.border.withValues(alpha: 0.28),
+                  borderRadius: DriverRadius.xsAll,
+                ),
+                child: Icon(
+                  icon,
+                  size: 19,
+                  color: enabled ? colors.primary : colors.textMuted,
+                ),
               ),
               const SizedBox(width: DriverSpacing.sm),
               Expanded(
@@ -62,6 +74,11 @@ class DriverRideActionChip extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: enabled ? colors.textMuted : colors.border,
               ),
             ],
           ),

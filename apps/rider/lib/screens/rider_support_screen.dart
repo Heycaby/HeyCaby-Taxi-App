@@ -442,7 +442,6 @@ class _ChatWithYazRow extends StatelessWidget {
 class _ContactRow extends StatelessWidget {
   final IconData icon;
   final String label;
-  final String? subtitle;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
   final VoidCallback onTap;
@@ -450,7 +449,6 @@ class _ContactRow extends StatelessWidget {
   const _ContactRow({
     required this.icon,
     required this.label,
-    this.subtitle,
     required this.colors,
     required this.typo,
     required this.onTap,
@@ -462,13 +460,7 @@ class _ContactRow extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: Icon(icon, color: colors.accent),
       title: Text(label, style: typo.bodyMedium.copyWith(color: colors.text)),
-      subtitle: subtitle == null
-          ? null
-          : Text(
-              subtitle!,
-              style: typo.bodySmall.copyWith(color: colors.textSoft),
-            ),
-      minVerticalPadding: subtitle == null ? 10 : 8,
+      minVerticalPadding: 10,
       trailing: Icon(Icons.chevron_right, color: colors.textSoft),
       onTap: onTap,
     );

@@ -35,6 +35,32 @@ class HeyCabyDriverLogo extends StatelessWidget {
   }
 }
 
+/// Circular HeyCaby C-mark for compact brand moments.
+class HeyCabyDriverMark extends StatelessWidget {
+  const HeyCabyDriverMark({
+    super.key,
+    this.size = 56,
+    this.semanticsLabel = 'HeyCaby',
+  });
+
+  final double size;
+  final String semanticsLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: semanticsLabel,
+      image: true,
+      child: SvgPicture.asset(
+        DriverBrandAssets.logo,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+      ),
+    );
+  }
+}
+
 /// Square app-mark (black tile + wordmark) for launcher icons only.
 class HeyCabyDriverAppMark extends StatelessWidget {
   const HeyCabyDriverAppMark({

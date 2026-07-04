@@ -6,6 +6,7 @@ import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:intl/intl.dart';
 
+import '../widgets/active_booking_card.dart';
 import '../widgets/rides/rides_screen_header.dart';
 import '../providers/near_term_ride_request_provider.dart';
 import 'report_screen.dart';
@@ -70,6 +71,7 @@ class _RidesScreenState extends ConsumerState<RidesScreen> {
               ),
             ),
             const SizedBox(height: 14),
+            const _RidesActiveBookingCardSlot(),
             Expanded(
               child: IndexedStack(
                 index: _segment,
@@ -115,6 +117,20 @@ class _RidesScreenState extends ConsumerState<RidesScreen> {
       default:
         return 'all';
     }
+  }
+}
+
+class _RidesActiveBookingCardSlot extends ConsumerWidget {
+  const _RidesActiveBookingCardSlot();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final snap = ref.watch(nearTermRideRequestProvider).valueOrNull;
+    if (snap == null) return const SizedBox.shrink();
+    return const Padding(
+      padding: EdgeInsetsDirectional.fromSTEB(20, 0, 20, 14),
+      child: ActiveBookingCard(),
+    );
   }
 }
 

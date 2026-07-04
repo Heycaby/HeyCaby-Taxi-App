@@ -49,7 +49,7 @@
   "homeRecentPlacesTitle": "أماكن حديثة",
   "homeRecentPlacesEdit": "تعديل",
   "homeCompleteProfile": "أكمل الملف",
-  "vehicleCategoryTitle": "أي نوع رحلة تريد؟",
+  "vehicleCategoryTitle": "هل تحتاج إلى مركبة محددة؟",
   "homeAirportChipSchiphol": "سخيبول",
   "homeAirportChipRotterdam": "مطار روتردام",
   "homeAirportChipEindhoven": "آيندهوفن",
@@ -844,14 +844,39 @@
       }
     }
   },
-  "vehicleStandard": "عادي",
-  "vehicleStandardDesc": "رحلات بأسعار معقولة للاستخدام اليومي",
+  "vehicleStandard": "تاكسي عادي",
+  "vehicleStandardDesc": "تاكسي يومي حتى 4 ركاب.",
   "vehicleComfort": "مريح",
   "vehicleComfortDesc": "مركبات فاخرة بمساحة إضافية",
   "vehicleTaxibus": "تاكسي باص",
   "vehicleTaxibusDesc": "حتى 8 ركاب مع الأمتعة",
-  "vehicleWheelchair": "كرسي متحرك",
+  "vehicleWheelchair": "مناسب للكراسي المتحركة",
   "vehicleWheelchairDesc": "مركبات يمكن الوصول إليها بمنحدرات",
+  "vehicleNearbyMarketTitle": "سوق التاكسي القريب",
+  "vehicleNearbyMarketChecking": "جارٍ التحقق من التوفر المباشر...",
+  "vehicleNearbyDriverCount": "{count} سائقون قريبون",
+  "@vehicleNearbyDriverCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "vehicleFareRangeLabel": "نطاق السعر",
+  "vehiclePickupRangeLabel": "الوصول",
+  "vehicleOptionalPreferencesTitle": "تفضيلات اختيارية",
+  "vehicleOptionalPreferencesSubtitle": "اضبط من يرى طلبك.",
+  "vehicleSupplyNearbyCount": "{count} قريب",
+  "@vehicleSupplyNearbyCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "vehiclePetsWelcome": "الحيوانات الأليفة مرحب بها",
+  "vehicleIndependentPricingTitle": "تسعير السائقين المستقلين",
+  "vehicleIndependentPricingBody": "يحدد السائقون أسعارهم بأنفسهم. يأتي هذا النطاق من سيارات الأجرة القريبة وقد يتغير قبل الحجز.",
   "petFriendly": "صديق للحيوانات",
   "petFriendlyDesc": "سائقون يقبلون الحيوانات الأليفة",
   "vehicleSupplyCountCaption": "سائقون متاحون",
@@ -1104,12 +1129,68 @@
   "searchingTitle": "نبحث عن أقرب Caby…",
   "matchingTitleMarketplace": "نبحث عن Caby من السوق…",
   "matchingTitleScheduled": "نبحث عن Caby لرحلتك المجدولة…",
+  "matchingStatusLive": "مباشر",
+  "matchingStatusWindow": "الوقت",
+  "matchingStatusOffers": "العروض",
   "homeNearTermTitleInstant": "جارٍ العثور على Caby",
   "homeNearTermTitleMarketplace": "طلب من السوق",
   "homeNearTermTitleScheduled": "رحلة مجدولة",
   "homeNearTermOpenMatching": "ما زلنا نربطك بسائق. انقر لعرض التقدم.",
   "homeNearTermOpenMatchingHint": "ما زلنا نطابق — اضغط لتفاصيل الرحلة",
   "homeNearTermTripDetails": "تفاصيل الرحلة",
+  "activeBookingSearchingTitle": "جارٍ البحث عن سائقك",
+  "activeBookingMarketplaceTitle": "جارٍ البحث عن عروض",
+  "activeBookingScheduledTitle": "الرحلة المجدولة نشطة",
+  "activeBookingTapForDetails": "اضغط لعرض التقدم مع بقاء الخريطة أمامك.",
+  "activeBookingDriversNotified": "{count, plural, =0{لم يستلم أي سائق طلبك} one{استلم سائق واحد طلبك} other{استلم {count} سائقين طلبك}}",
+  "@activeBookingDriversNotified": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activeBookingOffersReceived": "{count, plural, =0{لا توجد عروض بعد} one{تم استلام عرض واحد} other{تم استلام {count} عروض}}",
+  "@activeBookingOffersReceived": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activeBookingInstantBody": "وقت الانتظار المتوقع: 1–2 دقيقة. سنخبرك عندما يقبل سائق.",
+  "activeBookingMarketplaceBody": "يمكن للسائقين المستقلين القبول أو تقديم عرض مقابل أو تجاهل الطلب. أنت تختار من تركب معه.",
+  "activeBookingOffersBody": "{count, plural, one{راجع العرض واختر سائقك.} other{قارن العروض واختر سائقك.}}",
+  "@activeBookingOffersBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activeBookingBestOffer": "أفضل عرض €{price} · على بعد {minutes} دقيقة",
+  "@activeBookingBestOffer": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "activeBookingScheduledBody": "الاستلام {pickup}. يبدأ البحث عن سائق {searchStarts}.",
+  "@activeBookingScheduledBody": {
+    "placeholders": {
+      "pickup": {
+        "type": "String"
+      },
+      "searchStarts": {
+        "type": "String"
+      }
+    }
+  },
+  "activeBookingScheduledSearchingBody": "بدأ البحث عن سائق لرحلتك المجدولة.",
   "rideMatchingTypeLabelInstant": "رحلة فورية",
   "rideMatchingTypeLabelMarketplace": "السوق",
   "rideMatchingTypeLabelScheduled": "مجدولة",
@@ -1202,6 +1283,60 @@
   "activeRideWaitForDriver": "انتظر السائق",
   "activeRidePickupNotes": "ملاحظات للالتقاط؟",
   "activeRideChatSubtitle": "راسل سائقك بسرعة",
+  "activeRidePingDriver": "تنبيه السائق",
+  "activeRidePingSubtitle": "أرسل تنبيهًا سريعًا",
+  "activeRidePickupNote": "ملاحظة الالتقاط",
+  "activeRidePingSheetSubtitle": "أرسل تحديثًا سريعًا عن الالتقاط. سيصل إلى سائقك كرسالة رحلة.",
+  "activeRidePingAtPickup": "أنا عند نقطة الالتقاط",
+  "activeRidePingWalkingThere": "أنا في الطريق إلى هناك",
+  "activeRidePingCantFindYou": "لا أستطيع العثور عليك",
+  "activeRidePingRunningLate": "سأتأخر دقيقتين",
+  "activeRidePingConfirmPlate": "يرجى تأكيد اللوحة",
+  "activeRidePingSent": "تم إرسال التنبيه: {message}",
+  "@activeRidePingSent": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRidePingFailed": "تعذر إرسال التنبيه. حاول مرة أخرى.",
+  "activeRideLastPing": "تم إرسال التنبيه: {message} · الآن",
+  "@activeRideLastPing": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRidePickupIn": "الالتقاط خلال {minutes} دقيقة",
+  "@activeRidePickupIn": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideArrivingIn": "الوصول خلال {minutes} دقيقة",
+  "@activeRideArrivingIn": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideDriverOutside": "سائقك بالخارج",
+  "activeRideMaxFourSeats": "حتى 4 مقاعد",
+  "activeRideSeatsMax": "حتى {seats} مقاعد",
+  "@activeRideSeatsMax": {
+    "placeholders": {
+      "seats": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideVerifiedTaxi": "سائق تاكسي موثّق",
+  "safety": "السلامة",
   "activeRideFoundingShort": "مؤسس",
   "activeRideShareSubtitle": "مشاركة رابط الرحلة المباشر",
   "activeRideReportSubtitle": "إرسال تقرير عن الرحلة",

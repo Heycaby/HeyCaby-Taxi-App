@@ -13,8 +13,21 @@ Future<void> launchDriverNavigation({
   required double? lat,
   required double? lng,
   required String coordinatesUnavailableMessage,
+  String? addressFallback,
 }) async {
+  final pref =
+      ref.read(driverNavAppPrefProvider).valueOrNull ?? DriverNavApp.waze;
+
   if (lat == null || lng == null) {
+    final fallback = addressFallback?.trim();
+    if (fallback != null && fallback.isNotEmpty) {
+      HapticService.selectionClick();
+      final opened = await DriverNavigationLauncher.launchAddress(
+        destination: fallback,
+        app: pref,
+      );
+      if (opened || !context.mounted) return;
+    }
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(coordinatesUnavailableMessage)),
@@ -22,8 +35,6 @@ Future<void> launchDriverNavigation({
     return;
   }
 
-  final pref =
-      ref.read(driverNavAppPrefProvider).valueOrNull ?? DriverNavApp.waze;
   HapticService.selectionClick();
   final opened = await DriverNavigationLauncher.launchPreferred(
     lat: lat,

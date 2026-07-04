@@ -9,13 +9,15 @@ import '../services/ride_swap_service.dart';
 import 'driver_state_provider.dart';
 import 'driver_location_provider.dart';
 
-final driverDataServiceProvider = Provider<DriverDataService>((_) => DriverDataService());
+final driverDataServiceProvider =
+    Provider<DriverDataService>((_) => DriverDataService());
 
 /// Web founding-driver claim; home screen shows a one-time welcome when set.
 final foundingDriverPostClaimProvider =
     StateProvider<ClaimFoundingDriverResult?>((ref) => null);
 
-final rideSwapServiceProvider = Provider<RideSwapService>((_) => RideSwapService());
+final rideSwapServiceProvider =
+    Provider<RideSwapService>((_) => RideSwapService());
 
 /// Open ride swap listings, sorted by urgency + pickup time + proximity (urgent/emergency).
 final rideSwapFeedProvider = FutureProvider<List<RideSwapListing>>((ref) async {
@@ -60,7 +62,8 @@ final driverIdProvider = FutureProvider<String?>((ref) async {
 });
 
 /// Earnings summary. Refetch when returning to home or after ride complete.
-final driverEarningsProvider = FutureProvider<DriverEarningsSummary?>((ref) async {
+final driverEarningsProvider =
+    FutureProvider<DriverEarningsSummary?>((ref) async {
   final id = await ref.watch(driverIdProvider.future);
   if (id == null) return null;
   return ref.read(driverDataServiceProvider).getEarningsSummary(id);
@@ -86,14 +89,16 @@ final driverMyRatingProvider = FutureProvider<DriverMyRating?>((ref) async {
 });
 
 /// Rate profiles for earnings modal and Driver Hub.
-final driverRateProfilesProvider = FutureProvider<List<DriverRateProfile>>((ref) async {
+final driverRateProfilesProvider =
+    FutureProvider<List<DriverRateProfile>>((ref) async {
   final id = await ref.watch(driverIdProvider.future);
   if (id == null) return [];
   return ref.read(driverDataServiceProvider).getRateProfiles(id);
 });
 
 /// Active rate profile (is_active = true). Null if none.
-final activeRateProfileProvider = FutureProvider<DriverRateProfile?>((ref) async {
+final activeRateProfileProvider =
+    FutureProvider<DriverRateProfile?>((ref) async {
   final list = await ref.watch(driverRateProfilesProvider.future);
   for (final p in list) {
     if (p.isActive) return p;
@@ -105,7 +110,8 @@ final driverBillingServiceProvider =
     Provider<DriverBillingService>((_) => const DriverBillingService());
 
 /// Billing/payment status — Supabase ledger V1 (Phase E; no Go fallback).
-final driverBillingStatusProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
+final driverBillingStatusProvider =
+    FutureProvider<Map<String, dynamic>?>((ref) async {
   await ref.watch(driverIdProvider.future);
   return ref.read(driverBillingServiceProvider).fetchBillingStatus();
 });
@@ -124,18 +130,22 @@ final driverHubBadgeCountProvider = FutureProvider<int>((ref) async {
   final id = await ref.watch(driverIdProvider.future);
   final driver = ref.watch(driverStateProvider);
   if (id == null || driver.userId == null) return 0;
-  return ref.read(driverDataServiceProvider).getHubBadgeCount(id, driver.userId);
+  return ref
+      .read(driverDataServiceProvider)
+      .getHubBadgeCount(id, driver.userId);
 });
 
 /// Earnings targets (daily/weekly) for Driver Hub.
-final driverEarningsTargetsProvider = FutureProvider<Map<String, double>>((ref) async {
+final driverEarningsTargetsProvider =
+    FutureProvider<Map<String, double>>((ref) async {
   final id = await ref.watch(driverIdProvider.future);
   if (id == null) return {};
   return ref.read(driverDataServiceProvider).getEarningsTargets(id);
 });
 
 /// Recent tickets for Driver Hub help section.
-final driverRecentTicketsProvider = FutureProvider<List<DriverTicket>>((ref) async {
+final driverRecentTicketsProvider =
+    FutureProvider<List<DriverTicket>>((ref) async {
   final userId = ref.watch(driverStateProvider).userId;
   return ref.read(driverDataServiceProvider).getRecentTickets(userId, limit: 3);
 });
@@ -164,16 +174,20 @@ final scheduledRidesByTabProvider =
 });
 
 /// Rides assigned to current driver (for swap post creation).
-final driverAssignedRidesProvider = FutureProvider<List<ScheduledRide>>((ref) async {
+final driverAssignedRidesProvider =
+    FutureProvider<List<ScheduledRide>>((ref) async {
   final id = await ref.watch(driverIdProvider.future);
   if (id == null) return [];
   return ref.read(driverDataServiceProvider).getDriverAssignedRides(id);
 });
 
 /// Immediate ride requests (Now tab in Available rides).
-final availableRidesNowProvider = FutureProvider<List<ScheduledRide>>((ref) async {
+final availableRidesNowProvider =
+    FutureProvider<List<ScheduledRide>>((ref) async {
   final zoneId = await ref.watch(currentZoneIdProvider.future);
-  return ref.read(driverDataServiceProvider).getAvailableRidesNow(zoneId: zoneId);
+  return ref
+      .read(driverDataServiceProvider)
+      .getAvailableRidesNow(zoneId: zoneId);
 });
 
 /// Marketplace ride requests (Marketplace tab in Available rides).
@@ -210,10 +224,13 @@ final driverHiddenCommentIdsProvider = FutureProvider<Set<String>>((ref) async {
 });
 
 /// Filtered passenger comments (excluding dismissed).
-final driverCommentsFilteredProvider = FutureProvider<List<DriverComment>>((ref) async {
+final driverCommentsFilteredProvider =
+    FutureProvider<List<DriverComment>>((ref) async {
   final comments = await ref.watch(driverCommentsProvider.future);
   final hidden = await ref.watch(driverHiddenCommentIdsProvider.future);
-  return comments.where((c) => c.ratingId == null || !hidden.contains(c.ratingId!)).toList();
+  return comments
+      .where((c) => c.ratingId == null || !hidden.contains(c.ratingId!))
+      .toList();
 });
 
 /// Today's ride list for Earnings sub-tab.
@@ -245,21 +262,26 @@ final weeklyDailyEarningsProvider = FutureProvider<List<double>>((ref) async {
 });
 
 /// Community posts by channel.
-final communityPostsProvider = FutureProvider.family<List<CommunityPost>, String>((ref, channel) async {
+final communityPostsProvider =
+    FutureProvider.family<List<CommunityPost>, String>((ref, channel) async {
   return ref.read(driverDataServiceProvider).getCommunityPosts(channel);
 });
 
 /// Same source as [communityPostsProvider] but a higher limit for the full-channel feed screen.
 final communityChannelFeedProvider =
     FutureProvider.family<List<CommunityPost>, String>((ref, channel) async {
-  return ref.read(driverDataServiceProvider).getCommunityPosts(channel, limit: 100);
+  return ref
+      .read(driverDataServiceProvider)
+      .getCommunityPosts(channel, limit: 100);
 });
 
 /// Driver notifications for Community bell sheet (latest first).
 final communityNotificationsProvider =
     FutureProvider<List<DriverNotificationItem>>((ref) async {
   try {
-    return await ref.read(driverApiProvider).getNotifications(unreadOnly: false, limit: 40);
+    return await ref
+        .read(driverApiProvider)
+        .getNotifications(unreadOnly: false, limit: 40);
   } catch (_) {
     // Do not fail the community screen if backend auth/session for this endpoint is stale.
     return const [];
@@ -267,7 +289,8 @@ final communityNotificationsProvider =
 });
 
 /// Unread count for the Community bell badge.
-final communityUnreadNotificationsCountProvider = FutureProvider<int>((ref) async {
+final communityUnreadNotificationsCountProvider =
+    FutureProvider<int>((ref) async {
   final all = await ref.watch(communityNotificationsProvider.future);
   return all.where((n) => n.isUnread).length;
 });
@@ -280,19 +303,28 @@ final driverProfileProvider = FutureProvider<DriverProfile?>((ref) async {
 });
 
 /// Dutch compliance + documents (Wpv 2000) — reads extended `drivers` columns.
-final driverComplianceProvider = FutureProvider<DriverComplianceSnapshot?>((ref) async {
+final driverComplianceProvider =
+    FutureProvider<DriverComplianceSnapshot?>((ref) async {
   final id = await ref.watch(driverIdProvider.future);
   if (id == null) return null;
   return ref.read(driverDataServiceProvider).getDriverCompliance(id);
 });
 
 /// Return trips (driver_return_trips view).
-final driverReturnTripsProvider = FutureProvider<List<DriverReturnTrip>>((ref) async {
+final driverReturnTripsProvider =
+    FutureProvider<List<DriverReturnTrip>>((ref) async {
   return ref.read(driverDataServiceProvider).getReturnTrips();
 });
 
+/// Server-backed Return Mode state. This is the contract for whether intent is active.
+final driverReturnModeProvider =
+    FutureProvider<DriverReturnModeStatus>((ref) async {
+  return ref.read(driverDataServiceProvider).getReturnModeStatus();
+});
+
 /// Filtered return trips — only rides heading toward driver's home zone or city.
-final filteredReturnTripsProvider = FutureProvider<List<DriverReturnTrip>>((ref) async {
+final filteredReturnTripsProvider =
+    FutureProvider<List<DriverReturnTrip>>((ref) async {
   final all = await ref.watch(driverReturnTripsProvider.future);
   final profile = await ref.watch(driverProfileProvider.future);
   final headingHomeZoneId = profile?.headingHomeZoneId;
@@ -302,9 +334,13 @@ final filteredReturnTripsProvider = FutureProvider<List<DriverReturnTrip>>((ref)
 
   final cityLower = homeCity?.toLowerCase().trim();
   return all.where((ride) {
-    if (ride.destinationZoneId != null && ride.destinationZoneId == headingHomeZoneId) return true;
+    if (ride.destinationZoneId != null &&
+        ride.destinationZoneId == headingHomeZoneId) return true;
     final destCity = ride.destinationCity?.toLowerCase().trim();
-    if (cityLower != null && cityLower.isNotEmpty && destCity != null && destCity.isNotEmpty) {
+    if (cityLower != null &&
+        cityLower.isNotEmpty &&
+        destCity != null &&
+        destCity.isNotEmpty) {
       return destCity == cityLower;
     }
     return false;
@@ -317,13 +353,15 @@ final latestCommunityPostProvider = FutureProvider<CommunityPost?>((ref) async {
 });
 
 /// Top requested app ideas from driver suggestion board.
-final topDriverAppSuggestionsProvider = FutureProvider<List<DriverTopAppSuggestion>>((ref) async {
+final topDriverAppSuggestionsProvider =
+    FutureProvider<List<DriverTopAppSuggestion>>((ref) async {
   return ref.read(driverDataServiceProvider).getTopAppSuggestions(limit: 8);
 });
 
 /// Finance + Tax metrics for a selected date range.
 final driverFinanceMetricsProvider =
-    FutureProvider.family<DriverFinanceMetrics, DriverFinanceRange>((ref, range) async {
+    FutureProvider.family<DriverFinanceMetrics, DriverFinanceRange>(
+        (ref, range) async {
   final id = await ref.watch(driverIdProvider.future);
   if (id == null) return const DriverFinanceMetrics();
   return ref.read(driverDataServiceProvider).getFinanceMetrics(

@@ -30,6 +30,8 @@ String? flutterRouteForReadinessItem(DriverReadinessItem item) {
       return '/driver/documents';
     case 'vehicle_plate':
       return '/driver/onboarding/plate';
+    case 'initial_tariff':
+      return '/driver/tariffs';
     case 'rijbewijs_verified':
       return '/driver/veriff';
     default:
@@ -44,6 +46,7 @@ String? _routeFromActionPath(String action) {
   if (a.startsWith('/driver/terms')) return '/driver/terms';
   if (a.startsWith('/driver/indemnification')) return '/driver/indemnification';
   if (a.startsWith('/driver/billing')) return '/driver/billing';
+  if (a.startsWith('/driver/tariffs')) return '/driver/tariffs';
   if (a.startsWith('/driver/veriff')) return '/driver/veriff';
   if (a.startsWith('/driver/documents')) return '/driver/documents';
   return null;

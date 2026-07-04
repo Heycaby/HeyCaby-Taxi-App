@@ -85,6 +85,7 @@ class DriverSupportChatResult {
   final bool ok;
   final String? reply;
   final String? error;
+
   /// When the function creates or merges a ticket, server may return this id.
   final String? ticketId;
 }
@@ -159,8 +160,10 @@ class DriverDataService {
       return ClaimFoundingDriverResult(
         isFoundingDriver: isFd,
         foundingNumber: readInt(map, 'founding_number', 'foundingNumber'),
-        needsProfilePhoto: readBool(map, 'needs_profile_photo', 'needsProfilePhoto'),
-        needsVehiclePhoto: readBool(map, 'needs_vehicle_photo', 'needsVehiclePhoto'),
+        needsProfilePhoto:
+            readBool(map, 'needs_profile_photo', 'needsProfilePhoto'),
+        needsVehiclePhoto:
+            readBool(map, 'needs_vehicle_photo', 'needsVehiclePhoto'),
       );
     }
 
@@ -252,7 +255,11 @@ class DriverDataService {
     final existing = await getDriverId();
     if (existing != null) return existing;
     try {
-      final res = await _client.from('drivers').insert({'user_id': userId}).select('id').maybeSingle();
+      final res = await _client
+          .from('drivers')
+          .insert({'user_id': userId})
+          .select('id')
+          .maybeSingle();
       return res?['id'] as String?;
     } catch (e) {
       if (kDebugMode) debugPrint('ensureDriverId insert fallback: $e');
@@ -283,7 +290,8 @@ class DriverDataService {
   }) async {
     final params = <String, dynamic>{'p_user_id': userId};
     if (fullName != null) params['p_full_name'] = fullName;
-    if (profilePhotoUrl != null) params['p_profile_photo_url'] = profilePhotoUrl;
+    if (profilePhotoUrl != null)
+      params['p_profile_photo_url'] = profilePhotoUrl;
     try {
       final res = await _client.rpc('save_driver_profile', params: params);
       if (res is Map<String, dynamic>) return res;
@@ -311,7 +319,8 @@ class DriverDataService {
     try {
       final nowLocal = DateTime.now();
       final todayStart = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
-      final weekStart = todayStart.subtract(Duration(days: todayStart.weekday - 1));
+      final weekStart =
+          todayStart.subtract(Duration(days: todayStart.weekday - 1));
       final monthStart = DateTime(nowLocal.year, nowLocal.month, 1);
       final monthTrips = await _loadCompletedTripEarningsSince(
         driverId: driverId,
@@ -364,7 +373,9 @@ class DriverDataService {
       final res = await _client.from('zone_demand_live').select(
             'zone_id, zone_name, center_lat, center_lng, radius_m, waiting_passengers, demand_level',
           );
-      return (res as List).map((e) => ZoneDemand.fromJson(e as Map<String, dynamic>)).toList();
+      return (res as List)
+          .map((e) => ZoneDemand.fromJson(e as Map<String, dynamic>))
+          .toList();
     } catch (_) {
       return const [];
     }
@@ -378,7 +389,11 @@ class DriverDataService {
         'shift_earnings_today, acceptance_rate, rating, '
         'current_shift_id, break_reminder_interval_minutes';
     try {
-      final res = await _client.from('drivers').select(extended).eq('id', driverId).maybeSingle();
+      final res = await _client
+          .from('drivers')
+          .select(extended)
+          .eq('id', driverId)
+          .maybeSingle();
       if (res == null) return null;
       return DriverShiftStats.fromJson(Map<String, dynamic>.from(res));
     } catch (_) {
@@ -466,8 +481,8 @@ class DriverDataService {
             .select('id')
             .eq('user_type', 'driver')
             .eq('user_id', userId)
-            .not('status', 'in', ['resolved', 'closed', 'auto_resolved'])
-            .limit(10);
+            .not('status', 'in', ['resolved', 'closed', 'auto_resolved']).limit(
+                10);
         tickets = (r as List).length;
       }
       final r2 = await _client
@@ -495,7 +510,8 @@ class DriverDataService {
       if (existing != null) return null;
       final driver = await _client
           .from('drivers')
-          .select('base_fare, per_km_rate, per_min_rate, minimum_fare, waiting_time_rate_per_min')
+          .select(
+              'base_fare, per_km_rate, per_min_rate, minimum_fare, waiting_time_rate_per_min')
           .eq('id', driverId)
           .maybeSingle();
       if (driver == null) return null;
@@ -503,18 +519,81 @@ class DriverDataService {
       final perKm = (driver['per_km_rate'] as num?)?.toDouble() ?? 2.00;
       final perMin = (driver['per_min_rate'] as num?)?.toDouble() ?? 0.35;
       final minFare = (driver['minimum_fare'] as num?)?.toDouble() ?? 5.00;
-      final waitingRate = (driver['waiting_time_rate_per_min'] as num?)?.toDouble() ?? 0.25;
-      final res = await _client.from('driver_rate_profiles').insert({
-        'driver_id': driverId,
-        'profile_name': 'Standaard',
-        'base_fare': baseFare,
-        'per_km_rate': perKm,
-        'per_min_rate': perMin,
-        'minimum_fare': minFare,
-        'waiting_rate': waitingRate,
-        'is_active': true,
-        'sort_order': 0,
-      }).select().single();
+      final waitingRate =
+          (driver['waiting_time_rate_per_min'] as num?)?.toDouble() ?? 0.25;
+      final res = await _client
+          .from('driver_rate_profiles')
+          .insert({
+            'driver_id': driverId,
+            'profile_name': 'Standaard',
+            'base_fare': baseFare,
+            'per_km_rate': perKm,
+            'per_min_rate': perMin,
+            'minimum_fare': minFare,
+            'waiting_rate': waitingRate,
+            'is_active': true,
+            'sort_order': 0,
+          })
+          .select()
+          .single();
+      return DriverRateProfile.fromJson(Map<String, dynamic>.from(res as Map));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Create the required first active tariff from explicit driver-entered values.
+  Future<DriverRateProfile?> createInitialRateProfile({
+    required String driverId,
+    required double baseFare,
+    required double perKmRate,
+    required double perMinRate,
+    required double vatPercentage,
+  }) async {
+    try {
+      final existing = await _client
+          .from('driver_rate_profiles')
+          .select()
+          .eq('driver_id', driverId)
+          .eq('is_active', true)
+          .maybeSingle();
+      if (existing != null) {
+        final id = existing['id'] as String?;
+        if (id == null || id.isEmpty) return null;
+        final res = await _client
+            .from('driver_rate_profiles')
+            .update({
+              'profile_name': existing['profile_name'] ?? 'Standard',
+              'base_fare': baseFare,
+              'per_km_rate': perKmRate,
+              'per_min_rate': perMinRate,
+              'minimum_fare': baseFare,
+              'vat_percentage': vatPercentage,
+            })
+            .eq('id', id)
+            .select()
+            .single();
+        return DriverRateProfile.fromJson(
+          Map<String, dynamic>.from(res as Map),
+        );
+      }
+
+      final res = await _client
+          .from('driver_rate_profiles')
+          .insert({
+            'driver_id': driverId,
+            'profile_name': 'Standard',
+            'base_fare': baseFare,
+            'per_km_rate': perKmRate,
+            'per_min_rate': perMinRate,
+            'minimum_fare': baseFare,
+            'waiting_rate': 0.25,
+            'vat_percentage': vatPercentage,
+            'is_active': true,
+            'sort_order': 0,
+          })
+          .select()
+          .single();
       return DriverRateProfile.fromJson(Map<String, dynamic>.from(res as Map));
     } catch (_) {
       return null;
@@ -634,7 +713,8 @@ class DriverDataService {
   }
 
   /// Recent tickets for Driver Hub help section.
-  Future<List<DriverTicket>> getRecentTickets(String? userId, {int limit = 3}) async {
+  Future<List<DriverTicket>> getRecentTickets(String? userId,
+      {int limit = 3}) async {
     if (userId == null) return [];
     try {
       final res = await _client
@@ -704,9 +784,13 @@ class DriverDataService {
       if (token != null && token.isNotEmpty) {
         return '$kAppPublicWebOrigin/track/$token';
       }
-      final newRow = await _client.from('ride_shares').insert({
-        'ride_request_id': rideRequestId,
-      }).select('share_token').single();
+      final newRow = await _client
+          .from('ride_shares')
+          .insert({
+            'ride_request_id': rideRequestId,
+          })
+          .select('share_token')
+          .single();
       final t = newRow['share_token'] as String?;
       return t != null ? '$kAppPublicWebOrigin/track/$t' : null;
     } catch (_) {
@@ -805,7 +889,8 @@ class DriverDataService {
   }
 
   /// Confirmed rides for this driver from `ride_requests` (includes `swap_listed`, `status`).
-  Future<List<ScheduledRide>> getConfirmedRidesForDriver(String driverId, {int limit = 50}) async {
+  Future<List<ScheduledRide>> getConfirmedRidesForDriver(String driverId,
+      {int limit = 50}) async {
     try {
       final now = DateTime.now().toUtc().toIso8601String();
       try {
@@ -913,7 +998,8 @@ class DriverDataService {
       });
       return true;
     } catch (e) {
-      if (e.toString().contains('duplicate') || e.toString().contains('unique')) {
+      if (e.toString().contains('duplicate') ||
+          e.toString().contains('unique')) {
         return true;
       }
       return false;
@@ -956,7 +1042,8 @@ class DriverDataService {
   Future<List<double>> getWeeklyDailyEarnings(String driverId) async {
     try {
       final now = DateTime.now();
-      final start = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
+      final start = DateTime(now.year, now.month, now.day)
+          .subtract(const Duration(days: 6));
       final list = await _loadCompletedTripEarningsSince(
         driverId: driverId,
         sinceUtc: start.toUtc(),
@@ -965,7 +1052,8 @@ class DriverDataService {
       final daily = List.filled(7, 0.0);
       for (final row in list) {
         final localTime = row.completedAt.toLocal();
-        final dayStart = DateTime(localTime.year, localTime.month, localTime.day);
+        final dayStart =
+            DateTime(localTime.year, localTime.month, localTime.day);
         final dayIndex = dayStart.difference(start).inDays;
         if (dayIndex >= 0 && dayIndex < 7) {
           daily[dayIndex] += row.fare;
@@ -999,9 +1087,12 @@ class DriverDataService {
         final pickupZone = row['pickup_zone'];
         final destZone = row['destination_zone'];
         final rr = row['ride_request'];
-        final pickupName = (pickupZone is Map ? pickupZone['name_display'] : null) as String?;
-        final destName = (destZone is Map ? destZone['name_display'] : null) as String?;
-        final fare = (rr is Map ? (rr['final_fare'] as num?)?.toDouble() : null);
+        final pickupName =
+            (pickupZone is Map ? pickupZone['name_display'] : null) as String?;
+        final destName =
+            (destZone is Map ? destZone['name_display'] : null) as String?;
+        final fare =
+            (rr is Map ? (rr['final_fare'] as num?)?.toDouble() : null);
         rides.add(TodayRide(
           id: row['id'] as String? ?? '',
           completedAt: _parseDateTime(row['completed_at']),
@@ -1200,10 +1291,12 @@ class DriverDataService {
         for (final row in list) {
           final forfeitedTo = row['commitment_fee_forfeited_to'] as String?;
           if (forfeitedTo == 'driver') {
-            fees += (row['preride_commitment_fee_euros'] as num?)?.toDouble() ?? 0;
+            fees +=
+                (row['preride_commitment_fee_euros'] as num?)?.toDouble() ?? 0;
           }
         }
-        return _CancelledRideFinance(count: list.length, cancellationFees: fees);
+        return _CancelledRideFinance(
+            count: list.length, cancellationFees: fees);
       } catch (_) {
         // Try the next timestamp column if this schema doesn't expose the current one.
       }
@@ -1235,7 +1328,8 @@ class DriverDataService {
   }
 
   /// Community posts by channel.
-  Future<List<CommunityPost>> getCommunityPosts(String channel, {int limit = 20}) async {
+  Future<List<CommunityPost>> getCommunityPosts(String channel,
+      {int limit = 20}) async {
     try {
       final cutoff = DateTime.now()
           .toUtc()
@@ -1243,13 +1337,15 @@ class DriverDataService {
           .toIso8601String();
       var query = _client
           .from('community_posts')
-          .select('id, driver_id, content, created_at, channel, ride_request_id, swap_status')
+          .select(
+              'id, driver_id, content, created_at, channel, ride_request_id, swap_status')
           .eq('channel', channel)
           .gte('created_at', cutoff);
       if (channel == 'swap') {
         query = query.eq('swap_status', 'open');
       }
-      final res = await query.order('created_at', ascending: false).limit(limit);
+      final res =
+          await query.order('created_at', ascending: false).limit(limit);
       final list = (res as List)
           .map((e) => CommunityPost.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -1377,7 +1473,8 @@ class DriverDataService {
   }
 
   /// Search community posts by content/title prefix from Supabase (no mock client-side data).
-  Future<List<CommunityPost>> searchCommunityPosts(String query, {int limit = 20}) async {
+  Future<List<CommunityPost>> searchCommunityPosts(String query,
+      {int limit = 20}) async {
     final q = query.trim();
     if (q.isEmpty) return const [];
     try {
@@ -1385,7 +1482,8 @@ class DriverDataService {
       final pattern = '%$escaped%';
       final res = await _client
           .from('community_posts')
-          .select('id, driver_id, content, created_at, channel, ride_request_id, swap_status')
+          .select(
+              'id, driver_id, content, created_at, channel, ride_request_id, swap_status')
           .or('content.ilike.$pattern,title.ilike.$pattern')
           .eq('is_deleted', false)
           .order('created_at', ascending: false)
@@ -1402,6 +1500,7 @@ class DriverDataService {
   Future<DriverProfile?> getDriverProfile(String driverId) async {
     const extendedCols =
         'full_name, vehicle_plate, vehicle_make, vehicle_model, vehicle_year, '
+        'vehicle_colour, passenger_seats, '
         'rating, avg_rating, pickup_distance_max_km, active_return_discount_pct, payment_methods, '
         'is_pet_friendly, is_wheelchair_accessible, profile_photo_url, profile_photo_locked, '
         'profile_photo_change_count, vehicle_photo_urls, '
@@ -1447,7 +1546,8 @@ class DriverDataService {
 
   /// Compliance fields for Documents hub (Wpv 2000 — matches `drivers` columns in Supabase).
   Future<DriverComplianceSnapshot?> getDriverCompliance(String driverId) async {
-    const cols = 'compliance_status, chauffeurspas_verified, chauffeurspas_number, chauffeurspas_expiry, '
+    const cols =
+        'compliance_status, chauffeurspas_verified, chauffeurspas_number, chauffeurspas_expiry, '
         'vog_verified, vog_implied_by_chauffeurspas, vog_expires_at, '
         'rijbewijs_verified, rijbewijs_expiry, taxidiploma_verified, '
         'taxi_insurance_verified, taxi_insurance_expiry, taxi_insurance_photo_url, '
@@ -1459,7 +1559,11 @@ class DriverDataService {
         'rdw_apk_vervaldatum, rdw_wam_verzekerd, '
         'vehicle_plate, rdw_merk, rdw_handelsbenaming';
     try {
-      final res = await _client.from('drivers').select(cols).eq('id', driverId).maybeSingle();
+      final res = await _client
+          .from('drivers')
+          .select(cols)
+          .eq('id', driverId)
+          .maybeSingle();
       if (res == null) return null;
       return DriverComplianceSnapshot.fromJson(Map<String, dynamic>.from(res));
     } catch (e) {
@@ -1571,12 +1675,14 @@ class DriverDataService {
       } on FunctionException catch (e) {
         if (e.status == 401) {
           if (kDebugMode) {
-            debugPrint('sendDriverSupportChatMessage: 401 — refreshSession + retry');
+            debugPrint(
+                'sendDriverSupportChatMessage: 401 — refreshSession + retry');
           }
           try {
             await _client.auth.refreshSession();
           } catch (err) {
-            if (kDebugMode) debugPrint('sendDriverSupportChatMessage: refresh failed: $err');
+            if (kDebugMode)
+              debugPrint('sendDriverSupportChatMessage: refresh failed: $err');
           }
           res = await invokeWithSessionToken();
         } else {
@@ -1596,7 +1702,8 @@ class DriverDataService {
         } catch (_) {}
         res = await invokeWithSessionToken();
         if (res == null) {
-          return const DriverSupportChatResult(ok: false, error: 'not_signed_in');
+          return const DriverSupportChatResult(
+              ok: false, error: 'not_signed_in');
         }
       }
 
@@ -1623,10 +1730,8 @@ class DriverDataService {
   /// Return trips view (driver_return_trips). Filter for home zone/city happens in Dart.
   Future<List<DriverReturnTrip>> getReturnTrips({int limit = 100}) async {
     try {
-      final res = await _client
-          .from('driver_return_trips')
-          .select()
-          .limit(limit);
+      final res =
+          await _client.from('driver_return_trips').select().limit(limit);
       return (res as List)
           .map((e) => DriverReturnTrip.fromJson(e as Map<String, dynamic>))
           .where((t) => t.isDisplayable)
@@ -1634,6 +1739,73 @@ class DriverDataService {
     } catch (_) {
       return [];
     }
+  }
+
+  Future<DriverReturnModeStatus> getReturnModeStatus() async {
+    try {
+      final res = await _client.rpc('fn_driver_return_mode_status');
+      return DriverReturnModeStatus.fromJson(_mapFromRpc(res));
+    } catch (_) {
+      return const DriverReturnModeStatus(ok: false);
+    }
+  }
+
+  Future<DriverReturnModeStatus> activateReturnMode({
+    String? destinationLabel,
+    String? destinationZoneId,
+    double? destinationLat,
+    double? destinationLng,
+    double? pickupRadiusKm,
+    double? returnDiscountPct,
+  }) async {
+    try {
+      final res = await _client.rpc('fn_driver_return_mode_activate', params: {
+        'p_destination_label': destinationLabel,
+        'p_destination_zone_id': destinationZoneId,
+        'p_destination_lat': destinationLat,
+        'p_destination_lng': destinationLng,
+        'p_pickup_radius_km': pickupRadiusKm,
+        'p_return_discount_pct': returnDiscountPct,
+      });
+      return DriverReturnModeStatus.fromJson(_mapFromRpc(res));
+    } catch (_) {
+      return const DriverReturnModeStatus(ok: false);
+    }
+  }
+
+  Future<DriverReturnModeStatus> disableReturnMode() async {
+    try {
+      final res = await _client.rpc('fn_driver_return_mode_disable');
+      return DriverReturnModeStatus.fromJson(_mapFromRpc(res));
+    } catch (_) {
+      return const DriverReturnModeStatus(ok: false);
+    }
+  }
+
+  Future<DriverReturnModeStatus> dismissReturnModePrompt({
+    int cooldownHours = 24,
+  }) async {
+    try {
+      final res = await _client.rpc(
+        'fn_driver_return_mode_dismiss_prompt',
+        params: {'p_cooldown_hours': cooldownHours},
+      );
+      return DriverReturnModeStatus.fromJson(_mapFromRpc(res));
+    } catch (_) {
+      return const DriverReturnModeStatus(ok: false);
+    }
+  }
+
+  Future<void> recordReturnModePromptShown() async {
+    try {
+      await _client.rpc('fn_driver_return_mode_prompt_shown');
+    } catch (_) {}
+  }
+
+  Map<String, dynamic> _mapFromRpc(dynamic res) {
+    if (res is Map<String, dynamic>) return res;
+    if (res is Map) return Map<String, dynamic>.from(res);
+    return const <String, dynamic>{};
   }
 
   /// Update active rate profile return discount percentage (0..40).
@@ -1652,7 +1824,8 @@ class DriverDataService {
   }
 
   /// Update vehicle info. Returns true on success.
-  Future<bool> updateVehicle(String driverId, {
+  Future<bool> updateVehicle(
+    String driverId, {
     String? plate,
     String? make,
     String? model,
@@ -1682,7 +1855,8 @@ class DriverDataService {
     try {
       await _client.from('driver_app_suggestions').insert({
         'user_id': userId,
-        'driver_id': (driverId != null && driverId.isNotEmpty) ? driverId : null,
+        'driver_id':
+            (driverId != null && driverId.isNotEmpty) ? driverId : null,
         'suggestion_text': text,
       });
       return true;
@@ -1691,14 +1865,16 @@ class DriverDataService {
     }
   }
 
-  Future<List<DriverTopAppSuggestion>> getTopAppSuggestions({int limit = 8}) async {
+  Future<List<DriverTopAppSuggestion>> getTopAppSuggestions(
+      {int limit = 8}) async {
     try {
       final res = await _client.rpc(
         'fn_driver_top_app_suggestions',
         params: {'p_limit': limit},
       );
       return (res as List)
-          .map((e) => DriverTopAppSuggestion.fromJson(Map<String, dynamic>.from(e)))
+          .map((e) =>
+              DriverTopAppSuggestion.fromJson(Map<String, dynamic>.from(e)))
           .toList();
     } catch (_) {
       return const [];
@@ -1755,9 +1931,12 @@ class DriverDataService {
         if (pickupDistanceKm != null) 'p_pickup_distance_km': pickupDistanceKm,
         if (paymentMethods != null) 'p_payment_methods': paymentMethods,
         if (isPetFriendly != null) 'p_is_pet_friendly': isPetFriendly,
-        if (isWheelchairAccessible != null) 'p_is_wheelchair_accessible': isWheelchairAccessible,
-        if (autoAcceptEnabled != null) 'p_auto_accept_enabled': autoAcceptEnabled,
-        if (autoAcceptMinFare != null) 'p_auto_accept_min_fare': autoAcceptMinFare,
+        if (isWheelchairAccessible != null)
+          'p_is_wheelchair_accessible': isWheelchairAccessible,
+        if (autoAcceptEnabled != null)
+          'p_auto_accept_enabled': autoAcceptEnabled,
+        if (autoAcceptMinFare != null)
+          'p_auto_accept_min_fare': autoAcceptMinFare,
         if (radarEnabled != null) 'p_radar_enabled': radarEnabled,
         if (isElectric != null) 'p_is_electric': isElectric,
         if (isFemaleDriver != null) 'p_is_female_driver': isFemaleDriver,
@@ -1773,7 +1952,8 @@ class DriverDataService {
   }
 
   /// Update driver preferences (wraps [saveDriverPreferences]). `driverId` kept for call sites.
-  Future<bool> updateDriverPrefs(String driverId, {
+  Future<bool> updateDriverPrefs(
+    String driverId, {
     double? pickupDistanceMaxKm,
     bool? isPetFriendly,
     bool? isWheelchairAccessible,
@@ -1812,17 +1992,23 @@ class DriverDataService {
         params: {
           'p_user_id': uid,
           'p_document_type': documentType,
-          if (chauffeurspasNumber != null) 'p_chauffeurspas_number': chauffeurspasNumber,
-          if (chauffeurspasExpiry != null) 'p_chauffeurspas_expiry': chauffeurspasExpiry,
-          if (insurancePhotoUrl != null) 'p_insurance_photo_url': insurancePhotoUrl,
-          if (insuranceProvider != null) 'p_insurance_provider': insuranceProvider,
+          if (chauffeurspasNumber != null)
+            'p_chauffeurspas_number': chauffeurspasNumber,
+          if (chauffeurspasExpiry != null)
+            'p_chauffeurspas_expiry': chauffeurspasExpiry,
+          if (insurancePhotoUrl != null)
+            'p_insurance_photo_url': insurancePhotoUrl,
+          if (insuranceProvider != null)
+            'p_insurance_provider': insuranceProvider,
           if (insuranceExpiry != null) 'p_insurance_expiry': insuranceExpiry,
-          if (insurancePolicyNr != null) 'p_insurance_policy_nr': insurancePolicyNr,
+          if (insurancePolicyNr != null)
+            'p_insurance_policy_nr': insurancePolicyNr,
           if (kvkNumber != null) 'p_kvk_number': kvkNumber,
           if (kvkBusinessName != null) 'p_kvk_business_name': kvkBusinessName,
           if (kvkAddress != null) 'p_kvk_address': kvkAddress,
           if (veriffSessionId != null) 'p_veriff_session_id': veriffSessionId,
-          if (veriffSessionUrl != null) 'p_veriff_session_url': veriffSessionUrl,
+          if (veriffSessionUrl != null)
+            'p_veriff_session_url': veriffSessionUrl,
           if (veriffStatus != null) 'p_veriff_status': veriffStatus,
         },
       );
@@ -1853,8 +2039,10 @@ class DriverDataService {
             .eq('user_id', uid)
             .maybeSingle();
         if (row == null) return false;
-        final storedNumber = (row['chauffeurspas_number'] as String? ?? '').trim();
-        final storedExpiry = (row['chauffeurspas_expiry']?.toString() ?? '').trim();
+        final storedNumber =
+            (row['chauffeurspas_number'] as String? ?? '').trim();
+        final storedExpiry =
+            (row['chauffeurspas_expiry']?.toString() ?? '').trim();
         return storedNumber == chauffeurspasNumber.trim() &&
             storedExpiry.startsWith(chauffeurspasExpiry);
       } catch (_) {
@@ -1982,11 +2170,14 @@ class DriverDataService {
             .eq('user_id', uid)
             .maybeSingle();
         if (row == null) return false;
-        final storedPhoto = (row['taxi_insurance_photo_url'] as String? ?? '').trim();
-        final storedProvider = (row['taxi_insurance_provider'] as String? ?? '').trim();
+        final storedPhoto =
+            (row['taxi_insurance_photo_url'] as String? ?? '').trim();
+        final storedProvider =
+            (row['taxi_insurance_provider'] as String? ?? '').trim();
         final storedPolicy =
             (row['taxi_insurance_policy_number'] as String? ?? '').trim();
-        final storedExpiry = (row['taxi_insurance_expiry']?.toString() ?? '').trim();
+        final storedExpiry =
+            (row['taxi_insurance_expiry']?.toString() ?? '').trim();
         return storedPhoto == insurancePhotoUrl.trim() &&
             storedProvider == insuranceProvider.trim() &&
             storedPolicy == insurancePolicyNr.trim() &&
@@ -2052,7 +2243,8 @@ class DriverDataService {
       }
       try {
         await _client.from('drivers').update({
-          'indemnification_accepted_at': DateTime.now().toUtc().toIso8601String(),
+          'indemnification_accepted_at':
+              DateTime.now().toUtc().toIso8601String(),
           'indemnification_accepted': quizPassed,
         }).eq('user_id', uid);
         return true;
@@ -2095,7 +2287,8 @@ class DriverDataService {
           .select('indemnification_quiz_passed')
           .eq('user_id', uid)
           .maybeSingle();
-      final existingQuizPassed = (row?['indemnification_quiz_passed'] as bool?) ?? false;
+      final existingQuizPassed =
+          (row?['indemnification_quiz_passed'] as bool?) ?? false;
       await _client.from('drivers').update({
         'indemnification_read_at': DateTime.now().toUtc().toIso8601String(),
         'indemnification_quiz_passed': existingQuizPassed,
@@ -2103,11 +2296,13 @@ class DriverDataService {
       return true;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('saveIndemnificationReadAcknowledgement new columns failed: $e');
+        debugPrint(
+            'saveIndemnificationReadAcknowledgement new columns failed: $e');
       }
       try {
         await _client.from('drivers').update({
-          'indemnification_accepted_at': DateTime.now().toUtc().toIso8601String(),
+          'indemnification_accepted_at':
+              DateTime.now().toUtc().toIso8601String(),
           'indemnification_accepted': true,
         }).eq('user_id', uid);
         return true;
@@ -2162,15 +2357,20 @@ class DriverDataService {
           'p_vehicle_plate_entered': vehiclePlateEntered,
           if (rdwVoertuigsoort != null) 'p_rdw_voertuigsoort': rdwVoertuigsoort,
           if (rdwMerk != null) 'p_rdw_merk': rdwMerk,
-          if (rdwHandelsbenaming != null) 'p_rdw_handelsbenaming': rdwHandelsbenaming,
+          if (rdwHandelsbenaming != null)
+            'p_rdw_handelsbenaming': rdwHandelsbenaming,
           if (rdwEersteKleur != null) 'p_rdw_eerste_kleur': rdwEersteKleur,
           if (rdwTweedeKleur != null) 'p_rdw_tweede_kleur': rdwTweedeKleur,
-          if (rdwDatumEersteToelating != null) 'p_rdw_datum_eerste_toelating': rdwDatumEersteToelating,
-          if (rdwAantalZitplaatsen != null) 'p_rdw_aantal_zitplaatsen': rdwAantalZitplaatsen,
+          if (rdwDatumEersteToelating != null)
+            'p_rdw_datum_eerste_toelating': rdwDatumEersteToelating,
+          if (rdwAantalZitplaatsen != null)
+            'p_rdw_aantal_zitplaatsen': rdwAantalZitplaatsen,
           if (rdwInrichting != null) 'p_rdw_inrichting': rdwInrichting,
-          if (rdwMassaLedigVoertuig != null) 'p_rdw_massa_ledig_voertuig': rdwMassaLedigVoertuig,
+          if (rdwMassaLedigVoertuig != null)
+            'p_rdw_massa_ledig_voertuig': rdwMassaLedigVoertuig,
           if (rdwWamVerzekerd != null) 'p_rdw_wam_verzekerd': rdwWamVerzekerd,
-          if (rdwApkVervaldatum != null) 'p_rdw_apk_vervaldatum': rdwApkVervaldatum,
+          if (rdwApkVervaldatum != null)
+            'p_rdw_apk_vervaldatum': rdwApkVervaldatum,
           'p_vehicle_verification_status': vehicleVerificationStatus,
           if (vehicleType != null) 'p_vehicle_type': vehicleType,
           if (vehicleYear != null) 'p_vehicle_year': vehicleYear,
@@ -2186,7 +2386,8 @@ class DriverDataService {
         return _normalizeSaveVehicleInfoResponse(res);
       }
       if (res is Map) {
-        return _normalizeSaveVehicleInfoResponse(Map<String, dynamic>.from(res));
+        return _normalizeSaveVehicleInfoResponse(
+            Map<String, dynamic>.from(res));
       }
       return null;
     } catch (e) {
@@ -2257,7 +2458,8 @@ class DriverDataService {
           'p_limit': limit,
           'p_offset': offset,
           if (plate != null && plate.trim().isNotEmpty) 'p_plate': plate.trim(),
-          if (status != null && status.trim().isNotEmpty) 'p_status': status.trim(),
+          if (status != null && status.trim().isNotEmpty)
+            'p_status': status.trim(),
         },
       );
       if (res is Map<String, dynamic>) return res;
@@ -2418,7 +2620,8 @@ class DriverDataService {
     try {
       await _client.from('drivers').update({
         'congratulations_modal_shown': true,
-        'congratulations_modal_shown_at': DateTime.now().toUtc().toIso8601String(),
+        'congratulations_modal_shown_at':
+            DateTime.now().toUtc().toIso8601String(),
       }).eq('user_id', uid);
       return true;
     } catch (e) {
@@ -2433,8 +2636,7 @@ class DriverDataService {
     try {
       await _client
           .from('drivers')
-          .update({'onboarding_feature_tour_shown': true})
-          .eq('id', driverId);
+          .update({'onboarding_feature_tour_shown': true}).eq('id', driverId);
     } catch (_) {}
   }
 
@@ -2494,7 +2696,8 @@ class DriverDataService {
               .maybeSingle();
           if (row == null) return null;
           final map = Map<String, dynamic>.from(row);
-          final hasPhoto = (map['profile_photo_url'] as String?)?.trim().isNotEmpty ?? false;
+          final hasPhoto =
+              (map['profile_photo_url'] as String?)?.trim().isNotEmpty ?? false;
           return {
             'profile_photo_url': map['profile_photo_url'],
             'profile_photo_change_count': hasPhoto ? 1 : 0,
@@ -2528,10 +2731,13 @@ class DriverDataService {
 
     Future<String?> doUpload() async {
       final state = await readPhotoState();
-      final rawCount = (state?['profile_photo_change_count'] as num?)?.toInt() ?? 0;
-      final existingPhoto = (state?['profile_photo_url'] as String?)?.trim() ?? '';
+      final rawCount =
+          (state?['profile_photo_change_count'] as num?)?.toInt() ?? 0;
+      final existingPhoto =
+          (state?['profile_photo_url'] as String?)?.trim() ?? '';
       // Backward compatible: old rows may have photo URL but no explicit counter.
-      final count = rawCount > 0 ? rawCount : (existingPhoto.isNotEmpty ? 1 : 0);
+      final count =
+          rawCount > 0 ? rawCount : (existingPhoto.isNotEmpty ? 1 : 0);
       if (count >= 2) throw const ProfilePhotoLimitException();
       final path = '$driverId/profile-photo.$fileExtension';
       await _client.storage.from(_profilePhotoBucket).uploadBinary(
@@ -2574,14 +2780,17 @@ class DriverDataService {
     } on TlsException catch (e, st) {
       lastTlsError++;
       if (kDebugMode) {
-        debugPrint('uploadDriverProfilePhotoOnce: TlsException (attempt $lastTlsError/$maxTlsRetries): $e\n$st');
+        debugPrint(
+            'uploadDriverProfilePhotoOnce: TlsException (attempt $lastTlsError/$maxTlsRetries): $e\n$st');
       }
       for (var i = lastTlsError; i < maxTlsRetries; i++) {
         await Future<void>.delayed(Duration(milliseconds: 300 * (i + 1)));
         try {
           return await doUpload();
         } on TlsException catch (retryE) {
-          if (kDebugMode) debugPrint('uploadDriverProfilePhotoOnce: retry $i failed: $retryE');
+          if (kDebugMode)
+            debugPrint(
+                'uploadDriverProfilePhotoOnce: retry $i failed: $retryE');
         }
       }
       throw const ProfilePhotoConnectionException();
@@ -2611,17 +2820,15 @@ class DriverDataService {
           .map((e) => e.toString())
           .where((e) => e.trim().isNotEmpty)
           .toList();
-      if (existing.length >= 2) throw const VehiclePhotoLimitException();
-
       final path =
-          '$driverId/vehicle-${existing.length + 1}-${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
+          '$driverId/vehicle-${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
       await _client.storage.from(_profilePhotoBucket).uploadBinary(
             path,
             bytes,
             fileOptions: FileOptions(contentType: contentType, upsert: false),
           );
       final url = _client.storage.from(_profilePhotoBucket).getPublicUrl(path);
-      final updated = [...existing, url];
+      final updated = [url, ...existing].take(2).toList();
       await _client.from('drivers').update({
         'vehicle_photo_urls': updated,
       }).eq('id', driverId);
@@ -2667,7 +2874,8 @@ class DriverDataService {
       if (refreshed.session == null) return null;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('startVeriffVerificationAndPersist: refreshSession failed: $e');
+        debugPrint(
+            'startVeriffVerificationAndPersist: refreshSession failed: $e');
       }
       return null;
     }
@@ -2676,10 +2884,12 @@ class DriverDataService {
 
   /// Invokes `create-driver-veriff-session` with an explicit [FunctionsClient.setAuth] so
   /// the user access token is used (gateway rejects anon-only `Authorization` with 401).
-  Future<VeriffSessionResult?> _invokeCreateDriverVeriffSession({required bool isRetry}) async {
+  Future<VeriffSessionResult?> _invokeCreateDriverVeriffSession(
+      {required bool isRetry}) async {
     final sess = _client.auth.currentSession;
     if (sess == null || sess.accessToken.isEmpty) {
-      if (kDebugMode) debugPrint('startVeriffVerificationAndPersist: missing session');
+      if (kDebugMode)
+        debugPrint('startVeriffVerificationAndPersist: missing session');
       return null;
     }
     _client.functions.setAuth(sess.accessToken);
@@ -2720,12 +2930,15 @@ class DriverDataService {
     } on FunctionException catch (e) {
       if (e.status == 401 && !isRetry) {
         if (kDebugMode) {
-          debugPrint('startVeriffVerificationAndPersist: 401 — refresh + setAuth + retry');
+          debugPrint(
+              'startVeriffVerificationAndPersist: 401 — refresh + setAuth + retry');
         }
         try {
           await _client.auth.refreshSession();
         } catch (err) {
-          if (kDebugMode) debugPrint('startVeriffVerificationAndPersist: retry refresh failed: $err');
+          if (kDebugMode)
+            debugPrint(
+                'startVeriffVerificationAndPersist: retry refresh failed: $err');
         }
         return _invokeCreateDriverVeriffSession(isRetry: true);
       }
@@ -2766,7 +2979,8 @@ class DriverDataService {
   }
 
   /// Rides assigned to this driver (for swap post creation).
-  Future<List<ScheduledRide>> getDriverAssignedRides(String driverId, {int limit = 20}) async {
+  Future<List<ScheduledRide>> getDriverAssignedRides(String driverId,
+      {int limit = 20}) async {
     try {
       final now = DateTime.now().toUtc().toIso8601String();
       final res = await _client
@@ -2793,7 +3007,8 @@ class DriverDataService {
   }
 
   /// Create a community post (general/driver talk channel).
-  Future<bool> createCommunityPost(String driverId, String channel, String content) async {
+  Future<bool> createCommunityPost(
+      String driverId, String channel, String content) async {
     final text = content.trim();
     if (text.isEmpty) return false;
     try {
@@ -2814,7 +3029,8 @@ class DriverDataService {
     required List<String> options,
   }) async {
     final q = question.trim();
-    final opts = options.map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    final opts =
+        options.map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
     if (q.length < 3 || opts.length < 2 || opts.length > 6) return null;
     try {
       final res = await _client.rpc(
@@ -2861,8 +3077,7 @@ class DriverDataService {
     try {
       await _client
           .from('community_posts')
-          .update({'content': text})
-          .eq('id', postId);
+          .update({'content': text}).eq('id', postId);
       return true;
     } catch (_) {
       return false;
@@ -2971,12 +3186,15 @@ class DriverDataService {
   }
 
   /// Create a swap post (offer a ride to another driver).
-  Future<bool> createSwapPost(String driverId, String rideRequestId, String content) async {
+  Future<bool> createSwapPost(
+      String driverId, String rideRequestId, String content) async {
     try {
       await _client.from('community_posts').insert({
         'driver_id': driverId,
         'channel': 'swap',
-        'content': content.trim().isNotEmpty ? content.trim() : 'Offering ride to swap',
+        'content': content.trim().isNotEmpty
+            ? content.trim()
+            : 'Offering ride to swap',
         'ride_request_id': rideRequestId,
         'swap_status': 'open',
       });
@@ -3003,9 +3221,8 @@ class DriverDataService {
       if (zoneId != null && zoneId.isNotEmpty) {
         query = query.eq('zone_id', zoneId);
       }
-      final res = await query
-          .order('created_at', ascending: false)
-          .limit(limit);
+      final res =
+          await query.order('created_at', ascending: false).limit(limit);
       return (res as List)
           .map((e) => _rideRequestToScheduledRide(e as Map<String, dynamic>))
           .toList();
@@ -3016,7 +3233,8 @@ class DriverDataService {
 
   /// Immediate (now) ride requests available for drivers. Uses ride_requests where
   /// status='pending'. Optionally filter by zone. May return empty if RLS restricts.
-  Future<List<ScheduledRide>> getAvailableRidesNow({String? zoneId, int limit = 20}) async {
+  Future<List<ScheduledRide>> getAvailableRidesNow(
+      {String? zoneId, int limit = 20}) async {
     try {
       var query = _client
           .from('ride_requests')
@@ -3028,9 +3246,8 @@ class DriverDataService {
       if (zoneId != null && zoneId.isNotEmpty) {
         query = query.eq('zone_id', zoneId);
       }
-      final res = await query
-          .order('created_at', ascending: false)
-          .limit(limit);
+      final res =
+          await query.order('created_at', ascending: false).limit(limit);
       return (res as List)
           .map((e) => _rideRequestToScheduledRide(e as Map<String, dynamic>))
           .toList();
@@ -3045,6 +3262,7 @@ class DriverDataService {
       if (v is String) return DateTime.tryParse(v);
       return null;
     }
+
     return ScheduledRide(
       id: j['id'] as String? ?? '',
       pickupAddress: j['pickup_address'] as String?,
@@ -3057,7 +3275,8 @@ class DriverDataService {
       riderPrerideRequestSentAt: parse(j['rider_preride_request_sent_at']),
       riderPrerideDeadline: parse(j['rider_preride_deadline']),
       riderPrerideConfirmed: j['rider_preride_confirmed'] as bool? ?? false,
-      prerideCommitmentFeeEuros: (j['preride_commitment_fee_euros'] as num?)?.toDouble(),
+      prerideCommitmentFeeEuros:
+          (j['preride_commitment_fee_euros'] as num?)?.toDouble(),
       commitmentFeeTikkieUrl: j['commitment_fee_tikkie_url'] as String?,
       commitmentFeeReceived: j['commitment_fee_received'] as bool? ?? false,
       driverPrerideReleasedAt: parse(j['driver_preride_released_at']),
@@ -3065,8 +3284,13 @@ class DriverDataService {
     );
   }
 
-  Future<List<ScheduledRide>> _withReliabilityTiers(List<ScheduledRide> rides) async {
-    final ids = rides.map((r) => r.riderIdentityId).whereType<String>().toSet().toList();
+  Future<List<ScheduledRide>> _withReliabilityTiers(
+      List<ScheduledRide> rides) async {
+    final ids = rides
+        .map((r) => r.riderIdentityId)
+        .whereType<String>()
+        .toSet()
+        .toList();
     if (ids.isEmpty) return rides;
     try {
       final raw = await _client.rpc(
@@ -3081,8 +3305,10 @@ class DriverDataService {
         if (v is String) return v;
         return null;
       }
+
       return rides
-          .map((r) => r.copyWith(riderReliabilityTier: tierFor(r.riderIdentityId)))
+          .map((r) =>
+              r.copyWith(riderReliabilityTier: tierFor(r.riderIdentityId)))
           .toList();
     } catch (_) {
       return rides;
@@ -3105,7 +3331,8 @@ class DriverDataService {
   }
 
   /// Driver sends pre-ride confirmation without € commitment.
-  Future<Map<String, dynamic>> driverSendPrerideNoFee(String rideRequestId) async {
+  Future<Map<String, dynamic>> driverSendPrerideNoFee(
+      String rideRequestId) async {
     final res = await _client.rpc(
       'fn_driver_send_preride_confirmation_no_fee',
       params: {'p_ride_request_id': rideRequestId},
@@ -3138,7 +3365,8 @@ class DriverDataService {
     return map;
   }
 
-  Future<Map<String, dynamic>> driverReleasePrerideRide(String rideRequestId) async {
+  Future<Map<String, dynamic>> driverReleasePrerideRide(
+      String rideRequestId) async {
     final res = await _client.rpc(
       'fn_driver_release_preride_ride',
       params: {'p_ride_request_id': rideRequestId},
@@ -3146,7 +3374,8 @@ class DriverDataService {
     return Map<String, dynamic>.from(res as Map);
   }
 
-  Future<Map<String, dynamic>> driverMarkCommitmentFeeReceived(String rideRequestId) async {
+  Future<Map<String, dynamic>> driverMarkCommitmentFeeReceived(
+      String rideRequestId) async {
     final res = await _client.rpc(
       'fn_driver_mark_commitment_fee_received',
       params: {'p_ride_request_id': rideRequestId},
@@ -3223,10 +3452,13 @@ class ZoneDemand {
   final String? smartTargetLabel;
   final String? smartTargetReason;
   final double? smartTargetScore;
+
   /// Ride requests with pickup in zone, last 120 minutes (`fn_driver_hotspots_smart`).
   final int recentBookings120m;
+
   /// Mean `offered_fare` when present (null if no fares in window).
   final double? avgOfferedFareEur;
+
   /// Online drivers (fresh location) assigned to this zone.
   final int onlineDriversInZone;
 
@@ -3343,6 +3575,7 @@ class DriverTicket {
       if (v is String) return DateTime.tryParse(v);
       return null;
     }
+
     final msgs = j['messages'];
     return DriverTicket(
       id: j['id'] as String? ?? '',
@@ -3367,12 +3600,11 @@ class DriverTicket {
     return false;
   }
 
-  String get statusLabel =>
-      (status == 'resolved' || status == 'closed')
-          ? 'Opgelost'
-          : hasDriverReplied
-              ? 'In behandeling'
-              : 'U heeft niet gereageerd';
+  String get statusLabel => (status == 'resolved' || status == 'closed')
+      ? 'Opgelost'
+      : hasDriverReplied
+          ? 'In behandeling'
+          : 'U heeft niet gereageerd';
 }
 
 /// One row from `driver_my_rating` / `driver_trust_scores` (migration 040).
@@ -3467,11 +3699,13 @@ class DriverShiftStats {
       if (v is String) return DateTime.tryParse(v);
       return null;
     }
+
     return DriverShiftStats(
       shiftStartAt: parse(j['shift_start_at']),
       lastBreakStartAt: parse(j['last_break_start_at']),
       continuousDrivingStartedAt: parse(j['continuous_driving_started_at']),
-      shiftTotalOnlineMinutes: (j['shift_total_online_minutes'] as num?)?.toInt() ?? 0,
+      shiftTotalOnlineMinutes:
+          (j['shift_total_online_minutes'] as num?)?.toInt() ?? 0,
       shiftBreakMinutes: (j['shift_break_minutes'] as num?)?.toInt() ?? 0,
       shiftRidesToday: (j['shift_rides_today'] as num?)?.toInt() ?? 0,
       shiftEarningsToday: (j['shift_earnings_today'] as num?)?.toDouble() ?? 0,
@@ -3507,6 +3741,7 @@ class ScheduledRide {
   final double? estimatedFare;
   final double? distanceKm;
   final String? vehicleCategory;
+
   /// From `ride_requests` when loading confirmed rides (swap migration 042).
   final String? status;
   final bool? swapListed;
@@ -3522,6 +3757,7 @@ class ScheduledRide {
   final String? commitmentFeeTikkieUrl;
   final bool commitmentFeeReceived;
   final DateTime? driverPrerideReleasedAt;
+
   /// From [fn_rider_reliability_bulk]: new | reliable | amber | risk
   final String? riderReliabilityTier;
 
@@ -3560,11 +3796,13 @@ class ScheduledRide {
       if (v is String) return DateTime.tryParse(v);
       return null;
     }
+
     List<String>? pay(dynamic v) {
       if (v == null) return null;
       if (v is List) return v.map((e) => e.toString()).toList();
       return null;
     }
+
     return ScheduledRide(
       id: j['id'] as String? ?? '',
       pickupAddress: j['pickup_address'] as String?,
@@ -3589,7 +3827,8 @@ class ScheduledRide {
       riderPrerideRequestSentAt: parse(j['rider_preride_request_sent_at']),
       riderPrerideDeadline: parse(j['rider_preride_deadline']),
       riderPrerideConfirmed: j['rider_preride_confirmed'] as bool? ?? false,
-      prerideCommitmentFeeEuros: (j['preride_commitment_fee_euros'] as num?)?.toDouble(),
+      prerideCommitmentFeeEuros:
+          (j['preride_commitment_fee_euros'] as num?)?.toDouble(),
       commitmentFeeTikkieUrl: j['commitment_fee_tikkie_url'] as String?,
       commitmentFeeReceived: j['commitment_fee_received'] as bool? ?? false,
       driverPrerideReleasedAt: parse(j['driver_preride_released_at']),
@@ -3644,13 +3883,19 @@ class ScheduledRide {
       paymentMethods: paymentMethods ?? this.paymentMethods,
       bookingMode: bookingMode ?? this.bookingMode,
       riderIdentityId: riderIdentityId ?? this.riderIdentityId,
-      riderPrerideRequestSentAt: riderPrerideRequestSentAt ?? this.riderPrerideRequestSentAt,
+      riderPrerideRequestSentAt:
+          riderPrerideRequestSentAt ?? this.riderPrerideRequestSentAt,
       riderPrerideDeadline: riderPrerideDeadline ?? this.riderPrerideDeadline,
-      riderPrerideConfirmed: riderPrerideConfirmed ?? this.riderPrerideConfirmed,
-      prerideCommitmentFeeEuros: prerideCommitmentFeeEuros ?? this.prerideCommitmentFeeEuros,
-      commitmentFeeTikkieUrl: commitmentFeeTikkieUrl ?? this.commitmentFeeTikkieUrl,
-      commitmentFeeReceived: commitmentFeeReceived ?? this.commitmentFeeReceived,
-      driverPrerideReleasedAt: driverPrerideReleasedAt ?? this.driverPrerideReleasedAt,
+      riderPrerideConfirmed:
+          riderPrerideConfirmed ?? this.riderPrerideConfirmed,
+      prerideCommitmentFeeEuros:
+          prerideCommitmentFeeEuros ?? this.prerideCommitmentFeeEuros,
+      commitmentFeeTikkieUrl:
+          commitmentFeeTikkieUrl ?? this.commitmentFeeTikkieUrl,
+      commitmentFeeReceived:
+          commitmentFeeReceived ?? this.commitmentFeeReceived,
+      driverPrerideReleasedAt:
+          driverPrerideReleasedAt ?? this.driverPrerideReleasedAt,
       riderReliabilityTier: riderReliabilityTier ?? this.riderReliabilityTier,
     );
   }
@@ -3664,7 +3909,9 @@ class ScheduledRide {
   bool get canSendPrerideConfirmation {
     if (!isScheduledBooking || scheduledPickupAt == null) return false;
     if (riderPrerideRequestSentAt != null) return false;
-    if (status != 'accepted' && status != 'driver_arrived' && status != 'assigned') {
+    if (status != 'accepted' &&
+        status != 'driver_arrived' &&
+        status != 'assigned') {
       return false;
     }
     final mins = scheduledPickupAt!.difference(DateTime.now()).inMinutes;
@@ -3672,14 +3919,16 @@ class ScheduledRide {
   }
 
   bool get prerideAwaitingRider {
-    if (riderPrerideRequestSentAt == null || riderPrerideConfirmed) return false;
+    if (riderPrerideRequestSentAt == null || riderPrerideConfirmed)
+      return false;
     final d = riderPrerideDeadline;
     if (d == null) return true;
     return DateTime.now().isBefore(d);
   }
 
   bool get canReleaseAfterPrerideDeadline {
-    if (riderPrerideRequestSentAt == null || riderPrerideConfirmed) return false;
+    if (riderPrerideRequestSentAt == null || riderPrerideConfirmed)
+      return false;
     final d = riderPrerideDeadline;
     if (d == null) return false;
     return DateTime.now().isAfter(d);
@@ -3721,6 +3970,7 @@ class DriverComment {
       if (v is String) return DateTime.tryParse(v);
       return null;
     }
+
     return DriverComment(
       ratingId: j['rating_id'] as String?,
       riderComment: j['rider_comment'] as String?,
@@ -3828,8 +4078,8 @@ class MyRideDetails extends MyRideSummary {
       fare: base.fare,
       currency: base.currency,
       manualEntry: base.manualEntry,
-      paymentMethod:
-          (j['manual_payment_method'] as String?) ?? (j['payment_method'] as String?),
+      paymentMethod: (j['manual_payment_method'] as String?) ??
+          (j['payment_method'] as String?),
       platformFeeCents: (j['platform_fee_cents'] as num?)?.toInt(),
       driverEarningsCents: (j['driver_earnings_cents'] as num?)?.toInt(),
       distanceKm: (j['distance_km'] as num?)?.toDouble(),
@@ -3979,7 +4229,8 @@ class CommunityPost {
     this.poll,
   });
 
-  bool get isSwapOpen => channel == 'swap' && rideRequestId != null && swapStatus == 'open';
+  bool get isSwapOpen =>
+      channel == 'swap' && rideRequestId != null && swapStatus == 'open';
 
   CommunityPost withPoll(CommunityPollData? poll) => CommunityPost(
         id: id,
@@ -3998,6 +4249,7 @@ class CommunityPost {
       if (v is String) return DateTime.tryParse(v);
       return null;
     }
+
     return CommunityPost(
       id: j['id'] as String? ?? '',
       authorDriverId: j['driver_id'] as String?,
@@ -4044,10 +4296,13 @@ class DriverProfile {
   final String? vehiclePlate;
   final String? vehicleMake;
   final String? vehicleModel;
+  final String? vehicleColour;
   final int? vehicleYear;
+  final int? passengerSeats;
   final double? rating;
   final double? avgRating;
   final double? pickupDistanceMaxKm;
+
   /// Mirrored from active rate profile for rider discovery; optional on older DB selects.
   final double? activeReturnDiscountPct;
   final List<String>? paymentMethod;
@@ -4076,7 +4331,9 @@ class DriverProfile {
     this.vehiclePlate,
     this.vehicleMake,
     this.vehicleModel,
+    this.vehicleColour,
     this.vehicleYear,
+    this.passengerSeats,
     this.rating,
     this.avgRating,
     this.pickupDistanceMaxKm,
@@ -4105,7 +4362,12 @@ class DriverProfile {
 
   bool get hasDocumentExpired {
     final now = DateTime.now();
-    for (final d in [chauffeurspasExpiry, rijbewijsExpiry, vogExpiresAt, taxiInsuranceExpiry]) {
+    for (final d in [
+      chauffeurspasExpiry,
+      rijbewijsExpiry,
+      vogExpiresAt,
+      taxiInsuranceExpiry
+    ]) {
       if (d != null && d.isBefore(now)) return true;
     }
     return false;
@@ -4114,7 +4376,12 @@ class DriverProfile {
   bool get hasDocumentExpiringWithin30Days {
     final now = DateTime.now();
     final limit = now.add(const Duration(days: 30));
-    for (final d in [chauffeurspasExpiry, rijbewijsExpiry, vogExpiresAt, taxiInsuranceExpiry]) {
+    for (final d in [
+      chauffeurspasExpiry,
+      rijbewijsExpiry,
+      vogExpiresAt,
+      taxiInsuranceExpiry
+    ]) {
       if (d != null && !d.isBefore(now) && d.isBefore(limit)) return true;
     }
     return false;
@@ -4126,11 +4393,13 @@ class DriverProfile {
       if (v is List) return v.map((e) => e.toString()).toList();
       return null;
     }
+
     DateTime? parseDate(dynamic v) {
       if (v == null) return null;
       if (v is String) return DateTime.tryParse(v);
       return null;
     }
+
     final paymentList =
         parsePayment(j['payment_methods']) ?? parsePayment(j['payment_method']);
     return DriverProfile(
@@ -4138,11 +4407,15 @@ class DriverProfile {
       vehiclePlate: j['vehicle_plate'] as String?,
       vehicleMake: j['vehicle_make'] as String?,
       vehicleModel: j['vehicle_model'] as String?,
+      vehicleColour:
+          (j['vehicle_colour'] ?? j['vehicle_color'])?.toString().trim(),
       vehicleYear: (j['vehicle_year'] as num?)?.toInt(),
+      passengerSeats: (j['passenger_seats'] as num?)?.toInt(),
       rating: (j['rating'] as num?)?.toDouble(),
       avgRating: (j['avg_rating'] as num?)?.toDouble(),
       pickupDistanceMaxKm: (j['pickup_distance_max_km'] as num?)?.toDouble(),
-      activeReturnDiscountPct: (j['active_return_discount_pct'] as num?)?.toDouble(),
+      activeReturnDiscountPct:
+          (j['active_return_discount_pct'] as num?)?.toDouble(),
       paymentMethod: paymentList ?? const ['cash'],
       isPetFriendly: (j['is_pet_friendly'] as bool?) ?? false,
       isWheelchairAccessible: (j['is_wheelchair_accessible'] as bool?) ?? false,
@@ -4164,7 +4437,8 @@ class DriverProfile {
       rijbewijsExpiry: parseDate(j['rijbewijs_expiry']),
       vogExpiresAt: parseDate(j['vog_expires_at']),
       taxiInsuranceExpiry: parseDate(j['taxi_insurance_expiry']),
-      onboardingFeatureTourShown: (j['onboarding_feature_tour_shown'] as bool?) ?? false,
+      onboardingFeatureTourShown:
+          (j['onboarding_feature_tour_shown'] as bool?) ?? false,
       isFoundingDriver: (j['is_founding_driver'] as bool?) ?? false,
       foundingNumber: (j['founding_number'] as num?)?.toInt(),
     );
@@ -4172,7 +4446,11 @@ class DriverProfile {
 
   String get vehicleDisplay {
     final parts = <String>[];
-    if (vehiclePlate != null && vehiclePlate!.isNotEmpty) parts.add(vehiclePlate!);
+    if (vehiclePlate != null && vehiclePlate!.isNotEmpty)
+      parts.add(vehiclePlate!);
+    if (vehicleColour != null && vehicleColour!.isNotEmpty) {
+      parts.add(vehicleColour!);
+    }
     if (vehicleMake != null) parts.add(vehicleMake!);
     if (vehicleModel != null) parts.add(vehicleModel!);
     if (vehicleYear != null) parts.add(vehicleYear.toString());
@@ -4193,6 +4471,7 @@ class DriverProfile {
 class DriverComplianceSnapshot {
   final String? complianceStatus;
   final bool? chauffeurspasVerified;
+
   /// Stored pass number; when set, app treats chauffeurspas as locked.
   final String? chauffeurspasNumber;
   final DateTime? chauffeurspasExpiry;
@@ -4381,22 +4660,100 @@ class DriverReturnTrip {
       rideRequestId: s(j['ride_request_id']) ?? s(j['request_id']),
       pickupZoneId: s(j['pickup_zone_id']),
       destinationZoneId: s(j['destination_zone_id']) ?? s(j['dropoff_zone_id']),
-      pickupZoneName: s(j['pickup_zone_name']) ?? s(j['pickup_zone']) ?? s(j['pickup_zone_display']),
-      destinationZoneName: s(j['destination_zone_name']) ?? s(j['destination_zone']) ?? s(j['destination_zone_display']),
-      destinationCity: s(j['destination_city']) ?? s(j['dropoff_city']) ?? s(j['city']),
+      pickupZoneName: s(j['pickup_zone_name']) ??
+          s(j['pickup_zone']) ??
+          s(j['pickup_zone_display']),
+      destinationZoneName: s(j['destination_zone_name']) ??
+          s(j['destination_zone']) ??
+          s(j['destination_zone_display']),
+      destinationCity:
+          s(j['destination_city']) ?? s(j['dropoff_city']) ?? s(j['city']),
       offeredFare: d(j['offered_fare']) ?? d(j['fare']) ?? d(j['final_fare']),
       distanceKm: d(j['distance_km']),
-      estimatedDurationMin: d(j['estimated_duration_min']) ?? d(j['duration_min']),
+      estimatedDurationMin:
+          d(j['estimated_duration_min']) ?? d(j['duration_min']),
     );
   }
 
   bool get isDisplayable {
-    final hasRoute = (pickupZoneName != null && pickupZoneName!.trim().isNotEmpty) &&
-        (((destinationZoneName != null && destinationZoneName!.trim().isNotEmpty) ||
+    final hasRoute = (pickupZoneName != null &&
+            pickupZoneName!.trim().isNotEmpty) &&
+        (((destinationZoneName != null &&
+                destinationZoneName!.trim().isNotEmpty) ||
             (destinationCity != null && destinationCity!.trim().isNotEmpty)));
-    final hasIdentity = rideRequestId != null && rideRequestId!.trim().isNotEmpty;
+    final hasIdentity =
+        rideRequestId != null && rideRequestId!.trim().isNotEmpty;
     return hasRoute && hasIdentity;
   }
+}
+
+@immutable
+class DriverReturnModeStatus {
+  final bool ok;
+  final bool enabled;
+  final bool autoAcceptEnabled;
+  final String? destinationZoneId;
+  final String? destinationLabel;
+  final double? destinationLat;
+  final double? destinationLng;
+  final double pickupRadiusKm;
+  final double returnDiscountPct;
+  final DateTime? activatedAt;
+  final DateTime? disabledAt;
+  final DateTime? lastPromptAt;
+  final DateTime? promptDismissedUntil;
+  final bool canPrompt;
+  final String? error;
+
+  const DriverReturnModeStatus({
+    required this.ok,
+    this.enabled = false,
+    this.autoAcceptEnabled = false,
+    this.destinationZoneId,
+    this.destinationLabel,
+    this.destinationLat,
+    this.destinationLng,
+    this.pickupRadiusKm = 10,
+    this.returnDiscountPct = 0,
+    this.activatedAt,
+    this.disabledAt,
+    this.lastPromptAt,
+    this.promptDismissedUntil,
+    this.canPrompt = false,
+    this.error,
+  });
+
+  static DriverReturnModeStatus fromJson(Map<String, dynamic> j) {
+    DateTime? dt(dynamic v) {
+      if (v is String) return DateTime.tryParse(v);
+      return null;
+    }
+
+    double? dbl(dynamic v) => (v as num?)?.toDouble();
+
+    return DriverReturnModeStatus(
+      ok: j['ok'] == true,
+      enabled: j['enabled'] == true,
+      autoAcceptEnabled: j['auto_accept_enabled'] == true,
+      destinationZoneId: j['destination_zone_id'] as String?,
+      destinationLabel: (j['destination_label'] as String?)?.trim(),
+      destinationLat: dbl(j['destination_lat']),
+      destinationLng: dbl(j['destination_lng']),
+      pickupRadiusKm: dbl(j['pickup_radius_km']) ?? 10,
+      returnDiscountPct: dbl(j['return_discount_pct']) ?? 0,
+      activatedAt: dt(j['activated_at']),
+      disabledAt: dt(j['disabled_at']),
+      lastPromptAt: dt(j['last_prompt_at']),
+      promptDismissedUntil: dt(j['prompt_dismissed_until']),
+      canPrompt: j['can_prompt'] == true,
+      error: j['error'] as String?,
+    );
+  }
+
+  bool get hasDestination =>
+      destinationLabel != null && destinationLabel!.trim().isNotEmpty;
+
+  String get destinationDisplay => hasDestination ? destinationLabel! : '—';
 }
 
 @immutable

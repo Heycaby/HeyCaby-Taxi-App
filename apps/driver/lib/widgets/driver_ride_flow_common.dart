@@ -55,9 +55,9 @@ class DriverRideFlowScaffold extends StatelessWidget {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(
                   DriverSpacing.screenEdge,
-                  DriverSpacing.md,
-                  DriverSpacing.screenEdge,
                   DriverSpacing.lg,
+                  DriverSpacing.screenEdge,
+                  DriverSpacing.xl,
                 ),
                 child: content,
               ),
@@ -192,15 +192,38 @@ class DriverRideTripSummary extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (riderName != null) ...[
-          Text(
-            riderName!,
-            style: typography.headlineSmall.copyWith(
-              color: colors.text,
-              fontWeight: FontWeight.w800,
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: DriverSpacing.md,
+              vertical: DriverSpacing.sm,
             ),
-            textAlign: TextAlign.center,
+            decoration: BoxDecoration(
+              color: colors.card.withValues(alpha: 0.86),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: colors.border),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.person_rounded, size: 18, color: colors.primary),
+                const SizedBox(width: DriverSpacing.xs),
+                Flexible(
+                  child: Text(
+                    riderName!,
+                    style: typography.titleSmall.copyWith(
+                      color: colors.text,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ).driverFadeSlideIn(staggerIndex: staggerIndex),
-          const SizedBox(height: DriverSpacing.lg),
+          const SizedBox(height: DriverSpacing.md),
         ],
         DriverRideCard(
           colors: colors,
@@ -245,20 +268,45 @@ class DriverRideActionGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (var i = 0; i < actions.length; i++) ...[
-          if (i > 0) const SizedBox(height: DriverSpacing.sm),
-          DriverRideActionChip(
-            label: actions[i].label,
-            icon: actions[i].icon,
-            colors: colors,
-            typography: typography,
-            onTap: actions[i].enabled ? actions[i].onTap : null,
-          ),
-        ],
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final twoColumns = actions.length > 1 && constraints.maxWidth >= 320;
+        if (!twoColumns) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < actions.length; i++) ...[
+                if (i > 0) const SizedBox(height: DriverSpacing.sm),
+                DriverRideActionChip(
+                  label: actions[i].label,
+                  icon: actions[i].icon,
+                  colors: colors,
+                  typography: typography,
+                  onTap: actions[i].enabled ? actions[i].onTap : null,
+                ),
+              ],
+            ],
+          );
+        }
+
+        return Wrap(
+          spacing: DriverSpacing.sm,
+          runSpacing: DriverSpacing.sm,
+          children: [
+            for (final action in actions)
+              SizedBox(
+                width: (constraints.maxWidth - DriverSpacing.sm) / 2,
+                child: DriverRideActionChip(
+                  label: action.label,
+                  icon: action.icon,
+                  colors: colors,
+                  typography: typography,
+                  onTap: action.enabled ? action.onTap : null,
+                ),
+              ),
+          ],
+        );
+      },
     ).driverFadeSlideIn(staggerIndex: 2);
   }
 }

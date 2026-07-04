@@ -10,19 +10,26 @@ String mapboxStyleUriForTheme(String themeId) {
     'MAPBOX_STYLE_DAYLIGHT': String.fromEnvironment('MAPBOX_STYLE_DAYLIGHT'),
     'MAPBOX_STYLE_FRESH': String.fromEnvironment('MAPBOX_STYLE_FRESH'),
     'MAPBOX_STYLE_BLOSSOM': String.fromEnvironment('MAPBOX_STYLE_BLOSSOM'),
-    'MAPBOX_STYLE_TAXI_SHADE_6': String.fromEnvironment('MAPBOX_STYLE_TAXI_SHADE_6'),
-    'MAPBOX_STYLE_TAXI_SHADE_2': String.fromEnvironment('MAPBOX_STYLE_TAXI_SHADE_2'),
-    'MAPBOX_STYLE_FOREST_DUSK': String.fromEnvironment('MAPBOX_STYLE_FOREST_DUSK'),
+    'MAPBOX_STYLE_TAXI_SHADE_6':
+        String.fromEnvironment('MAPBOX_STYLE_TAXI_SHADE_6'),
+    'MAPBOX_STYLE_TAXI_SHADE_2':
+        String.fromEnvironment('MAPBOX_STYLE_TAXI_SHADE_2'),
+    'MAPBOX_STYLE_FOREST_DUSK':
+        String.fromEnvironment('MAPBOX_STYLE_FOREST_DUSK'),
     'MAPBOX_STYLE_ROSE_NOIR': String.fromEnvironment('MAPBOX_STYLE_ROSE_NOIR'),
-    'MAPBOX_STYLE_ALPINE_CREAM': String.fromEnvironment('MAPBOX_STYLE_ALPINE_CREAM'),
-    'MAPBOX_STYLE_WARM_GLOSS': String.fromEnvironment('MAPBOX_STYLE_WARM_GLOSS'),
+    'MAPBOX_STYLE_ALPINE_CREAM':
+        String.fromEnvironment('MAPBOX_STYLE_ALPINE_CREAM'),
+    'MAPBOX_STYLE_WARM_GLOSS':
+        String.fromEnvironment('MAPBOX_STYLE_WARM_GLOSS'),
     'MAPBOX_STYLE_FROSTY_BLACK_WHITE':
         String.fromEnvironment('MAPBOX_STYLE_FROSTY_BLACK_WHITE'),
     'MAPBOX_STYLE_FROSTY_BLACK_YELLOW':
         String.fromEnvironment('MAPBOX_STYLE_FROSTY_BLACK_YELLOW'),
-    'MAPBOX_STYLE_MIDNIGHT_CARBON': String.fromEnvironment('MAPBOX_STYLE_MIDNIGHT_CARBON'),
+    'MAPBOX_STYLE_MIDNIGHT_CARBON':
+        String.fromEnvironment('MAPBOX_STYLE_MIDNIGHT_CARBON'),
     'MAPBOX_STYLE_DEFAULT': String.fromEnvironment('MAPBOX_STYLE_DEFAULT'),
-    'MAPBOX_STYLE_NAVIGATION_DAY': String.fromEnvironment('MAPBOX_STYLE_NAVIGATION_DAY'),
+    'MAPBOX_STYLE_NAVIGATION_DAY':
+        String.fromEnvironment('MAPBOX_STYLE_NAVIGATION_DAY'),
   };
 
   String? pick(String? a, String? b) {
@@ -33,14 +40,21 @@ String mapboxStyleUriForTheme(String themeId) {
 
   String? styleFromEnv;
   switch (themeId) {
+    case 'brand-orange':
+      styleFromEnv =
+          pick(env['MAPBOX_STYLE_DAYLIGHT'], env['MAPBOX_STYLE_TAXI_SHADE_6']);
+      break;
     case 'daylight':
-      styleFromEnv = pick(env['MAPBOX_STYLE_DAYLIGHT'], env['MAPBOX_STYLE_TAXI_SHADE_6']);
+      styleFromEnv =
+          pick(env['MAPBOX_STYLE_DAYLIGHT'], env['MAPBOX_STYLE_TAXI_SHADE_6']);
       break;
     case 'fresh':
-      styleFromEnv = pick(env['MAPBOX_STYLE_FRESH'], env['MAPBOX_STYLE_FOREST_DUSK']);
+      styleFromEnv =
+          pick(env['MAPBOX_STYLE_FRESH'], env['MAPBOX_STYLE_FOREST_DUSK']);
       break;
     case 'blossom':
-      styleFromEnv = pick(env['MAPBOX_STYLE_BLOSSOM'], env['MAPBOX_STYLE_ROSE_NOIR']);
+      styleFromEnv =
+          pick(env['MAPBOX_STYLE_BLOSSOM'], env['MAPBOX_STYLE_ROSE_NOIR']);
       break;
     case 'taxi-shade-6':
       styleFromEnv = env['MAPBOX_STYLE_TAXI_SHADE_6'];

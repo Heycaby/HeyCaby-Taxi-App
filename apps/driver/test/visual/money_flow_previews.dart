@@ -7,7 +7,7 @@ import 'package:heycaby_driver/theme/driver_typography.dart';
 import 'package:heycaby_driver/ui/driver_status_badge.dart';
 import 'package:heycaby_driver/widgets/driver_earnings_hub_body.dart';
 import 'package:heycaby_driver/widgets/driver_payment_history_body.dart';
-import 'package:heycaby_driver/widgets/driver_subscription_gate_body.dart';
+import 'package:heycaby_driver/widgets/driver_platform_balance_body.dart';
 
 /// Golden preview — Earnings Hub with mock metrics.
 class DriverEarningsHubPreview extends StatelessWidget {
@@ -72,9 +72,9 @@ class DriverEarningsHubPreview extends StatelessWidget {
   }
 }
 
-/// Golden preview — Subscription Gate (active founding member).
-class DriverSubscriptionGatePreview extends StatelessWidget {
-  const DriverSubscriptionGatePreview({
+/// Golden preview — Platform Balance (current driver).
+class DriverPlatformBalancePreview extends StatelessWidget {
+  const DriverPlatformBalancePreview({
     super.key,
     required this.colors,
     required this.typography,
@@ -83,26 +83,20 @@ class DriverSubscriptionGatePreview extends StatelessWidget {
   final DriverColors colors;
   final DriverTypography typography;
 
-  static final _summary = DriverSubscriptionSummary(
-    isFounding: true,
-    foundingNumber: 42,
-    weeklyFeeDisplay: '€12,50',
-    weeklyFeeUnknown: false,
-    statusLine: DriverStrings.billingStatusNoPaymentDue,
+  static final _summary = DriverPlatformBalanceSummary(
+    outstandingDisplay: '€0.00',
+    statusLine: DriverStrings.platformBalanceCurrent,
     statusTone: DriverStatusTone.success,
-    nextPaymentLabel:
-        '${DriverStrings.billingNextPayment}: ${DriverStrings.billingDaysRemaining(12)}',
-    showSubscriptionControls: true,
-    subscriptionPaused: false,
-    paymentRequired: false,
-    showOptionalCheckout: true,
-    showAppleRestore: false,
-    showPaymentMethods: true,
+    dueLine: DriverStrings.platformBalanceCurrentBody,
+    rideRequestsPaused: false,
+    paymentPending: false,
+    canSettle: false,
+    isCurrent: true,
   );
 
   @override
   Widget build(BuildContext context) {
-    return DriverSubscriptionGateBody(
+    return DriverPlatformBalanceBody(
       colors: colors,
       typography: typography,
       summary: _summary,
@@ -110,12 +104,7 @@ class DriverSubscriptionGatePreview extends StatelessWidget {
       errorMessage: null,
       onBack: () {},
       onViewHistory: () {},
-      onPayNow: () {},
-      onOptionalPay: () {},
-      onPaymentMethods: () {},
-      onPauseSubscription: () {},
-      onResumeSubscription: () {},
-      onCancelSubscription: () {},
+      onSettleBalance: null,
     );
   }
 }

@@ -179,7 +179,7 @@ final appRouter = GoRouter(
         if (args is! DriverRuntimeGateArgs) {
           return _page(
             state,
-            const DriverRuntimeGateScreen(
+            DriverRuntimeGateScreen(
               args: DriverRuntimeGateArgs(
                 title: DriverStrings.runtimeUnknownBlockedTitle,
                 body: DriverStrings.runtimeUnknownBlockedBody,

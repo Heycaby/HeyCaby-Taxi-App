@@ -1,4 +1,4 @@
-import 'dart:async' show unawaited;
+import 'dart:async' show Timer, unawaited;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
@@ -151,12 +151,14 @@ class MarketplaceOffersState {
 
 class MarketplaceOffersNotifier extends Notifier<MarketplaceOffersState> {
   RealtimeChannel? _bidsChannel;
+  Timer? _pollTimer;
   String? _rideId;
 
   @override
   MarketplaceOffersState build() {
     ref.onDispose(() {
       _bidsChannel?.unsubscribe();
+      _pollTimer?.cancel();
     });
     return const MarketplaceOffersState(isLoading: true);
   }
@@ -170,6 +172,7 @@ class MarketplaceOffersNotifier extends Notifier<MarketplaceOffersState> {
     await _refreshNearbyCount();
     await _refreshDriversNotified(rideId);
     _subscribe(rideId);
+    _startPollingFallback(rideId);
   }
 
   Future<void> _refreshDriversNotified(String rideId) async {
@@ -254,6 +257,15 @@ class MarketplaceOffersNotifier extends Notifier<MarketplaceOffersState> {
           callback: (_) => unawaited(_refreshOffers(rideId)),
         )
         .subscribe();
+  }
+
+  void _startPollingFallback(String rideId) {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (_rideId != rideId) return;
+      unawaited(_refreshOffers(rideId));
+      unawaited(_refreshDriversNotified(rideId));
+    });
   }
 
   void dismissLocally(String bidId) {

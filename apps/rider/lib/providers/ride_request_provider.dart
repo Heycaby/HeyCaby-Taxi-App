@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_models/heycaby_models.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
@@ -13,7 +14,9 @@ import '../services/booking_draft_storage.dart';
 import '../services/sound_service.dart';
 import '../services/heycaby_widget_sync.dart';
 import '../services/nearby_supply_service.dart';
+import '../services/rider_device_permission_snapshot.dart';
 import '../services/rider_notification_lifecycle_service.dart';
+import '../services/rider_permission_backend_sync.dart';
 import '../services/stale_ride_cleanup.dart';
 import '../utils/wkt_point.dart';
 import 'booking_provider.dart';
@@ -256,6 +259,23 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
 
     try {
       final identity = await ref.read(riderIdentityProvider.future);
+      final locationServiceEnabled =
+          await Geolocator.isLocationServiceEnabled();
+      final permissionSnapshot = await RiderDevicePermissionSnapshot.read();
+      final locationReady =
+          locationServiceEnabled && permissionSnapshot.locationGranted;
+      await RiderPermissionBackendSync.push(
+        locationGranted: locationReady,
+        notificationsGranted: permissionSnapshot.notificationsGranted,
+        riderIdentityId: identity.identityId,
+      );
+      if (!locationReady) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'location_required',
+        );
+        return false;
+      }
 
       final supabase = HeyCabySupabase.client;
       final authUserId = supabase.auth.currentUser?.id;
@@ -265,7 +285,9 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
       // Guest riders can book without email/login; keep a local token for RLS.
       if (riderToken == null || riderToken.isEmpty) {
         riderToken = _generateGuestRiderToken();
-        await ref.read(riderIdentityProvider.notifier).saveGuestToken(riderToken);
+        await ref
+            .read(riderIdentityProvider.notifier)
+            .saveGuestToken(riderToken);
       }
       if (verifiedIdentityId != null && verifiedIdentityId.isNotEmpty) {
         try {
@@ -390,7 +412,8 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
         'pickup_contact_name': pickupContactName,
         if (booking.scheduledAt != null)
           'scheduled_pickup_at': booking.scheduledAt!.toIso8601String(),
-        if (riderToken != null && riderToken.isNotEmpty) 'rider_token': riderToken,
+        if (riderToken != null && riderToken.isNotEmpty)
+          'rider_token': riderToken,
         if (verifiedIdentityId != null) 'rider_identity_id': verifiedIdentityId,
         // Marketplace: DB chk_marketplace_requires_fare → marketplace_offered_fare NOT NULL
         if (booking.effectiveRideMode ==
@@ -471,9 +494,14 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
       if (kDebugMode) {
         debugPrint('CreateRide stack trace: $stackTrace');
       }
+      final message = e.toString();
+      final error = message.contains('rider_location_required') ||
+              message.contains('Location permission is required')
+          ? 'location_required'
+          : 'ride_creation_failed';
       state = state.copyWith(
         isLoading: false,
-        error: 'ride_creation_failed',
+        error: error,
       );
       return false;
     }

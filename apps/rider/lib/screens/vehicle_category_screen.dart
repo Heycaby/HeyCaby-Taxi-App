@@ -10,13 +10,10 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 import '../models/rider_vehicle_category.dart';
 import '../providers/booking_provider.dart';
 import '../providers/nearby_category_supply_provider.dart';
-import '../providers/trip_category_estimates_provider.dart';
 import '../services/booking_flow_navigation.dart';
 import '../services/nearby_supply_service.dart';
 import '../widgets/booking/booking_flow_screen_header.dart';
-import '../widgets/booking/smart_vehicle_bundle_card.dart';
 import '../widgets/primary_cancel_row.dart';
-import '../widgets/vehicle_category_supply_card.dart';
 
 class VehicleCategoryScreen extends ConsumerStatefulWidget {
   const VehicleCategoryScreen({
@@ -34,15 +31,13 @@ class VehicleCategoryScreen extends ConsumerStatefulWidget {
 }
 
 class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
+  static const _visibleCategories = <RiderVehicleCategory>[
+    RiderVehicleCategory.standard,
+    RiderVehicleCategory.taxibus,
+    RiderVehicleCategory.wheelchair,
+  ];
+
   RiderVehicleCategory? _selectedCategory;
-  RiderVehicleCategory? _expandedCategory;
-
-  /// Specific driver the rider has chosen (null = post to all).
-  String? _selectedDriverId;
-  double? _selectedDriverFare;
-
-  /// True when rider tapped "Post to all" explicitly.
-  bool _postToAll = false;
 
   bool _seededFromBookingVehicle = false;
   bool _categoryManuallyTouched = false;
@@ -51,15 +46,10 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
   bool _showSupplyFallbackBanner = false;
   bool _selectedFromIdentityPreferred = false;
 
-  /// Multi-category bundle (keys from Supabase estimates).
-  Set<String>? _smartSelection;
-  String? _lastEstimateSig;
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.invalidate(tripCategoryEstimatesProvider);
       _seedVehicleFromProfile();
       _mergeContactFromIdentityIfEmpty();
     });
@@ -83,8 +73,10 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
       if (c != null) {
         setState(() {
           _seededFromBookingVehicle = true;
-          _selectedCategory = c;
-          _expandedCategory = c;
+          _selectedCategory = _visibleCategories.contains(c)
+              ? c
+              : RiderVehicleCategory.standard;
+          _showInvalidPreferredBanner = !_visibleCategories.contains(c);
         });
       }
       return;
@@ -103,7 +95,6 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
       }
       setState(() {
         _selectedCategory = RiderVehicleCategory.standard;
-        _expandedCategory = RiderVehicleCategory.standard;
         _showInvalidPreferredBanner = true;
       });
       return;
@@ -116,8 +107,9 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
     }
     setState(() {
       _selectedFromIdentityPreferred = true;
-      _selectedCategory = c;
-      _expandedCategory = c;
+      _selectedCategory =
+          _visibleCategories.contains(c) ? c : RiderVehicleCategory.standard;
+      _showInvalidPreferredBanner = !_visibleCategories.contains(c);
     });
   }
 
@@ -132,43 +124,11 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
   void _selectCategory(RiderVehicleCategory c) {
     _categoryManuallyTouched = true;
     setState(() {
-      if (_selectedCategory != c) {
-        _selectedDriverId = null;
-        _selectedDriverFare = null;
-        _postToAll = false;
-      }
       _selectedCategory = c;
-      _expandedCategory = c;
-    });
-  }
-
-  void _toggleExpand(RiderVehicleCategory c) {
-    setState(() {
-      _expandedCategory = _expandedCategory == c ? null : c;
-    });
-  }
-
-  void _selectDriver(String driverId, double fare) {
-    HapticService.selectionClick();
-    setState(() {
-      _selectedDriverId = driverId;
-      _selectedDriverFare = fare;
-      _postToAll = false;
-    });
-  }
-
-  void _postToAllForCategory() {
-    HapticService.selectionClick();
-    setState(() {
-      _selectedDriverId = null;
-      _selectedDriverFare = null;
-      _postToAll = true;
     });
   }
 
   String _nextLabel(AppLocalizations l10n) {
-    if (_selectedDriverId != null) return l10n.bookDriver;
-    if (_postToAll) return l10n.postToAllDrivers;
     return l10n.next;
   }
 
@@ -200,11 +160,12 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
         RiderVehicleCategory.tryParse(id?.preferredVehicleCategory);
     if (preferred == null || _selectedCategory != preferred) return;
 
-    final snap = supplyMap[preferred] ?? CategorySupplySnapshot.empty(preferred);
+    final snap =
+        supplyMap[preferred] ?? CategorySupplySnapshot.empty(preferred);
     if (snap.driverCount > 0) return;
 
     RiderVehicleCategory? replacement;
-    for (final cat in RiderVehicleCategory.values) {
+    for (final cat in _visibleCategories) {
       final s = supplyMap[cat] ?? CategorySupplySnapshot.empty(cat);
       if (s.driverCount > 0) {
         replacement = cat;
@@ -219,13 +180,41 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
       if (!mounted) return;
       setState(() {
         _selectedCategory = picked;
-        _expandedCategory = picked;
         _showSupplyFallbackBanner = true;
-        _selectedDriverId = null;
-        _selectedDriverFare = null;
-        _postToAll = false;
       });
     });
+  }
+
+  List<NearbyDriverOffer> _offersForSelectedCategory(
+    Map<RiderVehicleCategory, CategorySupplySnapshot>? supplyMap,
+  ) {
+    final selected = _selectedCategory ?? RiderVehicleCategory.standard;
+    return _snapFor(supplyMap, selected).drivers;
+  }
+
+  String _fmtEuro(double value) {
+    final whole = value == value.roundToDouble();
+    return whole
+        ? '€${value.toStringAsFixed(0)}'
+        : '€${value.toStringAsFixed(1)}';
+  }
+
+  String _priceRangeText(List<NearbyDriverOffer> offers) {
+    if (offers.isEmpty) return '—';
+    final prices = offers.map((e) => e.estimatedFareEuro).toList()..sort();
+    final min = prices.first;
+    final max = prices.last;
+    if (min == max) return _fmtEuro(min);
+    return '${_fmtEuro(min)} – ${_fmtEuro(max)}';
+  }
+
+  String _pickupRangeText(List<NearbyDriverOffer> offers) {
+    if (offers.isEmpty) return '—';
+    final nearest =
+        offers.map((e) => e.distanceKmPickup).reduce((a, b) => a < b ? a : b);
+    final min = math.max(3, (nearest * 3.5).round() + 2);
+    final max = min + 3;
+    return '$min–$max min';
   }
 
   @override
@@ -234,39 +223,8 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
     final typo = ref.watch(typographyProvider);
     final l10n = AppLocalizations.of(context);
     final booking = ref.watch(bookingProvider);
-    final estAsync = ref.watch(tripCategoryEstimatesProvider);
-    final estimates = estAsync.valueOrNull ?? [];
     final hasRoute = booking.pickup != null && booking.destination != null;
-    final hasEstimateRows = estimates.isNotEmpty;
-    final showSmartExperience = hasRoute;
-    final showDegradedPicker = showSmartExperience &&
-        !estAsync.isLoading &&
-        !hasEstimateRows;
-
-    ref.listen(tripCategoryEstimatesProvider, (prev, next) {
-      next.whenData((list) {
-        if (list.isEmpty || !mounted) return;
-        final sig = list.map((e) => '${e.categoryKey}:${e.priceEuro}').join('|');
-        if (_lastEstimateSig == sig) return;
-        _lastEstimateSig = sig;
-        final b = ref.read(bookingProvider);
-        final fromB =
-            b.vehicleCategories.where((k) => list.any((e) => e.categoryKey == k)).toSet();
-        final initial = fromB.isNotEmpty
-            ? fromB
-            : (b.vehicleCategory != null &&
-                    list.any((e) => e.categoryKey == b.vehicleCategory)
-                ? {b.vehicleCategory!}
-                : list.map((e) => e.categoryKey).toSet());
-        setState(() => _smartSelection = initial);
-      });
-    });
-
-    final canProceed = !showSmartExperience
-        ? _selectedCategory != null
-        : hasEstimateRows
-            ? (_smartSelection != null && _smartSelection!.isNotEmpty)
-            : _selectedCategory != null;
+    final canProceed = _selectedCategory != null;
 
     final mq = MediaQuery.of(context);
     // PrimaryCancelRow is 52px tall inside padded footer; reserve space so the
@@ -279,31 +237,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
     final supplyAsync = ref.watch(nearbyCategorySupplyProvider);
     final supplyMap = supplyAsync.valueOrNull;
     _maybeApplySupplyFallback(supplyMap);
-
-    Widget buildCategoryCard(
-      RiderVehicleCategory cat,
-      String title,
-      String subtitle,
-      IconData icon,
-    ) {
-      return VehicleCategorySupplyCard(
-        category: cat,
-        title: title,
-        subtitle: subtitle,
-        icon: icon,
-        snapshot: _snapFor(supplyMap, cat),
-        selectedCategory: _selectedCategory,
-        isExpanded: _expandedCategory == cat,
-        onSelect: () => _selectCategory(cat),
-        onToggleExpand: () => _toggleExpand(cat),
-        colors: colors,
-        typography: typo,
-        selectedDriverId: _selectedCategory == cat ? _selectedDriverId : null,
-        postToAllSelected: _selectedCategory == cat && _postToAll,
-        onSelectDriver: _selectDriver,
-        onPostToAll: _postToAllForCategory,
-      );
-    }
+    final selectedOffers = _offersForSelectedCategory(supplyMap);
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -404,263 +338,170 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                   HeyCabySpacing.sectionMedium + footerReserve,
                 ),
                 children: [
-                  if (showSmartExperience) ...[
-                    if (hasEstimateRows && _smartSelection != null)
-                      SmartVehicleBundleCard(
-                        estimates: estimates,
-                        selectedKeys: _smartSelection!,
-                        onSelectionChanged: (s) =>
-                            setState(() => _smartSelection = s),
-                        colors: colors,
-                        typography: typo,
-                        l10n: l10n,
-                      )
-                    else if (estAsync.isLoading)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 24),
-                        child: Center(
-                          child: SizedBox(
-                            width: 28,
-                            height: 28,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: colors.accent,
-                            ),
-                          ),
-                        ),
-                      )
-                    else
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsetsDirectional.fromSTEB(
-                          18, 18, 18, 16,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(22),
-                          color: colors.card,
-                          border: Border.all(color: colors.border),
-                          boxShadow: [
-                            BoxShadow(
-                              color: colors.text.withValues(alpha: 0.06),
-                              blurRadius: 14,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              l10n.smartBundleLoadError,
-                              style: typo.bodyMedium.copyWith(
-                                color: colors.textMid,
-                                height: 1.35,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            FilledButton.tonal(
-                              onPressed: () {
-                                HapticService.lightTap();
-                                ref.invalidate(tripCategoryEstimatesProvider);
-                              },
-                              child: Text(l10n.smartBundleRetry),
-                            ),
-                          ],
-                        ),
-                      ),
-                    SizedBox(height: HeyCabySpacing.sectionMedium),
-                  ],
-                  if (!showSmartExperience || showDegradedPicker) ...[
-                    buildCategoryCard(
+                  _MarketSupplySummaryCard(
+                    driverCount: selectedOffers.length,
+                    priceRange: _priceRangeText(selectedOffers),
+                    pickupRange: _pickupRangeText(selectedOffers),
+                    colors: colors,
+                    typography: typo,
+                    isLoading: supplyAsync.isLoading,
+                  ),
+                  SizedBox(height: HeyCabySpacing.component),
+                  _VehicleNeedCard(
+                    selected:
+                        _selectedCategory == RiderVehicleCategory.standard,
+                    icon: Icons.local_taxi_outlined,
+                    title: l10n.vehicleStandard,
+                    subtitle: l10n.vehicleStandardDesc,
+                    supplyLabel: l10n.vehicleSupplyNearbyCount(_snapFor(
+                      supplyMap,
                       RiderVehicleCategory.standard,
-                      l10n.vehicleStandard,
-                      l10n.vehicleStandardDesc,
-                      Icons.directions_car_outlined,
-                    ),
-                    SizedBox(height: HeyCabySpacing.componentSmall),
-                    buildCategoryCard(
-                      RiderVehicleCategory.comfort,
-                      l10n.vehicleComfort,
-                      l10n.vehicleComfortDesc,
-                      Icons.airline_seat_recline_extra,
-                    ),
-                    SizedBox(height: HeyCabySpacing.componentSmall),
-                    buildCategoryCard(
+                    ).driverCount),
+                    colors: colors,
+                    typography: typo,
+                    onTap: () => _selectCategory(RiderVehicleCategory.standard),
+                  ),
+                  SizedBox(height: HeyCabySpacing.componentSmall),
+                  _VehicleNeedCard(
+                    selected: _selectedCategory == RiderVehicleCategory.taxibus,
+                    icon: Icons.airport_shuttle_outlined,
+                    title: l10n.vehicleTaxibus,
+                    subtitle: l10n.vehicleTaxibusDesc,
+                    supplyLabel: l10n.vehicleSupplyNearbyCount(_snapFor(
+                      supplyMap,
                       RiderVehicleCategory.taxibus,
-                      l10n.vehicleTaxibus,
-                      l10n.vehicleTaxibusDesc,
-                      Icons.airport_shuttle_outlined,
-                    ),
-                    SizedBox(height: HeyCabySpacing.componentSmall),
-                    buildCategoryCard(
+                    ).driverCount),
+                    colors: colors,
+                    typography: typo,
+                    onTap: () => _selectCategory(RiderVehicleCategory.taxibus),
+                  ),
+                  SizedBox(height: HeyCabySpacing.componentSmall),
+                  _VehicleNeedCard(
+                    selected:
+                        _selectedCategory == RiderVehicleCategory.wheelchair,
+                    icon: Icons.accessible_forward_rounded,
+                    title: l10n.vehicleWheelchair,
+                    subtitle: l10n.vehicleWheelchairDesc,
+                    supplyLabel: l10n.vehicleSupplyNearbyCount(_snapFor(
+                      supplyMap,
                       RiderVehicleCategory.wheelchair,
-                      l10n.vehicleWheelchair,
-                      l10n.vehicleWheelchairDesc,
-                      Icons.accessible,
+                    ).driverCount),
+                    colors: colors,
+                    typography: typo,
+                    onTap: () =>
+                        _selectCategory(RiderVehicleCategory.wheelchair),
+                  ),
+                  SizedBox(height: HeyCabySpacing.sectionMedium),
+                  Theme(
+                    data: Theme.of(context).copyWith(
+                      dividerColor: Colors.transparent,
+                      splashColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
                     ),
-                    SizedBox(height: HeyCabySpacing.sectionMedium),
-                  ],
-                  Container(
-                    padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 12, 14),
-                    decoration: BoxDecoration(
-                      color: colors.card,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: booking.favoritesFirst
-                            ? colors.accent.withValues(alpha: 0.35)
-                            : colors.border.withValues(alpha: 0.85),
-                        width: 1,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: colors.card,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: colors.border),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colors.text.withValues(alpha: 0.04),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
+                            spreadRadius: -6,
+                          ),
+                        ],
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colors.text.withValues(alpha: 0.035),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                          spreadRadius: -4,
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
+                      child: ExpansionTile(
+                        tilePadding:
+                            const EdgeInsetsDirectional.fromSTEB(18, 8, 14, 8),
+                        childrenPadding:
+                            const EdgeInsetsDirectional.fromSTEB(14, 0, 14, 14),
+                        leading: Container(
+                          width: 42,
+                          height: 42,
                           decoration: BoxDecoration(
-                            color: booking.favoritesFirst
-                                ? colors.accent.withValues(alpha: 0.12)
-                                : colors.bgAlt.withValues(alpha: 0.6),
+                            color: colors.accentL.withValues(alpha: 0.75),
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Icon(
-                            Icons.favorite_rounded,
-                            color: booking.favoritesFirst
-                                ? colors.accent
-                                : colors.textMid,
+                            Icons.tune_rounded,
+                            color: colors.accent,
                             size: 22,
                           ),
                         ),
-                        SizedBox(width: HeyCabySpacing.component),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                l10n.favoriteDriversFirstTripDetail,
-                                style: typo.titleSmall.copyWith(
-                                  color: colors.text,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                l10n.myDriversHomeSubtitle,
-                                style: typo.bodySmall.copyWith(
-                                  color: colors.textSoft,
-                                  height: 1.3,
-                                ),
-                              ),
-                            ],
+                        title: Text(
+                          l10n.vehicleOptionalPreferencesTitle,
+                          style: typo.titleSmall.copyWith(
+                            color: colors.text,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
-                        Switch.adaptive(
-                          value: booking.favoritesFirst,
-                          onChanged: (v) {
-                            HapticService.lightTap();
-                            ref
-                                .read(bookingProvider.notifier)
-                                .setFavoritesFirst(v);
-                          },
-                          activeTrackColor: colors.accent,
+                        subtitle: Text(
+                          l10n.vehicleOptionalPreferencesSubtitle,
+                          style:
+                              typo.bodySmall.copyWith(color: colors.textSoft),
                         ),
-                      ],
+                        children: [
+                          _PreferenceSwitchRow(
+                            icon: Icons.favorite_rounded,
+                            title: l10n.favoriteDriversFirstTripDetail,
+                            subtitle: l10n.myDriversHomeSubtitle,
+                            value: booking.favoritesFirst,
+                            colors: colors,
+                            typography: typo,
+                            onChanged: (v) {
+                              HapticService.lightTap();
+                              ref
+                                  .read(bookingProvider.notifier)
+                                  .setFavoritesFirst(v);
+                            },
+                          ),
+                          _PreferenceSwitchRow(
+                            icon: Icons.pets_rounded,
+                            title: l10n.vehiclePetsWelcome,
+                            subtitle: l10n.petFriendlyDesc,
+                            value: booking.petFriendly,
+                            colors: colors,
+                            typography: typo,
+                            onChanged: (v) {
+                              HapticService.lightTap();
+                              ref
+                                  .read(bookingProvider.notifier)
+                                  .setPetFriendly(v);
+                            },
+                          ),
+                          _PreferenceSwitchRow(
+                            icon: Icons.u_turn_left_rounded,
+                            title: l10n.returnTripFareEstimatesTitle,
+                            subtitle: hasRoute
+                                ? l10n.returnTripFareEstimatesSubtitle
+                                : l10n.returnTripFareEstimatesRequiresRoute,
+                            value: hasRoute &&
+                                booking.returnTripFareEstimatesEnabled,
+                            enabled: hasRoute,
+                            colors: colors,
+                            typography: typo,
+                            onChanged: (v) {
+                              HapticService.lightTap();
+                              ref
+                                  .read(bookingProvider.notifier)
+                                  .setReturnTripFareEstimatesEnabled(v);
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  SizedBox(height: HeyCabySpacing.componentSmall),
+                  SizedBox(height: HeyCabySpacing.sectionMedium),
                   Container(
-                    padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 12, 14),
+                    padding:
+                        const EdgeInsetsDirectional.fromSTEB(16, 14, 12, 14),
                     decoration: BoxDecoration(
                       color: colors.card,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: booking.petFriendly
-                            ? colors.accent.withValues(alpha: 0.35)
-                            : colors.border.withValues(alpha: 0.85),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colors.text.withValues(alpha: 0.035),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                          spreadRadius: -4,
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: booking.petFriendly
-                                ? colors.accent.withValues(alpha: 0.12)
-                                : colors.bgAlt.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Icon(
-                            Icons.pets_rounded,
-                            color: booking.petFriendly
-                                ? colors.accent
-                                : colors.textMid,
-                            size: 22,
-                          ),
-                        ),
-                        SizedBox(width: HeyCabySpacing.component),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                l10n.petFriendly,
-                                style: typo.titleSmall.copyWith(
-                                  color: colors.text,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                l10n.petFriendlyDesc,
-                                style: typo.bodySmall.copyWith(
-                                  color: colors.textSoft,
-                                  height: 1.3,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Switch.adaptive(
-                          value: booking.petFriendly,
-                          onChanged: (v) {
-                            HapticService.lightTap();
-                            ref.read(bookingProvider.notifier).setPetFriendly(v);
-                          },
-                          activeTrackColor: colors.accent,
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: HeyCabySpacing.componentSmall),
-                  Container(
-                    padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 12, 14),
-                    decoration: BoxDecoration(
-                      color: colors.card,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: booking.returnTripFareEstimatesEnabled && hasRoute
-                            ? colors.accent.withValues(alpha: 0.35)
-                            : colors.border.withValues(alpha: 0.85),
-                        width: 1,
-                      ),
+                          color: colors.border.withValues(alpha: 0.85)),
                       boxShadow: [
                         BoxShadow(
                           color: colors.text.withValues(alpha: 0.035),
@@ -677,16 +518,12 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: booking.returnTripFareEstimatesEnabled && hasRoute
-                                ? colors.accent.withValues(alpha: 0.12)
-                                : colors.bgAlt.withValues(alpha: 0.6),
+                            color: colors.accentL.withValues(alpha: 0.65),
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Icon(
-                            Icons.u_turn_left_rounded,
-                            color: booking.returnTripFareEstimatesEnabled && hasRoute
-                                ? colors.accent
-                                : colors.textMid,
+                            Icons.info_outline_rounded,
+                            color: colors.accent,
                             size: 22,
                           ),
                         ),
@@ -696,7 +533,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                l10n.returnTripFareEstimatesTitle,
+                                l10n.vehicleIndependentPricingTitle,
                                 style: typo.titleSmall.copyWith(
                                   color: colors.text,
                                   fontWeight: FontWeight.w700,
@@ -704,9 +541,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                hasRoute
-                                    ? l10n.returnTripFareEstimatesSubtitle
-                                    : l10n.returnTripFareEstimatesRequiresRoute,
+                                l10n.vehicleIndependentPricingBody,
                                 style: typo.bodySmall.copyWith(
                                   color: colors.textSoft,
                                   height: 1.3,
@@ -715,27 +550,9 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                             ],
                           ),
                         ),
-                        Switch.adaptive(
-                          value: hasRoute && booking.returnTripFareEstimatesEnabled,
-                          onChanged: hasRoute
-                              ? (v) {
-                                  HapticService.lightTap();
-                                  ref
-                                      .read(bookingProvider.notifier)
-                                      .setReturnTripFareEstimatesEnabled(v);
-                                  setState(() {
-                                    _selectedDriverId = null;
-                                    _selectedDriverFare = null;
-                                    _postToAll = false;
-                                  });
-                                }
-                              : null,
-                          activeTrackColor: colors.accent,
-                        ),
                       ],
                     ),
                   ),
-                  SizedBox(height: HeyCabySpacing.sectionMedium),
                   if (_selectedFromIdentityPreferred &&
                       _selectedCategory != null &&
                       !_showInvalidPreferredBanner &&
@@ -754,7 +571,8 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                           decoration: BoxDecoration(
                             color: colors.accentL,
                             borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: colors.accent.withValues(alpha: 0.35)),
+                            border: Border.all(
+                                color: colors.accent.withValues(alpha: 0.35)),
                           ),
                           child: Text(
                             l10n.bookingUsualVehicleChip(
@@ -808,59 +626,34 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                     : () async {
                         final notifier = ref.read(bookingProvider.notifier);
                         final pet = ref.read(bookingProvider).petFriendly;
-                        if (hasEstimateRows && _smartSelection != null) {
-                          final keys = _smartSelection!.toList()
-                            ..sort((a, b) {
-                              final ia = estimates.indexWhere((e) => e.categoryKey == a);
-                              final ib = estimates.indexWhere((e) => e.categoryKey == b);
-                              return ia.compareTo(ib);
-                            });
-                          notifier.applyVehicleSelection(keys, petFriendly: pet);
-                          final prices = estimates
-                              .where((e) => _smartSelection!.contains(e.categoryKey))
-                              .map((e) => e.priceEuro)
-                              .toList()
-                            ..sort();
-                          if (prices.length == 1) {
-                            notifier.setTripPriceBand(
-                              minEuro: prices.first,
-                              maxEuro: prices.first,
-                            );
-                          } else if (prices.isNotEmpty) {
-                            notifier.setTripPriceBand(
-                              minEuro: prices.first,
-                              maxEuro: prices.last,
-                            );
-                          }
-                          notifier.clearSelectedDriver();
-                          await ref
-                              .read(riderIdentityProvider.notifier)
-                              .savePreferredVehicle(
-                                keys.first,
-                                petFriendly: pet,
-                              );
+                        final offers = _offersForSelectedCategory(supplyMap);
+                        final prices = offers
+                            .map((e) => e.estimatedFareEuro)
+                            .toList()
+                          ..sort();
+                        if (prices.isEmpty) {
+                          notifier.setTripPriceBand(
+                              minEuro: null, maxEuro: null);
                         } else {
-                          notifier.setTripPriceBand(minEuro: null, maxEuro: null);
-                          notifier.setVehicleCategory(
-                            _selectedCategory!.storageKey,
-                            petFriendly: pet,
+                          notifier.setTripPriceBand(
+                            minEuro: prices.first,
+                            maxEuro: prices.last,
                           );
-                          await ref
-                              .read(riderIdentityProvider.notifier)
-                              .savePreferredVehicle(
-                                _selectedCategory!.storageKey,
-                                petFriendly: pet,
-                              );
-                          if (_selectedDriverId != null &&
-                              _selectedDriverFare != null) {
-                            notifier.setSelectedDriver(
-                                _selectedDriverId!, _selectedDriverFare!);
-                          } else {
-                            notifier.clearSelectedDriver();
-                          }
                         }
+                        notifier.setVehicleCategory(
+                          _selectedCategory!.storageKey,
+                          petFriendly: pet,
+                        );
+                        notifier.clearSelectedDriver();
+                        await ref
+                            .read(riderIdentityProvider.notifier)
+                            .savePreferredVehicle(
+                              _selectedCategory!.storageKey,
+                              petFriendly: pet,
+                            );
                         if (!context.mounted) return;
-                        final next = BookingFlowNavigation.routeAfterVehicleComplete(
+                        final next =
+                            BookingFlowNavigation.routeAfterVehicleComplete(
                           ref.read(bookingProvider),
                         );
                         final backToSummary = widget.returnToSummaryAfterSave;
@@ -894,6 +687,372 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MarketSupplySummaryCard extends StatelessWidget {
+  const _MarketSupplySummaryCard({
+    required this.driverCount,
+    required this.priceRange,
+    required this.pickupRange,
+    required this.colors,
+    required this.typography,
+    required this.isLoading,
+  });
+
+  final int driverCount;
+  final String priceRange;
+  final String pickupRange;
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typography;
+  final bool isLoading;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsetsDirectional.fromSTEB(18, 18, 18, 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        color: colors.card,
+        border: Border.all(color: colors.border.withValues(alpha: 0.85)),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.055),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+            spreadRadius: -8,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: colors.accentL.withValues(alpha: 0.8),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  Icons.storefront_rounded,
+                  color: colors.accent,
+                  size: 23,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.vehicleNearbyMarketTitle,
+                      style: typography.titleMedium.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w900,
+                        height: 1.12,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      isLoading
+                          ? l10n.vehicleNearbyMarketChecking
+                          : l10n.vehicleNearbyDriverCount(driverCount),
+                      style: typography.bodySmall.copyWith(
+                        color: colors.textSoft,
+                        height: 1.25,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _MarketMetric(
+                  label: l10n.vehicleFareRangeLabel,
+                  value: priceRange,
+                  colors: colors,
+                  typography: typography,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _MarketMetric(
+                  label: l10n.vehiclePickupRangeLabel,
+                  value: pickupRange,
+                  colors: colors,
+                  typography: typography,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MarketMetric extends StatelessWidget {
+  const _MarketMetric({
+    required this.label,
+    required this.value,
+    required this.colors,
+    required this.typography,
+  });
+
+  final String label;
+  final String value;
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typography;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: colors.bgAlt.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colors.border.withValues(alpha: 0.65)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: typography.labelMedium.copyWith(
+              color: colors.textSoft,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 5),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: typography.titleLarge.copyWith(
+                color: colors.text,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VehicleNeedCard extends StatelessWidget {
+  const _VehicleNeedCard({
+    required this.selected,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.supplyLabel,
+    required this.colors,
+    required this.typography,
+    required this.onTap,
+  });
+
+  final bool selected;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String supplyLabel;
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typography;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color:
+              selected ? colors.accent : colors.border.withValues(alpha: 0.8),
+          width: selected ? 2 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: selected
+                ? colors.accent.withValues(alpha: 0.16)
+                : colors.text.withValues(alpha: 0.035),
+            blurRadius: selected ? 22 : 16,
+            offset: const Offset(0, 8),
+            spreadRadius: -6,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 15, 16, 15),
+            child: Row(
+              children: [
+                Container(
+                  width: 54,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? colors.accentL.withValues(alpha: 0.95)
+                        : colors.bgAlt.withValues(alpha: 0.75),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: selected ? colors.accent : colors.textMid,
+                    size: 27,
+                  ),
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: typography.titleMedium.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w900,
+                          height: 1.15,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: typography.bodySmall.copyWith(
+                          color: colors.textSoft,
+                          height: 1.28,
+                        ),
+                      ),
+                      const SizedBox(height: 9),
+                      Text(
+                        supplyLabel,
+                        style: typography.labelMedium.copyWith(
+                          color: selected ? colors.accent : colors.textMid,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: selected ? colors.accent : Colors.transparent,
+                    border: Border.all(
+                      color: selected ? colors.accent : colors.border,
+                      width: 2,
+                    ),
+                  ),
+                  child: selected
+                      ? Icon(Icons.check_rounded,
+                          color: colors.onAccent, size: 18)
+                      : null,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PreferenceSwitchRow extends StatelessWidget {
+  const _PreferenceSwitchRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.colors,
+    required this.typography,
+    required this.onChanged,
+    this.enabled = true,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool value;
+  final bool enabled;
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typography;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = enabled && value;
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(top: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: active
+                  ? colors.accentL.withValues(alpha: 0.85)
+                  : colors.bgAlt.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              icon,
+              color: active ? colors.accent : colors.textMid,
+              size: 21,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: typography.titleSmall.copyWith(
+                    color: enabled ? colors.text : colors.textSoft,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: typography.bodySmall.copyWith(
+                    color: colors.textSoft,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Switch.adaptive(
+            value: value,
+            onChanged: enabled ? onChanged : null,
+            activeTrackColor: colors.accent,
+          ),
+        ],
       ),
     );
   }

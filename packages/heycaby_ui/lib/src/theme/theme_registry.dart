@@ -5,6 +5,7 @@ import 'package:heycaby_ui/src/theme/typography.dart';
 const String kRiderDefaultTheme = 'taxi-3';
 
 const Set<String> kRiderSelectableThemeIds = {
+  'brand-orange',
   'fresh',
   'blossom',
   'taxi-1',
@@ -45,6 +46,13 @@ String resolveRiderThemeId(String? id) {
 }
 
 final Map<String, HeyCabyThemeData> kThemes = {
+  'brand-orange': HeyCabyThemeData(
+    id: 'brand-orange',
+    name: 'HeyCaby Orange',
+    tagline: 'Brand orange — black, white, and Dutch energy',
+    colors: kHeyCabyBrandOrange,
+    typography: buildTypographyForTheme('brand-orange'),
+  ),
   'daylight': HeyCabyThemeData(
     id: 'daylight',
     name: 'Daylight',

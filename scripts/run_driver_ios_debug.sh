@@ -9,12 +9,14 @@ cd "$ROOT"
 
 python3 <<'PY'
 import importlib.util
+import os
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location("ipa", Path("scripts/build_ios_ipas.py"))
 m = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(m)
-env, sources = m.merge_env_for_app("driver", None)
+extra = Path(os.environ["ENV_FILE"]) if os.environ.get("ENV_FILE") else None
+env, sources = m.merge_env_for_app("driver", extra)
 if not sources:
     raise SystemExit(
         "No .env files found. Create repo .env and/or apps/driver/.env "

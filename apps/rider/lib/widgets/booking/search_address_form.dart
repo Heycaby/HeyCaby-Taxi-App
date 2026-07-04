@@ -24,6 +24,7 @@ class SearchAddressHeader extends StatelessWidget {
   final VoidCallback onWhenTap;
   final DateTime? scheduledAt;
   final bool pickupLoading;
+  final bool isEditingExistingRoute;
 
   const SearchAddressHeader({
     super.key,
@@ -42,6 +43,7 @@ class SearchAddressHeader extends StatelessWidget {
     required this.onWhenTap,
     this.scheduledAt,
     this.pickupLoading = false,
+    this.isEditingExistingRoute = false,
   });
 
   @override
@@ -49,6 +51,9 @@ class SearchAddressHeader extends StatelessWidget {
     final scheduleSummary = scheduledAt != null
         ? '${scheduledAt!.day}/${scheduledAt!.month} ${scheduledAt!.hour}:${scheduledAt!.minute.toString().padLeft(2, '0')}'
         : l10n.laterButton;
+    final title = isEditingExistingRoute
+        ? l10n.upcomingRideEditBookAgain
+        : l10n.whereAreYouGoing;
 
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(
@@ -78,26 +83,98 @@ class SearchAddressHeader extends StatelessWidget {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsetsDirectional.only(top: 10),
-                  child: Text(
-                    l10n.whereAreYouGoing,
-                    style: typo.titleLarge.copyWith(
-                      color: colors.text,
-                      fontWeight: FontWeight.w800,
-                      height: 1.2,
-                      letterSpacing: -0.3,
-                    ),
-                    maxLines: 2,
-                    softWrap: true,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: typo.titleLarge.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w800,
+                          height: 1.2,
+                        ),
+                        maxLines: 2,
+                        softWrap: true,
+                      ),
+                      if (isEditingExistingRoute) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          l10n.tripSummarySubtitle,
+                          style: typo.bodySmall.copyWith(
+                            color: colors.textMid,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: HeyCabySpacing.sectionMedium),
+          const SizedBox(height: HeyCabySpacing.component),
+          Container(
+            padding: const EdgeInsetsDirectional.fromSTEB(12, 10, 12, 10),
+            decoration: BoxDecoration(
+              color: colors.accentL.withValues(alpha: 0.72),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: colors.accent.withValues(alpha: 0.18),
+              ),
+            ),
+            child: Row(
+              children: [
+                _BookingStepPill(
+                  colors: colors,
+                  typo: typo,
+                  icon: Icons.route_rounded,
+                  label: l10n.tripSummary,
+                  isActive: true,
+                ),
+                Expanded(
+                  child: Container(
+                    height: 2,
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: colors.accent.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(1),
+                    ),
+                  ),
+                ),
+                _BookingStepPill(
+                  colors: colors,
+                  typo: typo,
+                  icon: Icons.local_taxi_rounded,
+                  label: l10n.tripSummaryPassengerRideSection,
+                  isActive: false,
+                ),
+                Expanded(
+                  child: Container(
+                    height: 2,
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: colors.accent.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(1),
+                    ),
+                  ),
+                ),
+                _BookingStepPill(
+                  colors: colors,
+                  typo: typo,
+                  icon: Icons.check_rounded,
+                  label: l10n.searchAddressesContinue,
+                  isActive: false,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: HeyCabySpacing.component),
           Container(
             decoration: BoxDecoration(
               color: colors.card,
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: colors.border.withValues(alpha: 0.65),
               ),
@@ -109,7 +186,7 @@ class SearchAddressHeader extends StatelessWidget {
                 ),
               ],
             ),
-            padding: const EdgeInsetsDirectional.fromSTEB(14, 10, 6, 10),
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 8, 12),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -117,7 +194,7 @@ class SearchAddressHeader extends StatelessWidget {
                   padding: const EdgeInsetsDirectional.only(top: 6),
                   child: _SearchDotColumn(colors: colors),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     children: [
@@ -131,7 +208,10 @@ class SearchAddressHeader extends StatelessWidget {
                         isLoading: pickupLoading,
                         loadingHint: l10n.marketplaceLocatingYou,
                       ),
-                      Divider(height: 1, thickness: 1, color: colors.border.withValues(alpha: 0.5)),
+                      Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: colors.border.withValues(alpha: 0.5)),
                       _SearchAddressField(
                         controller: destinationController,
                         focusNode: destinationFocus,
@@ -145,10 +225,14 @@ class SearchAddressHeader extends StatelessWidget {
                 ),
                 IconButton(
                   onPressed: onSwap,
-                  icon: Icon(Icons.swap_vert_rounded, color: colors.accent, size: 24),
+                  icon: Icon(Icons.swap_vert_rounded,
+                      color: colors.accent, size: 24),
                   style: IconButton.styleFrom(
                     foregroundColor: colors.accent,
                     backgroundColor: colors.accentL,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
                   ),
                 ),
               ],
@@ -230,6 +314,60 @@ class SearchAddressHeader extends StatelessWidget {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BookingStepPill extends StatelessWidget {
+  const _BookingStepPill({
+    required this.colors,
+    required this.typo,
+    required this.icon,
+    required this.label,
+    required this.isActive,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final IconData icon;
+  final String label;
+  final bool isActive;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = isActive ? colors.onAccent : colors.textMid;
+    return Container(
+      constraints: const BoxConstraints(minWidth: 42, minHeight: 42),
+      padding: const EdgeInsetsDirectional.symmetric(
+        horizontal: 10,
+        vertical: 8,
+      ),
+      decoration: BoxDecoration(
+        color: isActive ? colors.accent : colors.card,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color:
+              isActive ? colors.accent : colors.border.withValues(alpha: 0.65),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 17, color: foreground),
+          if (isActive) ...[
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: typo.labelSmall.copyWith(
+                color: foreground,
+                fontWeight: FontWeight.w800,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ],
       ),
     );
@@ -337,7 +475,8 @@ class _SearchAddressField extends StatelessWidget {
                 ),
               )
             : null,
-        suffixIconConstraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+        suffixIconConstraints:
+            const BoxConstraints(minWidth: 28, minHeight: 28),
       ),
     );
   }
@@ -451,7 +590,8 @@ class _AddressSuggestionTile extends StatelessWidget {
               result.fullAddress != result.displayName
           ? Text(
               result.fullAddress,
-              style: typo.bodySmall.copyWith(color: colors.textSoft, height: 1.35),
+              style:
+                  typo.bodySmall.copyWith(color: colors.textSoft, height: 1.35),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             )

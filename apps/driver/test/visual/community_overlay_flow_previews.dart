@@ -44,6 +44,7 @@ class DriverCommunityNotificationsPreview extends StatelessWidget {
           error: null,
           items: _items,
           onMarkAllRead: () {},
+          onClearRead: () {},
           onNotificationTap: (_) {},
         ),
       ),

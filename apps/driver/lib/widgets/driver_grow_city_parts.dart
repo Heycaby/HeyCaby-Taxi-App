@@ -64,23 +64,6 @@ class DriverGrowCityHero extends StatelessWidget {
                 height: 1.45,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              strings.heroBody2,
-              style: typography.bodyMedium.copyWith(
-                color: colors.textSecondary,
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              strings.heroMission,
-              style: typography.bodySmall.copyWith(
-                color: colors.text,
-                fontWeight: FontWeight.w700,
-                height: 1.4,
-              ),
-            ),
           ],
         ),
       ),
@@ -118,76 +101,28 @@ class DriverCommunityProgressCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              strings.communityTitle(stats.regionName),
-              style: typography.titleSmall.copyWith(
-                color: colors.text,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 14),
-            _StatRow(
-              emoji: '🚖',
-              label: strings.driversLabel,
-              value:
-                  '${formatCommunityCount(stats.driverCount)} / ${formatCommunityCount(stats.driverCap)}',
-              colors: colors,
-              typography: typography,
-            ),
-            const SizedBox(height: 8),
-            _StatRow(
-              emoji: '🚶',
-              label: strings.ridersLabel,
-              value: formatCommunityCount(stats.riderCount),
-              colors: colors,
-              typography: typography,
-            ),
-            const SizedBox(height: 8),
-            _StatRow(
-              emoji: '📅',
-              label: strings.monthlyRidersLabel,
-              value: formatCommunityCount(stats.monthlyRiderCount),
-              colors: colors,
-              typography: typography,
-            ),
-            const SizedBox(height: 8),
-            _StatRow(
-              emoji: '🛞',
-              label: strings.monthlyDriversLabel,
-              value: formatCommunityCount(stats.monthlyDriverCount),
-              colors: colors,
-              typography: typography,
-            ),
-            const SizedBox(height: 8),
-            _StatRow(
-              emoji: '🎯',
-              label: strings.milestoneLabel,
-              value: formatCommunityCount(stats.nextMilestone),
-              colors: colors,
-              typography: typography,
-            ),
-            const SizedBox(height: 16),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 10,
-                backgroundColor: colors.border.withValues(alpha: 0.35),
-                color: colors.primary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
               strings.progressCount(
                 formatCommunityCount(stats.monthlyRiderCount),
                 formatCommunityCount(stats.nextMilestone),
               ),
-              style: typography.labelMedium.copyWith(
+              style: typography.labelLarge.copyWith(
                 color: colors.text,
                 fontWeight: FontWeight.w700,
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 8,
+                backgroundColor: colors.border.withValues(alpha: 0.35),
+                color: colors.primary,
               ),
             ),
             if (stats.finalGoalReached) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Text(
                 strings.finalGoalReached,
                 style: typography.bodySmall.copyWith(
@@ -195,34 +130,26 @@ class DriverCommunityProgressCard extends StatelessWidget {
                   height: 1.35,
                 ),
               ),
-            ] else if (stats.remainingToMilestone > 0) ...[
-              const SizedBox(height: 6),
-              Text(
-                strings.milestoneHint(
-                  formatCommunityCount(stats.remainingToMilestone),
-                  formatCommunityCount(stats.nextMilestone),
-                ),
-                style: typography.bodySmall.copyWith(
-                  color: colors.textSecondary,
-                  height: 1.35,
-                ),
-              ),
             ],
-            if (stats.achievedMilestones.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: stats.achievedMilestones
-                    .map(
-                      (m) => Chip(
-                        label: Text(formatCommunityCount(m)),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                    )
-                    .toList(),
-              ),
-            ],
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                _CompactChip(
+                  label:
+                      '${formatCommunityCount(stats.driverCount)} ${strings.driversLabel.toLowerCase()}',
+                  colors: colors,
+                  typography: typography,
+                ),
+                _CompactChip(
+                  label:
+                      '${formatCommunityCount(stats.riderCount)} ${strings.ridersLabel.toLowerCase()}',
+                  colors: colors,
+                  typography: typography,
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -230,41 +157,33 @@ class DriverCommunityProgressCard extends StatelessWidget {
   }
 }
 
-class _StatRow extends StatelessWidget {
-  const _StatRow({
-    required this.emoji,
+class _CompactChip extends StatelessWidget {
+  const _CompactChip({
     required this.label,
-    required this.value,
     required this.colors,
     required this.typography,
   });
 
-  final String emoji;
   final String label;
-  final String value;
   final DriverColors colors;
   final DriverTypography typography;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(emoji, style: const TextStyle(fontSize: 18)),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            label,
-            style: typography.bodyMedium.copyWith(color: colors.textSecondary),
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: colors.border.withValues(alpha: 0.75)),
+      ),
+      child: Text(
+        label,
+        style: typography.labelSmall.copyWith(
+          color: colors.textSecondary,
+          fontWeight: FontWeight.w600,
         ),
-        Text(
-          value,
-          style: typography.titleSmall.copyWith(
-            color: colors.text,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -298,14 +217,6 @@ class DriverYourImpactCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              strings.impactTitle,
-              style: typography.titleSmall.copyWith(
-                color: colors.text,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 12),
             if (loading)
               Center(
                 child: Padding(
@@ -319,28 +230,25 @@ class DriverYourImpactCard extends StatelessWidget {
             else
               Row(
                 children: [
+                  Icon(Icons.favorite_rounded, size: 20, color: colors.primary),
+                  const SizedBox(width: 10),
                   Expanded(
-                    child: _ImpactStat(
-                      label: strings.peopleInvited,
-                      value: '${impact.driversInvited}',
-                      colors: colors,
-                      typography: typography,
+                    child: Text(
+                      strings.impactTitle,
+                      style: typography.labelLarge.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                  Expanded(
-                    child: _ImpactStat(
-                      label: strings.joined,
-                      value: '${impact.joined}',
-                      colors: colors,
-                      typography: typography,
+                  Text(
+                    strings.impactCompact(
+                      impact.driversInvited,
+                      impact.joined,
                     ),
-                  ),
-                  Expanded(
-                    child: _ImpactStat(
-                      label: strings.completedRides,
-                      value: '${impact.completedRides}',
-                      colors: colors,
-                      typography: typography,
+                    style: typography.labelMedium.copyWith(
+                      color: colors.primary,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ],
@@ -348,46 +256,6 @@ class DriverYourImpactCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _ImpactStat extends StatelessWidget {
-  const _ImpactStat({
-    required this.label,
-    required this.value,
-    required this.colors,
-    required this.typography,
-  });
-
-  final String label;
-  final String value;
-  final DriverColors colors;
-  final DriverTypography typography;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: typography.titleLarge.copyWith(
-            color: colors.primary,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: typography.labelSmall.copyWith(
-            color: colors.textSecondary,
-            height: 1.2,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -495,9 +363,8 @@ class _BadgeChip extends StatelessWidget {
               : colors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: earned
-                ? colors.primary.withValues(alpha: 0.5)
-                : colors.border,
+            color:
+                earned ? colors.primary.withValues(alpha: 0.5) : colors.border,
           ),
         ),
         child: Row(

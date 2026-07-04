@@ -9,7 +9,8 @@ class DriverRuntimeService {
   DriverRuntimeSnapshot? _cachedRuntime;
   DateTime? _cachedAt;
 
-  Future<DriverRuntimeSnapshot> fetchRuntime({Duration cacheFor = const Duration(seconds: 20)}) async {
+  Future<DriverRuntimeSnapshot> fetchRuntime(
+      {Duration cacheFor = const Duration(seconds: 20)}) async {
     if (_cachedRuntime != null && _cachedAt != null) {
       if (DateTime.now().difference(_cachedAt!) < cacheFor) {
         return _cachedRuntime!;
@@ -40,7 +41,8 @@ class DriverRuntimeService {
       return DriverRuntimeSnapshot(
         ok: false,
         canGoOnline: false,
-        readiness: const DriverReadinessState(canGoOnline: false, checklist: []),
+        readiness:
+            const DriverReadinessState(canGoOnline: false, checklist: []),
         config: DriverRemoteConfig.fromJson(const {}),
         error: e.toString(),
       );
@@ -67,6 +69,13 @@ class DriverRuntimeService {
     double? lat,
     double? lng,
   }) async {
+    if (status == 'available' && (lat == null || lng == null)) {
+      return const DriverStatusDecision(
+        status: 'offline',
+        blockedReason: 'location_required',
+        message: 'Turn on location before going online.',
+      );
+    }
     try {
       final raw = await HeyCabySupabase.client.rpc(
         'fn_driver_set_status',
@@ -78,7 +87,8 @@ class DriverRuntimeService {
       );
       invalidateCache();
       if (raw is! Map) {
-        return const DriverStatusDecision(status: 'offline', message: 'Invalid status response');
+        return const DriverStatusDecision(
+            status: 'offline', message: 'Invalid status response');
       }
       final json = Map<String, dynamic>.from(raw);
       return DriverStatusDecision.fromJson(json);

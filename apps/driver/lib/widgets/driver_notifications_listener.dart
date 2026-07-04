@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/driver_notification_router.dart';
@@ -12,6 +13,7 @@ import '../models/driver_shift_handover_prompt_args.dart';
 import '../utils/driver_shift_handover_security_alert.dart';
 import '../utils/driver_taxi_session_revoked_flow.dart';
 import '../widgets/driver_shift_handover_prompt.dart';
+import '../services/sound_service.dart';
 
 /// Supabase-first in-app notifications with Realtime refetch + light backup poll.
 class DriverNotificationsListener extends ConsumerStatefulWidget {
@@ -40,7 +42,8 @@ class _DriverNotificationsListenerState
     WidgetsBinding.instance.addObserver(this);
     _subscribeRealtime();
     _poll();
-    _backupPollTimer = Timer.periodic(const Duration(seconds: 60), (_) => _poll());
+    _backupPollTimer =
+        Timer.periodic(const Duration(seconds: 60), (_) => _poll());
   }
 
   @override
@@ -104,6 +107,14 @@ class _DriverNotificationsListenerState
           continue;
         }
         if (category == 'incoming_ride') {
+          final rideId = n.data?['ride_request_id']?.toString();
+          if (rideId != null && rideId.isNotEmpty && mounted) {
+            final path = GoRouterState.of(context).uri.path;
+            if (!path.startsWith('/driver/ride/new/')) {
+              unawaited(SoundService().playRideRequest());
+              context.push('/driver/ride/new/$rideId');
+            }
+          }
           await api.markNotificationRead(n.id);
           continue;
         }

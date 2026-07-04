@@ -144,6 +144,47 @@ class _RiderNotificationsSheet extends ConsumerWidget {
                 ),
               ],
             ),
+            if (riderIdentityId != null && riderIdentityId!.isNotEmpty)
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: Wrap(
+                  spacing: 6,
+                  children: [
+                    TextButton(
+                      onPressed: () async {
+                        await ref.read(riderApiProvider).clearReadNotifications(
+                              riderIdentityId: riderIdentityId!,
+                            );
+                        if (context.mounted) Navigator.pop(context);
+                      },
+                      child: Text(
+                        'Clear read',
+                        style: typo.labelMedium.copyWith(
+                          color: colors.textMid,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        await ref
+                            .read(riderApiProvider)
+                            .markAllNotificationsRead(
+                              riderIdentityId: riderIdentityId!,
+                            );
+                        if (context.mounted) Navigator.pop(context);
+                      },
+                      child: Text(
+                        'Mark all read',
+                        style: typo.labelMedium.copyWith(
+                          color: colors.accent,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             const SizedBox(height: 8),
             Flexible(
               child: riderIdentityId == null || riderIdentityId!.isEmpty

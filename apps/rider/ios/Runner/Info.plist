@@ -54,6 +54,10 @@
 	<string>$(MAPBOX_ACCESS_TOKEN)</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>HeyCaby needs your location to show nearby drivers, set your pickup point, and display your position on the map while you use the app.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>HeyCaby may use your location during an active ride to keep pickup, live trip status, and safety features accurate when the app is open or briefly in the background.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>HeyCaby may use your location during an active ride to keep pickup, live trip status, and safety features accurate when the app is open or briefly in the background.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

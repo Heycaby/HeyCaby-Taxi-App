@@ -54,7 +54,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return DriverStrings.loginConfigError;
     }
     if (raw.isEmpty) return DriverStrings.loginFailed;
-    return raw.replaceFirst('AuthApiException(message: ', '').replaceAll(', statusCode: 401, code: null)', '');
+    return raw
+        .replaceFirst('AuthApiException(message: ', '')
+        .replaceAll(', statusCode: 401, code: null)', '');
   }
 
   @override
@@ -133,6 +135,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await HeyCabySupabase.client.auth.signInWithOtp(
         email: email,
         emailRedirectTo: null,
+        shouldCreateUser: false,
       );
       if (!mounted) return;
       setState(() {
@@ -165,6 +168,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await HeyCabySupabase.client.auth.signInWithOtp(
         email: email,
         emailRedirectTo: null,
+        shouldCreateUser: false,
       );
       if (!mounted) return;
       setState(() {

@@ -50,6 +50,10 @@ class DriverApi {
     await _notifications.markAllRead(userType: 'driver');
   }
 
+  Future<void> clearReadNotifications() async {
+    await _notifications.clearRead(userType: 'driver');
+  }
+
   /// Billing / platform-fee status — Supabase [fn_driver_billing_status] (Phase E; no Go).
   Future<Map<String, dynamic>> fetchDriverStatus() async {
     final status = await _billingEdge.fetchBillingStatusOrNull();
@@ -99,6 +103,21 @@ class DriverApi {
     double? lng,
     String? driverId,
   }) async {
+    if (status == 'available' && (lat == null || lng == null)) {
+      throw DioException(
+        requestOptions: RequestOptions(path: 'rpc/fn_driver_set_status'),
+        response: Response(
+          requestOptions: RequestOptions(path: 'rpc/fn_driver_set_status'),
+          statusCode: 409,
+          data: const {
+            'status': 'offline',
+            'blocked_reason': 'location_required',
+            'message': 'Turn on location before going online.',
+          },
+        ),
+        type: DioExceptionType.badResponse,
+      );
+    }
     final raw = await HeyCabySupabase.client.rpc(
       'fn_driver_set_status',
       params: {
@@ -110,6 +129,20 @@ class DriverApi {
     if (raw is Map) {
       final blocked = raw['blocked_reason'];
       if (blocked != null && blocked.toString().isNotEmpty) {
+        throw DioException(
+          requestOptions: RequestOptions(path: 'rpc/fn_driver_set_status'),
+          response: Response(
+            requestOptions: RequestOptions(path: 'rpc/fn_driver_set_status'),
+            statusCode: 409,
+            data: raw,
+          ),
+          type: DioExceptionType.badResponse,
+        );
+      }
+      final returnedStatus = raw['status']?.toString();
+      if (returnedStatus != null &&
+          returnedStatus.isNotEmpty &&
+          returnedStatus != status) {
         throw DioException(
           requestOptions: RequestOptions(path: 'rpc/fn_driver_set_status'),
           response: Response(
@@ -260,6 +293,21 @@ class DriverApi {
     await _invokeDriverRideRpc(
       'fn_driver_ride_start',
       {'p_ride_request_id': rideRequestId},
+    );
+  }
+
+  /// Supabase RPC `fn_driver_waive_waiting_fee` — rider is notified server-side.
+  Future<void> waiveWaitingFee({
+    required String rideRequestId,
+    String? reason,
+  }) async {
+    await _invokeDriverRideRpc(
+      'fn_driver_waive_waiting_fee',
+      {
+        'p_ride_request_id': rideRequestId,
+        if (reason != null && reason.trim().isNotEmpty)
+          'p_reason': reason.trim(),
+      },
     );
   }
 

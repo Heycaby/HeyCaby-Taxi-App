@@ -21,6 +21,7 @@ class DriverGrowCityStrings {
     required this.milestoneCelebrationBody,
     required this.milestoneCelebrationCta,
     required this.impactTitle,
+    required this.impactCompact,
     required this.peopleInvited,
     required this.joined,
     required this.completedRides,
@@ -65,6 +66,7 @@ class DriverGrowCityStrings {
   final String Function(String milestone) milestoneCelebrationBody;
   final String milestoneCelebrationCta;
   final String impactTitle;
+  final String Function(int invited, int joined) impactCompact;
   final String peopleInvited;
   final String joined;
   final String completedRides;
@@ -94,8 +96,7 @@ class DriverGrowCityStrings {
 final _en = DriverGrowCityStrings(
   screenTitle: 'Grow Your City',
   heroTitle: (region) => 'Grow HeyCaby in $region',
-  heroBody1:
-      'Invite fellow taxi drivers you trust to join the independent HeyCaby network.',
+  heroBody1: 'Invite taxi drivers you trust in your city.',
   heroBody2:
       'More drivers on the platform means shorter waits for riders and more ride opportunities for you.',
   heroMission:
@@ -116,6 +117,7 @@ final _en = DriverGrowCityStrings(
       'The HeyCaby community just hit $milestone monthly riders in the Netherlands. Thank you for helping us grow — on to the next milestone!',
   milestoneCelebrationCta: 'Let\'s keep growing',
   impactTitle: 'Your impact',
+  impactCompact: (invited, joined) => '$invited invited · $joined joined',
   peopleInvited: 'Drivers invited',
   joined: 'Joined',
   completedRides: 'Completed rides',
@@ -124,8 +126,7 @@ final _en = DriverGrowCityStrings(
   badgeBuilder: 'Community Builder',
   badgeAmbassador: 'City Ambassador',
   badgeTopPromoter: 'Top Promoter',
-  sharePrompt:
-      'Share HeyCaby Driver with taxi colleagues in your city. Every new driver strengthens the network.',
+  sharePrompt: 'Share HeyCaby Driver with taxi colleagues in your city.',
   shareLink: 'Share HeyCaby',
   copyLink: 'Copy link',
   inviteLinkLabel: 'App Store link',
@@ -142,15 +143,13 @@ final _en = DriverGrowCityStrings(
   whyHelpBullet2: 'More ride requests for everyone',
   whyHelpBullet3: 'Shorter waiting times for riders',
   whyHelpBullet4: 'Stronger independent taxi community',
-  socialProof:
-      'Thanks for helping build the largest independent taxi network in the Netherlands.',
+  socialProof: 'Every trusted driver makes the network stronger.',
 );
 
 final _nl = DriverGrowCityStrings(
   screenTitle: 'Groei je stad',
   heroTitle: (region) => 'Laat HeyCaby groeien in $region',
-  heroBody1:
-      'Nodig taxichauffeurs uit die je vertrouwt om mee te doen aan het onafhankelijke HeyCaby-netwerk.',
+  heroBody1: 'Nodig taxichauffeurs uit die je vertrouwt in jouw stad.',
   heroBody2:
       'Meer chauffeurs op het platform betekent kortere wachttijden voor passagiers en meer ritkansen voor jou.',
   heroMission:
@@ -171,6 +170,8 @@ final _nl = DriverGrowCityStrings(
       'De HeyCaby-community heeft $milestone maandelijkse passagiers in Nederland bereikt. Bedankt voor je hulp — door naar de volgende mijlpaal!',
   milestoneCelebrationCta: 'Laten we doorgroeien',
   impactTitle: 'Jouw impact',
+  impactCompact: (invited, joined) =>
+      '$invited uitgenodigd · $joined aangemeld',
   peopleInvited: 'Chauffeurs uitgenodigd',
   joined: 'Aangemeld',
   completedRides: 'Voltooide ritten',
@@ -179,8 +180,7 @@ final _nl = DriverGrowCityStrings(
   badgeBuilder: 'Community Builder',
   badgeAmbassador: 'Stadsambassadeur',
   badgeTopPromoter: 'Top Promoter',
-  sharePrompt:
-      'Deel HeyCaby Driver met taxicollega\'s in jouw stad. Elke nieuwe chauffeur versterkt het netwerk.',
+  sharePrompt: 'Deel HeyCaby Driver met taxicollega\'s in jouw stad.',
   shareLink: 'Deel HeyCaby',
   copyLink: 'Link kopiëren',
   inviteLinkLabel: 'App Store-link',
@@ -197,8 +197,7 @@ final _nl = DriverGrowCityStrings(
   whyHelpBullet2: 'Meer ritverzoeken voor iedereen',
   whyHelpBullet3: 'Kortere wachttijden voor passagiers',
   whyHelpBullet4: 'Sterkere onafhankelijke taxigemeenschap',
-  socialProof:
-      'Bedankt dat je helpt het grootste onafhankelijke taxinetwerk van Nederland te bouwen.',
+  socialProof: 'Elke vertrouwde chauffeur maakt het netwerk sterker.',
 );
 
 DriverGrowCityStrings driverGrowCityStringsFor(Locale? locale) {

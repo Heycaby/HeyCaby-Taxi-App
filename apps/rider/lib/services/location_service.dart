@@ -32,10 +32,12 @@ class LocationService {
     await _syncPermissionState();
 
     try {
-      return await Geolocator.getCurrentPosition(
+      final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
         timeLimit: const Duration(seconds: 8),
       );
+      if (!isInNetherlands(position.latitude, position.longitude)) return null;
+      return position;
     } catch (_) {
       return null;
     }

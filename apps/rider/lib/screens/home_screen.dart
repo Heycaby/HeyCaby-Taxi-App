@@ -23,6 +23,7 @@ import '../services/stale_ride_cleanup.dart';
 import '../utils/map_style_helper.dart';
 import '../constants/rider_search_window.dart';
 import '../widgets/driver_search_expired_dialog.dart';
+import '../widgets/active_booking_card.dart';
 import '../widgets/home/home_bottom_sheet.dart';
 import '../widgets/home/home_map_overlay.dart';
 import '../widgets/rider_preride_home_banner.dart';
@@ -437,6 +438,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             nearbyTaxiCount: _nearbyTaxiCount,
           ),
           Positioned(
+            left: 16,
+            right: 16,
+            bottom: MediaQuery.sizeOf(context).height * 0.29,
+            child: const ActiveBookingCard(),
+          ),
+          Positioned(
             top: MediaQuery.paddingOf(context).top + 8,
             left: 12,
             right: 12,
@@ -448,7 +455,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 }
 
-class _RiderMapCenterPin extends StatelessWidget {
+class _RiderMapCenterPin extends StatefulWidget {
   const _RiderMapCenterPin({
     required this.colors,
     required this.typo,
@@ -460,6 +467,29 @@ class _RiderMapCenterPin extends StatelessWidget {
   final String label;
 
   @override
+  State<_RiderMapCenterPin> createState() => _RiderMapCenterPinState();
+}
+
+class _RiderMapCenterPinState extends State<_RiderMapCenterPin>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final bottomOffset = MediaQuery.sizeOf(context).height * 0.18;
     return IgnorePointer(
@@ -469,56 +499,144 @@ class _RiderMapCenterPin extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  color: colors.card.withValues(alpha: 0.96),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: colors.border.withValues(alpha: 0.75),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.text.withValues(alpha: 0.12),
-                      blurRadius: 16,
-                      offset: const Offset(0, 7),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.my_location_rounded,
-                      color: colors.accent,
-                      size: 15,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      label,
-                      style: typo.labelMedium.copyWith(
-                        color: colors.text,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
+              _PickupPinLabel(
+                colors: widget.colors,
+                typo: widget.typo,
+                label: widget.label,
               ),
               const SizedBox(height: 7),
-              CustomPaint(
-                size: const Size(42, 54),
-                painter: _RiderPinPainter(
-                  fill: colors.accent,
-                  border: colors.onAccent,
-                  shadow: colors.text.withValues(alpha: 0.18),
-                ),
+              AnimatedBuilder(
+                animation: _pulseController,
+                builder: (context, child) {
+                  final t = Curves.easeOutCubic.transform(
+                    _pulseController.value,
+                  );
+                  final bob = -2.5 +
+                      (Curves.easeInOutSine.transform(
+                            (_pulseController.value * 2) % 1,
+                          ) *
+                          5);
+                  return Transform.translate(
+                    offset: Offset(0, bob),
+                    child: SizedBox(
+                      width: 76,
+                      height: 76,
+                      child: Stack(
+                        alignment: Alignment.topCenter,
+                        children: [
+                          Positioned(
+                            top: 26,
+                            child: Transform.scale(
+                              scale: 0.72 + (t * 0.62),
+                              child: Opacity(
+                                opacity: (0.32 * (1 - t)).clamp(0.0, 0.32),
+                                child: Container(
+                                  width: 54,
+                                  height: 26,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: widget.colors.accent,
+                                    border: Border.all(
+                                      color: widget.colors.accent
+                                          .withValues(alpha: 0.32),
+                                      width: 2,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 42,
+                            child: Transform.scale(
+                              scale: 0.9 + (t * 0.2),
+                              child: Opacity(
+                                opacity: (0.18 * (1 - t)).clamp(0.0, 0.18),
+                                child: Container(
+                                  width: 30,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: widget.colors.text,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          CustomPaint(
+                            size: const Size(42, 54),
+                            painter: _RiderPinPainter(
+                              fill: widget.colors.accent,
+                              border: widget.colors.onAccent,
+                              shadow: widget.colors.text.withValues(
+                                alpha: 0.18,
+                              ),
+                              pulse: t,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _PickupPinLabel extends StatelessWidget {
+  const _PickupPinLabel({
+    required this.colors,
+    required this.typo,
+    required this.label,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 7,
+      ),
+      decoration: BoxDecoration(
+        color: colors.card.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: colors.border.withValues(alpha: 0.75),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 7),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.my_location_rounded,
+            color: colors.accent,
+            size: 15,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: typo.labelMedium.copyWith(
+              color: colors.text,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -529,11 +647,13 @@ class _RiderPinPainter extends CustomPainter {
     required this.fill,
     required this.border,
     required this.shadow,
+    required this.pulse,
   });
 
   final Color fill;
   final Color border;
   final Color shadow;
+  final double pulse;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -576,8 +696,18 @@ class _RiderPinPainter extends CustomPainter {
     );
     canvas.drawCircle(
       Offset(size.width / 2, size.height * 0.31),
-      size.width * 0.17,
-      Paint()..color = border,
+      size.width * (0.17 + pulse * 0.025),
+      Paint()
+        ..color = border.withValues(alpha: 0.92 - pulse * 0.2)
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height * 0.31),
+      size.width * (0.29 + pulse * 0.12),
+      Paint()
+        ..color = border.withValues(alpha: 0.13 * (1 - pulse))
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.2,
     );
   }
 
@@ -585,6 +715,7 @@ class _RiderPinPainter extends CustomPainter {
   bool shouldRepaint(covariant _RiderPinPainter oldDelegate) {
     return fill != oldDelegate.fill ||
         border != oldDelegate.border ||
-        shadow != oldDelegate.shadow;
+        shadow != oldDelegate.shadow ||
+        pulse != oldDelegate.pulse;
   }
 }

@@ -21,7 +21,7 @@ Future<void> performDriverLogout(
     builder: (ctx) {
       final err = Theme.of(ctx).colorScheme.error;
       return AlertDialog(
-        title: const Text(DriverStrings.logout),
+        title: Text(DriverStrings.logout),
         content: const Text(DriverStrings.logoutConfirm),
         actions: [
           TextButton(

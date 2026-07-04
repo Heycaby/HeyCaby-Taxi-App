@@ -36,8 +36,12 @@ RiderNotificationBehavior behaviorForCategory(String? category) {
     return RiderNotificationBehavior.driverAccepted;
   }
   if (DriverPingType.isPingCategory(c)) {
-    if (c.contains('outside')) return RiderNotificationBehavior.driverPingOutside;
-    if (c.contains('arrived')) return RiderNotificationBehavior.driverPingArrived;
+    if (c.contains('outside')) {
+      return RiderNotificationBehavior.driverPingOutside;
+    }
+    if (c.contains('arrived')) {
+      return RiderNotificationBehavior.driverPingArrived;
+    }
     if (c.contains('on_my_way') || c.contains('nearby')) {
       return RiderNotificationBehavior.driverPingOnMyWay;
     }
@@ -55,7 +59,8 @@ RiderNotificationBehavior behaviorForCategory(String? category) {
   return RiderNotificationBehavior.generic;
 }
 
-Future<void> playRiderNotificationFeedback(RiderNotificationBehavior behavior) async {
+Future<void> playRiderNotificationFeedback(
+    RiderNotificationBehavior behavior) async {
   final sound = SoundService();
   switch (behavior) {
     case RiderNotificationBehavior.rideOffer:
@@ -116,6 +121,7 @@ Future<void> dispatchRiderNotification({
   required String body,
   Map<String, dynamic>? data,
   bool usePingBanner = false,
+  Future<void> Function()? onOpen,
 }) async {
   final behavior = behaviorForCategory(category);
   final pingType = DriverPingType.tryParse(
@@ -153,7 +159,9 @@ Future<void> dispatchRiderNotification({
       action: SnackBarAction(
         label: l10n.openAction,
         onPressed: () {
-          if (context.mounted) {
+          if (onOpen != null) {
+            unawaited(onOpen());
+          } else if (context.mounted) {
             context.go(riderDeepLinkForBehavior(behavior));
           }
         },
@@ -178,4 +186,3 @@ Future<void> _markPingOpened(
     // Best-effort until RPC is deployed in all envs.
   }
 }
-

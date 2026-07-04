@@ -50,11 +50,13 @@
 	<key>MBXAccessToken</key>
 	<string>$(MAPBOX_ACCESS_TOKEN)</string>
 	<key>NSCameraUsageDescription</key>
-	<string>HeyCaby needs access to your camera to take profile photos and upload documents.</string>
+	<string>HeyCaby needs access to your camera to take profile photos, taxi photos, and upload documents.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>HeyCaby needs your location to show the map, find rides, and navigate. Without location you cannot use the driver app.</string>
+	<string>HeyCaby Driver needs your location while you are online or on an active ride to show your position to nearby riders, receive ride requests, update pickup progress, and support navigation even if the app is briefly in the background.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>HeyCaby needs your location to show the map, find rides, and navigate. Without location you cannot use the driver app.</string>
+	<string>HeyCaby Driver needs your location while you use the app to show the map, receive nearby ride requests, update pickup progress, and support navigation.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>HeyCaby Driver needs your location while you are online or on an active ride to show your position to nearby riders, receive ride requests, update pickup progress, and support navigation even if the app is briefly in the background.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>HeyCaby gebruikt Face ID om een veilige dienstwissel (Secure Shift Handover) te bevestigen.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

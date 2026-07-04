@@ -176,6 +176,9 @@ class DriverLocationService {
       if (authUid == null) return;
 
       final driverId = await _resolveDriverId();
+      final heading = position.heading.isFinite && position.heading >= 0
+          ? position.heading.round()
+          : null;
 
       await HeyCabySupabase.client.from('driver_locations').upsert(
         {
@@ -183,7 +186,7 @@ class DriverLocationService {
           'driver_id': driverId,
           'latitude': position.latitude,
           'longitude': position.longitude,
-          'heading': position.heading,
+          'heading': heading,
           'updated_at': DateTime.now().toUtc().toIso8601String(),
         },
         onConflict: 'user_id',

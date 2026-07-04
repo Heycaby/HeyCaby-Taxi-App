@@ -44,27 +44,21 @@ class DriverPreferencesScreen extends ConsumerWidget {
             onVehicle: () => context.push('/driver/vehicle'),
             onLanguage: () => _showLanguagePicker(context, ref),
             onCashChanged: (v) {
-              SoundService().playTariffSwitch();
               _updatePaymentMethod(context, ref, profile, 'cash', v);
             },
             onCardChanged: (v) {
-              SoundService().playTariffSwitch();
               _updatePaymentMethod(context, ref, profile, 'card', v);
             },
             onTikkieChanged: (v) {
-              SoundService().playTariffSwitch();
               _updatePaymentMethod(context, ref, profile, 'tikkie', v);
             },
             onInvoiceChanged: (v) {
-              SoundService().playTariffSwitch();
               _updatePaymentMethod(context, ref, profile, 'invoice', v);
             },
             onPetFriendlyChanged: (v) {
-              SoundService().playTariffSwitch();
               _updatePref(ref, isPetFriendly: v);
             },
             onWheelchairChanged: (v) {
-              SoundService().playTariffSwitch();
               _updatePref(ref, isWheelchairAccessible: v);
             },
             navigationContent: const _NavAppPreferenceSection(),
@@ -197,7 +191,7 @@ class DriverPreferencesScreen extends ConsumerWidget {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  trailing: current == code
+                  trailing: !followsDevice && current == code
                       ? Icon(AppIcons.checkCircle, color: colors.accent)
                       : null,
                   onTap: () {

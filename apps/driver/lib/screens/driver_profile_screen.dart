@@ -1,3 +1,6 @@
+import 'dart:async' show unawaited;
+import 'dart:typed_data' show Uint8List;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -9,14 +12,19 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
+import '../providers/driver_runtime_providers.dart';
 import '../services/driver_data_service.dart'
     show
+        DriverComplianceSnapshot,
         DriverProfile,
         ProfilePhotoConnectionException,
-        ProfilePhotoLimitException;
+        ProfilePhotoLimitException,
+        VehiclePhotoLimitException;
 import '../theme/app_icons.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
+import '../models/driver_runtime_models.dart';
+import '../utils/driver_readiness_routes.dart';
 import '../widgets/driver_identity_body.dart';
 import '../utils/validation_utils.dart';
 
@@ -104,6 +112,114 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
     final used = explicitCount > 0 ? explicitCount : (hasPhoto ? 1 : 0);
     final remaining = 2 - used;
     return remaining < 0 ? 0 : remaining;
+  }
+
+  bool _checklistComplete(
+    DriverReadinessState? readiness,
+    String key,
+    bool fallback,
+  ) {
+    if (readiness == null) return fallback;
+    for (final item in readiness.checklist) {
+      if (item.key == key) return item.complete;
+    }
+    return fallback;
+  }
+
+  List<DriverIdentityRequirement> _completionItems({
+    required DriverProfile? profile,
+    required DriverComplianceSnapshot? compliance,
+    required DriverRuntimeSnapshot? runtime,
+  }) {
+    final readiness = runtime?.readiness;
+    final hasProfilePhoto = (profile?.profilePhotoUrl ?? '').trim().isNotEmpty;
+    final hasVehiclePhoto =
+        profile?.vehiclePhotoUrls.any((url) => url.trim().isNotEmpty) ?? false;
+    final plateVerified = runtime?.plateVerified ??
+        (compliance?.vehicleVerificationStatus == 'rdw_verified_taxi');
+    final termsAccepted =
+        runtime?.termsAccepted ?? compliance?.termsAcceptedAt != null;
+
+    return [
+      DriverIdentityRequirement(
+        key: 'vehicle_plate',
+        label: DriverStrings.profileRequirementPlate,
+        complete: _checklistComplete(readiness, 'vehicle_plate', plateVerified),
+      ),
+      DriverIdentityRequirement(
+        key: 'terms_of_service',
+        label: DriverStrings.profileRequirementTerms,
+        complete:
+            _checklistComplete(readiness, 'terms_of_service', termsAccepted),
+      ),
+      DriverIdentityRequirement(
+        key: 'profile_photo',
+        label: DriverStrings.profileRequirementDriverPhoto,
+        complete:
+            _checklistComplete(readiness, 'profile_photo', hasProfilePhoto),
+      ),
+      DriverIdentityRequirement(
+        key: 'vehicle_photos',
+        label: DriverStrings.profileRequirementVehiclePhoto,
+        complete:
+            _checklistComplete(readiness, 'vehicle_photos', hasVehiclePhoto),
+      ),
+    ];
+  }
+
+  String _vehicleDescriptor(
+    DriverProfile? profile,
+    DriverComplianceSnapshot? compliance,
+  ) {
+    final parts = <String>[];
+    void add(String? value) {
+      final v = value?.trim();
+      if (v == null || v.isEmpty || v == '—') return;
+      if (!parts.any((p) => p.toLowerCase() == v.toLowerCase())) {
+        parts.add(v);
+      }
+    }
+
+    add(profile?.vehicleColour);
+    add(profile?.vehicleMake ?? compliance?.rdwMerk);
+    add(profile?.vehicleModel ?? compliance?.rdwHandelsbenaming);
+    if (profile?.vehicleYear != null) add('${profile!.vehicleYear}');
+    return parts.join(' · ');
+  }
+
+  void _openRequirement(String key) {
+    switch (key) {
+      case 'profile_photo':
+        _openProfileFromRequirement();
+        return;
+      case 'vehicle_photos':
+      case 'vehicle_plate':
+        context.push('/driver/vehicle');
+        return;
+      case 'terms_of_service':
+      case 'indemnification_quiz':
+        context.push('/driver/documents');
+        return;
+      default:
+        final route = flutterRouteForReadinessItem(
+          DriverReadinessItem(key: key, label: '', complete: false),
+        );
+        if (route != null) context.push(route);
+    }
+  }
+
+  void _openProfileFromRequirement() {
+    final profile = ref.read(driverProfileProvider).valueOrNull;
+    final email = HeyCabySupabase.client.auth.currentUser?.email;
+    final name = profile?.fullName?.trim();
+    unawaited(
+      _openProfileEditSheet(
+        profile,
+        name == null || name.isEmpty ? null : name,
+        email,
+        _profilePhotoCacheBust,
+      ),
+    );
   }
 
   Future<void> _pickAndConfirmProfilePhoto(DriverProfile? profile) async {
@@ -228,6 +344,243 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(DriverStrings.profileNameSaveFailed)),
+      );
+    }
+  }
+
+  Future<ImageSource?> _chooseVehiclePhotoSource() {
+    final colors = DriverColors.fromTheme(ref.read(colorsProvider));
+    final typography = DriverTypography.fromTheme(ref.read(typographyProvider));
+
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: colors.card,
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  DriverStrings.vehiclePhotoGuidanceTitle,
+                  style: typography.titleLarge.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  DriverStrings.vehiclePhotoGuidanceBody,
+                  style: typography.bodyMedium.copyWith(
+                    color: colors.textSecondary,
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                FilledButton.icon(
+                  onPressed: () => Navigator.pop(ctx, ImageSource.camera),
+                  icon: const Icon(Icons.photo_camera_rounded),
+                  label: Text(DriverStrings.vehiclePhotoTakePhoto),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.pop(ctx, ImageSource.gallery),
+                  icon: const Icon(Icons.photo_library_rounded),
+                  label: Text(DriverStrings.vehiclePhotoChooseLibrary),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<bool> _confirmVehiclePhotoPreview({
+    required Uint8List bytes,
+    required String vehicleLabel,
+    required String plate,
+  }) async {
+    final colors = DriverColors.fromTheme(ref.read(colorsProvider));
+    final typography = DriverTypography.fromTheme(ref.read(typographyProvider));
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return Dialog(
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: ColoredBox(
+              color: colors.card,
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        DriverStrings.vehiclePhotoPreviewTitle,
+                        style: typography.titleLarge.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w900,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 14),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(22),
+                        child: AspectRatio(
+                          aspectRatio: 16 / 10,
+                          child: Image.memory(
+                            bytes,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: colors.surface,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: colors.border),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              plate.isEmpty ? DriverStrings.vehicle : plate,
+                              style: typography.titleMedium.copyWith(
+                                color: colors.text,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: plate.isEmpty ? 0 : 1.0,
+                              ),
+                            ),
+                            if (vehicleLabel.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                vehicleLabel,
+                                style: typography.bodyMedium.copyWith(
+                                  color: colors.textSecondary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 8),
+                            Text(
+                              DriverStrings.vehiclePhotoRiderPreviewHint,
+                              style: typography.bodySmall.copyWith(
+                                color: colors.textMuted,
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      FilledButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: Text(DriverStrings.vehiclePhotoUseThis),
+                      ),
+                      const SizedBox(height: 10),
+                      OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: Text(DriverStrings.vehiclePhotoRetake),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    return result == true;
+  }
+
+  Future<void> _pickAndConfirmVehiclePhoto(
+    DriverProfile? profile,
+    DriverComplianceSnapshot? compliance,
+  ) async {
+    final id = await _ensureDriverIdOrExplain();
+    if (id == null || !mounted) return;
+
+    final source = await _chooseVehiclePhotoSource();
+    if (source == null || !mounted) return;
+
+    final picker = ImagePicker();
+    final x = await picker.pickImage(
+      source: source,
+      maxWidth: 1800,
+      imageQuality: 88,
+    );
+    if (x == null || !mounted) return;
+
+    final lower = x.path.toLowerCase();
+    var ext = 'jpg';
+    var contentType = 'image/jpeg';
+    if (lower.endsWith('.png')) {
+      ext = 'png';
+      contentType = 'image/png';
+    }
+
+    final bytes = await x.readAsBytes();
+    if (!mounted) return;
+
+    final plate =
+        (compliance?.vehiclePlate ?? profile?.vehiclePlate ?? '').trim();
+    final vehicleLabel = _vehicleDescriptor(profile, compliance);
+    final approved = await _confirmVehiclePhotoPreview(
+      bytes: bytes,
+      vehicleLabel: vehicleLabel,
+      plate: plate,
+    );
+    if (!approved || !mounted) return;
+
+    setState(() => _busy = true);
+    List<String>? updated;
+    try {
+      updated =
+          await ref.read(driverDataServiceProvider).uploadDriverVehiclePhoto(
+                driverId: id,
+                bytes: bytes,
+                contentType: contentType,
+                fileExtension: ext,
+              );
+    } on VehiclePhotoLimitException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(DriverStrings.vehiclePhotoLimitReached)),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+
+    if (!mounted) return;
+    if (updated != null && updated.isNotEmpty) {
+      ref.invalidate(driverProfileProvider);
+      ref.invalidate(driverRuntimeSnapshotProvider);
+      try {
+        await ref.read(driverProfileProvider.future);
+      } catch (_) {}
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(DriverStrings.vehiclePhotoSaved)),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(DriverStrings.vehiclePhotoUploadFailed)),
       );
     }
   }
@@ -449,6 +802,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
         DriverTypography.fromTheme(ref.watch(typographyProvider));
     final profileAsync = ref.watch(driverProfileProvider);
     final complianceAsync = ref.watch(driverComplianceProvider);
+    final runtimeAsync = ref.watch(driverRuntimeSnapshotProvider);
     final email = HeyCabySupabase.client.auth.currentUser?.email;
 
     return Scaffold(
@@ -479,6 +833,12 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
               final apkExpiry = compliance?.apkExpiry != null
                   ? '${compliance!.apkExpiry!.day}/${compliance.apkExpiry!.month}/${compliance.apkExpiry!.year}'
                   : null;
+              final runtime = runtimeAsync.valueOrNull;
+              final vehiclePhotoUrl =
+                  profile?.vehiclePhotoUrls.isNotEmpty == true
+                      ? profile!.vehiclePhotoUrls.first
+                      : null;
+              final vehicleDescriptor = _vehicleDescriptor(profile, compliance);
 
               return DriverIdentityBody(
                 colors: colors,
@@ -487,6 +847,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                   headline: headline,
                   initials: initials,
                   profilePhotoUrl: profile?.profilePhotoUrl,
+                  vehiclePhotoUrl: vehiclePhotoUrl,
                   email: email,
                   emphasizePlaceholder: !hasName,
                   rating: rating,
@@ -499,6 +860,14 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                   vehicleDisplay: vehicle,
                   showVehicleVerified: vvs == 'rdw_verified_taxi',
                   apkExpiryLabel: apkExpiry,
+                  vehicleDescriptor:
+                      vehicleDescriptor.isEmpty ? null : vehicleDescriptor,
+                  vehicleSeats: profile?.passengerSeats,
+                  completionItems: _completionItems(
+                    profile: profile,
+                    compliance: compliance,
+                    runtime: runtime,
+                  ),
                 ),
                 onEditProfile: () async {
                   HapticService.lightTap();
@@ -510,7 +879,12 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                   );
                 },
                 onOpenVehicle: () => context.push('/driver/vehicle'),
+                onAddVehiclePhoto: () async {
+                  HapticService.lightTap();
+                  await _pickAndConfirmVehiclePhoto(profile, compliance);
+                },
                 onOpenSettings: () => context.push('/driver/settings'),
+                onOpenRequirement: _openRequirement,
               );
             },
             loading: () => Center(

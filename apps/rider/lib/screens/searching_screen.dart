@@ -18,6 +18,7 @@ import '../providers/booking_provider.dart';
 import '../providers/near_term_ride_request_provider.dart';
 import '../providers/recent_destinations_provider.dart';
 import '../providers/ride_request_provider.dart';
+import '../services/booking_flow_navigation.dart';
 import '../services/heycaby_widget_sync.dart';
 import '../services/nearby_supply_service.dart';
 import '../services/rider_notify_search_notifications.dart';
@@ -50,6 +51,7 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
   RealtimeChannel? _channel;
   RealtimeChannel? _bidsChannel;
   Timer? _factsTimer;
+  Timer? _clockTimer;
   Timer? _widgetTimer;
   Timer? _scheduledWidgetTimer;
   Timer? _noDriverTimer;
@@ -58,6 +60,8 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
   int _currentFactIndex = 0;
   bool _showNoDriverCard = false;
   bool _growthNudgeShown = false;
+  Duration _searchElapsed = Duration.zero;
+  Duration _searchRemaining = kRiderDriverSearchWindow;
 
   List<String> _facts = [];
   int _marketplaceBidCount = 0;
@@ -99,8 +103,15 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
         if (!ok) {
           if (mounted) {
             final l10n = AppLocalizations.of(context);
+            final rideError = ref.read(rideRequestProvider).error;
             ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-              SnackBar(content: Text(l10n.rideBookingFailed)),
+              SnackBar(
+                content: Text(
+                  rideError == 'location_required'
+                      ? l10n.locationPermissionRequired
+                      : l10n.rideBookingFailed,
+                ),
+              ),
             );
             context.go('/summary');
           }
@@ -207,15 +218,42 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
     _factsTimer?.cancel();
     _factsTimer = Timer.periodic(const Duration(milliseconds: 4500), (_) {
       if (mounted && _facts.isNotEmpty) {
-        setState(
-            () => _currentFactIndex = (_currentFactIndex + 1) % _facts.length);
+        setState(() {
+          _currentFactIndex = (_currentFactIndex + 1) % _facts.length;
+        });
       }
     });
+    _clockTimer?.cancel();
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(_updateSearchClock);
+      }
+    });
+    _updateSearchClock();
 
     _noDriverTimer?.cancel();
     _noDriverTimer = Timer(kRiderNoDriverCardDelay, () {
       unawaited(_runLiveNoSupplyCheck());
     });
+  }
+
+  void _updateSearchClock() {
+    final created = ref.read(rideRequestProvider).rideCreatedAt;
+    if (created == null) {
+      _searchElapsed = Duration.zero;
+      _searchRemaining = kRiderDriverSearchWindow;
+      return;
+    }
+    final elapsed = DateTime.now().difference(created);
+    final remaining = kRiderDriverSearchWindow - elapsed;
+    _searchElapsed = elapsed.isNegative ? Duration.zero : elapsed;
+    _searchRemaining = remaining.isNegative ? Duration.zero : remaining;
+  }
+
+  String _formatClock(Duration duration) {
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
   }
 
   Future<void> _runLiveNoSupplyCheck() async {
@@ -267,6 +305,7 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
     _channel?.unsubscribe();
     _bidsChannel?.unsubscribe();
     _factsTimer?.cancel();
+    _clockTimer?.cancel();
     _widgetTimer?.cancel();
     _scheduledWidgetTimer?.cancel();
     _noDriverTimer?.cancel();
@@ -633,7 +672,15 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
     final l10n = AppLocalizations.of(context);
     final booking = ref.watch(bookingProvider);
 
-    void onEditRoute(bool isPickup) => context.go('/search');
+    void onEditRoute(bool isPickup) => context.push(
+          '/search',
+          extra: BookingSearchRouteArgs(
+            returnToSummaryAfterSave: true,
+            initialEditTarget: isPickup
+                ? BookingAddressEditTarget.pickup
+                : BookingAddressEditTarget.destination,
+          ),
+        );
 
     if (widget.variant == RideMatchingVariant.scheduled) {
       return ScheduledMatchingFullscreen(
@@ -669,81 +716,508 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
           : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            Padding(
-              padding: const EdgeInsetsDirectional.only(start: 12, top: 8),
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Material(
-                  color: colors.card,
-                  elevation: 2,
-                  shadowColor: colors.text.withValues(alpha: 0.12),
-                  shape: const CircleBorder(),
-                  child: InkWell(
-                    onTap: () => _showCancelDialog(context, colors, typo, l10n),
-                    customBorder: const CircleBorder(),
-                    child: SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: Icon(Icons.close_rounded, color: colors.text, size: 22),
-                    ),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      colors.accent.withValues(alpha: 0.10),
+                      colors.bg,
+                      colors.bg,
+                    ],
+                    stops: const [0, 0.42, 1],
                   ),
                 ),
               ),
             ),
-            if (widget.variant == RideMatchingVariant.marketplace)
-              MarketplaceMatchingBanner(
-                colors: colors,
-                typo: typo,
-                l10n: l10n,
-              ),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _RadarAnimation(
-                    controllers: _radarControllers,
-                    orbitController: _orbitController,
-                    colors: colors,
-                  ),
-                  const SizedBox(height: 28),
-                  Text(
-                    _matchingTitle(l10n),
-                    style: typo.headingMedium.copyWith(
-                      color: colors.text,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.3,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 400),
-                    transitionBuilder: (child, animation) {
-                      final slide = Tween<Offset>(
-                        begin: const Offset(0.08, 0),
-                        end: Offset.zero,
-                      ).animate(CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOutCubic,
-                      ));
-                      return FadeTransition(
-                        opacity: animation,
-                        child: SlideTransition(position: slide, child: child),
-                      );
-                    },
-                    child: _DidYouKnowCard(
-                      key: ValueKey<int>(_currentFactIndex),
-                      fact: _facts.isNotEmpty ? _facts[_currentFactIndex] : '',
+            Column(
+              children: [
+                _SearchTopBar(
+                  colors: colors,
+                  typo: typo,
+                  l10n: l10n,
+                  onHome: () => context.go('/home'),
+                  onCancel: () =>
+                      _showCancelDialog(context, colors, typo, l10n),
+                ),
+                if (widget.variant == RideMatchingVariant.marketplace)
+                  Padding(
+                    padding: const EdgeInsetsDirectional.fromSTEB(20, 0, 20, 8),
+                    child: MarketplaceMatchingBanner(
                       colors: colors,
                       typo: typo,
+                      l10n: l10n,
                     ),
                   ),
-                ],
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsetsDirectional.fromSTEB(
+                      20,
+                      10,
+                      20,
+                      24,
+                    ),
+                    child: Column(
+                      children: [
+                        _SearchHeroPanel(
+                          colors: colors,
+                          typo: typo,
+                          title: _matchingTitle(l10n),
+                          subtitle:
+                              widget.variant == RideMatchingVariant.marketplace
+                                  ? l10n.activeBookingMarketplaceBody
+                                  : l10n.activeBookingInstantBody,
+                          controllers: _radarControllers,
+                          orbitController: _orbitController,
+                        ),
+                        const SizedBox(height: 14),
+                        _RouteContextStrip(
+                          colors: colors,
+                          typo: typo,
+                          pickup: booking.pickup?.displayName ?? '',
+                          destination: booking.destination?.displayName ?? '',
+                        ),
+                        const SizedBox(height: 14),
+                        _MatchingStatusStrip(
+                          colors: colors,
+                          typo: typo,
+                          l10n: l10n,
+                          mode: widget.variant,
+                          elapsed: _formatClock(_searchElapsed),
+                          remaining: _formatClock(_searchRemaining),
+                          bidCount: _marketplaceBidCount,
+                        ),
+                        const SizedBox(height: 14),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 400),
+                          transitionBuilder: (child, animation) {
+                            final slide = Tween<Offset>(
+                              begin: const Offset(0, 0.08),
+                              end: Offset.zero,
+                            ).animate(CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOutCubic,
+                            ));
+                            return FadeTransition(
+                              opacity: animation,
+                              child: SlideTransition(
+                                  position: slide, child: child),
+                            );
+                          },
+                          child: _DidYouKnowCard(
+                            key: ValueKey<int>(_currentFactIndex),
+                            fact: _facts.isNotEmpty
+                                ? _facts[_currentFactIndex]
+                                : '',
+                            colors: colors,
+                            typo: typo,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        _SearchActionBar(
+                          colors: colors,
+                          typo: typo,
+                          l10n: l10n,
+                          marketplace:
+                              widget.variant == RideMatchingVariant.marketplace,
+                          onHome: () => context.go('/home'),
+                          onCancel: () =>
+                              _showCancelDialog(context, colors, typo, l10n),
+                          onBoost: () => context.go(
+                            RideMatchingVariant.marketplace.routePath,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SearchTopBar extends StatelessWidget {
+  const _SearchTopBar({
+    required this.colors,
+    required this.typo,
+    required this.l10n,
+    required this.onHome,
+    required this.onCancel,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final AppLocalizations l10n;
+  final VoidCallback onHome;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(14, 8, 14, 10),
+      child: Row(
+        children: [
+          _RoundIconButton(
+            colors: colors,
+            icon: Icons.arrow_back_rounded,
+            tooltip: l10n.back,
+            onTap: onHome,
+          ),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: colors.card.withValues(alpha: 0.92),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: colors.border.withValues(alpha: 0.72)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: colors.accent,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  l10n.matchingStatusLive,
+                  style: typo.labelLarge.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+          _RoundIconButton(
+            colors: colors,
+            icon: Icons.close_rounded,
+            tooltip: l10n.cancel,
+            onTap: onCancel,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoundIconButton extends StatelessWidget {
+  const _RoundIconButton({
+    required this.colors,
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final HeyCabyColorTokens colors;
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: colors.card.withValues(alpha: 0.94),
+      shape: const CircleBorder(),
+      elevation: 8,
+      shadowColor: colors.text.withValues(alpha: 0.08),
+      child: Tooltip(
+        message: tooltip,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: SizedBox(
+            width: 46,
+            height: 46,
+            child: Icon(icon, color: colors.text, size: 23),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SearchHeroPanel extends StatelessWidget {
+  const _SearchHeroPanel({
+    required this.colors,
+    required this.typo,
+    required this.title,
+    required this.subtitle,
+    required this.controllers,
+    required this.orbitController,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final String title;
+  final String subtitle;
+  final List<AnimationController> controllers;
+  final AnimationController orbitController;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsetsDirectional.fromSTEB(18, 18, 18, 20),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: colors.border.withValues(alpha: 0.78)),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.10),
+            blurRadius: 32,
+            offset: const Offset(0, 18),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _RadarAnimation(
+            controllers: controllers,
+            orbitController: orbitController,
+            colors: colors,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: typo.headingMedium.copyWith(
+              color: colors.text,
+              fontWeight: FontWeight.w900,
+              height: 1.08,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            subtitle,
+            style: typo.bodyMedium.copyWith(
+              color: colors.textMid,
+              fontWeight: FontWeight.w600,
+              height: 1.42,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RouteContextStrip extends StatelessWidget {
+  const _RouteContextStrip({
+    required this.colors,
+    required this.typo,
+    required this.pickup,
+    required this.destination,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final String pickup;
+  final String destination;
+
+  @override
+  Widget build(BuildContext context) {
+    if (pickup.isEmpty && destination.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsetsDirectional.all(14),
+      decoration: BoxDecoration(
+        color: colors.card.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: colors.border.withValues(alpha: 0.7)),
+      ),
+      child: Row(
+        children: [
+          _RouteDot(colors: colors, filled: true),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              pickup.isEmpty ? destination : pickup,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: typo.labelLarge.copyWith(
+                color: colors.text,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          if (destination.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsetsDirectional.symmetric(horizontal: 8),
+              child: Icon(
+                Icons.arrow_forward_rounded,
+                color: colors.textSoft,
+                size: 18,
+              ),
+            ),
+            _RouteDot(colors: colors, filled: false),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                destination,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: typo.labelLarge.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RouteDot extends StatelessWidget {
+  const _RouteDot({required this.colors, required this.filled});
+
+  final HeyCabyColorTokens colors;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 13,
+      height: 13,
+      decoration: BoxDecoration(
+        color: filled ? colors.accent : colors.card,
+        shape: BoxShape.circle,
+        border: Border.all(color: colors.accent, width: 3),
+      ),
+    );
+  }
+}
+
+class _SearchActionBar extends StatelessWidget {
+  const _SearchActionBar({
+    required this.colors,
+    required this.typo,
+    required this.l10n,
+    required this.marketplace,
+    required this.onHome,
+    required this.onCancel,
+    required this.onBoost,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final AppLocalizations l10n;
+  final bool marketplace;
+  final VoidCallback onHome;
+  final VoidCallback onCancel;
+  final VoidCallback onBoost;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _SearchActionButton(
+            colors: colors,
+            typo: typo,
+            icon: Icons.home_rounded,
+            label: l10n.home,
+            onTap: onHome,
+          ),
+        ),
+        const SizedBox(width: 10),
+        if (marketplace) ...[
+          Expanded(
+            child: _SearchActionButton(
+              colors: colors,
+              typo: typo,
+              icon: Icons.trending_up_rounded,
+              label: l10n.marketplaceBoostOffer,
+              onTap: onBoost,
+            ),
+          ),
+          const SizedBox(width: 10),
+        ],
+        Expanded(
+          child: _SearchActionButton(
+            colors: colors,
+            typo: typo,
+            icon: Icons.close_rounded,
+            label: l10n.cancel,
+            danger: true,
+            onTap: onCancel,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SearchActionButton extends StatelessWidget {
+  const _SearchActionButton({
+    required this.colors,
+    required this.typo,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.danger = false,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool danger;
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = danger ? colors.error : colors.accent;
+    final bg = danger
+        ? colors.error.withValues(alpha: 0.08)
+        : colors.accent.withValues(alpha: 0.10);
+    return Material(
+      color: bg,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Padding(
+          padding: const EdgeInsetsDirectional.symmetric(
+              horizontal: 12, vertical: 13),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: fg, size: 18),
+              const SizedBox(width: 7),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: typo.labelLarge.copyWith(
+                    color: fg,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -811,6 +1285,127 @@ class _DidYouKnowCard extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MatchingStatusStrip extends StatelessWidget {
+  const _MatchingStatusStrip({
+    required this.colors,
+    required this.typo,
+    required this.l10n,
+    required this.mode,
+    required this.elapsed,
+    required this.remaining,
+    required this.bidCount,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final AppLocalizations l10n;
+  final RideMatchingVariant mode;
+  final String elapsed;
+  final String remaining;
+  final int bidCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = <_StatusPillData>[
+      _StatusPillData(
+        icon: Icons.bolt_rounded,
+        label: l10n.matchingStatusLive,
+        value: elapsed,
+      ),
+      _StatusPillData(
+        icon: Icons.hourglass_bottom_rounded,
+        label: l10n.matchingStatusWindow,
+        value: remaining,
+      ),
+      if (mode == RideMatchingVariant.marketplace)
+        _StatusPillData(
+          icon: Icons.local_offer_rounded,
+          label: l10n.matchingStatusOffers,
+          value: bidCount.toString(),
+        ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsetsDirectional.symmetric(horizontal: 20),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final item in items)
+            _StatusPill(colors: colors, typo: typo, data: item),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusPillData {
+  const _StatusPillData({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({
+    required this.colors,
+    required this.typo,
+    required this.data,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final _StatusPillData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 36),
+      padding: const EdgeInsetsDirectional.fromSTEB(10, 7, 12, 7),
+      decoration: BoxDecoration(
+        color: colors.card.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: colors.border.withValues(alpha: 0.72)),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(data.icon, color: colors.accent, size: 16),
+          const SizedBox(width: 6),
+          Text(
+            data.label,
+            style: typo.labelSmall.copyWith(
+              color: colors.textSoft,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            data.value,
+            style: typo.labelMedium.copyWith(
+              color: colors.text,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
         ],
       ),
     );

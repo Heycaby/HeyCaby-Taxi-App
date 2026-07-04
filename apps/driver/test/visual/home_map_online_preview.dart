@@ -10,7 +10,6 @@ import 'package:heycaby_driver/ui/driver_map_controls_column.dart';
 import 'package:heycaby_driver/ui/driver_map_demand_chip.dart';
 import 'package:heycaby_driver/ui/driver_map_eta_chip.dart';
 import 'package:heycaby_driver/ui/driver_map_fab.dart';
-import 'package:heycaby_driver/ui/driver_map_online_chip.dart';
 import 'package:heycaby_driver/widgets/driver_earnings_modal_parts.dart';
 import 'package:heycaby_driver/widgets/driver_money_dashboard_header.dart';
 
@@ -75,15 +74,6 @@ class DriverMapOnlinePreview extends StatelessWidget {
                     typography: typography,
                     onTap: () {},
                   ),
-                ),
-                const SizedBox(height: DriverSpacing.sm),
-                DriverMapOnlineChip(
-                  zoneName: zoneName,
-                  isOnBreak: false,
-                  colors: colors,
-                  typography: typography,
-                  pulseLiveIndicator: false,
-                  onTap: () {},
                 ),
                 const SizedBox(height: DriverSpacing.sm),
                 DriverMapDemandChip(

@@ -2,12 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../models/ride_matching_variant.dart';
 import '../providers/active_search_provider.dart';
 import '../providers/near_term_ride_request_provider.dart';
+import '../providers/ride_request_provider.dart';
 import '../services/sound_service.dart';
 import '../services/stale_ride_cleanup.dart';
 import '../utils/ride_matching_labels.dart';
@@ -23,7 +26,8 @@ class NearTermRideHomeBanner extends ConsumerStatefulWidget {
       _NearTermRideHomeBannerState();
 }
 
-class _NearTermRideHomeBannerState extends ConsumerState<NearTermRideHomeBanner> {
+class _NearTermRideHomeBannerState
+    extends ConsumerState<NearTermRideHomeBanner> {
   Timer? _ticker;
   bool _expanded = false;
 
@@ -101,6 +105,16 @@ class _NearTermRideHomeBannerState extends ConsumerState<NearTermRideHomeBanner>
       default:
         return l10n.homeNearTermTitleInstant;
     }
+  }
+
+  Future<void> _openRideFlow(NearTermRideSnapshot snap) async {
+    final attached = await ref
+        .read(rideRequestProvider.notifier)
+        .attachRideRequestForMatchingFlow(snap.id);
+    if (!mounted) return;
+    final mode =
+        attached ? ref.read(rideRequestProvider).bookingMode : snap.bookingMode;
+    context.go(rideMatchingVariantForBookingModeString(mode).routePath);
   }
 
   static Widget _detailRow({
@@ -195,8 +209,7 @@ class _NearTermRideHomeBannerState extends ConsumerState<NearTermRideHomeBanner>
                   ],
                 ),
                 child: Padding(
-                  padding:
-                      const EdgeInsetsDirectional.fromSTEB(16, 14, 14, 14),
+                  padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 14, 14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
@@ -376,6 +389,24 @@ class _NearTermRideHomeBannerState extends ConsumerState<NearTermRideHomeBanner>
                             ),
                           ),
                         ],
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: () => unawaited(_openRideFlow(snap)),
+                            icon: const Icon(Icons.arrow_forward_rounded),
+                            label: Text(l10n.openAction),
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsetsDirectional.symmetric(
+                                horizontal: 16,
+                                vertical: 13,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
                     ],
                   ),

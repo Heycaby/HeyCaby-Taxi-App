@@ -27,5 +27,23 @@ void main() {
         contains('destination=52.37,4.89'),
       );
     });
+
+    test('builds address fallback web links', () {
+      final googleFallback = DriverNavigationLauncher.googleWebSearchUri(
+        'H.B.S. Laan 8, Oud-Beijerland',
+      );
+      expect(
+        googleFallback.queryParameters['destination'],
+        'H.B.S. Laan 8, Oud-Beijerland',
+      );
+      expect(googleFallback.queryParameters['travelmode'], 'driving');
+
+      expect(
+        DriverNavigationLauncher.wazeWebSearchUri(
+          'Stationplein 17A, Rotterdam',
+        ).toString(),
+        contains('q=Stationplein%2017A%2C%20Rotterdam'),
+      );
+    });
   });
 }

@@ -26,7 +26,7 @@ class DriverIdentityPreview extends StatelessWidget {
       body: DriverIdentityBody(
         colors: colors,
         typography: typography,
-        model: const DriverIdentityViewModel(
+        model: DriverIdentityViewModel(
           headline: 'Jan de Vries',
           initials: 'JV',
           email: 'jan@example.nl',
@@ -38,11 +38,23 @@ class DriverIdentityPreview extends StatelessWidget {
           isVerifiedBadge: true,
           showVehicleVerified: true,
           apkExpiryLabel: '12/8/2026',
+          completionItems: [
+            DriverIdentityRequirement(
+              key: 'driver_photo',
+              label: DriverStrings.profileRequirementDriverPhoto,
+              complete: true,
+            ),
+            DriverIdentityRequirement(
+              key: 'vehicle_photo',
+              label: DriverStrings.profileRequirementVehiclePhoto,
+              complete: false,
+            ),
+          ],
         ),
         onEditProfile: () {},
         onOpenVehicle: () {},
-        onOpenPreferences: () {},
-        onOpenFinance: () {},
+        onOpenSettings: () {},
+        onOpenRequirement: (_) {},
       ),
     );
   }
@@ -66,7 +78,6 @@ class DriverPreferencesPreview extends StatelessWidget {
       typography: typography,
       vehicleSubtitle: 'Mercedes E-Klasse · Zwart',
       languageSubtitle: 'Nederlands',
-      themeSubtitle: 'Driver Pro',
       acceptsCash: true,
       acceptsCard: true,
       acceptsTikkie: false,
@@ -76,7 +87,6 @@ class DriverPreferencesPreview extends StatelessWidget {
       onBack: () {},
       onVehicle: () {},
       onLanguage: () {},
-      onTheme: () {},
       onCashChanged: (_) {},
       onCardChanged: (_) {},
       onTikkieChanged: (_) {},
@@ -103,7 +113,8 @@ class DriverVehicleProfilePreview extends StatefulWidget {
       _DriverVehicleProfilePreviewState();
 }
 
-class _DriverVehicleProfilePreviewState extends State<DriverVehicleProfilePreview> {
+class _DriverVehicleProfilePreviewState
+    extends State<DriverVehicleProfilePreview> {
   late final TextEditingController _plateCtrl;
 
   @override

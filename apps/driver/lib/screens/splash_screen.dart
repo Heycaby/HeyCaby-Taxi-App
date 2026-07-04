@@ -16,8 +16,8 @@ import '../utils/driver_entry_navigation.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_brand_moment_body.dart';
 
-/// Total intro length — enough for staggered copy without feeling slow.
-const _kTotalMs = 5200;
+/// Short brand moment before auth routing.
+const _kTotalMs = 2600;
 
 /// Driver welcome — logo on light background, value props below.
 class SplashScreen extends ConsumerStatefulWidget {

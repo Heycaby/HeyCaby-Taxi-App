@@ -2,6 +2,16 @@
 
 Apply with the [Supabase CLI](https://supabase.com/docs/guides/cli) linked to project `fvrprxguoternoxnyhoj`, or paste SQL into **Dashboard → SQL Editor**.
 
+## Environment-specific webhook config
+
+Do **not** promote staging-only webhook URL migrations to production.
+
+Production must use `migrations/20260701144500_driver_agent_webhook_url_config.sql`, which sets `app_config.agent_webhook_url` to:
+
+`https://fvrprxguoternoxnyhoj.supabase.co/functions/v1/driver-agent`
+
+Staging/branches may have remote migration history names such as `driver_agent_webhook_url_config_staging`. Those are environment-specific history entries and must stay out of production. If staging needs a different URL, update only staging `app_config.agent_webhook_url` or apply a staging-only migration in the staging project.
+
 | File | Purpose |
 |------|---------|
 | `migrations/20260403193000_rider_identity_booking_prefs.sql` | Adds **`rider_identities.preferred_payment_methods`**, **`preferred_vehicle_category`**, **`preferred_pet_friendly`** — required for rider default booking prefs sync; apply before device/App Store testing or the app falls back to local-only prefs for those fields. |
