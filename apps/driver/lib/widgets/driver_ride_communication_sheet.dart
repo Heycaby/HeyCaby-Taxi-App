@@ -110,7 +110,7 @@ class _DriverRideCommunicationSheetState
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.sizeOf(context).height * 0.86,
@@ -150,33 +150,72 @@ class _DriverRideCommunicationSheetState
                     ),
                   ),
                   const SizedBox(height: DriverSpacing.lg),
-                  Text(
-                    DriverStrings.communicationCenterTitle,
-                    style: widget.typography.titleLarge.copyWith(
-                      color: widget.colors.text,
-                      fontWeight: FontWeight.w800,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: DriverSpacing.sm),
-                  Text(
-                    DriverStrings.communicationCenterSubtitle,
-                    style: widget.typography.bodyMedium.copyWith(
-                      color: widget.colors.textSecondary,
-                      height: 1.35,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  if (commContext.nearPickup) ...[
-                    const SizedBox(height: DriverSpacing.sm),
-                    Text(
-                      DriverStrings.communicationNearPickupHint,
-                      style: widget.typography.bodySmall.copyWith(
-                        color: widget.colors.textMuted,
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(DriverSpacing.lg),
+                    decoration: BoxDecoration(
+                      color: widget.colors.primary.withValues(alpha: 0.08),
+                      borderRadius: DriverRadius.lgAll,
+                      border: Border.all(
+                        color: widget.colors.primary.withValues(alpha: 0.14),
                       ),
-                      textAlign: TextAlign.center,
                     ),
-                  ],
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: widget.colors.card,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: widget.colors.primary
+                                    .withValues(alpha: 0.14),
+                                blurRadius: 18,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.forum_rounded,
+                            color: widget.colors.primary,
+                            size: 26,
+                          ),
+                        ),
+                        const SizedBox(height: DriverSpacing.md),
+                        Text(
+                          DriverStrings.communicationCenterTitle,
+                          style: widget.typography.titleLarge.copyWith(
+                            color: widget.colors.text,
+                            fontWeight: FontWeight.w900,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: DriverSpacing.sm),
+                        Text(
+                          DriverStrings.communicationCenterSubtitle,
+                          style: widget.typography.bodyMedium.copyWith(
+                            color: widget.colors.textSecondary,
+                            height: 1.35,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        if (commContext.nearPickup) ...[
+                          const SizedBox(height: DriverSpacing.sm),
+                          Text(
+                            DriverStrings.communicationNearPickupHint,
+                            style: widget.typography.bodySmall.copyWith(
+                              color: widget.colors.textMuted,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: DriverSpacing.lg),
                   FilledButton.icon(
                     onPressed: widget.onOpenChat,
@@ -184,17 +223,12 @@ class _DriverRideCommunicationSheetState
                     label: const Text(DriverStrings.communicationChat),
                   ),
                   const SizedBox(height: DriverSpacing.lg),
-                  Divider(color: widget.colors.border),
-                  const SizedBox(height: DriverSpacing.sm),
-                  Text(
-                    DriverStrings.communicationQuickActions,
-                    style: widget.typography.labelLarge.copyWith(
-                      color: widget.colors.textMuted,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.4,
-                    ),
+                  _SectionLabel(
+                    colors: widget.colors,
+                    typography: widget.typography,
+                    label: DriverStrings.communicationQuickActions,
                   ),
-                  const SizedBox(height: DriverSpacing.md),
+                  const SizedBox(height: DriverSpacing.sm),
                   ...pings.map((type) {
                     final remaining = DriverPingCooldown.remaining(
                       widget.rideRequestId,
@@ -219,6 +253,12 @@ class _DriverRideCommunicationSheetState
                       ),
                     );
                   }),
+                  const SizedBox(height: DriverSpacing.sm),
+                  _SectionLabel(
+                    colors: widget.colors,
+                    typography: widget.typography,
+                    label: DriverStrings.communicationPingHistory,
+                  ),
                   const SizedBox(height: DriverSpacing.sm),
                   DecoratedBox(
                     decoration: BoxDecoration(
@@ -283,6 +323,30 @@ class _DriverRideCommunicationSheetState
   }
 }
 
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({
+    required this.colors,
+    required this.typography,
+    required this.label,
+  });
+
+  final DriverColors colors;
+  final DriverTypography typography;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: typography.labelLarge.copyWith(
+        color: colors.textMuted,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0.4,
+      ),
+    );
+  }
+}
+
 class _PingActionButton extends StatelessWidget {
   const _PingActionButton({
     required this.colors,
@@ -305,11 +369,11 @@ class _PingActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: enabled ? colors.card : colors.surface,
-      borderRadius: DriverRadius.smAll,
+      color: enabled ? colors.primary.withValues(alpha: 0.06) : colors.surface,
+      borderRadius: DriverRadius.mdAll,
       child: InkWell(
         onTap: enabled ? onTap : null,
-        borderRadius: DriverRadius.smAll,
+        borderRadius: DriverRadius.mdAll,
         child: Container(
           constraints:
               const BoxConstraints(minHeight: DriverSpacing.touchTarget),
@@ -318,10 +382,10 @@ class _PingActionButton extends StatelessWidget {
             vertical: DriverSpacing.sm,
           ),
           decoration: BoxDecoration(
-            borderRadius: DriverRadius.smAll,
+            borderRadius: DriverRadius.mdAll,
             border: Border.all(
               color: enabled
-                  ? colors.primary.withValues(alpha: 0.18)
+                  ? colors.primary.withValues(alpha: 0.20)
                   : colors.border,
             ),
           ),

@@ -592,6 +592,12 @@ abstract class AppLocalizations {
   /// **'Estimated fare'**
   String get fareEstimate;
 
+  /// No description provided for @vehicleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle'**
+  String get vehicleLabel;
+
   /// No description provided for @scheduledFor.
   ///
   /// In en, this message translates to:
@@ -4799,6 +4805,18 @@ abstract class AppLocalizations {
   /// **'Tap to view progress without losing the map.'**
   String get activeBookingTapForDetails;
 
+  /// No description provided for @activeBookingKeepAliveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your request keeps running'**
+  String get activeBookingKeepAliveTitle;
+
+  /// No description provided for @activeBookingKeepAliveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You can return home or lock your phone. We’ll keep searching and notify you when anything changes.'**
+  String get activeBookingKeepAliveBody;
+
   /// No description provided for @activeBookingDriversNotified.
   ///
   /// In en, this message translates to:
@@ -5261,6 +5279,60 @@ abstract class AppLocalizations {
   /// **'Please verify this plate before entering the vehicle.'**
   String get activeRideVerifyPlate;
 
+  /// No description provided for @activeRideWaitingFeeWaived.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting fee waived'**
+  String get activeRideWaitingFeeWaived;
+
+  /// No description provided for @activeRideWaitingFreePickupTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Free pickup time'**
+  String get activeRideWaitingFreePickupTime;
+
+  /// No description provided for @activeRideWaitingTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting time'**
+  String get activeRideWaitingTime;
+
+  /// No description provided for @activeRideWaitingFeeWaivedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your driver waived the waiting fee.'**
+  String get activeRideWaitingFeeWaivedBody;
+
+  /// No description provided for @activeRideWaitingGraceBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting may be added after 2 minutes.'**
+  String get activeRideWaitingGraceBody;
+
+  /// No description provided for @activeRideWaitingFeeAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} added so far'**
+  String activeRideWaitingFeeAdded(String amount);
+
+  /// No description provided for @activeRideWaitingRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate after grace: {rate}'**
+  String activeRideWaitingRate(String rate);
+
+  /// No description provided for @activeRideWaitingRateNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting rate not set'**
+  String get activeRideWaitingRateNotSet;
+
+  /// No description provided for @activeRideWaitingRateLive.
+  ///
+  /// In en, this message translates to:
+  /// **'{rate} · live'**
+  String activeRideWaitingRateLive(String rate);
+
   /// No description provided for @openAction.
   ///
   /// In en, this message translates to:
@@ -5290,6 +5362,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Settlement'**
   String get rideReceiptSettlement;
+
+  /// No description provided for @rideReceiptPaidTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get rideReceiptPaidTitle;
+
+  /// No description provided for @rideReceiptBusinessReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Business-ready receipt'**
+  String get rideReceiptBusinessReady;
+
+  /// No description provided for @rideReceiptBusinessReadyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this receipt for your trip history and expense records.'**
+  String get rideReceiptBusinessReadyBody;
+
+  /// No description provided for @rideReceiptFareBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Fare breakdown'**
+  String get rideReceiptFareBreakdown;
+
+  /// No description provided for @rideReceiptBaseFare.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride fare'**
+  String get rideReceiptBaseFare;
+
+  /// No description provided for @rideReceiptWaitingFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting time'**
+  String get rideReceiptWaitingFee;
+
+  /// No description provided for @rideReceiptWaitingWaived.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting time waived'**
+  String get rideReceiptWaitingWaived;
+
+  /// No description provided for @rideReceiptChargeableWait.
+  ///
+  /// In en, this message translates to:
+  /// **'Chargeable wait'**
+  String get rideReceiptChargeableWait;
+
+  /// No description provided for @rideReceiptSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds}s'**
+  String rideReceiptSeconds(int seconds);
+
+  /// No description provided for @rideReceiptReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt reference'**
+  String get rideReceiptReference;
 
   /// No description provided for @rideReceiptRideId.
   ///

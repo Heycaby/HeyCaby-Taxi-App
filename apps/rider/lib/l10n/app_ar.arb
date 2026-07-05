@@ -106,6 +106,7 @@
   "reportSubmitted": "تم إرسال التقرير بنجاح",
   "reportSubmitFailed": "فشل إرسال التقرير",
   "fareEstimate": "الأجرة التقديرية",
+  "vehicleLabel": "المركبة",
   "scheduledFor": "مجدول في {date}",
   "@scheduledFor": {
     "placeholders": {
@@ -1142,6 +1143,8 @@
   "activeBookingMarketplaceTitle": "جارٍ البحث عن عروض",
   "activeBookingScheduledTitle": "الرحلة المجدولة نشطة",
   "activeBookingTapForDetails": "اضغط لعرض التقدم مع بقاء الخريطة أمامك.",
+  "activeBookingKeepAliveTitle": "طلبك ما زال يعمل",
+  "activeBookingKeepAliveBody": "يمكنك الرجوع إلى الرئيسية أو قفل هاتفك. سنواصل البحث ونخبرك عند حدوث أي تغيير.",
   "activeBookingDriversNotified": "{count, plural, =0{لم يستلم أي سائق طلبك} one{استلم سائق واحد طلبك} other{استلم {count} سائقين طلبك}}",
   "@activeBookingDriversNotified": {
     "placeholders": {
@@ -1248,11 +1251,58 @@
   "activeRideUnknownPlate": "غير معروف",
   "activeRideFoundingMember": "عضو مؤسس",
   "activeRideVerifyPlate": "يرجى التحقق من هذه اللوحة قبل دخول المركبة.",
+  "activeRideWaitingFeeWaived": "تم التنازل عن رسوم الانتظار",
+  "activeRideWaitingFreePickupTime": "وقت استلام مجاني",
+  "activeRideWaitingTime": "وقت الانتظار",
+  "activeRideWaitingFeeWaivedBody": "تنازل السائق عن رسوم الانتظار.",
+  "activeRideWaitingGraceBody": "قد تتم إضافة الانتظار بعد دقيقتين.",
+  "activeRideWaitingFeeAdded": "تمت إضافة {amount} حتى الآن",
+  "@activeRideWaitingFeeAdded": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideWaitingRate": "السعر بعد الوقت المجاني: {rate}",
+  "@activeRideWaitingRate": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideWaitingRateNotSet": "سعر الانتظار غير محدد",
+  "activeRideWaitingRateLive": "{rate} · مباشر",
+  "@activeRideWaitingRateLive": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
   "activeRideContactDriver": "اتصل بالسائق",
   "openAction": "فتح",
   "rideReceiptTitle": "إيصال الرحلة",
   "rideReceiptUnavailable": "الإيصال غير متاح بعد.",
   "rideReceiptSettlement": "التسوية",
+  "rideReceiptPaidTitle": "تم الدفع",
+  "rideReceiptBusinessReady": "إيصال مناسب للأعمال",
+  "rideReceiptBusinessReadyBody": "احتفظ بهذا الإيصال في سجل رحلاتك ومصاريفك.",
+  "rideReceiptFareBreakdown": "تفصيل الأجرة",
+  "rideReceiptBaseFare": "أجرة الرحلة",
+  "rideReceiptWaitingFee": "وقت الانتظار",
+  "rideReceiptWaitingWaived": "تم التنازل عن وقت الانتظار",
+  "rideReceiptChargeableWait": "وقت الانتظار المحسوب",
+  "rideReceiptSeconds": "{seconds}ث",
+  "@rideReceiptSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "rideReceiptReference": "مرجع الإيصال",
   "rideReceiptRideId": "معرّف الرحلة",
   "rideReceiptExpected": "المتوقع",
   "rideReceiptPaid": "المدفوع",

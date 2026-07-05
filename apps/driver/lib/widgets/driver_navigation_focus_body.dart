@@ -51,13 +51,16 @@ class DriverNavigationFocusBody extends StatelessWidget {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          DriverStatusBadge(
-            label: DriverStrings.rideInProgress,
+          DriverRidePhaseHero(
             colors: colors,
             typography: typography,
-            tone: DriverStatusTone.online,
+            eyebrow: DriverStrings.rideInProgress,
+            title: DriverStrings.inProgressHeroTitle,
+            body: DriverStrings.inProgressHeroBody,
             icon: Icons.directions_car_rounded,
-          ).driverFadeSlideIn(staggerIndex: 0),
+            tone: DriverStatusTone.online,
+            metric: expectedAmountLabel,
+          ),
           if (showNearDestinationAssist) ...[
             const SizedBox(height: DriverSpacing.sm),
             DriverStatusBadge(
@@ -75,7 +78,6 @@ class DriverNavigationFocusBody extends StatelessWidget {
             pickupLabel: pickupAddress,
             dropoffLabel: destinationAddress,
             riderName: riderName,
-            fareLabel: expectedAmountLabel,
             statusLabel: DriverStrings.destination,
             statusTone: DriverStatusTone.success,
             staggerIndex: 1,
@@ -91,7 +93,7 @@ class DriverNavigationFocusBody extends StatelessWidget {
                 onTap: onNavigate,
               ),
               DriverRideFlowAction(
-                label: DriverStrings.communicationOpen,
+                label: DriverStrings.pingRiderAction,
                 icon: Icons.forum_outlined,
                 onTap: onOpenCommunication,
                 enabled: !completing,

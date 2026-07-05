@@ -228,7 +228,7 @@ class _ActiveBookingCardState extends ConsumerState<ActiveBookingCard> {
             child: Ink(
               decoration: BoxDecoration(
                 color: colors.card,
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(28),
                 border: Border.all(color: colors.border.withValues(alpha: 0.7)),
                 boxShadow: [
                   BoxShadow(
@@ -239,11 +239,13 @@ class _ActiveBookingCardState extends ConsumerState<ActiveBookingCard> {
                 ],
               ),
               child: Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 14, 14),
+                padding: const EdgeInsetsDirectional.fromSTEB(14, 10, 14, 14),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _SheetHandle(colors: colors),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         _IconTile(
@@ -336,6 +338,13 @@ class _ActiveBookingCardState extends ConsumerState<ActiveBookingCard> {
                               bestOffer.etaMinutes,
                             ),
                     ),
+                    const SizedBox(height: 12),
+                    _KeepAliveNotice(
+                      colors: colors,
+                      typo: typo,
+                      title: l10n.activeBookingKeepAliveTitle,
+                      body: l10n.activeBookingKeepAliveBody,
+                    ),
                     const SizedBox(height: 14),
                     Row(
                       children: [
@@ -381,6 +390,98 @@ class _ActiveBookingCardState extends ConsumerState<ActiveBookingCard> {
       },
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class _SheetHandle extends StatelessWidget {
+  const _SheetHandle({required this.colors});
+
+  final HeyCabyColorTokens colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 54,
+        height: 5,
+        decoration: BoxDecoration(
+          color: colors.border.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(999),
+        ),
+      ),
+    );
+  }
+}
+
+class _KeepAliveNotice extends StatelessWidget {
+  const _KeepAliveNotice({
+    required this.colors,
+    required this.typo,
+    required this.title,
+    required this.body,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsetsDirectional.fromSTEB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: colors.accent.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.accent.withValues(alpha: 0.16)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: colors.accent.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.autorenew_rounded,
+              color: colors.accent,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: typo.labelLarge.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w900,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  body,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: typo.bodySmall.copyWith(
+                    color: colors.textMid,
+                    fontWeight: FontWeight.w600,
+                    height: 1.28,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -29,6 +29,9 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
   bool _sendingReceipt = false;
   bool _returnModePromptShown = false;
   String? _expectedLabel;
+  String? _baseFareLabel;
+  String? _waitingFeeLabel;
+  bool _waitingFeeWaived = false;
   num? _expectedAmount;
   String _method = 'cash';
   final TextEditingController _paidCtrl = TextEditingController();
@@ -86,6 +89,9 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
           (currency == null || currency == 'EUR') ? 'EUR ' : '$currency ';
       setState(() {
         _expectedAmount = totalAmount;
+        _baseFareLabel = '$prefix${amountValue.toStringAsFixed(2)}';
+        _waitingFeeLabel = '$prefix${waitingAmount.toStringAsFixed(2)}';
+        _waitingFeeWaived = waitingFeeWaived;
         _expectedLabel = '$prefix${totalAmount.toStringAsFixed(2)}';
         _paidCtrl.text = totalAmount.toStringAsFixed(2);
       });
@@ -193,6 +199,9 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
       destinationAddress:
           driver.destinationAddress ?? DriverStrings.destination,
       expectedLabel: _expectedLabel,
+      baseFareLabel: _baseFareLabel,
+      waitingFeeLabel: _waitingFeeLabel,
+      waitingFeeWaived: _waitingFeeWaived,
       paidController: _paidCtrl,
       noteController: _noteCtrl,
       paymentMethod: _method,

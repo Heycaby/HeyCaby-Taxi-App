@@ -7,7 +7,6 @@ import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 
-import '../widgets/booking/booking_flow_screen_header.dart';
 import '../providers/ride_request_provider.dart';
 
 class RatingScreen extends ConsumerStatefulWidget {
@@ -89,7 +88,9 @@ class _RatingScreenState extends ConsumerState<RatingScreen> {
       if (rideRequestId == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocalizations.of(context).failedToSubmitRating)),
+            SnackBar(
+                content:
+                    Text(AppLocalizations.of(context).failedToSubmitRating)),
           );
         }
         return;
@@ -134,7 +135,8 @@ class _RatingScreenState extends ConsumerState<RatingScreen> {
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).failedToSubmitRating)),
+          SnackBar(
+              content: Text(AppLocalizations.of(context).failedToSubmitRating)),
         );
       }
     } finally {
@@ -163,243 +165,526 @@ class _RatingScreenState extends ConsumerState<RatingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            BookingFlowScreenHeader(
+            _RatingTopBar(
               colors: colors,
               typo: typo,
               title: l10n.rateYourDriver,
-              subtitle: l10n.howWasYourRide,
-              icon: Icons.star_rounded,
-              onBack: () {
-                if (!_isSubmitting) context.go('/home');
-              },
+              onClose: _isSubmitting ? null : () => context.go('/home'),
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsetsDirectional.fromSTEB(20, 8, 20, 24),
+                padding: const EdgeInsetsDirectional.fromSTEB(20, 8, 20, 28),
                 children: [
-                  Center(
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: colors.accentL,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: colors.accent.withValues(alpha: 0.25),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: colors.text.withValues(alpha: 0.06),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.person_rounded,
-                        color: colors.accent,
-                        size: 40,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  _StarRating(
+                  _RatingHeroCard(
                     rating: _rating,
                     colors: colors,
+                    typo: typo,
+                    title: l10n.howWasYourRide,
+                    subtitle: l10n.ratingCategorySubtitle,
                     onRatingChanged: _onOverallRatingChanged,
                   ),
-                  const SizedBox(height: 28),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsetsDirectional.all(16),
-                    decoration: BoxDecoration(
-                      color: colors.card,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: colors.border),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colors.text.withValues(alpha: 0.04),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                  Text(
-                    l10n.ratingCategorySectionTitle,
-                    style: typo.titleMedium.copyWith(
-                      color: colors.text,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    l10n.ratingCategorySubtitle,
-                    style: typo.bodySmall.copyWith(color: colors.textSoft),
-                  ),
                   const SizedBox(height: 16),
-                  _CategoryStarRow(
-                    label: l10n.ratingDimensionPunctuality,
-                    value: _punctuality,
+                  _RatingCategoryCard(
                     colors: colors,
                     typo: typo,
-                    onChanged: (v) => setState(() => _punctuality = v),
-                  ),
-                  _CategoryStarRow(
-                    label: l10n.ratingDimensionCleanliness,
-                    value: _cleanliness,
-                    colors: colors,
-                    typo: typo,
-                    onChanged: (v) => setState(() => _cleanliness = v),
-                  ),
-                  _CategoryStarRow(
-                    label: l10n.ratingDimensionAttitude,
-                    value: _attitude,
-                    colors: colors,
-                    typo: typo,
-                    onChanged: (v) => setState(() => _attitude = v),
-                  ),
-                  _CategoryStarRow(
-                    label: l10n.ratingDimensionDrivingSafety,
-                    value: _drivingSafety,
-                    colors: colors,
-                    typo: typo,
-                    onChanged: (v) => setState(() => _drivingSafety = v),
-                  ),
-                  _CategoryStarRow(
-                    label: l10n.ratingDimensionCommunication,
-                    value: _communication,
-                    colors: colors,
-                    typo: typo,
-                    onChanged: (v) => setState(() => _communication = v),
-                  ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    l10n.whatDidYouLike,
-                    style: typo.titleMedium.copyWith(
-                      color: colors.text,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _getQuickFeedback(l10n).map((tag) {
-                      final isSelected = _selectedFeedback.contains(tag);
-                      return _FeedbackChip(
-                        label: tag,
-                        isSelected: isSelected,
+                    title: l10n.ratingCategorySectionTitle,
+                    children: [
+                      _CategoryStarRow(
+                        label: l10n.ratingDimensionPunctuality,
+                        value: _punctuality,
                         colors: colors,
                         typo: typo,
-                        onTap: () {
-                          HapticService.lightTap();
-                          setState(() {
-                            if (isSelected) {
-                              _selectedFeedback.remove(tag);
-                            } else {
-                              _selectedFeedback.add(tag);
-                            }
-                          });
-                        },
-                      );
-                    }).toList(),
+                        onChanged: (v) => setState(() => _punctuality = v),
+                      ),
+                      _CategoryStarRow(
+                        label: l10n.ratingDimensionCleanliness,
+                        value: _cleanliness,
+                        colors: colors,
+                        typo: typo,
+                        onChanged: (v) => setState(() => _cleanliness = v),
+                      ),
+                      _CategoryStarRow(
+                        label: l10n.ratingDimensionAttitude,
+                        value: _attitude,
+                        colors: colors,
+                        typo: typo,
+                        onChanged: (v) => setState(() => _attitude = v),
+                      ),
+                      _CategoryStarRow(
+                        label: l10n.ratingDimensionDrivingSafety,
+                        value: _drivingSafety,
+                        colors: colors,
+                        typo: typo,
+                        onChanged: (v) => setState(() => _drivingSafety = v),
+                      ),
+                      _CategoryStarRow(
+                        label: l10n.ratingDimensionCommunication,
+                        value: _communication,
+                        colors: colors,
+                        typo: typo,
+                        onChanged: (v) => setState(() => _communication = v),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                  Text(
-                    l10n.additionalFeedback,
-                    style: typo.titleMedium.copyWith(
-                      color: colors.text,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  const SizedBox(height: 16),
+                  _FeedbackTagsCard(
+                    colors: colors,
+                    typo: typo,
+                    title: l10n.whatDidYouLike,
+                    tags: _getQuickFeedback(l10n),
+                    selectedTags: _selectedFeedback,
+                    onToggle: (tag) {
+                      HapticService.lightTap();
+                      setState(() {
+                        if (_selectedFeedback.contains(tag)) {
+                          _selectedFeedback.remove(tag);
+                        } else {
+                          _selectedFeedback.add(tag);
+                        }
+                      });
+                    },
                   ),
-                  const SizedBox(height: 12),
-                  TextField(
+                  const SizedBox(height: 16),
+                  _FeedbackTextCard(
+                    colors: colors,
+                    typo: typo,
+                    title: l10n.additionalFeedback,
+                    hint: l10n.tellUsMore,
                     controller: _feedbackController,
-                    style: typo.bodyMedium.copyWith(color: colors.text),
-                    maxLines: 4,
-                    maxLength: 5000,
-                    decoration: InputDecoration(
-                      hintText: l10n.tellUsMore,
-                      hintStyle: typo.bodyMedium.copyWith(color: colors.textSoft),
-                      filled: true,
-                      fillColor: colors.card,
-                      contentPadding: const EdgeInsetsDirectional.all(16),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: colors.border),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: colors.border),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: colors.accent, width: 2),
-                      ),
-                    ),
                   ),
                 ],
               ),
             ),
-            Container(
-              padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 20),
-              decoration: BoxDecoration(
-                color: colors.card,
-                boxShadow: [
-                  BoxShadow(
-                    color: colors.text.withValues(alpha: 0.08),
-                    blurRadius: 20,
-                    offset: const Offset(0, -6),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: FilledButton(
-                      onPressed: !_canSubmit || _isSubmitting ? null : _submitRating,
-                      child: _isSubmitting
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                color: colors.onAccent,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : Text(
-                              l10n.submitRating,
-                              style: typo.labelLarge.copyWith(
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: _isSubmitting ? null : () => context.go('/home'),
-                    child: Text(
-                      l10n.skip,
-                      style: typo.labelLarge.copyWith(
-                        color: colors.textMid,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            _RatingActionDock(
+              colors: colors,
+              typo: typo,
+              submitLabel: l10n.submitRating,
+              skipLabel: l10n.skip,
+              canSubmit: _canSubmit,
+              isSubmitting: _isSubmitting,
+              onSubmit: _submitRating,
+              onSkip: () => context.go('/home'),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _RatingTopBar extends StatelessWidget {
+  const _RatingTopBar({
+    required this.colors,
+    required this.typo,
+    required this.title,
+    required this.onClose,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final String title;
+  final VoidCallback? onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(12, 8, 20, 8),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: onClose,
+            icon: Icon(Icons.close_rounded, color: colors.text),
+            tooltip: title,
+          ),
+          Expanded(
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              style: typo.titleLarge.copyWith(
+                color: colors.text,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(width: 48),
+        ],
+      ),
+    );
+  }
+}
+
+class _RatingHeroCard extends StatelessWidget {
+  const _RatingHeroCard({
+    required this.rating,
+    required this.colors,
+    required this.typo,
+    required this.title,
+    required this.subtitle,
+    required this.onRatingChanged,
+  });
+
+  final int rating;
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final String title;
+  final String subtitle;
+  final ValueChanged<int> onRatingChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsetsDirectional.fromSTEB(20, 22, 20, 20),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: colors.border),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.07),
+            blurRadius: 26,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: colors.warning.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: colors.warning.withValues(alpha: 0.22),
+              ),
+            ),
+            child: Icon(
+              Icons.star_rounded,
+              color: colors.warning,
+              size: 38,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: typo.titleLarge.copyWith(
+              color: colors.text,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: typo.bodyMedium.copyWith(
+              color: colors.textSoft,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 18),
+          _StarRating(
+            rating: rating,
+            colors: colors,
+            onRatingChanged: onRatingChanged,
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 280.ms).slideY(
+          begin: 0.04,
+          end: 0,
+          duration: 280.ms,
+          curve: Curves.easeOutCubic,
+        );
+  }
+}
+
+class _RatingCategoryCard extends StatelessWidget {
+  const _RatingCategoryCard({
+    required this.colors,
+    required this.typo,
+    required this.title,
+    required this.children,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return _RatingSurface(
+      colors: colors,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _SectionIcon(colors: colors, icon: Icons.tune_rounded),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: typo.titleMedium.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+class _FeedbackTagsCard extends StatelessWidget {
+  const _FeedbackTagsCard({
+    required this.colors,
+    required this.typo,
+    required this.title,
+    required this.tags,
+    required this.selectedTags,
+    required this.onToggle,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final String title;
+  final List<String> tags;
+  final Set<String> selectedTags;
+  final ValueChanged<String> onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return _RatingSurface(
+      colors: colors,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: typo.titleMedium.copyWith(
+              color: colors.text,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: tags.map((tag) {
+              final isSelected = selectedTags.contains(tag);
+              return _FeedbackChip(
+                label: tag,
+                isSelected: isSelected,
+                colors: colors,
+                typo: typo,
+                onTap: () => onToggle(tag),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeedbackTextCard extends StatelessWidget {
+  const _FeedbackTextCard({
+    required this.colors,
+    required this.typo,
+    required this.title,
+    required this.hint,
+    required this.controller,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final String title;
+  final String hint;
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return _RatingSurface(
+      colors: colors,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: typo.titleMedium.copyWith(
+              color: colors.text,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: controller,
+            style: typo.bodyMedium.copyWith(color: colors.text),
+            maxLines: 4,
+            maxLength: 5000,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: typo.bodyMedium.copyWith(color: colors.textSoft),
+              filled: true,
+              fillColor: colors.bg,
+              contentPadding: const EdgeInsetsDirectional.all(16),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: BorderSide(color: colors.border),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: BorderSide(color: colors.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: BorderSide(color: colors.accent, width: 2),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RatingActionDock extends StatelessWidget {
+  const _RatingActionDock({
+    required this.colors,
+    required this.typo,
+    required this.submitLabel,
+    required this.skipLabel,
+    required this.canSubmit,
+    required this.isSubmitting,
+    required this.onSubmit,
+    required this.onSkip,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final String submitLabel;
+  final String skipLabel;
+  final bool canSubmit;
+  final bool isSubmitting;
+  final VoidCallback onSubmit;
+  final VoidCallback onSkip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsetsDirectional.fromSTEB(
+        20,
+        14,
+        20,
+        16 + MediaQuery.paddingOf(context).bottom,
+      ),
+      decoration: BoxDecoration(
+        color: colors.card,
+        border: Border(top: BorderSide(color: colors.border)),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.09),
+            blurRadius: 24,
+            offset: const Offset(0, -10),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 56,
+              child: FilledButton(
+                onPressed: !canSubmit || isSubmitting ? null : onSubmit,
+                child: isSubmitting
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: colors.onAccent,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        submitLabel,
+                        style: typo.labelLarge.copyWith(
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          TextButton(
+            onPressed: isSubmitting ? null : onSkip,
+            child: Text(
+              skipLabel,
+              style: typo.labelLarge.copyWith(
+                color: colors.textMid,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RatingSurface extends StatelessWidget {
+  const _RatingSurface({
+    required this.colors,
+    required this.child,
+  });
+
+  final HeyCabyColorTokens colors;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsetsDirectional.all(18),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: colors.border),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.045),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _SectionIcon extends StatelessWidget {
+  const _SectionIcon({required this.colors, required this.icon});
+
+  final HeyCabyColorTokens colors;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: colors.accentL,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Icon(icon, color: colors.accent, size: 22),
     );
   }
 }
@@ -449,7 +734,9 @@ class _CategoryStarRow extends StatelessWidget {
                     duration: const Duration(milliseconds: 180),
                     curve: Curves.easeOutBack,
                     child: Icon(
-                      value >= star ? Icons.star_rounded : Icons.star_outline_rounded,
+                      value >= star
+                          ? Icons.star_rounded
+                          : Icons.star_outline_rounded,
                       color: value >= star ? colors.warning : colors.border,
                       size: 28,
                     ),

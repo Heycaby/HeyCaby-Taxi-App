@@ -74,7 +74,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
       final row = await HeyCabySupabase.client
           .from('ride_requests')
           .select(
-            'driver_id, drivers(full_name, avg_rating, vehicle_plate, profile_photo_url, vehicle_category, vehicle_make, vehicle_model, vehicle_colour, vehicle_photo_urls, is_founding_driver, founding_number)',
+            'driver_id, drivers(full_name, avg_rating, vehicle_plate, profile_photo_url, vehicle_category, vehicle_make, vehicle_model, vehicle_colour, vehicle_photo_urls)',
           )
           .eq('id', rideId)
           .maybeSingle();
@@ -482,26 +482,31 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
             onMapCreated: _onMapCreated,
             styleUri: mapStyleForTheme(ref.watch(themeProvider).id),
           ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _ActiveRideSheet(
-              status: status,
-              colors: colors,
-              typo: typo,
-              l10n: l10n,
-              booking: booking,
-              onComplete: () => context.go('/home'),
-              onShare: () => _shareRide(context),
-              onPingDriver: () => _openPingDriverSheet(context),
-              onPickupNote: () => context.push('/chat'),
-              onCancelRide: () => _openCancelFlow(context),
-              driverInfo: _driverInfo,
-              etaMinutes: etaMinutes,
-              lastRiderPing: _lastRiderPing,
-              waitingInfo: _waitingInfo,
-            ),
+          DraggableScrollableSheet(
+            initialChildSize: 0.48,
+            minChildSize: 0.32,
+            maxChildSize: 0.86,
+            snap: true,
+            snapSizes: const [0.48, 0.86],
+            builder: (context, scrollController) {
+              return _ActiveRideSheet(
+                status: status,
+                colors: colors,
+                typo: typo,
+                l10n: l10n,
+                booking: booking,
+                scrollController: scrollController,
+                onComplete: () => context.go('/home'),
+                onShare: () => _shareRide(context),
+                onPingDriver: () => _openPingDriverSheet(context),
+                onPickupNote: () => context.push('/chat'),
+                onCancelRide: () => _openCancelFlow(context),
+                driverInfo: _driverInfo,
+                etaMinutes: etaMinutes,
+                lastRiderPing: _lastRiderPing,
+                waitingInfo: _waitingInfo,
+              );
+            },
           ),
         ],
       ),
@@ -679,6 +684,7 @@ class _ActiveRideSheet extends StatelessWidget {
   final HeyCabyTypography typo;
   final AppLocalizations l10n;
   final BookingState booking;
+  final ScrollController scrollController;
   final VoidCallback onComplete;
   final VoidCallback onShare;
   final VoidCallback onPingDriver;
@@ -695,6 +701,7 @@ class _ActiveRideSheet extends StatelessWidget {
     required this.typo,
     required this.l10n,
     required this.booking,
+    required this.scrollController,
     required this.onComplete,
     required this.onShare,
     required this.onPingDriver,
@@ -724,7 +731,6 @@ class _ActiveRideSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCompleted = status == 'completed';
-    final sheetHeight = MediaQuery.of(context).size.height * 0.72;
     String paymentLabel() {
       if (booking.paymentMethods.isEmpty) return l10n.pinSubtitle;
       return booking.paymentMethods.first.replaceAll('_', ' ');
@@ -746,7 +752,6 @@ class _ActiveRideSheet extends StatelessWidget {
     }
 
     return Container(
-      height: sheetHeight,
       decoration: BoxDecoration(
         color: colors.card,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -760,6 +765,7 @@ class _ActiveRideSheet extends StatelessWidget {
       ),
       padding: const EdgeInsetsDirectional.fromSTEB(22, 16, 22, 22),
       child: SingleChildScrollView(
+        controller: scrollController,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -782,6 +788,9 @@ class _ActiveRideSheet extends StatelessWidget {
               l10n: l10n,
               etaMinutes: etaMinutes,
               driverInfo: driverInfo,
+              fareLabel: fareLabel(),
+              paymentLabel: paymentLabel(),
+              categoryLabel: categoryLabel(),
             ),
             const SizedBox(height: 14),
             if (driverInfo != null) ...[
@@ -824,6 +833,7 @@ class _ActiveRideSheet extends StatelessWidget {
                 colors: colors,
                 typo: typo,
                 info: waitingInfo!,
+                l10n: l10n,
               ),
               const SizedBox(height: 12),
             ],
@@ -1332,6 +1342,9 @@ class _RideConfidenceHeader extends StatelessWidget {
   final AppLocalizations l10n;
   final int? etaMinutes;
   final _DriverSheetInfo? driverInfo;
+  final String fareLabel;
+  final String paymentLabel;
+  final String categoryLabel;
 
   const _RideConfidenceHeader({
     required this.status,
@@ -1341,11 +1354,16 @@ class _RideConfidenceHeader extends StatelessWidget {
     required this.l10n,
     required this.etaMinutes,
     required this.driverInfo,
+    required this.fareLabel,
+    required this.paymentLabel,
+    required this.categoryLabel,
   });
 
   @override
   Widget build(BuildContext context) {
     final isComplete = status == 'completed';
+    final isArrived = status == 'driver_arrived' || status == 'arrived';
+    final isInProgress = status == 'in_progress';
     final title = switch (status) {
       'driver_arrived' || 'arrived' => l10n.activeRideDriverOutside,
       'in_progress' => etaMinutes != null
@@ -1357,67 +1375,244 @@ class _RideConfidenceHeader extends StatelessWidget {
           : label,
     };
     final vehicle = driverInfo?.naturalVehicleLabel.trim() ?? '';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 240),
-                child: Text(
-                  title,
-                  key: ValueKey(title),
-                  style: typo.headingMedium.copyWith(
-                    color: colors.text,
-                    fontWeight: FontWeight.w900,
+    final phaseIcon = isComplete
+        ? Icons.check_circle_rounded
+        : isInProgress
+            ? Icons.route_rounded
+            : isArrived
+                ? Icons.location_on_rounded
+                : Icons.local_taxi_rounded;
+    final phaseBody = isComplete
+        ? l10n.tripComplete
+        : isInProgress
+            ? l10n.activeRideVerifyPlate
+            : isArrived
+                ? l10n.activeRideWaitingGraceBody
+                : (vehicle.isNotEmpty ? vehicle : l10n.activeRideVerifyPlate);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colors.surface,
+            colors.bgAlt,
+            colors.accentL.withValues(alpha: 0.42),
+          ],
+          stops: const [0, 0.58, 1],
+        ),
+        border: Border.all(color: colors.border),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.06),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: colors.card,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: colors.accent.withValues(alpha: 0.16),
                   ),
                 ),
+                child: Icon(
+                  phaseIcon,
+                  color: isComplete ? colors.success : colors.accent,
+                  size: 25,
+                ),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: isComplete
-                    ? colors.success.withValues(alpha: 0.12)
-                    : colors.accentL,
-                borderRadius: BorderRadius.circular(99),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isComplete ? colors.success : colors.accent,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _PhasePill(
+                          colors: colors,
+                          typo: typo,
+                          label: label,
+                          tone: isComplete ? colors.success : colors.accent,
+                        ),
+                        if (etaMinutes != null && !isComplete)
+                          _PhasePill(
+                            colors: colors,
+                            typo: typo,
+                            label: '${etaMinutes!} min',
+                            tone: colors.text,
+                          ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    label,
-                    style: typo.labelSmall.copyWith(
-                      color: isComplete ? colors.success : colors.accent,
-                      fontWeight: FontWeight.w700,
+                    const SizedBox(height: 10),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 240),
+                      child: Text(
+                        title,
+                        key: ValueKey(title),
+                        style: typo.headingMedium.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 6),
+                    Text(
+                      phaseBody,
+                      style: typo.bodyMedium.copyWith(
+                        color: colors.textMid,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-        if (vehicle.isNotEmpty) ...[
-          const SizedBox(height: 6),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _PhaseMetric(
+                  colors: colors,
+                  typo: typo,
+                  label: l10n.fareEstimate,
+                  value: fareLabel,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _PhaseMetric(
+                  colors: colors,
+                  typo: typo,
+                  label: l10n.paymentMethod,
+                  value: paymentLabel,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _PhaseMetric(
+                  colors: colors,
+                  typo: typo,
+                  label: l10n.vehicleLabel,
+                  value: categoryLabel,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PhasePill extends StatelessWidget {
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final String label;
+  final Color tone;
+
+  const _PhasePill({
+    required this.colors,
+    required this.typo,
+    required this.label,
+    required this.tone,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: tone.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: tone.withValues(alpha: 0.14)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: tone),
+          ),
+          const SizedBox(width: 6),
           Text(
-            vehicle,
-            style: typo.bodyMedium.copyWith(
-              color: colors.textMid,
-              fontWeight: FontWeight.w600,
+            label,
+            style: typo.labelSmall.copyWith(
+              color: tone,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],
-      ],
+      ),
+    );
+  }
+}
+
+class _PhaseMetric extends StatelessWidget {
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final String label;
+  final String value;
+
+  const _PhaseMetric({
+    required this.colors,
+    required this.typo,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 58),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: colors.card.withValues(alpha: 0.82),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: typo.labelSmall.copyWith(
+              color: colors.textSoft,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: typo.bodyMedium.copyWith(
+              color: colors.text,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1467,11 +1662,13 @@ class _RiderWaitingFeeCard extends StatelessWidget {
     required this.colors,
     required this.typo,
     required this.info,
+    required this.l10n,
   });
 
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
   final _RideWaitingInfo info;
+  final AppLocalizations l10n;
 
   String _duration(int seconds) {
     final safe = seconds < 0 ? 0 : seconds;
@@ -1492,23 +1689,25 @@ class _RiderWaitingFeeCard extends StatelessWidget {
     final feeCents = info.waitingFeeCentsNow();
     final isGrace = !info.waived && chargeable == 0;
     final title = info.waived
-        ? 'Waiting fee waived'
+        ? l10n.activeRideWaitingFeeWaived
         : isGrace
-            ? 'Free pickup time'
-            : 'Waiting time';
+            ? l10n.activeRideWaitingFreePickupTime
+            : l10n.activeRideWaitingTime;
     final main = info.waived
         ? _money(0)
         : isGrace
             ? _duration(remainingGrace)
             : _duration(chargeable);
     final subtitle = info.waived
-        ? 'Your driver waived the waiting fee.'
+        ? l10n.activeRideWaitingFeeWaivedBody
         : isGrace
-            ? 'Waiting may be added after 2 minutes.'
-            : '${_money(feeCents)} added so far';
+            ? l10n.activeRideWaitingGraceBody
+            : l10n.activeRideWaitingFeeAdded(_money(feeCents));
     final rate = info.ratePerMinute > 0
-        ? 'Rate after grace: €${info.ratePerMinute.toStringAsFixed(2)}/min'
-        : 'Waiting rate not set';
+        ? l10n.activeRideWaitingRate(
+            '€${info.ratePerMinute.toStringAsFixed(2)}/min',
+          )
+        : l10n.activeRideWaitingRateNotSet;
 
     return Container(
       width: double.infinity,
@@ -1578,7 +1777,9 @@ class _RiderWaitingFeeCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  elapsed < info.graceSeconds ? rate : '$rate · live',
+                  elapsed < info.graceSeconds
+                      ? rate
+                      : l10n.activeRideWaitingRateLive(rate),
                   style: typo.labelSmall.copyWith(
                     color: colors.textSoft,
                     fontWeight: FontWeight.w700,
@@ -1881,8 +2082,6 @@ class _DriverSheetInfo {
   final String? vehicleModel;
   final String? vehicleColor;
   final String? vehiclePhotoUrl;
-  final bool isFoundingDriver;
-  final int? foundingNumber;
   final double? rating;
 
   const _DriverSheetInfo({
@@ -1894,8 +2093,6 @@ class _DriverSheetInfo {
     this.vehicleModel,
     this.vehicleColor,
     this.vehiclePhotoUrl,
-    this.isFoundingDriver = false,
-    this.foundingNumber,
     this.rating,
   });
 
@@ -1925,8 +2122,6 @@ class _DriverSheetInfo {
       vehicleColor:
           (json['vehicle_colour'] ?? json['vehicle_color']) as String?,
       vehiclePhotoUrl: firstPhoto,
-      isFoundingDriver: (json['is_founding_driver'] as bool?) ?? false,
-      foundingNumber: (json['founding_number'] as num?)?.toInt(),
       rating: rating,
     );
   }
@@ -2103,25 +2298,6 @@ class _DriverInfoCard extends StatelessWidget {
                         ? Icon(Icons.person, color: colors.accent)
                         : null,
                   ),
-                  if (driverInfo.isFoundingDriver)
-                    Positioned(
-                      right: -1,
-                      bottom: -1,
-                      child: Container(
-                        width: 16,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          color: colors.success,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: colors.surface, width: 1.5),
-                        ),
-                        child: Icon(
-                          Icons.check_rounded,
-                          size: 11,
-                          color: colors.onAccent,
-                        ),
-                      ),
-                    ),
                 ],
               ),
               const SizedBox(width: 11),
@@ -2171,25 +2347,6 @@ class _DriverInfoCard extends StatelessWidget {
                 ),
             ],
           ),
-          if (driverInfo.isFoundingDriver) ...[
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: colors.accentL,
-                borderRadius: BorderRadius.circular(99),
-              ),
-              child: Text(
-                driverInfo.foundingNumber != null
-                    ? '${l10n.activeRideFoundingMember} #${driverInfo.foundingNumber}'
-                    : l10n.activeRideFoundingMember,
-                style: typo.labelSmall.copyWith(
-                  color: colors.accent,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
           const SizedBox(height: 6),
           Text(
             l10n.activeRideVerifyPlate,

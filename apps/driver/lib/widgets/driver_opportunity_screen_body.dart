@@ -7,12 +7,12 @@ import '../theme/driver_radius.dart';
 import '../theme/driver_shadows.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
-import '../ui/driver_app_bar.dart';
 import 'driver_ride_premium_style.dart';
 import '../ui/driver_button.dart';
 import '../ui/driver_empty_state.dart';
 import '../ui/driver_skeleton.dart';
 import '../ui/driver_status_badge.dart';
+import 'driver_ride_flow_common.dart';
 
 /// **Opportunity Screen** presentation — accept / skip in &lt; 1 second.
 class DriverOpportunityScreenBody extends StatelessWidget {
@@ -45,42 +45,37 @@ class DriverOpportunityScreenBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: colors.background,
-      appBar: DriverAppBar(
-        title: DriverStrings.newRideRequest,
+    if (errorMessage == null && rideData != null) {
+      return _OfferContent(
         colors: colors,
         typography: typography,
-        leading: IconButton(
-          icon: Icon(Icons.close_rounded, color: colors.text),
-          onPressed: isDeclining ? null : onDecline,
-          tooltip: DriverStrings.decline,
-        ),
-      ),
+        countdownSeconds: countdownSeconds,
+        totalCountdownSeconds: totalCountdownSeconds,
+        rideData: rideData!,
+        isAccepting: isAccepting,
+        isDeclining: isDeclining,
+        onAccept: onAccept,
+        onDecline: onDecline,
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: colors.background,
       body: DecoratedBox(
         decoration: BoxDecoration(
           gradient: DriverRidePremiumStyle.screenBackground(colors),
         ),
-        child: errorMessage != null
-            ? _ErrorState(
-                colors: colors,
-                typography: typography,
-                message: errorMessage!,
-                onBack: onErrorBack ?? onDecline,
-              )
-            : rideData == null
-                ? _LoadingState(colors: colors)
-                : _OfferContent(
-                    colors: colors,
-                    typography: typography,
-                    countdownSeconds: countdownSeconds,
-                    totalCountdownSeconds: totalCountdownSeconds,
-                    rideData: rideData!,
-                    isAccepting: isAccepting,
-                    isDeclining: isDeclining,
-                    onAccept: onAccept,
-                    onDecline: onDecline,
-                  ),
+        child: SafeArea(
+          bottom: false,
+          child: errorMessage != null
+              ? _ErrorState(
+                  colors: colors,
+                  typography: typography,
+                  message: errorMessage!,
+                  onBack: onErrorBack ?? onDecline,
+                )
+              : _LoadingState(colors: colors),
+        ),
       ),
     );
   }
@@ -113,76 +108,112 @@ class _OfferContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final offer = _RideOfferViewData.from(rideData);
 
-    return Column(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-              DriverSpacing.screenEdge,
-              DriverSpacing.md,
-              DriverSpacing.screenEdge,
-              DriverSpacing.lg,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _DecisionHero(
-                  colors: colors,
-                  typography: typography,
-                  offer: offer,
-                  countdownSeconds: countdownSeconds,
-                  totalCountdownSeconds: totalCountdownSeconds,
-                ).driverFadeSlideIn(staggerIndex: 0, slideY: -0.04),
-                const SizedBox(height: DriverSpacing.md),
-                _RouteDecisionCard(
-                  colors: colors,
-                  typography: typography,
-                  offer: offer,
-                ).driverFadeSlideIn(staggerIndex: 1),
-              ],
-            ),
-          ),
+    return DriverRideFlowScaffold(
+      title: DriverStrings.newRideRequest,
+      colors: colors,
+      typography: typography,
+      onBack: isDeclining ? null : onDecline,
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _DecisionHero(
+            colors: colors,
+            typography: typography,
+            offer: offer,
+            countdownSeconds: countdownSeconds,
+            totalCountdownSeconds: totalCountdownSeconds,
+          ).driverFadeSlideIn(staggerIndex: 0, slideY: -0.04),
+          const SizedBox(height: DriverSpacing.md),
+          _RouteDecisionCard(
+            colors: colors,
+            typography: typography,
+            offer: offer,
+          ).driverFadeSlideIn(staggerIndex: 1),
+        ],
+      ),
+      bottomBar: _OpportunityDecisionBar(
+        colors: colors,
+        typography: typography,
+        isAccepting: isAccepting,
+        isDeclining: isDeclining,
+        onAccept: onAccept,
+        onDecline: onDecline,
+      ),
+    );
+  }
+}
+
+class _OpportunityDecisionBar extends StatelessWidget {
+  const _OpportunityDecisionBar({
+    required this.colors,
+    required this.typography,
+    required this.isAccepting,
+    required this.isDeclining,
+    required this.onAccept,
+    required this.onDecline,
+  });
+
+  final DriverColors colors;
+  final DriverTypography typography;
+  final bool isAccepting;
+  final bool isDeclining;
+  final VoidCallback onAccept;
+  final VoidCallback onDecline;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: DriverRadius.sheetTop,
+        border: Border(top: BorderSide(color: colors.border)),
+        boxShadow: DriverShadows.floating(colors),
+      ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          DriverSpacing.screenEdge,
+          DriverSpacing.md,
+          DriverSpacing.screenEdge,
+          DriverSpacing.lg + MediaQuery.paddingOf(context).bottom,
         ),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.card,
-            borderRadius: DriverRadius.sheetTop,
-            boxShadow: DriverShadows.floating(colors),
-          ),
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              DriverSpacing.screenEdge,
-              DriverSpacing.lg,
-              DriverSpacing.screenEdge,
-              DriverSpacing.lg + MediaQuery.paddingOf(context).bottom,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DriverRidePremiumStyle.sheetHandle(colors),
+            const SizedBox(height: DriverSpacing.md),
+            DriverButton(
+              label: DriverStrings.accept,
+              icon: Icons.check_rounded,
+              onPressed: isAccepting ? null : onAccept,
+              loading: isAccepting,
+              size: DriverButtonSize.lg,
+              colors: colors,
+              typography: typography,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                DriverButton(
-                  label: DriverStrings.accept,
-                  icon: Icons.check_rounded,
-                  onPressed: isAccepting ? null : onAccept,
-                  loading: isAccepting,
-                  size: DriverButtonSize.lg,
-                  colors: colors,
-                  typography: typography,
-                ),
-                const SizedBox(height: DriverSpacing.sm),
-                DriverButton(
-                  label: DriverStrings.decline,
-                  onPressed: (isAccepting || isDeclining) ? null : onDecline,
-                  loading: isDeclining,
-                  variant: DriverButtonVariant.outline,
-                  size: DriverButtonSize.md,
-                  colors: colors,
-                  typography: typography,
-                ),
-              ],
+            const SizedBox(height: DriverSpacing.sm),
+            DriverButton(
+              label: DriverStrings.decline,
+              onPressed: (isAccepting || isDeclining) ? null : onDecline,
+              loading: isDeclining,
+              variant: DriverButtonVariant.outline,
+              size: DriverButtonSize.md,
+              colors: colors,
+              typography: typography,
             ),
-          ),
+            const SizedBox(height: DriverSpacing.sm),
+            Text(
+              DriverStrings.incomingRideSkipHint,
+              textAlign: TextAlign.center,
+              style: typography.bodySmall.copyWith(
+                color: colors.textMuted,
+                fontWeight: FontWeight.w600,
+                height: 1.3,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -211,8 +242,8 @@ class _DecisionHero extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: DriverRadius.lgAll,
-        border: Border.all(color: colors.border),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: colors.primary.withValues(alpha: 0.14)),
         boxShadow: DriverShadows.card(colors),
       ),
       child: Padding(
@@ -238,6 +269,14 @@ class _DecisionHero extends StatelessWidget {
               ],
             ),
             const SizedBox(height: DriverSpacing.lg),
+            Text(
+              DriverStrings.incomingRideEstimatedEarnings,
+              style: typography.labelLarge.copyWith(
+                color: colors.textSecondary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: DriverSpacing.xs),
             Text(
               offer.fareLabel ?? DriverStrings.incomingRideOpenFare,
               style: typography.displaySmall.copyWith(

@@ -28,12 +28,18 @@ class DriverRewardScreenBody extends StatelessWidget {
     required this.onRateRider,
     required this.onSkip,
     required this.onBack,
+    this.baseFareLabel,
+    this.waitingFeeLabel,
+    this.waitingFeeWaived = false,
   });
 
   final DriverColors colors;
   final DriverTypography typography;
   final String destinationAddress;
   final String? expectedLabel;
+  final String? baseFareLabel;
+  final String? waitingFeeLabel;
+  final bool waitingFeeWaived;
   final TextEditingController paidController;
   final TextEditingController noteController;
   final String paymentMethod;
@@ -95,9 +101,13 @@ class DriverRewardScreenBody extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: DriverSpacing.sm),
-                Text(
-                  '${DriverStrings.expectedFareLabel}: ${expectedLabel ?? '—'}',
-                  style: typography.bodySmall.copyWith(color: colors.textSecondary),
+                _FareBreakdownCard(
+                  colors: colors,
+                  typography: typography,
+                  baseFareLabel: baseFareLabel ?? expectedLabel,
+                  waitingFeeLabel: waitingFeeLabel,
+                  waitingFeeWaived: waitingFeeWaived,
+                  totalLabel: expectedLabel,
                 ),
                 const SizedBox(height: DriverSpacing.lg),
                 DriverTextField(
@@ -164,6 +174,143 @@ class DriverRewardScreenBody extends StatelessWidget {
         tertiaryLabel: DriverStrings.skip,
         onTertiary: onSkip,
       ),
+    );
+  }
+}
+
+class _FareBreakdownCard extends StatelessWidget {
+  const _FareBreakdownCard({
+    required this.colors,
+    required this.typography,
+    required this.baseFareLabel,
+    required this.waitingFeeLabel,
+    required this.waitingFeeWaived,
+    required this.totalLabel,
+  });
+
+  final DriverColors colors;
+  final DriverTypography typography;
+  final String? baseFareLabel;
+  final String? waitingFeeLabel;
+  final bool waitingFeeWaived;
+  final String? totalLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final waitingLabel = waitingFeeWaived
+        ? DriverStrings.waitingFeeWaived
+        : waitingFeeLabel ?? '-';
+
+    return Container(
+      padding: const EdgeInsets.all(DriverSpacing.md),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: colors.border.withValues(alpha: 0.75)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  Icons.receipt_long_rounded,
+                  color: colors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: DriverSpacing.sm),
+              Expanded(
+                child: Text(
+                  DriverStrings.fareBreakdownTitle,
+                  style: typography.titleSmall.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: DriverSpacing.md),
+          _FareRow(
+            colors: colors,
+            typography: typography,
+            label: DriverStrings.rideFareLabel,
+            value: baseFareLabel ?? '-',
+          ),
+          const SizedBox(height: DriverSpacing.sm),
+          _FareRow(
+            colors: colors,
+            typography: typography,
+            label: DriverStrings.waitingFeeLabel,
+            value: waitingLabel,
+            highlight: waitingFeeWaived,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: DriverSpacing.md),
+            child: Divider(color: colors.border, height: 1),
+          ),
+          _FareRow(
+            colors: colors,
+            typography: typography,
+            label: DriverStrings.totalToRecordLabel,
+            value: totalLabel ?? '-',
+            strong: true,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FareRow extends StatelessWidget {
+  const _FareRow({
+    required this.colors,
+    required this.typography,
+    required this.label,
+    required this.value,
+    this.strong = false,
+    this.highlight = false,
+  });
+
+  final DriverColors colors;
+  final DriverTypography typography;
+  final String label;
+  final String value;
+  final bool strong;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: (strong ? typography.labelLarge : typography.bodySmall)
+                .copyWith(
+              color: strong ? colors.text : colors.textSecondary,
+              fontWeight: strong ? FontWeight.w900 : FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(width: DriverSpacing.md),
+        Text(
+          value,
+          style: (strong ? typography.titleMedium : typography.bodyMedium)
+              .copyWith(
+            color: highlight ? colors.primary : colors.text,
+            fontWeight: strong ? FontWeight.w900 : FontWeight.w800,
+          ),
+        ),
+      ],
     );
   }
 }

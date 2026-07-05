@@ -100,6 +100,7 @@
   "reportSubmitted": "Report submitted successfully",
   "reportSubmitFailed": "Failed to submit report",
   "fareEstimate": "Estimated fare",
+  "vehicleLabel": "Vehicle",
   "scheduledFor": "Scheduled for {date}",
   "@scheduledFor": {
     "placeholders": {
@@ -1065,6 +1066,8 @@
   "activeBookingMarketplaceTitle": "Searching for offers",
   "activeBookingScheduledTitle": "Scheduled ride active",
   "activeBookingTapForDetails": "Tap to view progress without losing the map.",
+  "activeBookingKeepAliveTitle": "Your request keeps running",
+  "activeBookingKeepAliveBody": "You can return home or lock your phone. We’ll keep searching and notify you when anything changes.",
   "activeBookingDriversNotified": "{count, plural, =0{0 drivers received your request} one{1 driver received your request} other{{count} drivers received your request}}",
   "@activeBookingDriversNotified": {
     "placeholders": {
@@ -1246,11 +1249,58 @@
   "activeRideUnknownPlate": "UNKNOWN",
   "activeRideFoundingMember": "Founding Member",
   "activeRideVerifyPlate": "Please verify this plate before entering the vehicle.",
+  "activeRideWaitingFeeWaived": "Waiting fee waived",
+  "activeRideWaitingFreePickupTime": "Free pickup time",
+  "activeRideWaitingTime": "Waiting time",
+  "activeRideWaitingFeeWaivedBody": "Your driver waived the waiting fee.",
+  "activeRideWaitingGraceBody": "Waiting may be added after 2 minutes.",
+  "activeRideWaitingFeeAdded": "{amount} added so far",
+  "@activeRideWaitingFeeAdded": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideWaitingRate": "Rate after grace: {rate}",
+  "@activeRideWaitingRate": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideWaitingRateNotSet": "Waiting rate not set",
+  "activeRideWaitingRateLive": "{rate} · live",
+  "@activeRideWaitingRateLive": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
   "openAction": "Open",
   "openLinkAction": "Open link",
   "rideReceiptTitle": "Ride receipt",
   "rideReceiptUnavailable": "Receipt not available yet.",
   "rideReceiptSettlement": "Settlement",
+  "rideReceiptPaidTitle": "Paid",
+  "rideReceiptBusinessReady": "Business-ready receipt",
+  "rideReceiptBusinessReadyBody": "Keep this receipt for your trip history and expense records.",
+  "rideReceiptFareBreakdown": "Fare breakdown",
+  "rideReceiptBaseFare": "Ride fare",
+  "rideReceiptWaitingFee": "Waiting time",
+  "rideReceiptWaitingWaived": "Waiting time waived",
+  "rideReceiptChargeableWait": "Chargeable wait",
+  "rideReceiptSeconds": "{seconds}s",
+  "@rideReceiptSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "rideReceiptReference": "Receipt reference",
   "rideReceiptRideId": "Ride ID",
   "rideReceiptExpected": "Expected",
   "rideReceiptPaid": "Paid",

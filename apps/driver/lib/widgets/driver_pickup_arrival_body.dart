@@ -59,14 +59,17 @@ class DriverPickupArrivalBody extends StatelessWidget {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          DriverStatusBadge(
-            label: DriverStrings.prerideAwaitingRider,
+          DriverRidePhaseHero(
             colors: colors,
             typography: typography,
-            tone: DriverStatusTone.warning,
+            eyebrow: DriverStrings.atPickup,
+            title: DriverStrings.pickupLiveMeterTitle,
+            body: DriverStrings.pickupLiveMeterBody,
             icon: Icons.schedule_rounded,
-          ).driverFadeSlideIn(staggerIndex: 0),
-          const SizedBox(height: DriverSpacing.sm),
+            tone: DriverStatusTone.warning,
+            metric: DriverStrings.waiting,
+          ),
+          const SizedBox(height: DriverSpacing.md),
           _WaitingFeeCard(
             colors: colors,
             typography: typography,
@@ -94,7 +97,7 @@ class DriverPickupArrivalBody extends StatelessWidget {
             typography: typography,
             actions: [
               DriverRideFlowAction(
-                label: DriverStrings.communicationOpen,
+                label: DriverStrings.pingRiderAction,
                 icon: Icons.forum_outlined,
                 onTap: onOpenCommunication,
                 enabled: !loading,
@@ -174,23 +177,25 @@ class _WaitingFeeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final inGrace = _chargeableSeconds == 0 && !waived;
     final title = waived
-        ? 'Waiting fee waived'
+        ? DriverStrings.waitingFeeWaivedTitle
         : inGrace
-            ? 'Free pickup time'
-            : 'Waiting time';
+            ? DriverStrings.waitingFeeFreeTimeTitle
+            : DriverStrings.waitingFeeLabel;
     final mainValue = waived
         ? _money(0)
         : inGrace
             ? _duration(_remainingGraceSeconds)
             : _duration(_chargeableSeconds);
     final subtitle = waived
-        ? 'The rider has been notified.'
+        ? DriverStrings.waitingFeeWaivedBody
         : inGrace
-            ? 'Fee starts after grace time.'
-            : '${_money(_feeCents)} added so far';
+            ? DriverStrings.waitingFeeFreeTimeBody
+            : '${_money(_feeCents)} ${DriverStrings.waitingFeeAddedSoFar}';
     final rateLabel = ratePerMinute > 0
-        ? 'Rate: €${ratePerMinute.toStringAsFixed(2)}/min'
-        : 'Waiting rate not set';
+        ? DriverStrings.waitingFeeRateLabel(
+            '€${ratePerMinute.toStringAsFixed(2)}',
+          )
+        : DriverStrings.waitingFeeRateNotSet;
 
     return Container(
       width: double.infinity,
@@ -262,7 +267,7 @@ class _WaitingFeeCard extends StatelessWidget {
                   TextButton.icon(
                     onPressed: loading ? null : onWaive,
                     icon: const Icon(Icons.volunteer_activism_outlined),
-                    label: const Text('Waive waiting fee'),
+                    label: Text(DriverStrings.waitingFeeWaiveAction),
                   ),
                 ],
               ],

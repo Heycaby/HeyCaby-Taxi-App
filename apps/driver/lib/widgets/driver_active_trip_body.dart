@@ -55,13 +55,16 @@ class DriverActiveTripBody extends StatelessWidget {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          DriverStatusBadge(
-            label: DriverStrings.navigateToPickup,
+          DriverRidePhaseHero(
             colors: colors,
             typography: typography,
-            tone: DriverStatusTone.online,
+            eyebrow: DriverStrings.navigateToPickup,
+            title: DriverStrings.enRouteToPickupTitle,
+            body: DriverStrings.enRouteToPickupBody,
             icon: Icons.navigation_rounded,
-          ).driverFadeSlideIn(staggerIndex: 0),
+            tone: DriverStatusTone.online,
+            metric: DriverStrings.pickup,
+          ),
           if (showNearPickupAssist) ...[
             const SizedBox(height: DriverSpacing.sm),
             DriverStatusBadge(
@@ -70,7 +73,7 @@ class DriverActiveTripBody extends StatelessWidget {
               typography: typography,
               tone: DriverStatusTone.success,
               icon: Icons.near_me_rounded,
-            ).driverFadeSlideIn(staggerIndex: 0),
+            ).driverFadeSlideIn(staggerIndex: 1),
           ],
           const SizedBox(height: DriverSpacing.lg),
           DriverRideTripSummary(
@@ -93,7 +96,7 @@ class DriverActiveTripBody extends StatelessWidget {
                 onTap: onNavigate,
               ),
               DriverRideFlowAction(
-                label: DriverStrings.communicationOpen,
+                label: DriverStrings.pingRiderAction,
                 icon: Icons.forum_outlined,
                 onTap: onOpenCommunication,
               ),

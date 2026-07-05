@@ -270,6 +270,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get fareEstimate => 'Geschatte prijs';
 
   @override
+  String get vehicleLabel => 'Voertuig';
+
+  @override
   String scheduledFor(String date) {
     return 'Gepland voor $date';
   }
@@ -2666,6 +2669,13 @@ class AppLocalizationsNl extends AppLocalizations {
       'Tik om de voortgang te zien zonder de kaart kwijt te raken.';
 
   @override
+  String get activeBookingKeepAliveTitle => 'Je aanvraag blijft actief';
+
+  @override
+  String get activeBookingKeepAliveBody =>
+      'Je kunt terug naar home of je telefoon vergrendelen. Wij blijven zoeken en melden het zodra er iets verandert.';
+
+  @override
   String activeBookingDriversNotified(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -2968,6 +2978,41 @@ class AppLocalizationsNl extends AppLocalizations {
       'Controleer dit kenteken voordat je instapt.';
 
   @override
+  String get activeRideWaitingFeeWaived => 'Wachttarief kwijtgescholden';
+
+  @override
+  String get activeRideWaitingFreePickupTime => 'Gratis ophaaltijd';
+
+  @override
+  String get activeRideWaitingTime => 'Wachttijd';
+
+  @override
+  String get activeRideWaitingFeeWaivedBody =>
+      'Je chauffeur heeft het wachttarief kwijtgescholden.';
+
+  @override
+  String get activeRideWaitingGraceBody =>
+      'Wachttijd kan na 2 minuten worden toegevoegd.';
+
+  @override
+  String activeRideWaitingFeeAdded(String amount) {
+    return '$amount tot nu toe toegevoegd';
+  }
+
+  @override
+  String activeRideWaitingRate(String rate) {
+    return 'Tarief na gratis tijd: $rate';
+  }
+
+  @override
+  String get activeRideWaitingRateNotSet => 'Wachttarief niet ingesteld';
+
+  @override
+  String activeRideWaitingRateLive(String rate) {
+    return '$rate · live';
+  }
+
+  @override
   String get openAction => 'Openen';
 
   @override
@@ -2981,6 +3026,39 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get rideReceiptSettlement => 'Afrekening';
+
+  @override
+  String get rideReceiptPaidTitle => 'Betaald';
+
+  @override
+  String get rideReceiptBusinessReady => 'Zakelijke ritbon';
+
+  @override
+  String get rideReceiptBusinessReadyBody =>
+      'Bewaar deze ritbon voor je ritgeschiedenis en declaraties.';
+
+  @override
+  String get rideReceiptFareBreakdown => 'Prijsopbouw';
+
+  @override
+  String get rideReceiptBaseFare => 'Ritprijs';
+
+  @override
+  String get rideReceiptWaitingFee => 'Wachttijd';
+
+  @override
+  String get rideReceiptWaitingWaived => 'Wachttijd kwijtgescholden';
+
+  @override
+  String get rideReceiptChargeableWait => 'Betaalde wachttijd';
+
+  @override
+  String rideReceiptSeconds(int seconds) {
+    return '${seconds}s';
+  }
+
+  @override
+  String get rideReceiptReference => 'Bonreferentie';
 
   @override
   String get rideReceiptRideId => 'Rit-ID';

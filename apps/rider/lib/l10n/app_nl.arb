@@ -100,6 +100,7 @@
   "reportSubmitted": "Rapport succesvol verstuurd",
   "reportSubmitFailed": "Rapport versturen mislukt",
   "fareEstimate": "Geschatte prijs",
+  "vehicleLabel": "Voertuig",
   "scheduledFor": "Gepland voor {date}",
   "@scheduledFor": {
     "placeholders": {
@@ -1063,6 +1064,8 @@
   "activeBookingMarketplaceTitle": "We zoeken biedingen",
   "activeBookingScheduledTitle": "Geplande rit actief",
   "activeBookingTapForDetails": "Tik om de voortgang te zien zonder de kaart kwijt te raken.",
+  "activeBookingKeepAliveTitle": "Je aanvraag blijft actief",
+  "activeBookingKeepAliveBody": "Je kunt terug naar home of je telefoon vergrendelen. Wij blijven zoeken en melden het zodra er iets verandert.",
   "activeBookingDriversNotified": "{count, plural, =0{0 chauffeurs ontvingen je aanvraag} one{1 chauffeur ontving je aanvraag} other{{count} chauffeurs ontvingen je aanvraag}}",
   "@activeBookingDriversNotified": {
     "placeholders": {
@@ -1244,11 +1247,58 @@
   "activeRideUnknownPlate": "ONBEKEND",
   "activeRideFoundingMember": "Founding Member",
   "activeRideVerifyPlate": "Controleer dit kenteken voordat je instapt.",
+  "activeRideWaitingFeeWaived": "Wachttarief kwijtgescholden",
+  "activeRideWaitingFreePickupTime": "Gratis ophaaltijd",
+  "activeRideWaitingTime": "Wachttijd",
+  "activeRideWaitingFeeWaivedBody": "Je chauffeur heeft het wachttarief kwijtgescholden.",
+  "activeRideWaitingGraceBody": "Wachttijd kan na 2 minuten worden toegevoegd.",
+  "activeRideWaitingFeeAdded": "{amount} tot nu toe toegevoegd",
+  "@activeRideWaitingFeeAdded": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideWaitingRate": "Tarief na gratis tijd: {rate}",
+  "@activeRideWaitingRate": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideWaitingRateNotSet": "Wachttarief niet ingesteld",
+  "activeRideWaitingRateLive": "{rate} · live",
+  "@activeRideWaitingRateLive": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
   "openAction": "Openen",
   "openLinkAction": "Link openen",
   "rideReceiptTitle": "Ritbon",
   "rideReceiptUnavailable": "Bon is nog niet beschikbaar.",
   "rideReceiptSettlement": "Afrekening",
+  "rideReceiptPaidTitle": "Betaald",
+  "rideReceiptBusinessReady": "Zakelijke ritbon",
+  "rideReceiptBusinessReadyBody": "Bewaar deze ritbon voor je ritgeschiedenis en declaraties.",
+  "rideReceiptFareBreakdown": "Prijsopbouw",
+  "rideReceiptBaseFare": "Ritprijs",
+  "rideReceiptWaitingFee": "Wachttijd",
+  "rideReceiptWaitingWaived": "Wachttijd kwijtgescholden",
+  "rideReceiptChargeableWait": "Betaalde wachttijd",
+  "rideReceiptSeconds": "{seconds}s",
+  "@rideReceiptSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "rideReceiptReference": "Bonreferentie",
   "rideReceiptRideId": "Rit-ID",
   "rideReceiptExpected": "Verwacht",
   "rideReceiptPaid": "Betaald",

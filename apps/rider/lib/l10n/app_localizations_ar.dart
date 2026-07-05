@@ -268,6 +268,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get fareEstimate => 'الأجرة التقديرية';
 
   @override
+  String get vehicleLabel => 'المركبة';
+
+  @override
   String scheduledFor(String date) {
     return 'مجدول في $date';
   }
@@ -2624,6 +2627,13 @@ class AppLocalizationsAr extends AppLocalizations {
       'اضغط لعرض التقدم مع بقاء الخريطة أمامك.';
 
   @override
+  String get activeBookingKeepAliveTitle => 'طلبك ما زال يعمل';
+
+  @override
+  String get activeBookingKeepAliveBody =>
+      'يمكنك الرجوع إلى الرئيسية أو قفل هاتفك. سنواصل البحث ونخبرك عند حدوث أي تغيير.';
+
+  @override
   String activeBookingDriversNotified(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -2914,6 +2924,39 @@ class AppLocalizationsAr extends AppLocalizations {
       'يرجى التحقق من هذه اللوحة قبل دخول المركبة.';
 
   @override
+  String get activeRideWaitingFeeWaived => 'تم التنازل عن رسوم الانتظار';
+
+  @override
+  String get activeRideWaitingFreePickupTime => 'وقت استلام مجاني';
+
+  @override
+  String get activeRideWaitingTime => 'وقت الانتظار';
+
+  @override
+  String get activeRideWaitingFeeWaivedBody => 'تنازل السائق عن رسوم الانتظار.';
+
+  @override
+  String get activeRideWaitingGraceBody => 'قد تتم إضافة الانتظار بعد دقيقتين.';
+
+  @override
+  String activeRideWaitingFeeAdded(String amount) {
+    return 'تمت إضافة $amount حتى الآن';
+  }
+
+  @override
+  String activeRideWaitingRate(String rate) {
+    return 'السعر بعد الوقت المجاني: $rate';
+  }
+
+  @override
+  String get activeRideWaitingRateNotSet => 'سعر الانتظار غير محدد';
+
+  @override
+  String activeRideWaitingRateLive(String rate) {
+    return '$rate · مباشر';
+  }
+
+  @override
   String get openAction => 'فتح';
 
   @override
@@ -2927,6 +2970,39 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get rideReceiptSettlement => 'التسوية';
+
+  @override
+  String get rideReceiptPaidTitle => 'تم الدفع';
+
+  @override
+  String get rideReceiptBusinessReady => 'إيصال مناسب للأعمال';
+
+  @override
+  String get rideReceiptBusinessReadyBody =>
+      'احتفظ بهذا الإيصال في سجل رحلاتك ومصاريفك.';
+
+  @override
+  String get rideReceiptFareBreakdown => 'تفصيل الأجرة';
+
+  @override
+  String get rideReceiptBaseFare => 'أجرة الرحلة';
+
+  @override
+  String get rideReceiptWaitingFee => 'وقت الانتظار';
+
+  @override
+  String get rideReceiptWaitingWaived => 'تم التنازل عن وقت الانتظار';
+
+  @override
+  String get rideReceiptChargeableWait => 'وقت الانتظار المحسوب';
+
+  @override
+  String rideReceiptSeconds(int seconds) {
+    return '$secondsث';
+  }
+
+  @override
+  String get rideReceiptReference => 'مرجع الإيصال';
 
   @override
   String get rideReceiptRideId => 'معرّف الرحلة';

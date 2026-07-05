@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:heycaby_map/heycaby_map.dart';
+import 'package:heycaby_ui/heycaby_ui.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import '../theme/driver_colors.dart';
 import '../theme/driver_motion_presets.dart';
@@ -6,7 +9,6 @@ import '../theme/driver_radius.dart';
 import '../theme/driver_shadows.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
-import '../ui/driver_app_bar.dart';
 import '../ui/driver_button.dart';
 import '../ui/driver_ride_action_chip.dart';
 import '../ui/driver_ride_card.dart';
@@ -28,7 +30,7 @@ class DriverRideFlowScaffold extends StatelessWidget {
   final String title;
   final DriverColors colors;
   final DriverTypography typography;
-  final VoidCallback onBack;
+  final VoidCallback? onBack;
   final Widget content;
   final Widget? bottomBar;
 
@@ -36,35 +38,122 @@ class DriverRideFlowScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: colors.background,
-      appBar: DriverAppBar(
-        title: title,
-        colors: colors,
-        typography: typography,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: colors.text),
-          onPressed: onBack,
-        ),
-      ),
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: DriverRidePremiumStyle.screenBackground(colors),
-        ),
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(
-                  DriverSpacing.screenEdge,
-                  DriverSpacing.lg,
-                  DriverSpacing.screenEdge,
-                  DriverSpacing.xl,
-                ),
-                child: content,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const _DriverRideMapBackdrop(),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  colors.background.withValues(alpha: 0.04),
+                  colors.background.withValues(alpha: 0.18),
+                  colors.background.withValues(alpha: 0.88),
+                ],
+                stops: const [0.0, 0.42, 1.0],
               ),
             ),
-            if (bottomBar != null) bottomBar!,
-          ],
-        ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final topGap = (constraints.maxHeight * 0.24)
+                          .clamp(96.0, 220.0)
+                          .toDouble();
+                      return SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(
+                          DriverSpacing.screenEdge,
+                          topGap,
+                          DriverSpacing.screenEdge,
+                          bottomBar == null
+                              ? DriverSpacing.xl +
+                                  MediaQuery.paddingOf(context).bottom
+                              : DriverSpacing.md,
+                        ),
+                        child: DecoratedBox(
+                          decoration:
+                              DriverRidePremiumStyle.modalSurface(colors),
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                              DriverSpacing.md,
+                              DriverSpacing.md,
+                              DriverSpacing.md,
+                              DriverSpacing.lg,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                DriverRidePremiumStyle.sheetHandle(colors),
+                                const SizedBox(height: DriverSpacing.md),
+                                DriverRidePremiumStyle.modalTopBar(
+                                  colors: colors,
+                                  title: title,
+                                  titleStyle: typography.titleLarge.copyWith(
+                                    color: colors.text,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                  onBack: onBack,
+                                ),
+                                const SizedBox(height: DriverSpacing.xl),
+                                content,
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                if (bottomBar != null) bottomBar!,
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DriverRideMapBackdrop extends StatelessWidget {
+  const _DriverRideMapBackdrop();
+
+  @override
+  Widget build(BuildContext context) {
+    final themeId = HeyCabyAppChrome.themeIdOf(context);
+    return IgnorePointer(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          MapWidget(
+            key: ValueKey('driver-ride-map-$themeId'),
+            styleUri: mapboxStyleUriForTheme(themeId),
+            cameraOptions: CameraOptions(
+              center: Point(coordinates: Position(4.9041, 52.3676)),
+              zoom: 14.2,
+              pitch: 18,
+            ),
+          ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.02),
+                  Colors.black.withValues(alpha: 0.06),
+                  Colors.white.withValues(alpha: 0.70),
+                ],
+                stops: const [0, 0.42, 1],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -114,7 +203,7 @@ class DriverRideFlowBottomBar extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.fromLTRB(
           DriverSpacing.screenEdge,
-          DriverSpacing.lg,
+          DriverSpacing.md,
           DriverSpacing.screenEdge,
           DriverSpacing.lg + MediaQuery.paddingOf(context).bottom,
         ),
@@ -122,6 +211,8 @@ class DriverRideFlowBottomBar extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
+            DriverRidePremiumStyle.sheetHandle(colors),
+            const SizedBox(height: DriverSpacing.md),
             DriverButton(
               label: primaryLabel,
               icon: primaryIcon,
@@ -236,6 +327,143 @@ class DriverRideTripSummary extends StatelessWidget {
         ).driverFadeSlideIn(staggerIndex: staggerIndex + 1),
       ],
     );
+  }
+}
+
+/// Premium state header for the current ride phase.
+class DriverRidePhaseHero extends StatelessWidget {
+  const DriverRidePhaseHero({
+    super.key,
+    required this.colors,
+    required this.typography,
+    required this.eyebrow,
+    required this.title,
+    required this.body,
+    required this.icon,
+    this.tone = DriverStatusTone.success,
+    this.metric,
+    this.staggerIndex = 0,
+  });
+
+  final DriverColors colors;
+  final DriverTypography typography;
+  final String eyebrow;
+  final String title;
+  final String body;
+  final IconData icon;
+  final DriverStatusTone tone;
+  final String? metric;
+  final int staggerIndex;
+
+  Color get _toneColor {
+    return switch (tone) {
+      DriverStatusTone.online || DriverStatusTone.success => colors.primary,
+      DriverStatusTone.busy || DriverStatusTone.warning => colors.warning,
+      DriverStatusTone.error => colors.error,
+      DriverStatusTone.offline ||
+      DriverStatusTone.neutral =>
+        colors.textSecondary,
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final toneColor = _toneColor;
+
+    return Container(
+      padding: const EdgeInsets.all(DriverSpacing.lg),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            toneColor.withValues(alpha: 0.16),
+            colors.card,
+            colors.surface.withValues(alpha: 0.82),
+          ],
+        ),
+        border: Border.all(color: toneColor.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color: colors.card.withValues(alpha: 0.92),
+              borderRadius: DriverRadius.mdAll,
+              boxShadow: [
+                BoxShadow(
+                  color: toneColor.withValues(alpha: 0.16),
+                  blurRadius: 24,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: toneColor, size: 29),
+          ),
+          const SizedBox(width: DriverSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  eyebrow,
+                  style: typography.labelMedium.copyWith(
+                    color: toneColor,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  style: typography.titleLarge.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  body,
+                  style: typography.bodySmall.copyWith(
+                    color: colors.textSecondary,
+                    height: 1.25,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          if (metric != null) ...[
+            const SizedBox(width: DriverSpacing.sm),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: DriverSpacing.md,
+                vertical: DriverSpacing.sm,
+              ),
+              decoration: BoxDecoration(
+                color: colors.card.withValues(alpha: 0.82),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: colors.border),
+              ),
+              child: Text(
+                metric!,
+                style: typography.labelMedium.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    ).driverFadeSlideIn(staggerIndex: staggerIndex);
   }
 }
 

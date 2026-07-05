@@ -887,10 +887,114 @@ class DriverStrings {
       'Innen: $amountLabel nu.';
   static const String collectPaymentContinue = 'Ik heb betaald ontvangen';
   static const String collectPaymentBack = 'Terug';
-  static const String recordPaymentReceived = 'Betaling vastleggen';
-  static const String expectedFareLabel = 'Verwacht tarief';
-  static const String paidAmountLabel = 'Betaald bedrag';
-  static const String paymentMethodLabel = 'Betaalmethode';
+  static String get recordPaymentReceived => _t(
+        'Betaling vastleggen',
+        en: 'Record payment',
+        es: 'Registrar pago',
+        ar: 'تسجيل الدفع',
+      );
+  static String get expectedFareLabel => _t(
+        'Verwacht tarief',
+        en: 'Expected fare',
+        es: 'Tarifa esperada',
+        ar: 'الأجرة المتوقعة',
+      );
+  static String get fareBreakdownTitle => _t(
+        'Tariefopbouw',
+        en: 'Fare breakdown',
+        es: 'Desglose de tarifa',
+        ar: 'تفاصيل الأجرة',
+      );
+  static String get rideFareLabel => _t(
+        'Rittarief',
+        en: 'Ride fare',
+        es: 'Tarifa del viaje',
+        ar: 'أجرة الرحلة',
+      );
+  static String get waitingFeeLabel => _t(
+        'Wachttijd',
+        en: 'Waiting time',
+        es: 'Tiempo de espera',
+        ar: 'وقت الانتظار',
+      );
+  static String get waitingFeeWaived => _t(
+        'Kwijtgescholden',
+        en: 'Waived',
+        es: 'Condonado',
+        ar: 'تم التنازل',
+      );
+  static String get waitingFeeWaivedTitle => _t(
+        'Wachttijd kwijtgescholden',
+        en: 'Waiting fee waived',
+        es: 'Tiempo de espera condonado',
+        ar: 'تم التنازل عن رسوم الانتظار',
+      );
+  static String get waitingFeeWaivedBody => _t(
+        'De reiziger is direct geïnformeerd.',
+        en: 'The rider has been notified.',
+        es: 'El pasajero ha sido informado.',
+        ar: 'تم إشعار الراكب.',
+      );
+  static String get waitingFeeFreeTimeTitle => _t(
+        'Gratis ophaaltijd',
+        en: 'Free pickup time',
+        es: 'Tiempo gratis de recogida',
+        ar: 'وقت الالتقاط المجاني',
+      );
+  static String get waitingFeeFreeTimeBody => _t(
+        'Wachttijd start na de gratis tijd.',
+        en: 'Waiting fee starts after the free time.',
+        es: 'El tiempo de espera empieza después del tiempo gratis.',
+        ar: 'تبدأ رسوم الانتظار بعد الوقت المجاني.',
+      );
+  static String get waitingFeeAddedSoFar => _t(
+        'toegevoegd tot nu toe',
+        en: 'added so far',
+        es: 'añadido hasta ahora',
+        ar: 'أضيف حتى الآن',
+      );
+  static String waitingFeeRateLabel(String amount) => _t(
+        'Tarief: $amount/min',
+        en: 'Rate: $amount/min',
+        es: 'Tarifa: $amount/min',
+        ar: 'السعر: $amount/دقيقة',
+      );
+  static String get waitingFeeRateNotSet => _t(
+        'Wachttarief niet ingesteld',
+        en: 'Waiting rate not set',
+        es: 'Tarifa de espera no configurada',
+        ar: 'لم يتم تحديد سعر الانتظار',
+      );
+  static String get waitingFeeWaiveAction => _t(
+        'Wachttijd kwijtschelden',
+        en: 'Waive waiting fee',
+        es: 'Condonar espera',
+        ar: 'التنازل عن رسوم الانتظار',
+      );
+  static String get waitingFeeWaivedNotice => _t(
+        'Wachttijd kwijtgescholden. De reiziger is geïnformeerd.',
+        en: 'Waiting fee waived. Rider has been notified.',
+        es: 'Tiempo de espera condonado. El pasajero ha sido informado.',
+        ar: 'تم التنازل عن رسوم الانتظار. تم إشعار الراكب.',
+      );
+  static String get totalToRecordLabel => _t(
+        'Totaal vastleggen',
+        en: 'Total to record',
+        es: 'Total a registrar',
+        ar: 'الإجمالي للتسجيل',
+      );
+  static String get paidAmountLabel => _t(
+        'Betaald bedrag',
+        en: 'Paid amount',
+        es: 'Importe pagado',
+        ar: 'المبلغ المدفوع',
+      );
+  static String get paymentMethodLabel => _t(
+        'Betaalmethode',
+        en: 'Payment method',
+        es: 'Método de pago',
+        ar: 'طريقة الدفع',
+      );
   static const String accountingNoteLabel =
       'Administratieve notitie (optioneel)';
   static const String sendReceipt = 'Bon versturen';
@@ -3275,11 +3379,90 @@ class DriverStrings {
   static const String requestsPaused = 'Nieuwe aanvragen gepauzeerd.';
   static const String requestStatusUpdateFailed =
       'Aanvraagstatus bijwerken mislukt:';
-  static const String cancelOrder = 'Rit annuleren';
-  static const String optionalReason = 'Optionele reden';
-  static const String back = 'Terug';
-  static const String cancelRide = 'Rit annuleren';
-  static const String rideCancelled = 'Rit geannuleerd.';
+  static String get cancelOrder => _t(
+        'Rit annuleren',
+        en: 'Cancel ride',
+        es: 'Cancelar viaje',
+        ar: 'إلغاء الرحلة',
+      );
+  static String get optionalReason => _t(
+        'Optionele reden',
+        en: 'Optional reason',
+        es: 'Motivo opcional',
+        ar: 'سبب اختياري',
+      );
+  static String get back => _t(
+        'Terug',
+        en: 'Back',
+        es: 'Atrás',
+        ar: 'رجوع',
+      );
+  static String get cancelRide => _t(
+        'Rit annuleren',
+        en: 'Cancel ride',
+        es: 'Cancelar viaje',
+        ar: 'إلغاء الرحلة',
+      );
+  static String get cancelRideSheetTitle => _t(
+        'Waarom annuleer je?',
+        en: 'Why are you cancelling?',
+        es: '¿Por qué cancelas?',
+        ar: 'لماذا تلغي؟',
+      );
+  static String get cancelRideSheetBody => _t(
+        'Kies een reden zodat support en de reiziger begrijpen wat er gebeurde.',
+        en: 'Choose a reason so support and the rider understand what happened.',
+        es: 'Elige un motivo para que soporte y el pasajero entiendan qué pasó.',
+        ar: 'اختر سببا حتى يفهم الدعم والراكب ما حدث.',
+      );
+  static String get cancelRideReasonRiderUnavailable => _t(
+        'Reiziger niet beschikbaar',
+        en: 'Rider unavailable',
+        es: 'Pasajero no disponible',
+        ar: 'الراكب غير متاح',
+      );
+  static String get cancelRideReasonPickupIssue => _t(
+        'Probleem bij ophaalpunt',
+        en: 'Pickup issue',
+        es: 'Problema en recogida',
+        ar: 'مشكلة في نقطة الانطلاق',
+      );
+  static String get cancelRideReasonWrongDetails => _t(
+        'Ritgegevens kloppen niet',
+        en: 'Trip details are wrong',
+        es: 'Los detalles del viaje son incorrectos',
+        ar: 'تفاصيل الرحلة غير صحيحة',
+      );
+  static String get cancelRideReasonSafetyConcern => _t(
+        'Veiligheidsprobleem',
+        en: 'Safety concern',
+        es: 'Preocupación de seguridad',
+        ar: 'مشكلة سلامة',
+      );
+  static String get cancelRideReasonOther => _t(
+        'Anders',
+        en: 'Other',
+        es: 'Otro',
+        ar: 'أخرى',
+      );
+  static String get cancelRideReasonDetailsHint => _t(
+        'Voeg details toe als dat helpt',
+        en: 'Add details if helpful',
+        es: 'Añade detalles si ayuda',
+        ar: 'أضف تفاصيل إذا كان ذلك مفيدا',
+      );
+  static String get cancelRideReasonRequired => _t(
+        'Kies een reden om te annuleren.',
+        en: 'Choose a reason to cancel.',
+        es: 'Elige un motivo para cancelar.',
+        ar: 'اختر سببا للإلغاء.',
+      );
+  static String get rideCancelled => _t(
+        'Rit geannuleerd.',
+        en: 'Ride cancelled.',
+        es: 'Viaje cancelado.',
+        ar: 'تم إلغاء الرحلة.',
+      );
   static const String riderCancelledTitle = 'Reiziger heeft geannuleerd';
   static const String riderCancelledBody =
       'De reiziger heeft deze rit geannuleerd. Je bent weer beschikbaar voor nieuwe ritten.';
@@ -3359,7 +3542,42 @@ class DriverStrings {
   static const String rideCompleteTitle = 'Rit afgerond';
   static const String rideCompleted = 'Rit voltooid';
   static const String destination = 'Bestemming';
-  static const String navigateToPickup = 'Navigeer naar ophaalpunt';
+  static String get navigateToPickup => _t(
+        'Navigeer naar ophaalpunt',
+        en: 'Navigate to pickup',
+        es: 'Navegar a la recogida',
+        ar: 'التنقل إلى نقطة الالتقاط',
+      );
+  static String get enRouteToPickupTitle => _t(
+        'Onderweg naar reiziger',
+        en: 'On your way to the rider',
+        es: 'De camino al pasajero',
+        ar: 'في الطريق إلى الراكب',
+      );
+  static String get enRouteToPickupBody => _t(
+        'Navigeer, stuur een ping of open de communicatie voordat je aankomt.',
+        en: 'Navigate, send a ping, or open communication before you arrive.',
+        es: 'Navega, envía un ping o abre la comunicación antes de llegar.',
+        ar: 'تنقل أو أرسل تنبيها أو افتح التواصل قبل وصولك.',
+      );
+  static String get pingRiderAction => _t(
+        'Ping reiziger',
+        en: 'Ping rider',
+        es: 'Enviar ping',
+        ar: 'تنبيه الراكب',
+      );
+  static String get pickupLiveMeterTitle => _t(
+        'Live wachttijd',
+        en: 'Live waiting time',
+        es: 'Espera en vivo',
+        ar: 'وقت الانتظار المباشر',
+      );
+  static String get pickupLiveMeterBody => _t(
+        'Jij en de reiziger zien dezelfde timer.',
+        en: 'You and the rider see the same timer.',
+        es: 'Tú y el pasajero veis el mismo temporizador.',
+        ar: 'أنت والراكب تريان نفس المؤقت.',
+      );
   static const String pickupAddress = 'Ophaaladres';
   static const String riderPrefix = 'Reiziger:';
   static const String rider = 'Reiziger';
@@ -3377,9 +3595,24 @@ class DriverStrings {
         es: 'Tarifa activa',
         ar: 'التعرفة النشطة',
       );
-  static const String atPickup = 'Bij ophaalpunt';
-  static const String waiting = 'Wachten';
-  static const String riderDidNotShow = 'Reiziger niet verschenen';
+  static String get atPickup => _t(
+        'Bij ophaalpunt',
+        en: 'At pickup',
+        es: 'En recogida',
+        ar: 'عند نقطة الالتقاط',
+      );
+  static String get waiting => _t(
+        'Wachten',
+        en: 'Waiting',
+        es: 'Esperando',
+        ar: 'انتظار',
+      );
+  static String get riderDidNotShow => _t(
+        'Reiziger niet verschenen',
+        en: 'Rider did not show',
+        es: 'El pasajero no apareció',
+        ar: 'لم يظهر الراكب',
+      );
   static const String noShowConfirmTitle = 'Reiziger niet verschenen?';
   static const String noShowConfirmBody =
       'Bevestig alleen als de reiziger na 5 minuten wachten niet is verschenen.';
@@ -3407,6 +3640,18 @@ class DriverStrings {
         en: 'Open fare',
         es: 'Tarifa abierta',
         ar: 'أجرة مفتوحة',
+      );
+  static String get incomingRideEstimatedEarnings => _t(
+        'Geschatte opbrengst',
+        en: 'Estimated earnings',
+        es: 'Ingresos estimados',
+        ar: 'الأرباح المقدرة',
+      );
+  static String get incomingRideSkipHint => _t(
+        'Overslaan heeft geen invloed op deze rit. Kies alleen ritten die bij jouw bedrijf passen.',
+        en: 'Skipping will not affect this trip. Choose only rides that fit your business.',
+        es: 'Omitir no afectará este viaje. Elige solo viajes que encajen con tu negocio.',
+        ar: 'التخطي لن يؤثر على هذه الرحلة. اختر فقط الرحلات المناسبة لعملك.',
       );
   static String get incomingRideDeclineSafe => _t(
         'Kies de ritten die bij jouw bedrijf passen.',
@@ -3480,9 +3725,36 @@ class DriverStrings {
         es: 'Omitir',
         ar: 'تخطي',
       );
-  static const String rideInProgress = 'Rit bezig';
-  static const String startRide = 'Rit starten';
-  static const String completeRide = 'Rit voltooien';
+  static String get rideInProgress => _t(
+        'Rit bezig',
+        en: 'Ride in progress',
+        es: 'Viaje en curso',
+        ar: 'الرحلة قيد التنفيذ',
+      );
+  static String get inProgressHeroTitle => _t(
+        'Naar bestemming',
+        en: 'Heading to destination',
+        es: 'Hacia el destino',
+        ar: 'في الطريق إلى الوجهة',
+      );
+  static String get inProgressHeroBody => _t(
+        'Hou de kaart centraal. Alleen de belangrijkste acties blijven zichtbaar.',
+        en: 'Keep the map central. Only the key actions stay visible.',
+        es: 'Mantén el mapa al centro. Solo quedan las acciones clave.',
+        ar: 'أبق الخريطة في الوسط. تبقى الإجراءات الأساسية فقط ظاهرة.',
+      );
+  static String get startRide => _t(
+        'Rit starten',
+        en: 'Start ride',
+        es: 'Iniciar viaje',
+        ar: 'بدء الرحلة',
+      );
+  static String get completeRide => _t(
+        'Rit voltooien',
+        en: 'Complete ride',
+        es: 'Completar viaje',
+        ar: 'إكمال الرحلة',
+      );
   static String get rateRider => _t(
         'Reiziger beoordelen',
         en: 'Rate rider',

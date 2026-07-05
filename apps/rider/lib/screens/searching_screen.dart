@@ -766,6 +766,7 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
                         _SearchHeroPanel(
                           colors: colors,
                           typo: typo,
+                          l10n: l10n,
                           title: _matchingTitle(l10n),
                           subtitle:
                               widget.variant == RideMatchingVariant.marketplace
@@ -955,6 +956,7 @@ class _SearchHeroPanel extends StatelessWidget {
   const _SearchHeroPanel({
     required this.colors,
     required this.typo,
+    required this.l10n,
     required this.title,
     required this.subtitle,
     required this.controllers,
@@ -963,6 +965,7 @@ class _SearchHeroPanel extends StatelessWidget {
 
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
+  final AppLocalizations l10n;
   final String title;
   final String subtitle;
   final List<AnimationController> controllers;
@@ -1011,6 +1014,83 @@ class _SearchHeroPanel extends StatelessWidget {
               height: 1.42,
             ),
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          _SearchKeepAliveNotice(
+            colors: colors,
+            typo: typo,
+            title: l10n.activeBookingKeepAliveTitle,
+            body: l10n.activeBookingKeepAliveBody,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SearchKeepAliveNotice extends StatelessWidget {
+  const _SearchKeepAliveNotice({
+    required this.colors,
+    required this.typo,
+    required this.title,
+    required this.body,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: colors.bg.withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colors.border.withValues(alpha: 0.72)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: colors.accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.mobile_friendly_rounded,
+              color: colors.accent,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: typo.labelLarge.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w900,
+                    height: 1.14,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  body,
+                  style: typo.bodySmall.copyWith(
+                    color: colors.textMid,
+                    fontWeight: FontWeight.w600,
+                    height: 1.34,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -1331,15 +1411,35 @@ class _MatchingStatusStrip extends StatelessWidget {
         ),
     ];
 
-    return Padding(
-      padding: const EdgeInsetsDirectional.symmetric(horizontal: 20),
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        spacing: 8,
-        runSpacing: 8,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsetsDirectional.all(10),
+      decoration: BoxDecoration(
+        color: colors.card.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: colors.border.withValues(alpha: 0.72)),
+        boxShadow: [
+          BoxShadow(
+            color: colors.text.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Row(
         children: [
-          for (final item in items)
-            _StatusPill(colors: colors, typo: typo, data: item),
+          for (var i = 0; i < items.length; i++) ...[
+            Expanded(
+              child: _StatusPill(colors: colors, typo: typo, data: items[i]),
+            ),
+            if (i != items.length - 1)
+              Container(
+                width: 1,
+                height: 42,
+                margin: const EdgeInsetsDirectional.symmetric(horizontal: 4),
+                color: colors.border.withValues(alpha: 0.72),
+              ),
+          ],
         ],
       ),
     );
@@ -1371,39 +1471,33 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minHeight: 36),
-      padding: const EdgeInsetsDirectional.fromSTEB(10, 7, 12, 7),
-      decoration: BoxDecoration(
-        color: colors.card.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: colors.border.withValues(alpha: 0.72)),
-        boxShadow: [
-          BoxShadow(
-            color: colors.text.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
+    return Padding(
+      padding:
+          const EdgeInsetsDirectional.symmetric(horizontal: 6, vertical: 4),
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(data.icon, color: colors.accent, size: 16),
-          const SizedBox(width: 6),
+          Icon(data.icon, color: colors.accent, size: 18),
+          const SizedBox(height: 5),
+          Text(
+            data.value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: typo.titleSmall.copyWith(
+              color: colors.text,
+              fontWeight: FontWeight.w900,
+              height: 1,
+            ),
+          ),
+          const SizedBox(height: 3),
           Text(
             data.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
             style: typo.labelSmall.copyWith(
               color: colors.textSoft,
               fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            data.value,
-            style: typo.labelMedium.copyWith(
-              color: colors.text,
-              fontWeight: FontWeight.w900,
             ),
           ),
         ],

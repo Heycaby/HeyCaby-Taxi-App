@@ -178,6 +178,7 @@ class DriverMapFloating extends ConsumerWidget {
     showDialog(
       context: context,
       barrierDismissible: true,
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
       builder: (dialogContext) => DriverEarningsModal(
         todayEarnings: todayStr,
         zoneName: zoneName,

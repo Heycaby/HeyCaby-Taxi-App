@@ -270,6 +270,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fareEstimate => 'Estimated fare';
 
   @override
+  String get vehicleLabel => 'Vehicle';
+
+  @override
   String scheduledFor(String date) {
     return 'Scheduled for $date';
   }
@@ -2647,6 +2650,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Tap to view progress without losing the map.';
 
   @override
+  String get activeBookingKeepAliveTitle => 'Your request keeps running';
+
+  @override
+  String get activeBookingKeepAliveBody =>
+      'You can return home or lock your phone. We’ll keep searching and notify you when anything changes.';
+
+  @override
   String activeBookingDriversNotified(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -2948,6 +2958,41 @@ class AppLocalizationsEn extends AppLocalizations {
       'Please verify this plate before entering the vehicle.';
 
   @override
+  String get activeRideWaitingFeeWaived => 'Waiting fee waived';
+
+  @override
+  String get activeRideWaitingFreePickupTime => 'Free pickup time';
+
+  @override
+  String get activeRideWaitingTime => 'Waiting time';
+
+  @override
+  String get activeRideWaitingFeeWaivedBody =>
+      'Your driver waived the waiting fee.';
+
+  @override
+  String get activeRideWaitingGraceBody =>
+      'Waiting may be added after 2 minutes.';
+
+  @override
+  String activeRideWaitingFeeAdded(String amount) {
+    return '$amount added so far';
+  }
+
+  @override
+  String activeRideWaitingRate(String rate) {
+    return 'Rate after grace: $rate';
+  }
+
+  @override
+  String get activeRideWaitingRateNotSet => 'Waiting rate not set';
+
+  @override
+  String activeRideWaitingRateLive(String rate) {
+    return '$rate · live';
+  }
+
+  @override
   String get openAction => 'Open';
 
   @override
@@ -2961,6 +3006,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rideReceiptSettlement => 'Settlement';
+
+  @override
+  String get rideReceiptPaidTitle => 'Paid';
+
+  @override
+  String get rideReceiptBusinessReady => 'Business-ready receipt';
+
+  @override
+  String get rideReceiptBusinessReadyBody =>
+      'Keep this receipt for your trip history and expense records.';
+
+  @override
+  String get rideReceiptFareBreakdown => 'Fare breakdown';
+
+  @override
+  String get rideReceiptBaseFare => 'Ride fare';
+
+  @override
+  String get rideReceiptWaitingFee => 'Waiting time';
+
+  @override
+  String get rideReceiptWaitingWaived => 'Waiting time waived';
+
+  @override
+  String get rideReceiptChargeableWait => 'Chargeable wait';
+
+  @override
+  String rideReceiptSeconds(int seconds) {
+    return '${seconds}s';
+  }
+
+  @override
+  String get rideReceiptReference => 'Receipt reference';
 
   @override
   String get rideReceiptRideId => 'Ride ID';

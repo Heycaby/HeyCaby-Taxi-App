@@ -130,7 +130,7 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(DriverStrings.back),
+            child: Text(DriverStrings.back),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -174,9 +174,7 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
       if (!mounted) return;
       setState(() => _waitingFeeWaived = true);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Waiting fee waived. Rider has been notified.'),
-        ),
+        SnackBar(content: Text(DriverStrings.waitingFeeWaivedNotice)),
       );
     } catch (_) {
       if (!mounted) return;
