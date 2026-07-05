@@ -1,0 +1,5 @@
+-- Staging compatibility marker.
+--
+-- Staging recorded the driver_locations realtime alignment at this timestamp
+-- when the MCP migration was applied. The real idempotent migration is stored
+-- under the production timestamp 20260705063519.

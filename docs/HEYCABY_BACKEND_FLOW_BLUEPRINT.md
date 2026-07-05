@@ -1,10 +1,10 @@
 # HeyCaby Backend Flow Blueprint
 
-Source of truth for the rider booking flow, driver readiness flow, dispatch contract, ride lifecycle, pricing, waiting time, notifications, and failure modes.
+Source of truth for the rider booking flow, driver readiness flow, dispatch contract, ride lifecycle, ride swap (Ritwissel), pricing, waiting time, notifications, and failure modes.
 
 Status: Backend contract blueprint  
 Owner: HeyCaby engineering / product  
-Last updated: 2026-07-04
+Last updated: 2026-07-05
 
 ## Purpose
 
@@ -41,6 +41,7 @@ These are the expected backend surfaces. Names must be verified against the acti
 | Dispatch matching | `fn_seed_ride_matching_batch` |
 | Accept ride | `fn_driver_accept_ride_invite` |
 | Lifecycle | `fn_driver_ride_arrived`, `fn_driver_ride_start`, `fn_driver_ride_complete`, cancel/no-show RPCs |
+| Ride swap (Ritwissel) | `ride_swaps`, `offer_ride_swap`, `claim_ride_swap`, `cancel_ride_swap`, `can_driver_take_swap` |
 | Notifications | `notification_events`, `notifications`, `driver-agent` Edge Function |
 | Chat / pings | `messages` and/or a dedicated `conversation_id` contract |
 | Billing | Platform Balance functions and billing guard RPCs |
@@ -921,6 +922,348 @@ What breaks if missing:
 - Rider cancels but driver continues driving.
 - Support cannot resolve dispute.
 
+## Ride Swap / Ritwissel Contract
+
+**CTO direction.** Ride Swap is **Ritwissel** — a marketplace reliability feature that lets one driver hand over an already assigned ride to another eligible driver. This is mainly for **scheduled rides**, not random instant rides.
+
+### What Ride Swap Is
+
+Example:
+
+A driver accepted a scheduled airport ride for tomorrow at 08:00. Later they cannot do it (car problem, family emergency, double booking, too far away, shift changed, wants to stop working). Instead of cancelling the rider, the driver offers the ride to other HeyCaby drivers. Another eligible driver claims it. The rider keeps the booking; only the assigned driver changes.
+
+### Why This Feature Matters
+
+Without Ride Swap:
+
+```text
+Driver cannot do ride
+        ↓
+Driver cancels
+        ↓
+Rider loses booking
+        ↓
+Rider loses trust
+```
+
+With Ride Swap:
+
+```text
+Driver cannot do ride
+        ↓
+Driver offers ride swap
+        ↓
+Another driver claims it
+        ↓
+Rider keeps booking
+        ↓
+HeyCaby looks reliable
+```
+
+This is critical for scheduled rides, airport rides, early morning rides, and high-value bookings.
+
+### Business Benefit
+
+- **Drivers** — independent operators should not feel trapped; they need a professional way to hand over a future ride.
+- **HeyCaby** — fewer cancellations.
+- **Riders** — booking stays alive.
+
+This is a marketplace reliability feature, not an admin tool.
+
+### Eligibility Rules
+
+Ride Swap is allowed when:
+
+- Ride is already assigned to a driver.
+- Ride is scheduled.
+- Pickup is not too soon.
+- Ride has not started.
+- Original driver is still responsible for the ride.
+- Backend says swap is allowed.
+
+**Current rule found in code:**
+
+```text
+ride status is accepted or driver_arrived
+pickup is scheduled
+pickup is more than 15 minutes away
+```
+
+**Launch-safe rule (CTO decision):**
+
+Be careful with `driver_arrived`. If the driver has already arrived at pickup, swap should normally **not** be allowed unless this is a controlled emergency case.
+
+For launch, safest rule:
+
+```text
+scheduled ride
+status = accepted
+pickup more than 15 minutes away
+ride not started
+ride not cancelled
+ride not completed
+```
+
+### Product Surfaces
+
+Ride Swap should be visible in:
+
+| Surface | Placement |
+| --- | --- |
+| **Driver Hub** | Business tool: "Ride Swap — Hand over or claim scheduled rides" |
+| **Scheduled Rides** | Per ride: "Offer for swap" |
+| **Home / Work** | Only when relevant, e.g. "You have 1 scheduled ride eligible for swap" — do not clutter Home permanently |
+
+### Existing Code (Reuse, Do Not Rebuild)
+
+The driver app already references:
+
+- `ride_swap_service.dart`
+- `ride_swap_feed_content.dart`
+- `scheduled_rides_screen.dart`
+- `offer_ride_swap_dialog.dart`
+
+Reuse and improve the existing flow. Do not rebuild from scratch or bypass the `ride_swaps` system.
+
+### Supabase Contract (Verify Before UI Polish)
+
+Before polishing UI, confirm production/staging Supabase has:
+
+1. `ride_swaps` table.
+2. `offer_ride_swap` RPC.
+3. `claim_ride_swap` RPC.
+4. `cancel_ride_swap` RPC.
+5. `can_driver_take_swap` RPC.
+6. RLS enabled and correct.
+7. Realtime publication includes `ride_swaps`.
+8. Claim operation is atomic.
+9. Rider notification exists when swap succeeds.
+10. Original driver and new driver both get state updates.
+
+If any of these are missing, fix the backend contract first.
+
+### Atomic Claim (Non-Negotiable)
+
+Only one driver can claim a swap. If 10 drivers see the same swap and 2 tap Claim at the same time, only the first wins.
+
+Backend must lock the swap row and ride row.
+
+```text
+Driver A taps Claim first
+        ↓
+Driver A gets the ride
+
+Driver B taps Claim milliseconds later
+        ↓
+Driver B sees: This ride was already claimed by another driver.
+```
+
+If claim is not atomic, two drivers may think they own the same ride. That cannot happen.
+
+### Rider Trust Rule
+
+If a ride swap succeeds, the rider **must** be notified. This is not optional.
+
+The rider booked one driver/car. If another driver/car is coming, the rider must know who is coming, what car is coming, and what plate to check. Without this, swap becomes a trust and safety problem.
+
+Required rider notification payload:
+
+```text
+Your driver has changed.
+
+New driver: Ahmed
+Vehicle: Black Tesla Model Y
+Plate: TX-22-NL
+```
+
+The scheduled ride card must update immediately via Realtime.
+
+### Original Driver Experience
+
+**Offer:**
+
+```text
+Offer this ride for swap?
+
+Other eligible drivers can claim it.
+You remain responsible until another driver accepts.
+```
+
+The original driver remains responsible until the swap is claimed. Do not release them immediately.
+
+**After claimed:**
+
+```text
+Ride swapped successfully.
+
+Ahmed is now assigned to this ride.
+```
+
+### Claiming Driver Experience
+
+**Feed card:**
+
+```text
+Scheduled ride available
+Tomorrow 08:00
+Rotterdam → Schiphol
+Estimated fare: €65
+Pickup in 12h
+[Claim ride]
+```
+
+**Before claim:**
+
+```text
+Claim this ride?
+
+You will become responsible for pickup and communication with the rider.
+```
+
+**After claim:**
+
+```text
+Ride claimed.
+It has been added to your scheduled rides.
+```
+
+### Backend Flows
+
+**Offer swap:**
+
+```text
+Original driver taps Offer Swap
+        ↓
+offer_ride_swap RPC
+        ↓
+Verify driver owns ride
+        ↓
+Verify ride is eligible
+        ↓
+Insert ride_swaps row (status = open)
+        ↓
+Realtime publishes swap
+        ↓
+Other drivers see it in feed
+```
+
+**Claim swap:**
+
+```text
+New driver taps Claim
+        ↓
+claim_ride_swap RPC
+        ↓
+Lock ride_swap row + ride_request row
+        ↓
+Verify swap still open
+        ↓
+Verify new driver eligible
+        ↓
+Assign ride to new driver
+        ↓
+Mark swap claimed
+        ↓
+Notify rider (driver + vehicle + plate)
+        ↓
+Notify original driver
+        ↓
+Notify claiming driver
+        ↓
+Realtime updates all clients
+```
+
+**Cancel swap:**
+
+```text
+Original driver taps Cancel Swap
+        ↓
+cancel_ride_swap RPC
+        ↓
+Verify driver owns original ride
+        ↓
+Mark swap cancelled
+        ↓
+Realtime removes from feed
+```
+
+### RLS Rules
+
+RLS must prevent:
+
+- Random drivers claiming unavailable swaps.
+- Drivers claiming their own swap.
+- Drivers seeing private rider data unnecessarily.
+- Drivers editing swaps directly.
+- Clients manually changing assigned driver.
+
+All sensitive changes must happen through RPCs. Flutter must not directly update ride ownership.
+
+### Realtime Requirements
+
+Realtime must update:
+
+- Swap feed when a swap opens, is claimed, or is cancelled.
+- Scheduled ride screen when ownership changes.
+- Rider active/scheduled ride card when new driver is assigned.
+
+If Realtime does not update, users will act on stale ride data.
+
+### UI Direction
+
+Do not make Ride Swap feel like a technical admin tool. Make it feel like: **"Need to hand this ride over?"** — simple, professional, driver-friendly.
+
+Use: `Offer for swap`, `Claim ride`, `Ride claimed`, `Ride swapped`.
+
+Avoid: `Transfer assignment mutation` or similar internal language.
+
+### What Not To Do
+
+- Rebuild the feature from scratch.
+- Bypass the existing `ride_swaps` system.
+- Create client-side ownership changes.
+- Allow swap after ride has started.
+- Hide rider notification.
+- Allow two drivers to claim the same ride.
+- Release original driver before claim succeeds.
+
+### Launch Acceptance Criteria (Staging)
+
+Ride Swap is ready only when all of the following pass on staging:
+
+1. Driver A has a scheduled ride.
+2. Driver A offers ride for swap.
+3. Driver B sees it live.
+4. Driver B claims it.
+5. Driver A sees ride swapped.
+6. Driver B sees ride in scheduled rides.
+7. Rider sees new driver and vehicle.
+8. Driver C cannot claim after Driver B.
+9. Swap feed removes claimed ride.
+10. Original driver can no longer act as assigned driver.
+11. New driver can manage the ride.
+12. No direct Flutter table mutation is used.
+13. All changes are done through RPC.
+14. Audit logs exist.
+
+### CTO Decision Summary
+
+Ride Swap is a valuable, **trust-sensitive** feature. Keep it, polish it, and make it reliable. Audit the Supabase contract before UI polish, then improve screens using the existing feature.
+
+Target experience:
+
+```text
+I cannot do this scheduled ride anymore.
+        ↓
+I offer it for swap.
+        ↓
+Another trusted HeyCaby driver claims it.
+        ↓
+The rider is informed.
+        ↓
+The ride continues without disruption.
+```
+
 ## Notifications Contract
 
 Notifications are not decorative. They are part of the backend contract.
@@ -935,6 +1278,7 @@ Required notification events:
 - Rider: trip completed/receipt.
 - Driver/rider: pings and chat messages.
 - Driver/rider: cancellation.
+- Rider: driver changed after ride swap (name, vehicle, plate).
 
 Every push notification should have:
 
@@ -983,6 +1327,30 @@ System cancels -> both sides notified where appropriate
 
 Cancel must never be a local-only Flutter state change.
 
+### Ride Swap Notification Chain
+
+When `claim_ride_swap` succeeds:
+
+```text
+claim_ride_swap RPC
+        ↓
+Assign new driver on ride_requests
+        ↓
+notification_events(type = driver_changed / ride_swap_claimed)
+        ↓
+driver-agent / notification worker
+        ↓
+Rider push: new driver name, vehicle, plate
+        ↓
+Original driver push: ride swapped
+        ↓
+Claiming driver push: ride claimed
+        ↓
+Realtime updates rider scheduled/active card + driver scheduled rides + swap feed
+```
+
+Rider safety depends on this chain. Swap without rider notification is a launch blocker.
+
 ## Realtime Contract
 
 Realtime should be used for live UI updates, but not as the only source of truth.
@@ -992,6 +1360,7 @@ Realtime tables:
 - `ride_requests`
 - `ride_request_invites`
 - `ride_bids`
+- `ride_swaps`
 - `messages` or chat table
 - `driver_locations` where scoped appropriately
 
@@ -1162,6 +1531,21 @@ Before production release, these must pass on staging.
 - Driver cancel notifies rider.
 - Rider cancel notifies driver.
 - Both apps leave active ride state.
+
+### Ride swap (Ritwissel)
+
+- Scheduled ride with status `accepted` and pickup > 15 minutes away can be offered.
+- `driver_arrived` rides cannot be swapped at launch (except controlled emergency — not in V1).
+- `offer_ride_swap` creates open swap; original driver remains assigned until claim.
+- Swap feed updates live via Realtime on `ride_swaps`.
+- `claim_ride_swap` is atomic; second claimant receives already-claimed error.
+- Rider receives push with new driver, vehicle, and plate.
+- Original and claiming drivers receive state notifications.
+- Rider scheduled/active card updates to new driver without app restart.
+- Original driver loses assigned-driver actions after successful claim.
+- Claiming driver sees ride in scheduled rides.
+- No Flutter direct write to `ride_requests.driver_id` or `ride_swaps` status.
+- Audit rows exist for offer, claim, and cancel.
 
 ## Production Rule
 

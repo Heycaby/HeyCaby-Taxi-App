@@ -1,0 +1,5 @@
+-- Staging compatibility marker.
+--
+-- The blueprint ride-swap contract is stored in this repository under the
+-- production migration timestamp 20260705054659. Staging already recorded this
+-- later timestamp during alignment, so this file intentionally performs no DDL.

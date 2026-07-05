@@ -1,0 +1,5 @@
+-- Staging compatibility marker.
+--
+-- The blueprint go-online/accept contract is stored in this repository under
+-- the production migration timestamp 20260705054420. Staging already recorded
+-- this later timestamp during alignment, so this file intentionally performs no DDL.

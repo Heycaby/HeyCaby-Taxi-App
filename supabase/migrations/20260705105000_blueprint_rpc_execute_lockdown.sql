@@ -1,0 +1,5 @@
+-- Staging compatibility marker.
+--
+-- The final RPC execute lockdown is stored in this repository under the
+-- production migration timestamp 20260705062850. Staging already recorded this
+-- later timestamp during alignment, so this file intentionally performs no DDL.
