@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heycaby_driver/l10n/driver_strings.dart';
 import 'package:heycaby_driver/theme/driver_colors.dart';
 import 'package:heycaby_driver/theme/driver_typography.dart';
 import 'package:heycaby_driver/widgets/driver_active_trip_body.dart';
@@ -11,6 +13,10 @@ const _pickup = 'Damrak 1, Amsterdam';
 const _dropoff = 'Schiphol Airport, Evert van de Beekstraat';
 const _rider = 'Sophie van Dijk';
 const _fare = '€ 42,50';
+const _pickupLat = 52.3740;
+const _pickupLng = 4.8952;
+const _destLat = 52.3105;
+const _destLng = 4.7683;
 
 /// Golden preview — Active Trip (navigate to pickup).
 class DriverActiveTripPreview extends StatelessWidget {
@@ -25,21 +31,30 @@ class DriverActiveTripPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DriverActiveTripBody(
-      colors: colors,
-      typography: typography,
-      pickupAddress: _pickup,
-      destinationAddress: _dropoff,
-      riderName: _rider,
-      requestsPaused: false,
-      statusBusy: false,
-      arriving: false,
-      onBack: () {},
-      onArrived: () {},
-      onNavigate: () {},
-      onOpenCommunication: () {},
-      onCancelOrder: () {},
-      onToggleRequests: () {},
+    return ProviderScope(
+      child: DriverActiveTripBody(
+        rideId: 'preview-ride',
+        colors: colors,
+        typography: typography,
+        pickupAddress: _pickup,
+        destinationAddress: _dropoff,
+        riderName: _rider,
+        requestsPaused: false,
+        statusBusy: false,
+        arriving: false,
+        pickupLat: _pickupLat,
+        pickupLng: _pickupLng,
+        destLat: _destLat,
+        destLng: _destLng,
+        driverLat: 52.3676,
+        driverLng: 4.9041,
+        farePill: DriverStrings.rideFarePill(_fare),
+        onArrived: () {},
+        onNavigate: () {},
+        onOpenCommunication: () {},
+        onCancelOrder: () {},
+        onToggleRequests: () {},
+      ),
     );
   }
 }
@@ -57,20 +72,34 @@ class DriverPickupArrivalPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DriverPickupArrivalBody(
-      colors: colors,
-      typography: typography,
-      pickupAddress: _pickup,
-      destinationAddress: _dropoff,
-      riderName: _rider,
-      waitSeconds: 125,
-      canReportNoShow: false,
-      loading: false,
-      onBack: () {},
-      onStartRide: () {},
-      onOpenCommunication: () {},
-      onReportNoShow: () {},
-      onCancelRide: () {},
+    return ProviderScope(
+      child: DriverPickupArrivalBody(
+        colors: colors,
+        typography: typography,
+        rideId: 'preview-ride',
+        pickupAddress: _pickup,
+        destinationAddress: _dropoff,
+        riderName: _rider,
+        waitSeconds: 75,
+        waitingGraceSeconds: 120,
+        waitingRatePerMinute: 0.45,
+        waitingFeeWaived: false,
+        canReportNoShow: false,
+        loading: false,
+        pickupLat: _pickupLat,
+        pickupLng: _pickupLng,
+        destLat: _destLat,
+        destLng: _destLng,
+        driverLat: 52.3676,
+        driverLng: 4.9041,
+        farePill: DriverStrings.rideFarePill(_fare),
+        onStartRide: () {},
+        onOpenCommunication: () {},
+        onNavigate: () {},
+        onWaiveWaitingFee: () {},
+        onReportNoShow: () {},
+        onCancelRide: () {},
+      ),
     );
   }
 }
@@ -88,19 +117,26 @@ class DriverNavigationFocusPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DriverNavigationFocusBody(
-      colors: colors,
-      typography: typography,
-      pickupAddress: _pickup,
-      destinationAddress: _dropoff,
-      riderName: _rider,
-      expectedAmountLabel: _fare,
-      completing: false,
-      onBack: () {},
-      onNavigate: () {},
-      onCompleteRide: () {},
-      onOpenCommunication: () {},
-      onCancelRide: () {},
+    return ProviderScope(
+      child: DriverNavigationFocusBody(
+        colors: colors,
+        typography: typography,
+        pickupAddress: _pickup,
+        destinationAddress: _dropoff,
+        riderName: _rider,
+        expectedAmountLabel: _fare,
+        completing: false,
+        pickupLat: _pickupLat,
+        pickupLng: _pickupLng,
+        destLat: _destLat,
+        destLng: _destLng,
+        driverLat: 52.3676,
+        driverLng: 4.9041,
+        onNavigate: () {},
+        onCompleteRide: () {},
+        onOpenCommunication: () {},
+        onCancelRide: () {},
+      ),
     );
   }
 }
@@ -149,11 +185,14 @@ class _DriverRewardPreviewState extends State<DriverRewardPreview> {
       noteController: _noteController,
       paymentMethod: 'cash',
       sendingReceipt: false,
+      pickupLat: _pickupLat,
+      pickupLng: _pickupLng,
+      destLat: _destLat,
+      destLng: _destLng,
       onPaymentMethodChanged: (_) {},
       onSendReceipt: () {},
       onRateRider: () {},
       onSkip: () {},
-      onBack: () {},
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
+import 'package:heycaby_utils/heycaby_utils.dart';
 import 'package:intl/intl.dart';
 
 import '../l10n/driver_strings.dart';
@@ -16,6 +17,14 @@ import '../widgets/driver_todays_ledger_body.dart';
 class DriverMyRidesScreen extends ConsumerWidget {
   const DriverMyRidesScreen({super.key});
 
+  void _handleBack(BuildContext context) {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+    context.go('/driver');
+  }
+
   List<DriverLedgerHistoryItem> _mapItems(List<MyRideSummary> rides) {
     return rides.map((ride) {
       final date = ride.createdAt == null
@@ -23,7 +32,7 @@ class DriverMyRidesScreen extends ConsumerWidget {
           : DateFormat('dd MMM yyyy, HH:mm').format(ride.createdAt!.toLocal());
       final fare = ride.fare == null
           ? '—'
-          : '${ride.currency ?? 'EUR'} ${ride.fare!.toStringAsFixed(2)}';
+          : HeyCabyRideFare.formatEuroLabel(ride.fare) ?? '—';
       final from = (ride.pickupAddress ?? '—').trim();
       final to = (ride.destinationAddress ?? '—').trim();
       final statusLabel =
@@ -56,7 +65,7 @@ class DriverMyRidesScreen extends ConsumerWidget {
         loading: false,
         errorMessage: null,
         items: _mapItems(rides),
-        onBack: () => context.pop(),
+        onBack: () => _handleBack(context),
         onItemTap: (index) =>
             context.push('/driver/my-rides/${rides[index].id}'),
       ),
@@ -66,7 +75,7 @@ class DriverMyRidesScreen extends ConsumerWidget {
         loading: true,
         errorMessage: null,
         items: const [],
-        onBack: () => context.pop(),
+        onBack: () => _handleBack(context),
         onItemTap: (_) {},
       ),
       error: (_, __) => DriverRideHistoryBody(
@@ -75,7 +84,7 @@ class DriverMyRidesScreen extends ConsumerWidget {
         loading: false,
         errorMessage: DriverStrings.myRidesLoadFailed,
         items: const [],
-        onBack: () => context.pop(),
+        onBack: () => _handleBack(context),
         onItemTap: (_) {},
       ),
     );

@@ -2,9 +2,10 @@ import 'package:heycaby_ui/src/theme/color_tokens.dart';
 import 'package:heycaby_ui/src/theme/theme_data.dart';
 import 'package:heycaby_ui/src/theme/typography.dart';
 
-const String kRiderDefaultTheme = 'taxi-3';
+const String kRiderDefaultTheme = kHeyCabyDriverProThemeId;
 
 const Set<String> kRiderSelectableThemeIds = {
+  kHeyCabyDriverProThemeId,
   'brand-orange',
   'fresh',
   'blossom',
@@ -104,8 +105,8 @@ final Map<String, HeyCabyThemeData> kThemes = {
   ),
   kHeyCabyDriverProThemeId: HeyCabyThemeData(
     id: kHeyCabyDriverProThemeId,
-    name: 'Driver Pro',
-    tagline: 'Premium green — earn with confidence',
+    name: 'HeyCaby Green',
+    tagline: 'Premium green — the HeyCaby signature',
     colors: kHeyCabyDriverPro,
     typography: buildTypographyForTheme(kHeyCabyDriverProThemeId),
   ),

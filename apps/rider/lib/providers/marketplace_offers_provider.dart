@@ -2,6 +2,7 @@ import 'dart:async' show Timer, unawaited;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
+import 'package:heycaby_utils/heycaby_utils.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/marketplace_driver_offer.dart';
@@ -46,6 +47,7 @@ Future<bool> boostMarketplaceOffer({
   try {
     await HeyCabySupabase.client.from('ride_requests').update({
       'marketplace_offered_fare': newEuro,
+      ...HeyCabyRideFare.fareSnapshotForInsert(newEuro.toDouble()),
     }).eq('id', rideId);
     await seedMarketplaceDriverInvites(rideId);
     return true;
@@ -61,13 +63,16 @@ Future<bool> acceptMarketplaceOffer({
   required String rideRequestId,
 }) async {
   try {
+    final agreedEuro = offer.bidAmountEuro;
     await HeyCabySupabase.client.from('ride_requests').update({
       'driver_id': offer.driverId,
       'status': 'assigned',
+      ...HeyCabyRideFare.fareSnapshotForInsert(agreedEuro),
     }).eq('id', rideRequestId);
     await HeyCabySupabase.client
         .from('ride_bids')
         .update({'status': 'accepted'}).eq('id', offer.id);
+    ref.read(bookingProvider.notifier).setMarketplaceBidEuro(agreedEuro.round());
     ref.read(rideRequestProvider.notifier).updateStatus('assigned');
     return true;
   } catch (_) {

@@ -12,3 +12,16 @@ When the task touches an external system and this workspace has a **configured M
 - **If MCP is not available** for that system in this session, say so briefly and fall back to the repo’s documented workflow (e.g. `supabase` CLI, scripts in `scripts/`).
 
 This matches the project owner preference: **always use MCP when it applies.**
+
+## Supabase: staging first
+
+Device and agent testing use **HeyCaby Staging**, not production.
+
+| Environment | Project | Ref / `project_id` |
+|-------------|---------|-------------------|
+| **Staging (default for tests)** | HeyCaby Staging | `fdavszxncggswuiwggcp` |
+| Production | HEYCABY-TAXI | `fvrprxguoternoxnyhoj` |
+
+- **Apply migrations, `execute_sql`, and smoke checks on staging first.** Only promote to production after staging passes or when the user explicitly asks for prod.
+- Rider/driver `.env` / `--dart-define` must point at staging (`https://fdavszxncggswuiwggcp.supabase.co`) during QA — not `fvrprxguoternoxnyhoj`.
+- Staging-only webhook / `app_config` migrations must not be copied to production unchanged (see `supabase/README.md`).

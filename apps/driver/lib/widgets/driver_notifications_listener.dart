@@ -36,10 +36,21 @@ class _DriverNotificationsListenerState
   bool _notificationsDisabled = false;
   final Set<String> _handledIds = <String>{};
 
+  String? _lastSubscribedUid;
+  StreamSubscription<AuthState>? _authSub;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _authSub = HeyCabySupabase.client.auth.onAuthStateChange.listen((event) {
+      if (!mounted) return;
+      final uid = event.session?.user.id;
+      if (uid != null && uid.isNotEmpty && uid != _lastSubscribedUid) {
+        _subscribeRealtime();
+        _poll();
+      }
+    });
     _subscribeRealtime();
     _poll();
     _backupPollTimer =
@@ -52,13 +63,14 @@ class _DriverNotificationsListenerState
     _backupPollTimer?.cancel();
     _debounceTimer?.cancel();
     _realtimeChannel?.unsubscribe();
+    _authSub?.cancel();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed) {
+    if (state == AppLifecycleState.resumed && mounted) {
       _poll();
     }
   }
@@ -67,10 +79,13 @@ class _DriverNotificationsListenerState
     final uid = HeyCabySupabase.client.auth.currentUser?.id;
     if (uid == null || uid.isEmpty) return;
 
+    _lastSubscribedUid = uid;
     _realtimeChannel?.unsubscribe();
     _realtimeChannel = _notifications.subscribeToTableChanges(
       channelName: 'driver-notifications-$uid',
       onChange: (_) => _schedulePoll(),
+      filterUserId: uid,
+      filterUserType: 'driver',
     );
   }
 

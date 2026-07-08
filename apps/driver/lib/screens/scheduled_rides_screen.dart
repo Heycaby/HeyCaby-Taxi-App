@@ -14,6 +14,7 @@ import '../widgets/driver_scheduled_rides_body.dart';
 import '../widgets/driver_trip_planning_flow_common.dart';
 import '../widgets/offer_ride_swap_dialog.dart';
 import '../widgets/scheduled_preride_actions.dart';
+import '../widgets/scheduled_ride_detail_sheet.dart';
 
 enum ScheduledTab { requests, confirmed }
 
@@ -251,7 +252,7 @@ class _ScheduledRidesScreenState extends ConsumerState<ScheduledRidesScreen> {
   }
 
   void _openRideDetail(BuildContext context, ScheduledRide ride) {
-    context.push('/driver/ride/new/${ride.id}');
+    showScheduledRideDetailSheet(context, ref, ride: ride);
   }
 
   Future<void> _cancelListedSwap(
@@ -273,25 +274,18 @@ class _ScheduledRidesScreenState extends ConsumerState<ScheduledRidesScreen> {
       );
       return;
     }
+    final colors = ref.read(colorsProvider);
     final typo = ref.read(typographyProvider);
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title:
-            Text(DriverStrings.swapCancelConfirmTitle, style: typo.titleMedium),
-        content:
-            Text(DriverStrings.swapCancelConfirmBody, style: typo.bodyMedium),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(DriverStrings.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(DriverStrings.swapCancelConfirmCta),
-          ),
-        ],
-      ),
+    final confirm = await showHeyCabyConfirmSheet(
+      context,
+      colors: colors,
+      typography: typo,
+      title: DriverStrings.swapCancelConfirmTitle,
+      message: DriverStrings.swapCancelConfirmBody,
+      dismissLabel: DriverStrings.cancel,
+      confirmLabel: DriverStrings.swapCancelConfirmCta,
+      icon: Icons.swap_horiz_rounded,
+      confirmDestructive: true,
     );
     if (confirm != true || !context.mounted) return;
     final res = await ref.read(rideSwapServiceProvider).cancelRideSwap(

@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heycaby_api/heycaby_api.dart';
+import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../utils/driver_address_clipboard.dart';
 import '../l10n/driver_strings.dart';
+import '../providers/driver_nav_app_pref_provider.dart';
+import '../services/driver_nav_app_pref.dart';
 import '../theme/driver_colors.dart';
-import '../theme/driver_motion_presets.dart';
-import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
-import '../ui/driver_status_badge.dart';
+import 'driver_ride_bolt_layout.dart';
 import 'driver_ride_flow_common.dart';
 
-/// **Pickup Arrival** — confirm arrival; start trip friction-free.
-class DriverPickupArrivalBody extends StatelessWidget {
+/// **Pickup Arrival** — Bolt-style waiting at pickup; start trip friction-free.
+class DriverPickupArrivalBody extends ConsumerWidget {
   const DriverPickupArrivalBody({
     super.key,
     required this.colors,
     required this.typography,
+    required this.rideId,
     required this.pickupAddress,
     required this.destinationAddress,
     required this.riderName,
@@ -23,16 +28,28 @@ class DriverPickupArrivalBody extends StatelessWidget {
     required this.waitingFeeWaived,
     required this.canReportNoShow,
     required this.loading,
-    required this.onBack,
     required this.onStartRide,
     required this.onOpenCommunication,
+    required this.onNavigate,
     required this.onWaiveWaitingFee,
     required this.onReportNoShow,
     required this.onCancelRide,
+    this.pickupLat,
+    this.pickupLng,
+    this.destLat,
+    this.destLng,
+    this.driverLat,
+    this.driverLng,
+    this.farePill,
+    this.onToggleRequests,
+    this.onSafety,
+    this.requestsPaused = false,
+    this.statusBusy = false,
   });
 
   final DriverColors colors;
   final DriverTypography typography;
+  final String rideId;
   final String pickupAddress;
   final String destinationAddress;
   final String? riderName;
@@ -42,81 +59,126 @@ class DriverPickupArrivalBody extends StatelessWidget {
   final bool waitingFeeWaived;
   final bool canReportNoShow;
   final bool loading;
-  final VoidCallback onBack;
   final VoidCallback onStartRide;
   final VoidCallback onOpenCommunication;
+  final VoidCallback onNavigate;
   final VoidCallback onWaiveWaitingFee;
   final VoidCallback onReportNoShow;
   final VoidCallback onCancelRide;
+  final double? pickupLat;
+  final double? pickupLng;
+  final double? destLat;
+  final double? destLng;
+  final double? driverLat;
+  final double? driverLng;
+  final String? farePill;
+  final VoidCallback? onToggleRequests;
+  final VoidCallback? onSafety;
+  final bool requestsPaused;
+  final bool statusBusy;
 
-  @override
-  Widget build(BuildContext context) {
-    return DriverRideFlowScaffold(
-      title: DriverStrings.atPickup,
+  String _navLabel(WidgetRef ref) {
+    final app =
+        ref.watch(driverNavAppPrefProvider).valueOrNull ?? DriverNavApp.waze;
+    return switch (app) {
+      DriverNavApp.waze => 'Waze',
+      DriverNavApp.google => 'Google Maps',
+    };
+  }
+
+  void _openRouteDetails(BuildContext context, WidgetRef ref) {
+    showDriverRideRouteDetailsSheet(
+      context: context,
       colors: colors,
       typography: typography,
-      onBack: onBack,
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DriverRidePhaseHero(
-            colors: colors,
-            typography: typography,
-            eyebrow: DriverStrings.atPickup,
-            title: DriverStrings.pickupLiveMeterTitle,
-            body: DriverStrings.pickupLiveMeterBody,
-            icon: Icons.schedule_rounded,
-            tone: DriverStatusTone.warning,
-            metric: DriverStrings.waiting,
-          ),
-          const SizedBox(height: DriverSpacing.md),
-          _WaitingFeeCard(
-            colors: colors,
-            typography: typography,
-            waitSeconds: waitSeconds,
-            graceSeconds: waitingGraceSeconds,
-            ratePerMinute: waitingRatePerMinute,
-            waived: waitingFeeWaived,
-            loading: loading,
-            onWaive: onWaiveWaitingFee,
-          ).driverFadeSlideIn(staggerIndex: 1),
-          const SizedBox(height: DriverSpacing.lg),
-          DriverRideTripSummary(
-            colors: colors,
-            typography: typography,
-            pickupLabel: pickupAddress,
-            dropoffLabel: destinationAddress,
-            riderName: riderName,
-            statusLabel: DriverStrings.atPickup,
-            statusTone: DriverStatusTone.warning,
-            staggerIndex: 1,
-          ),
-          const SizedBox(height: DriverSpacing.xl),
-          DriverRideActionGrid(
-            colors: colors,
-            typography: typography,
-            actions: [
-              DriverRideFlowAction(
-                label: DriverStrings.pingRiderAction,
-                icon: Icons.forum_outlined,
-                onTap: onOpenCommunication,
-                enabled: !loading,
-              ),
-              DriverRideFlowAction(
-                label: DriverStrings.cancelOrder,
-                icon: Icons.cancel_outlined,
-                onTap: onCancelRide,
-                enabled: !loading,
-              ),
-            ],
-          ),
-        ],
+      destinationAddress: destinationAddress,
+      farePill: farePill,
+      riderName: riderName,
+      navAppLabel: _navLabel(ref),
+      rideRequestId: rideId,
+      smartPingPhase: DriverRideCommunicationPhase.atPickup,
+      onContact: onOpenCommunication,
+      onNavigate: onNavigate,
+      onCancelRide: onCancelRide,
+      onToggleRequests: onToggleRequests,
+      requestsPaused: requestsPaused,
+    );
+  }
+
+  Future<void> _handleToggleRequests(BuildContext context) async {
+    if (onToggleRequests == null) return;
+    if (!requestsPaused) {
+      final themeColors = Theme.of(context).extension<HeyCabyColorTokens>();
+      final themeTypo = Theme.of(context).extension<HeyCabyTypography>();
+      if (themeColors == null || themeTypo == null) return;
+      final confirmed = await showHeyCabyConfirmSheet(
+        context,
+        colors: themeColors,
+        typography: themeTypo,
+        title: DriverStrings.breakConfirmTitle,
+        message: DriverStrings.breakConfirmBodyActiveRide,
+        dismissLabel: DriverStrings.cancel,
+        confirmLabel: DriverStrings.shiftStartBreak,
+        icon: Icons.coffee_rounded,
+      );
+      if (confirmed != true) return;
+    }
+    onToggleRequests!();
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return DriverRideBoltScaffold(
+      colors: colors,
+      typography: typography,
+      phase: DriverRideBoltPhase.atPickup,
+      pickupLat: pickupLat,
+      pickupLng: pickupLng,
+      destLat: destLat,
+      destLng: destLng,
+      driverLat: driverLat,
+      driverLng: driverLng,
+      showWaitHereHint: true,
+      onToggleRequests: onToggleRequests == null
+          ? null
+          : () => _handleToggleRequests(context),
+      onSafety: onSafety,
+      onChat: onOpenCommunication,
+      requestsPaused: requestsPaused,
+      statusBusy: statusBusy,
+      infoCard: DriverRideBoltInfoCard(
+        colors: colors,
+        typography: typography,
+        heroPrimary: driverRideBoltWaitLabel(waitSeconds),
+        heroSecondary: DriverStrings.waiting,
+        focusAddress: pickupAddress,
+        riderName: riderName,
+        farePill: farePill,
+        onOpenRouteDetails: () => _openRouteDetails(context, ref),
+        onCopyAddress: pickupAddress.trim().isEmpty
+            ? null
+            : () => copyDriverRideAddress(
+                  context,
+                  address: pickupAddress,
+                  colors: colors,
+                  typography: typography,
+                ),
+        extra: _WaitingFeeCard(
+          colors: colors,
+          typography: typography,
+          waitSeconds: waitSeconds,
+          graceSeconds: waitingGraceSeconds,
+          ratePerMinute: waitingRatePerMinute,
+          waived: waitingFeeWaived,
+          loading: loading,
+          onWaive: onWaiveWaitingFee,
+        ),
       ),
       bottomBar: DriverRideFlowBottomBar(
         colors: colors,
         typography: typography,
-        primaryLabel: DriverStrings.startRide,
-        primaryIcon: Icons.play_arrow_rounded,
+        primaryLabel: DriverStrings.startRideAndNavigate(_navLabel(ref)),
+        primaryIcon: Icons.navigation_rounded,
         onPrimary: loading ? null : onStartRide,
         primaryLoading: loading,
         tertiaryLabel: canReportNoShow ? DriverStrings.riderDidNotShow : null,
@@ -191,88 +253,39 @@ class _WaitingFeeCard extends StatelessWidget {
         : inGrace
             ? DriverStrings.waitingFeeFreeTimeBody
             : '${_money(_feeCents)} ${DriverStrings.waitingFeeAddedSoFar}';
-    final rateLabel = ratePerMinute > 0
-        ? DriverStrings.waitingFeeRateLabel(
-            '€${ratePerMinute.toStringAsFixed(2)}',
-          )
-        : DriverStrings.waitingFeeRateNotSet;
 
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: waived
-            ? colors.success.withValues(alpha: 0.08)
-            : colors.warning.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: waived
-              ? colors.success.withValues(alpha: 0.22)
-              : colors.warning.withValues(alpha: 0.22),
-        ),
+        color: colors.backgroundAlt.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.border.withValues(alpha: 0.55)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 74,
-            height: 74,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: colors.card,
-              border: Border.all(
-                color: waived ? colors.success : colors.warning,
-                width: 4,
-              ),
-            ),
-            child: Center(
-              child: Text(
-                mainValue,
-                style: typography.titleMedium.copyWith(
-                  color: colors.text,
-                  fontWeight: FontWeight.w900,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
+          Text(
+            title,
+            style: typography.labelLarge.copyWith(
+              fontWeight: FontWeight.w800,
+              color: colors.textSecondary,
             ),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: typography.titleMedium.copyWith(
-                    color: colors.text,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: typography.bodyMedium.copyWith(
-                    color: colors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  rateLabel,
-                  style: typography.labelMedium.copyWith(
-                    color: colors.textMuted,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                if (!waived && _feeCents > 0) ...[
-                  const SizedBox(height: 10),
-                  TextButton.icon(
-                    onPressed: loading ? null : onWaive,
-                    icon: const Icon(Icons.volunteer_activism_outlined),
-                    label: Text(DriverStrings.waitingFeeWaiveAction),
-                  ),
-                ],
-              ],
-            ),
+          const SizedBox(height: 4),
+          Text(
+            mainValue,
+            style: typography.titleLarge.copyWith(fontWeight: FontWeight.w900),
           ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: typography.bodySmall.copyWith(color: colors.textSecondary),
+          ),
+          if (!waived && _feeCents > 0)
+            TextButton(
+              onPressed: loading ? null : onWaive,
+              child: Text(DriverStrings.waitingFeeWaiveAction),
+            ),
         ],
       ),
     );

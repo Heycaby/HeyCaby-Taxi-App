@@ -216,6 +216,29 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
       }
     }
 
+    final isGoingOnBreak = newStatus == DriverAvailabilityStatus.onBreak;
+    if (isGoingOnBreak) {
+      if (!mounted) return;
+      final hasActiveRide = driverData.appState == DriverAppState.assigned ||
+          driverData.appState == DriverAppState.arrived ||
+          driverData.appState == DriverAppState.inProgress;
+      final confirmed = await _showBreakConfirmDialog(hasActiveRide);
+      if (!confirmed) {
+        _resetThumbToCurrentStatus();
+        return;
+      }
+      if (hasActiveRide) {
+        ref.read(driverStateProvider.notifier).setStatus(
+              driverData.appState,
+            );
+        ref.read(driverStateProvider.notifier).setPendingBreak(true);
+        HapticService.success();
+        if (mounted) unawaited(_showBreakWidgetPopout());
+        _resetThumbToPosition(DriverAvailabilityStatus.onBreak);
+        return;
+      }
+    }
+
     final api = ref.read(driverApiProvider);
     setState(() => _isWritingStatus = true);
     try {
@@ -331,36 +354,38 @@ class _ThreeStateToggleState extends ConsumerState<ThreeStateToggle>
     final minutes = onlineMinutes % 60;
     final durationText = '${hours}h ${minutes.toString().padLeft(2, '0')}m';
 
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(
-          DriverStrings.endShiftConfirm,
-          style: typo.titleMedium,
-        ),
-        content: Text(
-          DriverStrings.endShiftDetail
-              .replaceFirst('X hours', durationText)
-              .replaceFirst('Y rides', '$ridesToday rides'),
-          style: typo.bodyMedium.copyWith(color: colors.textMid),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(DriverStrings.cancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: colors.error,
-              foregroundColor: colors.card,
-            ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(DriverStrings.endShift),
-          ),
-        ],
-      ),
+    return showHeyCabyConfirmSheet(
+      context,
+      colors: colors,
+      typography: typo,
+      title: DriverStrings.endShiftConfirm,
+      message: DriverStrings.endShiftDetail
+          .replaceFirst('X hours', durationText)
+          .replaceFirst('Y rides', '$ridesToday rides'),
+      dismissLabel: DriverStrings.cancel,
+      confirmLabel: DriverStrings.endShift,
+      icon: Icons.power_settings_new_rounded,
+      confirmDestructive: true,
     );
-    return result ?? false;
+  }
+
+  Future<bool> _showBreakConfirmDialog(bool hasActiveRide) async {
+    final colors = ref.read(colorsProvider);
+    final typo = ref.read(typographyProvider);
+
+    return showHeyCabyConfirmSheet(
+      context,
+      colors: colors,
+      typography: typo,
+      title: DriverStrings.breakConfirmTitle,
+      message: hasActiveRide
+          ? DriverStrings.breakConfirmBodyActiveRide
+          : DriverStrings.breakConfirmBodyIdle,
+      dismissLabel: DriverStrings.cancel,
+      confirmLabel: DriverStrings.shiftStartBreak,
+      icon: Icons.coffee_rounded,
+      confirmDestructive: false,
+    );
   }
 
   void _resetThumbToPosition(DriverAvailabilityStatus status) {

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
 import '../models/driver_runtime_models.dart';
@@ -9,6 +10,8 @@ import '../providers/driver_data_providers.dart';
 import '../providers/driver_runtime_providers.dart';
 import '../screens/driver_runtime_gate_screen.dart';
 import '../services/location_service.dart';
+import '../theme/driver_colors.dart';
+import '../widgets/driver_ride_premium_style.dart';
 import '../utils/driver_network_guard.dart';
 import '../utils/driver_go_online_onboarding.dart';
 import 'driver_battery_optimization_prompt.dart';
@@ -148,165 +151,195 @@ Future<void> _showInitialTariffSetupSheet(
 ) async {
   if (!context.mounted) return;
 
-  final kmController = TextEditingController(text: '2.00');
-  final minuteController = TextEditingController(text: '0.35');
-  final startController = TextEditingController(text: '2.50');
-  final vatController = TextEditingController(text: '9');
-
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    builder: (sheetContext) {
-      var saving = false;
-      return StatefulBuilder(
-        builder: (context, setState) {
-          final inset = MediaQuery.viewInsetsOf(context).bottom;
-          return Padding(
-            padding: EdgeInsets.fromLTRB(20, 16, 20, inset + 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 44,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  DriverStrings.initialTariffTitle,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  DriverStrings.initialTariffBody,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        height: 1.35,
-                      ),
-                ),
-                const SizedBox(height: 20),
-                _InitialTariffField(
-                  controller: kmController,
-                  label: DriverStrings.initialTariffPricePerKm,
-                ),
-                const SizedBox(height: 12),
-                _InitialTariffField(
-                  controller: minuteController,
-                  label: DriverStrings.initialTariffPricePerMinute,
-                ),
-                const SizedBox(height: 12),
-                _InitialTariffField(
-                  controller: startController,
-                  label: DriverStrings.initialTariffStartFee,
-                ),
-                const SizedBox(height: 12),
-                _InitialTariffField(
-                  controller: vatController,
-                  label: DriverStrings.initialTariffVat,
-                ),
-                const SizedBox(height: 20),
-                FilledButton(
-                  onPressed: saving
-                      ? null
-                      : () async {
-                          final perKm = _parseAmount(kmController.text);
-                          final perMin = _parseAmount(minuteController.text);
-                          final startFee = _parseAmount(startController.text);
-                          final vat = _parseAmount(vatController.text);
-                          final valid = perKm != null &&
-                              perKm > 0 &&
-                              perMin != null &&
-                              perMin >= 0 &&
-                              startFee != null &&
-                              startFee >= 0 &&
-                              vat != null &&
-                              vat >= 0 &&
-                              vat <= 100;
-                          if (!valid) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content:
-                                    Text(DriverStrings.initialTariffInvalid),
-                              ),
-                            );
-                            return;
-                          }
-
-                          setState(() => saving = true);
-                          final driverId =
-                              await ref.read(driverIdProvider.future);
-                          if (driverId == null) {
-                            setState(() => saving = false);
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content:
-                                    Text(DriverStrings.initialTariffFailed),
-                              ),
-                            );
-                            return;
-                          }
-
-                          final profile = await ref
-                              .read(driverDataServiceProvider)
-                              .createInitialRateProfile(
-                                driverId: driverId,
-                                baseFare: startFee,
-                                perKmRate: perKm,
-                                perMinRate: perMin,
-                                vatPercentage: vat,
-                              );
-                          if (!context.mounted) return;
-                          setState(() => saving = false);
-                          if (profile == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content:
-                                    Text(DriverStrings.initialTariffFailed),
-                              ),
-                            );
-                            return;
-                          }
-
-                          ref.invalidate(driverRateProfilesProvider);
-                          ref.invalidate(activeRateProfileProvider);
-                          ref.invalidate(driverRuntimeSnapshotProvider);
-                          ref.invalidate(driverReadinessProvider);
-                          unawaited(refreshDriverRuntime(ref));
-                          Navigator.of(sheetContext).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(DriverStrings.initialTariffSaved),
-                            ),
-                          );
-                        },
-                  child: Text(
-                    saving
-                        ? DriverStrings.initialTariffSaving
-                        : DriverStrings.initialTariffSave,
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    },
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) => _InitialTariffSetupSheet(
+      parentContext: context,
+    ),
   );
+}
 
-  kmController.dispose();
-  minuteController.dispose();
-  startController.dispose();
-  vatController.dispose();
+class _InitialTariffSetupSheet extends ConsumerStatefulWidget {
+  const _InitialTariffSetupSheet({
+    required this.parentContext,
+  });
+
+  final BuildContext parentContext;
+
+  @override
+  ConsumerState<_InitialTariffSetupSheet> createState() =>
+      _InitialTariffSetupSheetState();
+}
+
+class _InitialTariffSetupSheetState
+    extends ConsumerState<_InitialTariffSetupSheet> {
+  late final TextEditingController _startController;
+  late final TextEditingController _kmController;
+  late final TextEditingController _minuteController;
+  late final TextEditingController _waitController;
+  var _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startController = TextEditingController(text: '2.50');
+    _kmController = TextEditingController(text: '2.00');
+    _minuteController = TextEditingController(text: '0.35');
+    _waitController = TextEditingController(text: '0.25');
+  }
+
+  @override
+  void dispose() {
+    _startController.dispose();
+    _kmController.dispose();
+    _minuteController.dispose();
+    _waitController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final startFee = _parseAmount(_startController.text);
+    final perKm = _parseAmount(_kmController.text);
+    final perMin = _parseAmount(_minuteController.text);
+    final waitingRate = _parseAmount(_waitController.text);
+    final valid = startFee != null &&
+        startFee >= 0 &&
+        perKm != null &&
+        perKm > 0 &&
+        perMin != null &&
+        perMin >= 0 &&
+        waitingRate != null &&
+        waitingRate >= 0;
+    if (!valid) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(DriverStrings.initialTariffInvalid)),
+      );
+      return;
+    }
+
+    setState(() => _saving = true);
+    final driverId = await ref.read(driverIdProvider.future);
+    if (!mounted) return;
+    if (driverId == null) {
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(DriverStrings.initialTariffFailed)),
+      );
+      return;
+    }
+
+    final profile = await ref.read(driverDataServiceProvider).createInitialRateProfile(
+          driverId: driverId,
+          baseFare: startFee,
+          perKmRate: perKm,
+          perMinRate: perMin,
+          waitingRate: waitingRate,
+        );
+    if (!mounted) return;
+    if (profile == null) {
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(DriverStrings.initialTariffFailed)),
+      );
+      return;
+    }
+
+    Navigator.of(context).pop();
+    if (!widget.parentContext.mounted) return;
+    ref.invalidate(driverRateProfilesProvider);
+    ref.invalidate(activeRateProfileProvider);
+    ref.invalidate(driverRuntimeSnapshotProvider);
+    ref.invalidate(driverReadinessProvider);
+    unawaited(refreshDriverRuntime(ref));
+    ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+      SnackBar(content: Text(DriverStrings.initialTariffSaved)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final inset = MediaQuery.viewInsetsOf(context).bottom;
+    final colors = DriverColors.fromTheme(
+      ref.watch(colorsProvider),
+    );
+    return Padding(
+      padding: EdgeInsets.fromLTRB(12, 0, 12, inset + 12),
+      child: DriverRidePremiumStyle.glassSurface(
+        colors: colors,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+        blurSigma: 26,
+        tintOpacity: 0.82,
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: colors.border.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                DriverStrings.initialTariffTitle,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: colors.text,
+                    ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                DriverStrings.initialTariffBody,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colors.textSecondary,
+                      height: 1.35,
+                    ),
+              ),
+              const SizedBox(height: 20),
+              _InitialTariffField(
+                controller: _startController,
+                label: DriverStrings.initialTariffStartFee,
+              ),
+              const SizedBox(height: 12),
+              _InitialTariffField(
+                controller: _kmController,
+                label: DriverStrings.initialTariffPricePerKm,
+              ),
+              const SizedBox(height: 12),
+              _InitialTariffField(
+                controller: _minuteController,
+                label: DriverStrings.initialTariffPricePerMinute,
+              ),
+              const SizedBox(height: 12),
+              _InitialTariffField(
+                controller: _waitController,
+                label: DriverStrings.initialTariffWaitingRate,
+              ),
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: _saving ? null : _save,
+                child: Text(
+                  _saving
+                      ? DriverStrings.initialTariffSaving
+                      : DriverStrings.initialTariffSave,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 double? _parseAmount(String raw) {

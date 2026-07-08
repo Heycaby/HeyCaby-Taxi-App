@@ -82,8 +82,8 @@ class DriverFcmHandler {
         await dispatchDriverNotification(
           context: context,
           category: payload.effectiveCategory,
-          title: '',
-          body: '',
+          title: payload.title ?? '',
+          body: payload.body ?? '',
           data: {
             if (payload.rideRequestId != null)
               'ride_request_id': payload.rideRequestId,
@@ -95,9 +95,12 @@ class DriverFcmHandler {
         await dispatchDriverNotification(
           context: context,
           category: payload.effectiveCategory,
-          title: '',
-          body: '',
-          data: null,
+          title: payload.title ?? '',
+          body: payload.body ?? '',
+          data: {
+            if (payload.rideRequestId != null)
+              'ride_request_id': payload.rideRequestId,
+          },
           fromTap: fromTap,
           foreground: foreground,
         );
@@ -105,8 +108,8 @@ class DriverFcmHandler {
         await dispatchDriverNotification(
           context: context,
           category: payload.effectiveCategory,
-          title: '',
-          body: '',
+          title: payload.title ?? '',
+          body: payload.body ?? '',
           data: {
             if (payload.rideRequestId != null)
               'ride_request_id': payload.rideRequestId,

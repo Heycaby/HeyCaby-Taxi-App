@@ -47,15 +47,21 @@ class DriverTrackingNotifier extends AutoDisposeAsyncNotifier<DriverLocation?> {
   Future<void> _fetchDriverLocation() async {
     final rideId = _rideId;
     if (rideId == null || rideId.isEmpty) {
-      state = const AsyncData(null);
       return;
     }
     try {
+      final identity = await ref.read(riderIdentityProvider.future);
+      final params = <String, dynamic>{'p_ride_request_id': rideId};
+      final token = identity.riderToken?.trim();
+      if (token != null && token.isNotEmpty) {
+        params['p_rider_token'] = token;
+      }
       final response = await HeyCabySupabase.client.rpc(
         'fn_rider_driver_location_for_ride',
-        params: {'p_ride_request_id': rideId},
+        params: params,
       );
 
+      if (_rideId == null) return; // disposed / stopped while awaiting
       if (response is! Map) {
         state = const AsyncData(null);
         return;
@@ -68,8 +74,8 @@ class DriverTrackingNotifier extends AutoDisposeAsyncNotifier<DriverLocation?> {
         heading: (row['heading'] as num?)?.toDouble(),
         updatedAt: DateTime.parse(row['updated_at'] as String),
       ));
-    } catch (e) {
-      state = const AsyncData(null);
+    } catch (_) {
+      if (_rideId != null) state = const AsyncData(null);
     }
   }
 

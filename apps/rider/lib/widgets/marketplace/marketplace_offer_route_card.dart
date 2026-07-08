@@ -29,40 +29,50 @@ class MarketplaceOfferRouteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 16, 14),
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: colors.border.withValues(alpha: 0.5)),
-        boxShadow: [
-          BoxShadow(
-            color: colors.text.withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colors.border.withValues(alpha: 0.55)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _RouteLine(
+          Text(
+            l10n.marketplaceYourRoute,
+            style: typo.labelLarge.copyWith(
+              color: colors.text,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _RouteStop(
+            colors: colors,
+            typo: typo,
+            dotColor: colors.warning,
+            label: l10n.pickup,
+            value: booking.pickup?.displayName,
+            placeholder: l10n.marketplaceWhereAreYouGoing,
+            onTap: onPickup,
+            onClear: onClearPickup,
+          ),
+          Padding(
+            padding: const EdgeInsetsDirectional.only(start: 11),
+            child: Container(
+              width: 2,
+              height: 16,
+              color: colors.border.withValues(alpha: 0.7),
+            ),
+          ),
+          _RouteStop(
             colors: colors,
             typo: typo,
             dotColor: colors.success,
-            icon: Icons.radio_button_checked,
-            label: booking.pickup?.displayName ?? l10n.pickup,
-            isSet: booking.pickup != null,
-            onTap: onPickup,
-            onClear: booking.pickup != null ? onClearPickup : null,
-          ),
-          Divider(height: 1, color: colors.border.withValues(alpha: 0.5)),
-          _RouteLine(
-            colors: colors,
-            typo: typo,
-            dotColor: colors.error,
-            icon: Icons.location_on_rounded,
-            label: booking.destination?.displayName ?? l10n.destination,
-            isSet: booking.destination != null,
+            label: l10n.destination,
+            value: booking.destination?.displayName,
+            placeholder: l10n.destination,
             onTap: onDestination,
-            onClear: booking.destination != null ? onClearDestination : null,
+            onClear: onClearDestination,
           ),
         ],
       ),
@@ -70,14 +80,14 @@ class MarketplaceOfferRouteCard extends StatelessWidget {
   }
 }
 
-class _RouteLine extends StatelessWidget {
-  const _RouteLine({
+class _RouteStop extends StatelessWidget {
+  const _RouteStop({
     required this.colors,
     required this.typo,
     required this.dotColor,
-    required this.icon,
     required this.label,
-    required this.isSet,
+    required this.value,
+    required this.placeholder,
     required this.onTap,
     this.onClear,
   });
@@ -85,51 +95,73 @@ class _RouteLine extends StatelessWidget {
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
   final Color dotColor;
-  final IconData icon;
   final String label;
-  final bool isSet;
+  final String? value;
+  final String placeholder;
   final VoidCallback onTap;
   final VoidCallback? onClear;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        HapticService.lightTap();
-        onTap();
-      },
-      child: Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 8, 14),
-        child: Row(
-          children: [
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: dotColor.withValues(alpha: 0.14),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: dotColor, size: 16),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                label,
-                style: typo.bodyLarge.copyWith(
-                  color: isSet ? colors.text : colors.textSoft,
-                  fontWeight: isSet ? FontWeight.w600 : FontWeight.w400,
+    final isSet = value != null && value!.trim().isNotEmpty;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticService.lightTap();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(0, 6, 0, 6),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                margin: const EdgeInsets.only(top: 2),
+                decoration: BoxDecoration(
+                  color: dotColor.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: dotColor, width: 2),
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            if (onClear != null)
-              IconButton(
-                visualDensity: VisualDensity.compact,
-                onPressed: onClear,
-                icon: Icon(Icons.close, color: colors.textSoft, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: typo.labelSmall.copyWith(
+                        color: colors.textSoft,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isSet ? value! : placeholder,
+                      style: typo.bodyMedium.copyWith(
+                        color: isSet ? colors.text : colors.textSoft,
+                        fontWeight: isSet ? FontWeight.w700 : FontWeight.w500,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
-          ],
+              if (onClear != null)
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  onPressed: onClear,
+                  icon: Icon(Icons.close_rounded, color: colors.textSoft, size: 18),
+                ),
+            ],
+          ),
         ),
       ),
     );

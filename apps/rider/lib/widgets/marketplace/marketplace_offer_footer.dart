@@ -11,7 +11,6 @@ class MarketplaceOfferFooter extends StatelessWidget {
     required this.typo,
     required this.l10n,
     required this.onTap,
-    required this.onClose,
   });
 
   final bool isSubmitting;
@@ -20,7 +19,6 @@ class MarketplaceOfferFooter extends StatelessWidget {
   final HeyCabyTypography typo;
   final AppLocalizations l10n;
   final VoidCallback onTap;
-  final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -28,65 +26,47 @@ class MarketplaceOfferFooter extends StatelessWidget {
 
     return Container(
       padding: EdgeInsetsDirectional.fromSTEB(
-        HeyCabySpacing.screenEdge,
+        16,
         12,
-        HeyCabySpacing.screenEdge,
-        MediaQuery.paddingOf(context).bottom + 16,
+        16,
+        MediaQuery.paddingOf(context).bottom + 12,
       ),
       decoration: BoxDecoration(
         color: colors.card,
-        border: Border(top: BorderSide(color: colors.border, width: 0.5)),
-        boxShadow: [
-          BoxShadow(
-            color: colors.text.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, -4),
-          ),
-        ],
+        border: Border(top: BorderSide(color: colors.border.withValues(alpha: 0.45))),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: SizedBox(
-              height: 54,
-              child: FilledButton(
-                onPressed: enabled ? onTap : null,
-                style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-                child: isSubmitting
-                    ? SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: colors.onAccent,
-                        ),
-                      )
-                    : Text(
-                        l10n.marketplacePostRequest,
-                        style: typo.labelLarge.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+          if (!hasAddresses)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Text(
+                l10n.marketplaceSetPickupDestinationHint,
+                textAlign: TextAlign.center,
+                style: typo.bodySmall.copyWith(color: colors.textMid),
               ),
             ),
-          ),
-          const SizedBox(width: 10),
           SizedBox(
-            width: 54,
-            height: 54,
-            child: OutlinedButton(
-              onPressed: onClose,
-              style: OutlinedButton.styleFrom(
-                padding: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: Icon(Icons.close, color: colors.text),
+            height: 52,
+            child: FilledButton(
+              onPressed: enabled ? onTap : null,
+              child: isSubmitting
+                  ? SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: colors.onAccent,
+                      ),
+                    )
+                  : Text(
+                      l10n.marketplacePostRequest,
+                      style: typo.labelLarge.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
             ),
           ),
         ],

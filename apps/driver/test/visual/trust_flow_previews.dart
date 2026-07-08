@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_driver/l10n/driver_strings.dart';
 import 'package:heycaby_driver/theme/driver_colors.dart';
 import 'package:heycaby_driver/theme/driver_typography.dart';
@@ -39,17 +40,25 @@ class _DriverFeedbackLoopPreviewState extends State<DriverFeedbackLoopPreview> {
 
   @override
   Widget build(BuildContext context) {
-    return DriverFeedbackLoopBody(
-      colors: widget.colors,
-      typography: widget.typography,
-      stars: _stars,
-      commentController: _controller,
-      maxCommentLength: 100,
-      loading: false,
-      onStarSelected: (star) => setState(() => _stars = star),
-      onSubmit: () {},
-      onSkip: () {},
-      onClose: () {},
+    return ProviderScope(
+      child: DriverFeedbackLoopBody(
+        colors: widget.colors,
+        typography: widget.typography,
+        stars: _stars,
+        commentController: _controller,
+        maxCommentLength: 100,
+        loading: false,
+        riderName: 'Sophie van Dijk',
+        destinationAddress: 'Schiphol Airport',
+        pickupLat: 52.3740,
+        pickupLng: 4.8952,
+        destLat: 52.3105,
+        destLng: 4.7683,
+        onStarSelected: (star) => setState(() => _stars = star),
+        onSubmit: () {},
+        onSkip: () {},
+        onClose: () {},
+      ),
     );
   }
 }

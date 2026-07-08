@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -53,7 +55,14 @@ class _RateRiderScreenState extends ConsumerState<RateRiderScreen> {
       }
       await ref.read(driverApiProvider).rateRider(payload: payload);
       HapticService.success();
+      final wasPendingBreak =
+          ref.read(driverStateProvider).pendingBreak;
       ref.read(driverStateProvider.notifier).clearActiveRide();
+      if (wasPendingBreak) {
+        unawaited(
+          ref.read(driverApiProvider).setStatus(status: 'on_break'),
+        );
+      }
       if (!mounted) return;
       context.go('/driver');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -72,7 +81,14 @@ class _RateRiderScreenState extends ConsumerState<RateRiderScreen> {
 
   void _skip() {
     HapticService.lightTap();
+    final wasPendingBreak =
+        ref.read(driverStateProvider).pendingBreak;
     ref.read(driverStateProvider.notifier).clearActiveRide();
+    if (wasPendingBreak) {
+      unawaited(
+        ref.read(driverApiProvider).setStatus(status: 'on_break'),
+      );
+    }
     context.go('/driver');
   }
 
@@ -82,6 +98,8 @@ class _RateRiderScreenState extends ConsumerState<RateRiderScreen> {
     final typography =
         DriverTypography.fromTheme(ref.watch(typographyProvider));
 
+    final driver = ref.watch(driverStateProvider);
+
     return DriverFeedbackLoopBody(
       colors: colors,
       typography: typography,
@@ -89,6 +107,13 @@ class _RateRiderScreenState extends ConsumerState<RateRiderScreen> {
       commentController: _commentController,
       maxCommentLength: _maxCommentLength,
       loading: _loading,
+      riderName: driver.riderContactName,
+      destinationAddress:
+          driver.destinationAddress ?? DriverStrings.destination,
+      pickupLat: driver.pickupLat,
+      pickupLng: driver.pickupLng,
+      destLat: driver.destinationLat,
+      destLng: driver.destinationLng,
       onStarSelected: (star) => setState(() => _stars = star),
       onSubmit: _submit,
       onSkip: _skip,

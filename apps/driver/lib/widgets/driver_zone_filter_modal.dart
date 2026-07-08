@@ -23,17 +23,17 @@ class DriverZoneFilterModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+    return GlassPanel(
+      colors: colors,
+      typography: typo,
       padding: EdgeInsets.only(
         top: 16,
         left: 20,
         right: 20,
         bottom: MediaQuery.of(context).padding.bottom + 24,
       ),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      tintColor: colors.card,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -102,7 +102,7 @@ class _ZoneOptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: colors.card,
+      color: colors.card.withValues(alpha: 0.55),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,

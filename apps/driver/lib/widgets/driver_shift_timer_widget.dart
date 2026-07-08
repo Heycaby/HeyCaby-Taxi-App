@@ -170,36 +170,21 @@ class _DriverShiftTimerWidgetState
     final stats = ref.read(driverShiftStatsProvider).valueOrNull;
     final onlineMins = stats?.shiftTotalOnlineMinutes ?? 0;
     final rides = stats?.shiftRidesToday ?? 0;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) {
-        final colors = ref.read(colorsProvider);
-        final typo = ref.read(typographyProvider);
-        return AlertDialog(
-          title: Text(DriverStrings.endShiftConfirm, style: typo.titleMedium),
-          content: Text(
-            DriverStrings.endShiftDetail
-                .replaceFirst(
-                    'X hours', '${onlineMins ~/ 60}h ${onlineMins % 60}m')
-                .replaceFirst('Y rides', '$rides rides'),
-            style: typo.bodyMedium.copyWith(color: colors.textMid),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(DriverStrings.cancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              style: FilledButton.styleFrom(
-                backgroundColor: colors.error,
-                foregroundColor: colors.card,
-              ),
-              child: const Text(DriverStrings.endShift),
-            ),
-          ],
-        );
-      },
+    final colors = ref.read(colorsProvider);
+    final typo = ref.read(typographyProvider);
+    final confirmed = await showHeyCabyConfirmSheet(
+      context,
+      colors: colors,
+      typography: typo,
+      title: DriverStrings.endShiftConfirm,
+      message: DriverStrings.endShiftDetail
+          .replaceFirst(
+              'X hours', '${onlineMins ~/ 60}h ${onlineMins % 60}m')
+          .replaceFirst('Y rides', '$rides rides'),
+      dismissLabel: DriverStrings.cancel,
+      confirmLabel: DriverStrings.endShift,
+      icon: Icons.power_settings_new_rounded,
+      confirmDestructive: true,
     );
     if (confirmed != true || !mounted) return;
     final id = await ref.read(driverIdProvider.future);

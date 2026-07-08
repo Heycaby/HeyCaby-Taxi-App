@@ -5,6 +5,32 @@ import '../constants/rider_near_term_window.dart';
 import '../constants/rider_search_window.dart';
 import '../services/stale_ride_cleanup.dart';
 
+DateTime? _parseScheduledPickup(dynamic raw) {
+  if (raw == null) return null;
+  return DateTime.tryParse(raw.toString())?.toLocal();
+}
+
+bool _isFutureScheduledRide(DateTime? scheduledPickupAt, DateTime now) =>
+    scheduledPickupAt != null && scheduledPickupAt.isAfter(now);
+
+/// Instant/marketplace live search expires after [kRiderDriverSearchWindow].
+/// Future scheduled pickups stay open until pickup or explicit cancel.
+Future<bool> _expireStaleInstantRideIfNeeded({
+  required String rideId,
+  required String riderToken,
+  required DateTime createdAt,
+  required DateTime now,
+  required DateTime? scheduledPickupAt,
+}) async {
+  if (_isFutureScheduledRide(scheduledPickupAt, now)) return false;
+  if (now.difference(createdAt) <= kRiderDriverSearchWindow) return false;
+  await cancelExpiredRiderOpenRide(
+    rideId: rideId,
+    riderToken: riderToken,
+  );
+  return true;
+}
+
 /// Open `ride_requests` row worth highlighting on Home (matching soon or scheduled soon).
 class NearTermRideSnapshot {
   final String id;
@@ -24,6 +50,19 @@ class NearTermRideSnapshot {
     required this.bookingMode,
     required this.createdAt,
   });
+
+  static const liveStatuses = {
+    'assigned',
+    'accepted',
+    'driver_found',
+    'driver_arrived',
+    'arrived',
+    'in_progress',
+  };
+
+  bool get isLiveRide => liveStatuses.contains(status);
+
+  bool get isMatching => status == 'pending' || status == 'bidding';
 }
 
 /// Fetches the best candidate ride_request for the home banner (near-term only).
@@ -55,19 +94,19 @@ final nearTermRideRequestProvider =
       final pickup = (m['pickup_address'] as String?) ?? '';
       final dest = (m['destination_address'] as String?) ?? '';
       final schedRaw = m['scheduled_pickup_at'];
-      final scheduled = schedRaw == null
-          ? null
-          : DateTime.tryParse(schedRaw.toString())?.toLocal();
+      final scheduled = _parseScheduledPickup(schedRaw);
       final bookingMode = m['booking_mode'] as String?;
       final createdAt = DateTime.tryParse(
             (m['created_at'] ?? '').toString(),
           ) ??
           now;
-      if (now.difference(createdAt) > kRiderDriverSearchWindow) {
-        await cancelExpiredRiderOpenRide(
-          rideId: id,
-          riderToken: identity.riderToken!,
-        );
+      if (await _expireStaleInstantRideIfNeeded(
+        rideId: id,
+        riderToken: identity.riderToken!,
+        createdAt: createdAt,
+        now: now,
+        scheduledPickupAt: scheduled,
+      )) {
         continue;
       }
 
@@ -129,16 +168,16 @@ final farFutureScheduledRideRequestsProvider =
       final id = m['id'] as String?;
       if (id == null) continue;
       final createdAt = DateTime.tryParse((m['created_at'] ?? '').toString()) ?? now;
-      if (now.difference(createdAt) > kRiderDriverSearchWindow) {
-        await cancelExpiredRiderOpenRide(
-          rideId: id,
-          riderToken: identity.riderToken!,
-        );
+      final scheduled = _parseScheduledPickup(m['scheduled_pickup_at']);
+      if (await _expireStaleInstantRideIfNeeded(
+        rideId: id,
+        riderToken: identity.riderToken!,
+        createdAt: createdAt,
+        now: now,
+        scheduledPickupAt: scheduled,
+      )) {
         continue;
       }
-      final scheduled = DateTime.tryParse(
-        (m['scheduled_pickup_at'] ?? '').toString(),
-      )?.toLocal();
       if (scheduled == null || !scheduled.isAfter(now)) continue;
       if (scheduled.difference(now) <= kRiderNearTermScheduledWindow) continue;
       out.add(
@@ -159,12 +198,23 @@ final farFutureScheduledRideRequestsProvider =
   }
 });
 
-/// All open `ride_requests` for the Rides tab (scheduled + live matching).
-/// Order: future scheduled pickups (soonest first), then live pending rows (newest first).
+/// All open `ride_requests` for the Rides tab (live trip, matching, scheduled).
+/// Order: live trips, future scheduled (soonest first), then matching (newest first).
 final ridesTabUpcomingRequestsProvider =
     FutureProvider.autoDispose<List<NearTermRideSnapshot>>((ref) async {
   final identity = await ref.watch(riderIdentityProvider.future);
   if (!identity.hasSession || identity.riderToken == null) return [];
+
+  const openStatuses = [
+    'pending',
+    'bidding',
+    'assigned',
+    'accepted',
+    'driver_found',
+    'driver_arrived',
+    'arrived',
+    'in_progress',
+  ];
 
   try {
     final rows = await HeyCabySupabase.client
@@ -173,7 +223,7 @@ final ridesTabUpcomingRequestsProvider =
           'id, status, pickup_address, destination_address, scheduled_pickup_at, booking_mode, created_at',
         )
         .eq('rider_token', identity.riderToken!)
-        .inFilter('status', ['pending', 'bidding'])
+        .inFilter('status', openStatuses)
         .order('created_at', ascending: false)
         .limit(40);
 
@@ -186,21 +236,21 @@ final ridesTabUpcomingRequestsProvider =
       if (id == null) continue;
       final createdAt =
           DateTime.tryParse((m['created_at'] ?? '').toString()) ?? now;
-      if (now.difference(createdAt) > kRiderDriverSearchWindow) {
-        await cancelExpiredRiderOpenRide(
-          rideId: id,
-          riderToken: identity.riderToken!,
-        );
+      final scheduled = _parseScheduledPickup(m['scheduled_pickup_at']);
+      if (await _expireStaleInstantRideIfNeeded(
+        rideId: id,
+        riderToken: identity.riderToken!,
+        createdAt: createdAt,
+        now: now,
+        scheduledPickupAt: scheduled,
+      )) {
         continue;
       }
-      final schedRaw = m['scheduled_pickup_at'];
-      final scheduled = schedRaw == null
-          ? null
-          : DateTime.tryParse(schedRaw.toString())?.toLocal();
+      final status = m['status'] as String? ?? 'pending';
       snaps.add(
         NearTermRideSnapshot(
           id: id,
-          status: m['status'] as String? ?? 'pending',
+          status: status,
           pickupAddress: (m['pickup_address'] as String?) ?? '',
           destinationAddress: (m['destination_address'] as String?) ?? '',
           scheduledPickupAt: scheduled,
@@ -210,25 +260,31 @@ final ridesTabUpcomingRequestsProvider =
       );
     }
 
+    final live = snaps.where((s) => s.isLiveRide).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
     final futureSched = snaps
         .where(
           (s) =>
-              s.scheduledPickupAt != null && s.scheduledPickupAt!.isAfter(now),
+              !s.isLiveRide &&
+              s.scheduledPickupAt != null &&
+              s.scheduledPickupAt!.isAfter(now),
         )
         .toList()
       ..sort(
         (a, b) => a.scheduledPickupAt!.compareTo(b.scheduledPickupAt!),
       );
 
-    final live = snaps
+    final matching = snaps
         .where(
           (s) =>
-              s.scheduledPickupAt == null || !s.scheduledPickupAt!.isAfter(now),
+              !s.isLiveRide &&
+              (s.scheduledPickupAt == null || !s.scheduledPickupAt!.isAfter(now)),
         )
         .toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-    return [...futureSched, ...live];
+    return [...live, ...futureSched, ...matching];
   } catch (_) {
     return [];
   }

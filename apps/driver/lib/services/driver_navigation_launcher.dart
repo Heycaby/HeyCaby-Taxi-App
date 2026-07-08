@@ -35,8 +35,77 @@ class DriverNavigationLauncher {
   static Uri wazeNativeUri(double lat, double lng) =>
       Uri.parse('waze://?ll=$lat,$lng&navigate=yes');
 
+  static Uri wazeNativeAddressUri(
+    String destination, {
+    double? lat,
+    double? lng,
+  }) {
+    final query = Uri.encodeComponent(destination.trim());
+    if (lat != null && lng != null && coordsAreValid(lat, lng)) {
+      return Uri.parse('waze://?q=$query&ll=$lat,$lng&navigate=yes');
+    }
+    return Uri.parse('waze://?q=$query&navigate=yes');
+  }
+
   static Uri wazeWebUri(double lat, double lng) =>
       Uri.parse('https://waze.com/ul?ll=$lat,$lng&navigate=yes');
+
+  static bool coordsAreValid(double? lat, double? lng) {
+    if (lat == null || lng == null) return false;
+    if (lat.abs() > 90 || lng.abs() > 180) return false;
+    if (lat.abs() < 0.0001 && lng.abs() < 0.0001) return false;
+    return true;
+  }
+
+  /// Opens navigation with address and/or coordinates (native → web fallback).
+  static Future<bool> launchToDestination({
+    required DriverNavApp app,
+    double? lat,
+    double? lng,
+    String? address,
+  }) async {
+    final query = address?.trim() ?? '';
+    final coordsOk = coordsAreValid(lat, lng);
+
+    switch (app) {
+      case DriverNavApp.waze:
+        if (query.isNotEmpty) {
+          final native = wazeNativeAddressUri(
+            query,
+            lat: coordsOk ? lat : null,
+            lng: coordsOk ? lng : null,
+          );
+          if (await launchUrl(native, mode: LaunchMode.externalApplication)) {
+            return true;
+          }
+          if (await launchUrl(
+            wazeWebSearchUri(query),
+            mode: LaunchMode.externalApplication,
+          )) {
+            return true;
+          }
+        }
+        if (coordsOk) return _launchWaze(lat!, lng!);
+        return false;
+      case DriverNavApp.google:
+        if (query.isNotEmpty) {
+          final native = Uri.parse(
+            'comgooglemaps://?daddr=${Uri.encodeComponent(query)}&directionsmode=driving',
+          );
+          if (await launchUrl(native, mode: LaunchMode.externalApplication)) {
+            return true;
+          }
+          if (await launchUrl(
+            googleWebSearchUri(query),
+            mode: LaunchMode.externalApplication,
+          )) {
+            return true;
+          }
+        }
+        if (coordsOk) return _launchGoogle(lat!, lng!);
+        return false;
+    }
+  }
 
   /// Opens the preferred app with native → web fallback.
   static Future<bool> launchPreferred({
@@ -44,12 +113,7 @@ class DriverNavigationLauncher {
     required double lng,
     required DriverNavApp app,
   }) async {
-    switch (app) {
-      case DriverNavApp.waze:
-        return _launchWaze(lat, lng);
-      case DriverNavApp.google:
-        return _launchGoogle(lat, lng);
-    }
+    return launchToDestination(app: app, lat: lat, lng: lng);
   }
 
   /// Address fallback for older rows that have labels but no stored coordinates.
@@ -57,33 +121,7 @@ class DriverNavigationLauncher {
     required String destination,
     required DriverNavApp app,
   }) async {
-    final query = destination.trim();
-    if (query.isEmpty) return false;
-
-    switch (app) {
-      case DriverNavApp.waze:
-        final native = Uri.parse(
-          'waze://?q=${Uri.encodeComponent(query)}&navigate=yes',
-        );
-        if (await launchUrl(native, mode: LaunchMode.externalApplication)) {
-          return true;
-        }
-        return launchUrl(
-          wazeWebSearchUri(query),
-          mode: LaunchMode.externalApplication,
-        );
-      case DriverNavApp.google:
-        final native = Uri.parse(
-          'comgooglemaps://?daddr=${Uri.encodeComponent(query)}&directionsmode=driving',
-        );
-        if (await launchUrl(native, mode: LaunchMode.externalApplication)) {
-          return true;
-        }
-        return launchUrl(
-          googleWebSearchUri(query),
-          mode: LaunchMode.externalApplication,
-        );
-    }
+    return launchToDestination(app: app, address: destination);
   }
 
   static Future<bool> _launchGoogle(double lat, double lng) async {

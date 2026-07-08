@@ -14,4 +14,16 @@ class HeyCabyFormatters {
     final m = minutes % 60;
     return m == 0 ? '${h}h' : '${h}h ${m}m';
   }
+
+  /// Driving ETA fallback when Mapbox routing is unavailable.
+  /// Uses faster effective speeds on longer legs (highway-heavy trips).
+  static int estimateDrivingMinutes(double distanceKm) {
+    if (distanceKm <= 0) return 1;
+    final minutesPerKm = distanceKm >= 30
+        ? 0.9
+        : distanceKm >= 10
+            ? 1.2
+            : 2.0;
+    return (distanceKm * minutesPerKm).ceil().clamp(1, 480);
+  }
 }

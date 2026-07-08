@@ -12,7 +12,7 @@ class HomeInlineBanner extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.variant = RiderHomeBannerVariant.accent,
-    this.icon = Icons.auto_awesome_rounded,
+    this.icon = Icons.info_outline_rounded,
     this.onTap,
     this.trailing,
   });
@@ -138,6 +138,6 @@ IconData iconForRiderHomeBannerVariant(RiderHomeBannerVariant variant) {
     case RiderHomeBannerVariant.warning:
       return Icons.warning_amber_rounded;
     case RiderHomeBannerVariant.accent:
-      return Icons.auto_awesome_rounded;
+      return Icons.campaign_outlined;
   }
 }

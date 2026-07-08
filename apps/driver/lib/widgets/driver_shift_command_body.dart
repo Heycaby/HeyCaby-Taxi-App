@@ -1,7 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
@@ -13,6 +12,7 @@ import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
 import '../ui/driver_app_bar.dart';
 import 'scheduled_preride_actions.dart';
+import 'scheduled_ride_detail_sheet.dart';
 
 enum WorkSubTab { earnings, availableRides }
 
@@ -976,7 +976,7 @@ class _AssignedScheduledWorkCard extends ConsumerWidget {
         : '';
 
     return GestureDetector(
-      onTap: () => context.push('/driver/ride/new/${ride.id}'),
+      onTap: () => showScheduledRideDetailSheet(context, ref, ride: ride),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(

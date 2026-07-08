@@ -113,19 +113,36 @@ class AppNotificationsService {
     }
   }
 
-  /// Realtime channel; callback fires on any notifications table change (debounce in listener).
+  /// Realtime channel; callback fires on notifications table changes.
+  /// Pass [filterUserId] to filter at the database level and avoid receiving
+  /// every user's notification events.
   RealtimeChannel subscribeToTableChanges({
     required String channelName,
     required void Function(PostgresChangePayload payload) onChange,
+    String? filterUserId,
+    String? filterUserType,
   }) {
-    return HeyCabySupabase.client
-        .channel(channelName)
-        .onPostgresChanges(
-          event: PostgresChangeEvent.all,
-          schema: 'public',
-          table: 'notifications',
-          callback: onChange,
-        )
-        .subscribe();
+    var channel = HeyCabySupabase.client.channel(channelName);
+    if (filterUserId != null && filterUserId.isNotEmpty) {
+      channel = channel.onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'notifications',
+        filter: PostgresChangeFilter(
+          type: PostgresChangeFilterType.eq,
+          column: 'user_id',
+          value: filterUserId,
+        ),
+        callback: onChange,
+      );
+    } else {
+      channel = channel.onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'notifications',
+        callback: onChange,
+      );
+    }
+    return channel.subscribe();
   }
 }

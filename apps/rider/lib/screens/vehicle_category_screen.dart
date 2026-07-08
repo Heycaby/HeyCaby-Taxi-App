@@ -33,6 +33,7 @@ class VehicleCategoryScreen extends ConsumerStatefulWidget {
 class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
   static const _visibleCategories = <RiderVehicleCategory>[
     RiderVehicleCategory.standard,
+    RiderVehicleCategory.comfort,
     RiderVehicleCategory.taxibus,
     RiderVehicleCategory.wheelchair,
   ];
@@ -255,7 +256,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
               Material(
                 color: colors.warning.withValues(alpha: 0.12),
                 child: Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(
+                  padding: const EdgeInsetsDirectional.fromSTEB(
                     HeyCabySpacing.screenEdge,
                     HeyCabySpacing.componentSmall,
                     HeyCabySpacing.screenEdge,
@@ -264,7 +265,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                   child: Row(
                     children: [
                       Icon(Icons.info_outline, color: colors.warning, size: 22),
-                      SizedBox(width: HeyCabySpacing.buttonHorizontal),
+                      const SizedBox(width: HeyCabySpacing.buttonHorizontal),
                       Expanded(
                         child: Text(
                           l10n.vehicleSupplyNoPickup,
@@ -279,7 +280,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
               Material(
                 color: colors.warning.withValues(alpha: 0.12),
                 child: Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(
+                  padding: const EdgeInsetsDirectional.fromSTEB(
                     HeyCabySpacing.screenEdge,
                     HeyCabySpacing.componentSmall,
                     HeyCabySpacing.screenEdge,
@@ -288,7 +289,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                   child: Row(
                     children: [
                       Icon(Icons.info_outline, color: colors.warning, size: 22),
-                      SizedBox(width: HeyCabySpacing.buttonHorizontal),
+                      const SizedBox(width: HeyCabySpacing.buttonHorizontal),
                       Expanded(
                         child: Text(
                           l10n.vehiclePreferredCategoryUnavailable,
@@ -303,7 +304,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
               Material(
                 color: colors.warning.withValues(alpha: 0.12),
                 child: Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(
+                  padding: const EdgeInsetsDirectional.fromSTEB(
                     HeyCabySpacing.screenEdge,
                     HeyCabySpacing.componentSmall,
                     HeyCabySpacing.screenEdge,
@@ -312,7 +313,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                   child: Row(
                     children: [
                       Icon(Icons.info_outline, color: colors.warning, size: 22),
-                      SizedBox(width: HeyCabySpacing.buttonHorizontal),
+                      const SizedBox(width: HeyCabySpacing.buttonHorizontal),
                       Expanded(
                         child: Text(
                           l10n.vehiclePreferredNoDriversNearby,
@@ -346,7 +347,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                     typography: typo,
                     isLoading: supplyAsync.isLoading,
                   ),
-                  SizedBox(height: HeyCabySpacing.component),
+                  const SizedBox(height: HeyCabySpacing.component),
                   _VehicleNeedCard(
                     selected:
                         _selectedCategory == RiderVehicleCategory.standard,
@@ -361,7 +362,22 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                     typography: typo,
                     onTap: () => _selectCategory(RiderVehicleCategory.standard),
                   ),
-                  SizedBox(height: HeyCabySpacing.componentSmall),
+                  const SizedBox(height: HeyCabySpacing.componentSmall),
+                  _VehicleNeedCard(
+                    selected:
+                        _selectedCategory == RiderVehicleCategory.comfort,
+                    icon: Icons.drive_eta_rounded,
+                    title: l10n.vehicleComfort,
+                    subtitle: l10n.vehicleComfortDesc,
+                    supplyLabel: l10n.vehicleSupplyNearbyCount(_snapFor(
+                      supplyMap,
+                      RiderVehicleCategory.comfort,
+                    ).driverCount),
+                    colors: colors,
+                    typography: typo,
+                    onTap: () => _selectCategory(RiderVehicleCategory.comfort),
+                  ),
+                  const SizedBox(height: HeyCabySpacing.componentSmall),
                   _VehicleNeedCard(
                     selected: _selectedCategory == RiderVehicleCategory.taxibus,
                     icon: Icons.airport_shuttle_outlined,
@@ -375,7 +391,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                     typography: typo,
                     onTap: () => _selectCategory(RiderVehicleCategory.taxibus),
                   ),
-                  SizedBox(height: HeyCabySpacing.componentSmall),
+                  const SizedBox(height: HeyCabySpacing.componentSmall),
                   _VehicleNeedCard(
                     selected:
                         _selectedCategory == RiderVehicleCategory.wheelchair,
@@ -391,7 +407,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                     onTap: () =>
                         _selectCategory(RiderVehicleCategory.wheelchair),
                   ),
-                  SizedBox(height: HeyCabySpacing.sectionMedium),
+                  const SizedBox(height: HeyCabySpacing.sectionMedium),
                   Theme(
                     data: Theme.of(context).copyWith(
                       dividerColor: Colors.transparent,
@@ -493,7 +509,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(height: HeyCabySpacing.sectionMedium),
+                  const SizedBox(height: HeyCabySpacing.sectionMedium),
                   Container(
                     padding:
                         const EdgeInsetsDirectional.fromSTEB(16, 14, 12, 14),
@@ -527,7 +543,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                             size: 22,
                           ),
                         ),
-                        SizedBox(width: HeyCabySpacing.component),
+                        const SizedBox(width: HeyCabySpacing.component),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -558,13 +574,13 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                       !_showInvalidPreferredBanner &&
                       !_showSupplyFallbackBanner)
                     Padding(
-                      padding: EdgeInsets.only(
+                      padding: const EdgeInsets.only(
                         bottom: HeyCabySpacing.componentSmall,
                       ),
                       child: Align(
                         alignment: AlignmentDirectional.centerStart,
                         child: Container(
-                          padding: EdgeInsetsDirectional.symmetric(
+                          padding: const EdgeInsetsDirectional.symmetric(
                             horizontal: HeyCabySpacing.componentSmall,
                             vertical: HeyCabySpacing.element,
                           ),

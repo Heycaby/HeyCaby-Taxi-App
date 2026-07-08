@@ -24,14 +24,6 @@ class MarketplaceDriverScopePicker extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.marketplaceDriverScopeTitle,
-          style: typo.labelLarge.copyWith(
-            color: colors.textSoft,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 10),
         _ScopeTile(
           colors: colors,
           typo: typo,

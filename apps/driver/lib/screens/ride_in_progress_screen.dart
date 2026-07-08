@@ -1,20 +1,25 @@
-import 'dart:async' show unawaited;
+import 'dart:async' show unawaited, Timer;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
+import 'package:heycaby_utils/heycaby_utils.dart';
 
 import '../l10n/driver_strings.dart';
+import '../providers/driver_location_provider.dart';
 import '../providers/driver_ride_proximity_provider.dart';
 import '../providers/driver_state_provider.dart';
 import '../services/sound_service.dart';
 import '../utils/driver_cancel_ride_flow.dart';
 import '../utils/driver_navigation_launch.dart';
+import '../utils/driver_ride_coord_utils.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_ride_communication_sheet.dart';
+import '../widgets/driver_ride_bolt_layout.dart';
+import '../widgets/driver_collect_fare_sheet.dart';
 import '../widgets/driver_navigation_focus_body.dart';
 
 /// **Navigation Focus** — driving-first; minimal distraction.
@@ -30,12 +35,26 @@ class RideInProgressScreen extends ConsumerStatefulWidget {
 
 class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
   bool _loading = false;
+  bool _statusBusy = false;
   String? _expectedAmountLabel;
+  Timer? _fareRefreshTimer;
 
   @override
   void initState() {
     super.initState();
     _loadExpectedAmount();
+    _fareRefreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (mounted) _loadExpectedAmount();
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(hydrateDriverRideCoordsIfNeeded(ref, widget.rideId));
+    });
+  }
+
+  @override
+  void dispose() {
+    _fareRefreshTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadExpectedAmount() async {
@@ -43,46 +62,25 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
       final row = await HeyCabySupabase.client
           .from('ride_requests')
           .select(
-            'quoted_fare, offered_fare, estimated_fare, final_fare, currency',
+            'quoted_fare, offered_fare, estimated_fare, final_fare, marketplace_offered_fare, currency, waiting_fee_cents, waiting_fee_waived',
           )
           .eq('id', widget.rideId)
           .maybeSingle();
       if (!mounted || row == null) return;
-      double? amount;
-      for (final key in const [
-        'final_fare',
-        'quoted_fare',
-        'offered_fare',
-        'estimated_fare',
-      ]) {
-        final v = row[key];
-        if (v is num) {
-          amount = v.toDouble();
-          break;
-        }
-      }
-      final amountValue = amount;
-      if (amountValue == null) return;
+      final totalEuro = HeyCabyRideFare.resolveTotalEuroFromRow(
+        Map<String, dynamic>.from(row),
+      );
+      if (totalEuro == null) return;
       final currency = (row['currency'] as String?)?.trim().toUpperCase();
       final prefix =
           (currency == null || currency == 'EUR') ? 'EUR ' : '$currency ';
       setState(
-        () => _expectedAmountLabel = '$prefix${amountValue.toStringAsFixed(2)}',
+        () => _expectedAmountLabel = '$prefix${totalEuro.toStringAsFixed(2)}',
       );
     } catch (_) {}
   }
 
-  void _handleBack() {
-    if (context.canPop()) {
-      context.pop();
-      return;
-    }
-    context.go('/driver');
-  }
-
   Future<void> _completeRide() async {
-    final continueClose = await _confirmCollectionCheckpoint();
-    if (continueClose != true) return;
     setState(() => _loading = true);
     try {
       await ref
@@ -93,6 +91,14 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
           .setStatus(DriverAppState.completed);
       SoundService().playTripComplete();
       if (!mounted) return;
+
+      final continueClose = await _confirmCollectionCheckpoint();
+      if (!mounted) return;
+      if (continueClose != true) {
+        setState(() => _loading = false);
+        return;
+      }
+
       context.go('/driver/ride/complete/${widget.rideId}');
     } catch (_) {
       if (!mounted) return;
@@ -107,63 +113,25 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
   Future<bool?> _confirmCollectionCheckpoint() {
     final themeColors = ref.read(colorsProvider);
     final typo = ref.read(typographyProvider);
-    final amountLabel = _expectedAmountLabel;
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        icon:
-            Icon(Icons.payments_rounded, color: themeColors.warning, size: 34),
-        title: Text(
-          DriverStrings.collectPaymentTitle,
-          style: typo.titleMedium.copyWith(
-            color: themeColors.text,
-            fontWeight: FontWeight.w800,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              DriverStrings.collectPaymentBody,
-              textAlign: TextAlign.center,
-              style: typo.bodyMedium.copyWith(color: themeColors.textMid),
-            ),
-            if (amountLabel != null) ...[
-              const SizedBox(height: 10),
-              Text(
-                DriverStrings.collectPaymentAmount(amountLabel),
-                textAlign: TextAlign.center,
-                style: typo.bodyMedium.copyWith(
-                  color: themeColors.warning,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(DriverStrings.collectPaymentBack),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(DriverStrings.collectPaymentContinue),
-          ),
-        ],
-      ),
+    return showDriverCollectFareSheet(
+      context,
+      colors: themeColors,
+      typography: typo,
+      amountLabel: _expectedAmountLabel,
+      barrierDismissible: false,
     );
   }
 
   Future<void> _openNavigationApp() async {
     final driver = ref.read(driverStateProvider);
+    final destinationAddress =
+        driver.destinationAddress ?? DriverStrings.destination;
     await launchDriverNavigation(
       context: context,
       ref: ref,
       lat: driver.destinationLat,
       lng: driver.destinationLng,
-      addressFallback: driver.destinationAddress,
+      addressFallback: destinationAddress,
       coordinatesUnavailableMessage:
           DriverStrings.destinationCoordinatesUnavailable,
     );
@@ -191,6 +159,54 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
     ));
   }
 
+  Future<void> _toggleNewRequests() async {
+    if (_statusBusy) return;
+    setState(() => _statusBusy = true);
+    final driver = ref.read(driverStateProvider);
+    final currentlyOnBreak = driver.appState == DriverAppState.onBreak;
+    final nextStatus = currentlyOnBreak ? 'available' : 'on_break';
+    final nextAppState = currentlyOnBreak
+        ? DriverAppState.onlineAvailable
+        : DriverAppState.onBreak;
+    try {
+      await ref.read(driverApiProvider).setStatus(status: nextStatus);
+      ref.read(driverStateProvider.notifier).setStatus(nextAppState);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            currentlyOnBreak
+                ? DriverStrings.requestsResumed
+                : DriverStrings.requestsPaused,
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(DriverStrings.requestStatusUpdateFailedMessage),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _statusBusy = false);
+    }
+  }
+
+  void _openSafety() {
+    final colors = DriverColors.fromTheme(ref.read(colorsProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.read(typographyProvider));
+    unawaited(showDriverRideSafetyToolkitSheet(
+      context: context,
+      ref: ref,
+      colors: colors,
+      typography: typography,
+      rideRequestId: widget.rideId,
+      canShareTrip: true,
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
@@ -198,6 +214,7 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
         DriverTypography.fromTheme(ref.watch(typographyProvider));
     final driver = ref.watch(driverStateProvider);
     final proximity = ref.watch(driverRideProximityProvider);
+    final driverPos = ref.watch(driverLocationProvider).valueOrNull;
 
     return DriverNavigationFocusBody(
       colors: colors,
@@ -208,11 +225,20 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
       riderName: driver.riderContactName,
       expectedAmountLabel: _expectedAmountLabel,
       completing: _loading,
-      onBack: _handleBack,
+      pickupLat: driver.pickupLat,
+      pickupLng: driver.pickupLng,
+      destLat: driver.destinationLat,
+      destLng: driver.destinationLng,
+      driverLat: driverPos?.latitude,
+      driverLng: driverPos?.longitude,
       onNavigate: _openNavigationApp,
       onCompleteRide: _completeRide,
       onOpenCommunication: _openCommunication,
       onCancelRide: _cancelRide,
+      onToggleRequests: _toggleNewRequests,
+      onSafety: _openSafety,
+      requestsPaused: driver.appState == DriverAppState.onBreak,
+      statusBusy: _statusBusy,
       showNearDestinationAssist:
           proximity == DriverRideProximityAssist.nearDestination,
     );

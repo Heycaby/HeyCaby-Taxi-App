@@ -5,19 +5,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
+import 'package:heycaby_utils/heycaby_utils.dart';
 
 import '../l10n/driver_strings.dart';
+import '../providers/driver_location_provider.dart';
 import '../providers/driver_ride_proximity_provider.dart';
 import '../providers/driver_state_provider.dart';
 import '../services/driver_automatic_ping_service.dart';
 import '../services/driver_pickup_wait_service.dart';
 import '../utils/driver_cancel_ride_flow.dart';
 import '../utils/driver_communication_distance.dart';
+import '../utils/driver_ride_lifecycle_error_message.dart';
 import '../widgets/driver_ride_communication_sheet.dart';
-import '../widgets/driver_smart_ping_banner.dart';
 import '../utils/driver_navigation_launch.dart';
+import '../utils/driver_ride_coord_utils.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
+import '../widgets/driver_ride_bolt_layout.dart';
 import '../widgets/driver_active_trip_body.dart';
 
 /// **Active Trip** — navigate to pickup; rider + ETA obvious.
@@ -33,13 +37,54 @@ class ActiveRideScreen extends ConsumerStatefulWidget {
 class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
   bool _loading = false;
   bool _statusBusy = false;
+  String? _farePill;
 
-  void _handleBack() {
-    if (context.canPop()) {
-      context.pop();
-      return;
-    }
-    context.go('/driver');
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadFarePill());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(hydrateDriverRideCoordsIfNeeded(ref, widget.rideId));
+    });
+  }
+
+  Future<void> _loadFarePill() async {
+    try {
+      final row = await HeyCabySupabase.client
+          .from('ride_requests')
+          .select(
+            'quoted_fare, offered_fare, estimated_fare, final_fare, marketplace_offered_fare, currency',
+          )
+          .eq('id', widget.rideId)
+          .maybeSingle();
+      if (!mounted || row == null) return;
+      final fareAmount = HeyCabyRideFare.resolveEuroFromRow(
+        Map<String, dynamic>.from(row),
+      );
+      if (fareAmount == null) return;
+      final currency = (row['currency'] as String?)?.trim().toUpperCase();
+      final prefix =
+          (currency == null || currency == 'EUR') ? 'EUR ' : '$currency ';
+      setState(
+        () => _farePill = driverRideBoltFarePill(
+          '$prefix${fareAmount.toStringAsFixed(2)}',
+        ),
+      );
+    } catch (_) {}
+  }
+
+  void _openSafety() {
+    final colors = DriverColors.fromTheme(ref.read(colorsProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.read(typographyProvider));
+    unawaited(showDriverRideSafetyToolkitSheet(
+      context: context,
+      ref: ref,
+      colors: colors,
+      typography: typography,
+      rideRequestId: widget.rideId,
+      canShareTrip: true,
+    ));
   }
 
   Future<void> _markArrived() async {
@@ -58,10 +103,10 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
       ref.read(driverStateProvider.notifier).setStatus(DriverAppState.arrived);
       if (!mounted) return;
       context.go('/driver/ride/pickup/${widget.rideId}');
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.rideActionFailedMessage)),
+        SnackBar(content: Text(driverRideLifecycleErrorMessage(e))),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -70,12 +115,14 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
 
   Future<void> _openNavigationApp() async {
     final driver = ref.read(driverStateProvider);
+    final pickupAddress =
+        driver.pickupAddress ?? DriverStrings.pickupAddress;
     await launchDriverNavigation(
       context: context,
       ref: ref,
       lat: driver.pickupLat,
       lng: driver.pickupLng,
-      addressFallback: driver.pickupAddress,
+      addressFallback: pickupAddress,
       coordinatesUnavailableMessage: DriverStrings.pickupCoordinatesUnavailable,
     );
   }
@@ -140,36 +187,34 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
         DriverTypography.fromTheme(ref.watch(typographyProvider));
     final driver = ref.watch(driverStateProvider);
     final proximity = ref.watch(driverRideProximityProvider);
+    final driverPos = ref.watch(driverLocationProvider).valueOrNull;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        DriverSmartPingBanner(
-          rideRequestId: widget.rideId,
-          phase: DriverRideCommunicationPhase.enRouteToPickup,
-        ),
-        Expanded(
-          child: DriverActiveTripBody(
-            colors: colors,
-            typography: typography,
-            pickupAddress: driver.pickupAddress ?? DriverStrings.pickupAddress,
-            destinationAddress:
-                driver.destinationAddress ?? DriverStrings.destination,
-            riderName: driver.riderContactName,
-            requestsPaused: driver.appState == DriverAppState.onBreak,
-            statusBusy: _statusBusy,
-            arriving: _loading,
-            onBack: _handleBack,
-            onArrived: _markArrived,
-            onNavigate: _openNavigationApp,
-            onOpenCommunication: _openCommunication,
-            onCancelOrder: _cancelOrder,
-            onToggleRequests: _toggleNewRequests,
-            showNearPickupAssist:
-                proximity == DriverRideProximityAssist.nearPickup,
-          ),
-        ),
-      ],
+    return DriverActiveTripBody(
+      rideId: widget.rideId,
+      colors: colors,
+      typography: typography,
+      pickupAddress: driver.pickupAddress ?? DriverStrings.pickupAddress,
+      destinationAddress:
+          driver.destinationAddress ?? DriverStrings.destination,
+      riderName: driver.riderContactName,
+      requestsPaused: driver.appState == DriverAppState.onBreak,
+      statusBusy: _statusBusy,
+      arriving: _loading,
+      pickupLat: driver.pickupLat,
+      pickupLng: driver.pickupLng,
+      destLat: driver.destinationLat,
+      destLng: driver.destinationLng,
+      driverLat: driverPos?.latitude,
+      driverLng: driverPos?.longitude,
+      farePill: _farePill,
+      onArrived: _markArrived,
+      onNavigate: _openNavigationApp,
+      onOpenCommunication: _openCommunication,
+      onCancelOrder: _cancelOrder,
+      onToggleRequests: _toggleNewRequests,
+      onSafety: _openSafety,
+      showNearPickupAssist:
+          proximity == DriverRideProximityAssist.nearPickup,
     );
   }
 }

@@ -34,6 +34,7 @@ class DriverData {
   final double? destinationLat;
   final double? destinationLng;
   final bool radarActive;
+  final bool pendingBreak;
 
   const DriverData({
     this.appState = DriverAppState.loggedOut,
@@ -50,6 +51,7 @@ class DriverData {
     this.destinationLat,
     this.destinationLng,
     this.radarActive = false,
+    this.pendingBreak = false,
   });
 
   DriverData copyWith({
@@ -67,6 +69,7 @@ class DriverData {
     double? destinationLat,
     double? destinationLng,
     bool? radarActive,
+    bool? pendingBreak,
   }) =>
       DriverData(
         appState: appState ?? this.appState,
@@ -83,6 +86,7 @@ class DriverData {
         destinationLat: destinationLat ?? this.destinationLat,
         destinationLng: destinationLng ?? this.destinationLng,
         radarActive: radarActive ?? this.radarActive,
+        pendingBreak: pendingBreak ?? this.pendingBreak,
       );
 
   static DriverData empty() =>
@@ -95,6 +99,18 @@ class DriverStateNotifier extends Notifier<DriverData> {
 
   void setStatus(DriverAppState appState) =>
       state = state.copyWith(appState: appState);
+
+  void setPendingBreak(bool value) =>
+      state = state.copyWith(pendingBreak: value);
+
+  /// Returns true if [clearActiveRide] consumed a pending break.
+  bool consumePendingBreak() {
+    final wasPending = state.pendingBreak;
+    if (wasPending) {
+      state = state.copyWith(pendingBreak: false);
+    }
+    return wasPending;
+  }
 
   void setActiveRide({
     required String rideId,
@@ -122,12 +138,29 @@ class DriverStateNotifier extends Notifier<DriverData> {
         appState: DriverAppState.assigned,
       );
 
+  void patchRideCoords({
+    double? pickupLat,
+    double? pickupLng,
+    double? destinationLat,
+    double? destinationLng,
+  }) =>
+      state = state.copyWith(
+        pickupLat: pickupLat ?? state.pickupLat,
+        pickupLng: pickupLng ?? state.pickupLng,
+        destinationLat: destinationLat ?? state.destinationLat,
+        destinationLng: destinationLng ?? state.destinationLng,
+      );
+
   void clearActiveRide({DriverAppState? nextState}) {
+    final wasPendingBreak = consumePendingBreak();
     state = DriverData(
-      appState: nextState ?? DriverAppState.onlineAvailable,
+      appState: wasPendingBreak
+          ? DriverAppState.onBreak
+          : (nextState ?? DriverAppState.onlineAvailable),
       driverId: state.driverId,
       userId: state.userId,
       radarActive: state.radarActive,
+      pendingBreak: state.pendingBreak,
     );
   }
 

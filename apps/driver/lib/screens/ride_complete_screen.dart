@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
+import 'package:heycaby_utils/heycaby_utils.dart';
 
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
@@ -58,28 +59,16 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
       final row = await HeyCabySupabase.client
           .from('ride_requests')
           .select(
-            'quoted_fare, offered_fare, estimated_fare, final_fare, currency, waiting_fee_cents, waiting_fee_waived',
+            'quoted_fare, offered_fare, estimated_fare, final_fare, marketplace_offered_fare, currency, waiting_fee_cents, waiting_fee_waived',
           )
           .eq('id', widget.rideId)
           .maybeSingle();
       if (!mounted || row == null) return;
-      double? amount;
-      for (final key in const [
-        'final_fare',
-        'quoted_fare',
-        'offered_fare',
-        'estimated_fare',
-      ]) {
-        final v = row[key];
-        if (v is num) {
-          amount = v.toDouble();
-          break;
-        }
-      }
-      final amountValue = amount;
+      final map = Map<String, dynamic>.from(row);
+      final amountValue = HeyCabyRideFare.resolveEuroFromRow(map);
       if (amountValue == null) return;
-      final waitingFeeCents = row['waiting_fee_cents'];
       final waitingFeeWaived = row['waiting_fee_waived'] == true;
+      final waitingFeeCents = row['waiting_fee_cents'];
       final waitingAmount = waitingFeeWaived || waitingFeeCents is! num
           ? 0.0
           : waitingFeeCents.toDouble() / 100;
@@ -130,14 +119,6 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
     } finally {
       if (mounted) setState(() => _sendingReceipt = false);
     }
-  }
-
-  void _handleBack() {
-    if (context.canPop()) {
-      context.pop();
-      return;
-    }
-    context.go('/driver');
   }
 
   Future<void> _maybeShowReturnModePrompt() async {
@@ -206,15 +187,25 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
       noteController: _noteCtrl,
       paymentMethod: _method,
       sendingReceipt: _sendingReceipt,
+      pickupLat: driver.pickupLat,
+      pickupLng: driver.pickupLng,
+      destLat: driver.destinationLat,
+      destLng: driver.destinationLng,
       onPaymentMethodChanged: (v) => setState(() => _method = v),
       onSendReceipt: _sendReceipt,
       onRateRider: () => context.push('/driver/ride/rate/${widget.rideId}'),
       onSkip: () {
+        final wasPendingBreak =
+            ref.read(driverStateProvider).pendingBreak;
         ref.read(driverStateProvider.notifier).clearActiveRide();
+        if (wasPendingBreak) {
+          unawaited(
+            ref.read(driverApiProvider).setStatus(status: 'on_break'),
+          );
+        }
         unawaited(refreshDriverRuntime(ref));
         context.go('/driver');
       },
-      onBack: _handleBack,
     );
   }
 }

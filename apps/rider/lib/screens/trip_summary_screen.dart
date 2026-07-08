@@ -11,6 +11,7 @@ import '../providers/booking_draft_provider.dart';
 import '../providers/booking_provider.dart';
 import '../providers/recent_destinations_provider.dart';
 import '../providers/ride_request_provider.dart';
+import '../providers/saved_trips_provider.dart';
 import '../services/booking_draft_storage.dart';
 import '../services/booking_flow_navigation.dart';
 import 'location_required_screen.dart';
@@ -32,6 +33,10 @@ class _TripSummaryScreenState extends ConsumerState<TripSummaryScreen> {
 
   void _onRouteMetrics(double distanceKm, int etaMinutes) {
     if (!mounted) return;
+    ref.read(bookingProvider.notifier).setRouteMetrics(
+          distanceKm: distanceKm,
+          durationMin: etaMinutes,
+        );
     setState(() {
       _distanceKm = distanceKm;
       _etaMinutes = etaMinutes;
@@ -60,42 +65,24 @@ class _TripSummaryScreenState extends ConsumerState<TripSummaryScreen> {
     final minutes = _etaMinutes % 60;
     final etaText = hours > 0 ? '${hours}h ${minutes}min' : '${minutes}min';
 
-    final mapH = screenH * 0.34;
-
     return Scaffold(
       backgroundColor: colors.bg,
       body: Stack(
+        fit: StackFit.expand,
         children: [
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: mapH,
+          Positioned.fill(
             child: TripSummaryMapView(
-              height: mapH,
+              height: screenH,
+              cameraBottomPadding:
+                  screenH * 0.42 + MediaQuery.paddingOf(context).bottom,
               onRouteMetricsChanged: _onRouteMetrics,
-            ),
-          ),
-          Positioned(
-            top: mapH - 56,
-            left: 0,
-            right: 0,
-            height: 56,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, colors.bg],
-                ),
-              ),
             ),
           ),
           Positioned(
             top: MediaQuery.paddingOf(context).top + 12,
             left: 16,
             child: Material(
-              color: colors.card,
+              color: colors.card.withValues(alpha: 0.92),
               elevation: 2,
               shadowColor: colors.text.withValues(alpha: 0.12),
               shape: const CircleBorder(),
@@ -122,12 +109,14 @@ class _TripSummaryScreenState extends ConsumerState<TripSummaryScreen> {
               ),
             ),
           ),
-          Positioned(
-            top: mapH - 28,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: TripSummarySheet(
+          DraggableScrollableSheet(
+            initialChildSize: 0.40,
+            minChildSize: 0.28,
+            maxChildSize: 0.80,
+            snap: true,
+            snapSizes: const [0.40, 0.80],
+            builder: (context, scrollController) => TripSummarySheet(
+              scrollController: scrollController,
               booking: booking,
               colors: colors,
               typo: typo,
@@ -171,7 +160,10 @@ class _TripSummaryScreenState extends ConsumerState<TripSummaryScreen> {
                 }
                 // Safety net: if rider reached normal summary while mode is still
                 // marketplace without an offer, treat this as an instant ride.
-                if (bookingNow.effectiveRideMode == BookingMode.marketplace &&
+                final requiresNamedPrice =
+                    bookingNow.effectiveRideMode == BookingMode.marketplace ||
+                        bookingNow.effectiveRideMode == BookingMode.terug;
+                if (requiresNamedPrice &&
                     (bookingNow.marketplaceBidEuro == null ||
                         bookingNow.marketplaceBidEuro! <= 0)) {
                   bookingNotifier.setInstant();
@@ -187,6 +179,12 @@ class _TripSummaryScreenState extends ConsumerState<TripSummaryScreen> {
                   final pu = bookingNow.pickup;
                   final de = bookingNow.destination;
                   if (pu != null && de != null) {
+                    unawaited(
+                      ref.read(savedTripsProvider.notifier).saveTrip(
+                            pickup: pu,
+                            destination: de,
+                          ),
+                    );
                     unawaited(
                       ref
                           .read(recentDestinationsProvider.notifier)

@@ -5,6 +5,7 @@ import '../theme/driver_motion_presets.dart';
 import '../theme/driver_radius.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
+import '../widgets/driver_ride_premium_style.dart';
 import 'driver_status_badge.dart';
 
 /// Incoming / active ride summary card.
@@ -44,17 +45,11 @@ class DriverRideCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: DriverRadius.lgAll,
         child: Ink(
-          decoration: BoxDecoration(
-            color: colors.card,
+          decoration: DriverRidePremiumStyle.frostedFill(
+            colors,
             borderRadius: DriverRadius.lgAll,
-            border: Border.all(color: colors.border),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.09),
-                blurRadius: 28,
-                offset: const Offset(0, 16),
-              ),
-            ],
+            tint: colors.card,
+            tintOpacity: 0.62,
           ),
           padding: const EdgeInsets.all(DriverSpacing.lg),
           child: Column(

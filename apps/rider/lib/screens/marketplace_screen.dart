@@ -8,11 +8,13 @@ import '../providers/booking_provider.dart';
 import '../providers/marketplace_pricing_provider.dart';
 import '../services/booking_flow_navigation.dart';
 import '../widgets/address_search_modal.dart';
-import '../widgets/marketplace/marketplace_screen_header.dart';
 import '../widgets/marketplace/marketplace_driver_scope_picker.dart';
+import '../widgets/marketplace/marketplace_intro_strip.dart';
 import '../widgets/marketplace/marketplace_offer_footer.dart';
 import '../widgets/marketplace/marketplace_offer_price_panel.dart';
 import '../widgets/marketplace/marketplace_offer_route_card.dart';
+import '../widgets/marketplace/marketplace_screen_header.dart';
+import '../widgets/marketplace/marketplace_step_progress.dart';
 import 'location_required_screen.dart';
 
 /// Marketplace — name your price; same Supabase booking + auction backend.
@@ -68,8 +70,13 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
 
   Future<void> _submitOffer() async {
     HapticService.mediumTap();
+    final currentMode = ref.read(bookingProvider).mode;
     ref.read(bookingProvider.notifier).setMarketplaceBidEuro(_bidAmount);
-    ref.read(bookingProvider.notifier).setMarketplace();
+    if (currentMode == BookingMode.terug) {
+      ref.read(bookingProvider.notifier).setTaxiTerug();
+    } else {
+      ref.read(bookingProvider.notifier).setMarketplace();
+    }
     setState(() => _isSubmitting = true);
     try {
       await BookingFlowNavigation.prefillBookingFromIdentity(ref);
@@ -115,8 +122,22 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 16),
+                padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 16, 16),
                 children: [
+                  MarketplaceIntroStrip(
+                    colors: colors,
+                    typo: typo,
+                    l10n: l10n,
+                  ),
+                  const SizedBox(height: 16),
+                  MarketplaceStepProgress(
+                    colors: colors,
+                    typo: typo,
+                    l10n: l10n,
+                    routeDone: hasAddresses,
+                    priceDone: hasAddresses && _bidAmount > 0,
+                  ),
+                  const SizedBox(height: 20),
                   MarketplaceOfferRouteCard(
                     booking: booking,
                     colors: colors,
@@ -130,7 +151,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                     onClearDestination: () =>
                         ref.read(bookingProvider.notifier).clearDestination(),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   MarketplaceOfferPricePanel(
                     bidAmount: _bidAmount,
                     hasAddresses: hasAddresses,
@@ -140,39 +161,28 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                     onBidChanged: (v) => setState(() => _bidAmount = v),
                   ),
                   const SizedBox(height: 8),
-                  Material(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(16),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: () =>
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () =>
                           setState(() => _showDriverScope = !_showDriverScope),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              l10n.marketplaceDriverScopeTitle,
-                              style: typo.labelLarge.copyWith(
-                                color: colors.accent,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            Icon(
-                              _showDriverScope
-                                  ? Icons.expand_less_rounded
-                                  : Icons.expand_more_rounded,
-                              color: colors.accent,
-                            ),
-                          ],
+                      icon: Icon(
+                        _showDriverScope
+                            ? Icons.expand_less_rounded
+                            : Icons.expand_more_rounded,
+                        size: 18,
+                      ),
+                      label: Text(l10n.marketplaceDriverScopeTitle),
+                      style: TextButton.styleFrom(
+                        foregroundColor: colors.textMid,
+                        textStyle: typo.labelMedium.copyWith(
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                   ),
                   if (_showDriverScope)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.only(bottom: 8),
                       child: MarketplaceDriverScopePicker(
                         colors: colors,
                         typo: typo,
@@ -189,7 +199,6 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
               typo: typo,
               l10n: l10n,
               onTap: _submitOffer,
-              onClose: _close,
             ),
           ],
         ),

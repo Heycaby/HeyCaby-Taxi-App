@@ -4,6 +4,7 @@ import 'dart:io' show TlsException;
 
 import 'package:flutter/foundation.dart';
 import 'package:heycaby_api/heycaby_api.dart';
+import 'package:heycaby_utils/heycaby_utils.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'
     show FileOptions, FunctionException, UserAttributes;
 
@@ -290,8 +291,9 @@ class DriverDataService {
   }) async {
     final params = <String, dynamic>{'p_user_id': userId};
     if (fullName != null) params['p_full_name'] = fullName;
-    if (profilePhotoUrl != null)
+    if (profilePhotoUrl != null) {
       params['p_profile_photo_url'] = profilePhotoUrl;
+    }
     try {
       final res = await _client.rpc('save_driver_profile', params: params);
       if (res is Map<String, dynamic>) return res;
@@ -548,54 +550,33 @@ class DriverDataService {
     required double baseFare,
     required double perKmRate,
     required double perMinRate,
-    required double vatPercentage,
+    required double waitingRate,
   }) async {
     try {
-      final existing = await _client
-          .from('driver_rate_profiles')
-          .select()
-          .eq('driver_id', driverId)
-          .eq('is_active', true)
-          .maybeSingle();
-      if (existing != null) {
-        final id = existing['id'] as String?;
-        if (id == null || id.isEmpty) return null;
-        final res = await _client
-            .from('driver_rate_profiles')
-            .update({
-              'profile_name': existing['profile_name'] ?? 'Standard',
-              'base_fare': baseFare,
-              'per_km_rate': perKmRate,
-              'per_min_rate': perMinRate,
-              'minimum_fare': baseFare,
-              'vat_percentage': vatPercentage,
-            })
-            .eq('id', id)
-            .select()
-            .single();
-        return DriverRateProfile.fromJson(
-          Map<String, dynamic>.from(res as Map),
-        );
+      final res = await _client.rpc(
+        'fn_driver_save_initial_tariff',
+        params: {
+          'p_base_fare': baseFare,
+          'p_per_km_rate': perKmRate,
+          'p_per_min_rate': perMinRate,
+          'p_waiting_rate': waitingRate,
+        },
+      );
+      if (res is! Map || res['success'] != true) {
+        if (kDebugMode) debugPrint('createInitialRateProfile: $res');
+        return null;
       }
-
-      final res = await _client
+      final profileId = res['profile_id'] as String?;
+      if (profileId == null || profileId.isEmpty) return null;
+      final row = await _client
           .from('driver_rate_profiles')
-          .insert({
-            'driver_id': driverId,
-            'profile_name': 'Standard',
-            'base_fare': baseFare,
-            'per_km_rate': perKmRate,
-            'per_min_rate': perMinRate,
-            'minimum_fare': baseFare,
-            'waiting_rate': 0.25,
-            'vat_percentage': vatPercentage,
-            'is_active': true,
-            'sort_order': 0,
-          })
           .select()
-          .single();
-      return DriverRateProfile.fromJson(Map<String, dynamic>.from(res as Map));
-    } catch (_) {
+          .eq('id', profileId)
+          .maybeSingle();
+      if (row == null) return null;
+      return DriverRateProfile.fromJson(Map<String, dynamic>.from(row as Map));
+    } catch (e) {
+      if (kDebugMode) debugPrint('createInitialRateProfile: $e');
       return null;
     }
   }
@@ -868,6 +849,7 @@ class DriverDataService {
           .select(
             'id, status, pickup_address, pickup_lat, pickup_lng, '
             'destination_address, destination_lat, destination_lng, '
+            'pickup_coords, destination_coords, '
             'booking_mode, payment_method, payment_methods, pickup_contact_name',
           )
           .eq('driver_id', driverId)
@@ -1115,7 +1097,11 @@ class DriverDataService {
       final res = await _client
           .from('ride_requests')
           .select(
-              'id, created_at, status, pickup_address, destination_address, final_fare, manual_fare_cents, manual_entry, currency')
+            'id, created_at, status, pickup_address, destination_address, '
+            'final_fare, quoted_fare, offered_fare, estimated_fare, '
+            'marketplace_offered_fare, manual_fare_cents, manual_entry, currency, '
+            'waiting_fee_cents, waiting_fee_waived',
+          )
           .eq('driver_id', driverId)
           .order('created_at', ascending: false)
           .limit(200);
@@ -1129,14 +1115,26 @@ class DriverDataService {
   }
 
   /// Ride detail payload for "My Rides" full-screen details.
-  Future<MyRideDetails?> getMyRideDetails(String rideId) async {
+  Future<MyRideDetails?> getMyRideDetails(
+    String rideId, {
+    String? driverId,
+  }) async {
     try {
-      final row = await _client
+      var query = _client
           .from('ride_requests')
           .select(
-              'id, created_at, status, pickup_address, destination_address, final_fare, manual_fare_cents, manual_entry, currency, payment_method, manual_payment_method, platform_fee_cents, driver_earnings_cents, distance_km')
-          .eq('id', rideId)
-          .maybeSingle();
+            'id, created_at, completed_at, started_at, status, pickup_address, '
+            'destination_address, final_fare, quoted_fare, offered_fare, estimated_fare, '
+            'marketplace_offered_fare, manual_fare_cents, manual_entry, currency, '
+            'payment_method, manual_payment_method, platform_fee_cents, '
+            'driver_earnings_cents, estimated_distance_km, waiting_fee_cents, '
+            'waiting_fee_waived',
+          )
+          .eq('id', rideId);
+      if (driverId != null && driverId.isNotEmpty) {
+        query = query.eq('driver_id', driverId);
+      }
+      final row = await query.maybeSingle();
       if (row == null) return null;
       return MyRideDetails.fromJson(Map<String, dynamic>.from(row));
     } catch (_) {
@@ -1681,8 +1679,9 @@ class DriverDataService {
           try {
             await _client.auth.refreshSession();
           } catch (err) {
-            if (kDebugMode)
+            if (kDebugMode) {
               debugPrint('sendDriverSupportChatMessage: refresh failed: $err');
+            }
           }
           res = await invokeWithSessionToken();
         } else {
@@ -2788,9 +2787,10 @@ class DriverDataService {
         try {
           return await doUpload();
         } on TlsException catch (retryE) {
-          if (kDebugMode)
+          if (kDebugMode) {
             debugPrint(
                 'uploadDriverProfilePhotoOnce: retry $i failed: $retryE');
+          }
         }
       }
       throw const ProfilePhotoConnectionException();
@@ -2888,8 +2888,9 @@ class DriverDataService {
       {required bool isRetry}) async {
     final sess = _client.auth.currentSession;
     if (sess == null || sess.accessToken.isEmpty) {
-      if (kDebugMode)
+      if (kDebugMode) {
         debugPrint('startVeriffVerificationAndPersist: missing session');
+      }
       return null;
     }
     _client.functions.setAuth(sess.accessToken);
@@ -2936,9 +2937,10 @@ class DriverDataService {
         try {
           await _client.auth.refreshSession();
         } catch (err) {
-          if (kDebugMode)
+          if (kDebugMode) {
             debugPrint(
                 'startVeriffVerificationAndPersist: retry refresh failed: $err');
+          }
         }
         return _invokeCreateDriverVeriffSession(isRetry: true);
       }
@@ -3231,18 +3233,40 @@ class DriverDataService {
     }
   }
 
-  /// Immediate (now) ride requests available for drivers. Uses ride_requests where
-  /// status='pending'. Optionally filter by zone. May return empty if RLS restricts.
+  /// Immediate ride invites for this driver (cascade matching).
+  /// Only returns rides where this driver has a live invite — not every pending request.
   Future<List<ScheduledRide>> getAvailableRidesNow(
       {String? zoneId, int limit = 20}) async {
+    final driverId = await getDriverId();
+    if (driverId == null || driverId.isEmpty) return [];
+
     try {
+      final inviteRows = await _client
+          .from('ride_request_invites')
+          .select('ride_request_id')
+          .eq('driver_id', driverId)
+          .eq('status', 'pending')
+          .gt('expires_at', DateTime.now().toUtc().toIso8601String())
+          .order('invited_at', ascending: false)
+          .limit(limit);
+
+      final rideIds = (inviteRows as List)
+          .map((row) => (row as Map<String, dynamic>)['ride_request_id']
+              ?.toString())
+          .whereType<String>()
+          .where((id) => id.isNotEmpty)
+          .toList();
+      if (rideIds.isEmpty) return [];
+
       var query = _client
           .from('ride_requests')
           .select(
             'id, pickup_address, destination_address, scheduled_pickup_at, '
-            'offered_fare, estimated_distance_km, zone_id',
+            'offered_fare, estimated_distance_km, zone_id, booking_mode, '
+            'rider_identity_id, status',
           )
-          .eq('status', 'pending');
+          .eq('status', 'pending')
+          .inFilter('id', rideIds);
       if (zoneId != null && zoneId.isNotEmpty) {
         query = query.eq('zone_id', zoneId);
       }
@@ -3250,6 +3274,10 @@ class DriverDataService {
           await query.order('created_at', ascending: false).limit(limit);
       return (res as List)
           .map((e) => _rideRequestToScheduledRide(e as Map<String, dynamic>))
+          .where((r) =>
+              r.bookingMode == null ||
+              r.bookingMode == 'instant' ||
+              r.scheduledPickupAt == null)
           .toList();
     } catch (_) {
       return [];
@@ -3919,16 +3947,18 @@ class ScheduledRide {
   }
 
   bool get prerideAwaitingRider {
-    if (riderPrerideRequestSentAt == null || riderPrerideConfirmed)
+    if (riderPrerideRequestSentAt == null || riderPrerideConfirmed) {
       return false;
+    }
     final d = riderPrerideDeadline;
     if (d == null) return true;
     return DateTime.now().isBefore(d);
   }
 
   bool get canReleaseAfterPrerideDeadline {
-    if (riderPrerideRequestSentAt == null || riderPrerideConfirmed)
+    if (riderPrerideRequestSentAt == null || riderPrerideConfirmed) {
       return false;
+    }
     final d = riderPrerideDeadline;
     if (d == null) return false;
     return DateTime.now().isAfter(d);
@@ -4031,14 +4061,16 @@ class MyRideSummary {
 
   factory MyRideSummary.fromJson(Map<String, dynamic> j) {
     final manualFare = (j['manual_fare_cents'] as num?)?.toDouble();
-    final finalFare = (j['final_fare'] as num?)?.toDouble();
+    final resolved = manualFare != null
+        ? manualFare / 100.0
+        : HeyCabyRideFare.resolveTotalEuroFromRow(j);
     return MyRideSummary(
       id: (j['id'] as String?) ?? '',
       createdAt: DateTime.tryParse((j['created_at'] as String?) ?? ''),
       status: (j['status'] as String?) ?? 'unknown',
       pickupAddress: j['pickup_address'] as String?,
       destinationAddress: j['destination_address'] as String?,
-      fare: manualFare != null ? (manualFare / 100.0) : finalFare,
+      fare: resolved,
       currency: j['currency'] as String?,
       manualEntry: j['manual_entry'] == true,
     );
@@ -4051,6 +4083,8 @@ class MyRideDetails extends MyRideSummary {
   final int? platformFeeCents;
   final int? driverEarningsCents;
   final double? distanceKm;
+  final DateTime? completedAt;
+  final DateTime? startedAt;
 
   const MyRideDetails({
     required super.id,
@@ -4065,7 +4099,36 @@ class MyRideDetails extends MyRideSummary {
     required this.platformFeeCents,
     required this.driverEarningsCents,
     required this.distanceKm,
+    required this.completedAt,
+    required this.startedAt,
   });
+
+  /// Drivers may message riders only within 2 hours of trip completion.
+  bool get canContactRider {
+    final anchor = completedAt ?? createdAt;
+    if (anchor == null) return false;
+    return DateTime.now().difference(anchor.toLocal()) <
+        const Duration(hours: 2);
+  }
+
+  int? get resolvedEarningsCents {
+    if (driverEarningsCents != null && driverEarningsCents! > 0) {
+      return driverEarningsCents;
+    }
+    final fareCents = fare != null && fare! > 0 ? (fare! * 100).round() : null;
+    if (fareCents == null) return null;
+    final fee = platformFeeCents ?? 0;
+    final net = fareCents - fee;
+    return net > 0 ? net : fareCents;
+  }
+
+  int? get tripDurationMinutes {
+    final start = startedAt ?? createdAt;
+    final end = completedAt;
+    if (start == null || end == null) return null;
+    final mins = end.difference(start).inMinutes;
+    return mins > 0 ? mins : null;
+  }
 
   factory MyRideDetails.fromJson(Map<String, dynamic> j) {
     final base = MyRideSummary.fromJson(j);
@@ -4082,7 +4145,9 @@ class MyRideDetails extends MyRideSummary {
           (j['payment_method'] as String?),
       platformFeeCents: (j['platform_fee_cents'] as num?)?.toInt(),
       driverEarningsCents: (j['driver_earnings_cents'] as num?)?.toInt(),
-      distanceKm: (j['distance_km'] as num?)?.toDouble(),
+      distanceKm: (j['estimated_distance_km'] as num?)?.toDouble(),
+      completedAt: DateTime.tryParse((j['completed_at'] as String?) ?? ''),
+      startedAt: DateTime.tryParse((j['started_at'] as String?) ?? ''),
     );
   }
 }
@@ -4446,8 +4511,9 @@ class DriverProfile {
 
   String get vehicleDisplay {
     final parts = <String>[];
-    if (vehiclePlate != null && vehiclePlate!.isNotEmpty)
+    if (vehiclePlate != null && vehiclePlate!.isNotEmpty) {
       parts.add(vehiclePlate!);
+    }
     if (vehicleColour != null && vehicleColour!.isNotEmpty) {
       parts.add(vehicleColour!);
     }

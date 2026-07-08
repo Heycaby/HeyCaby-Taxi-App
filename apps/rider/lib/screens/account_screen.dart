@@ -305,36 +305,16 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
     final colors = ref.read(colorsProvider);
     final typo = ref.read(typographyProvider);
 
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: colors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(l10n.logoutConfirmTitle,
-            style: typo.headingMedium.copyWith(color: colors.text)),
-        content: Text(l10n.logoutConfirmMessage,
-            style: typo.bodyMedium.copyWith(color: colors.textMid)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.cancel,
-                style: typo.bodyLarge.copyWith(color: colors.accent)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: heyCabyElevatedErrorStyle(colors).merge(
-              ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-            child: Text(
-              l10n.logout,
-              style: typo.labelLarge.copyWith(color: colors.onError),
-            ),
-          ),
-        ],
-      ),
+    final result = await showHeyCabyConfirmSheet(
+      context,
+      colors: colors,
+      typography: typo,
+      title: l10n.logoutConfirmTitle,
+      message: l10n.logoutConfirmMessage,
+      dismissLabel: l10n.cancel,
+      confirmLabel: l10n.logout,
+      icon: Icons.logout_rounded,
+      confirmDestructive: true,
     );
 
     if (result == true && mounted) {
@@ -505,6 +485,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
             if (widget.mode == AccountScreenMode.profile) ...[
               const SizedBox(height: 16),
               _buildPassportCard(colors, typo, l10n),
+              const SizedBox(height: 16),
+              _buildRiderRatingCard(colors, typo, l10n),
               if (fromOnboarding) ...[
                 const SizedBox(height: 12),
                 _buildOnboardingBanner(colors, typo, l10n),
@@ -613,6 +595,176 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
       typo,
       () => context.push('/settings'),
     );
+  }
+
+  Widget _buildRiderRatingCard(
+    HeyCabyColorTokens colors,
+    HeyCabyTypography typo,
+    AppLocalizations l10n,
+  ) {
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: _fetchRiderRating(),
+      builder: (context, snap) {
+        final data = snap.data;
+        final avgRating = data?['avg_rating'] as num?;
+        final tripCount = data?['trip_count'] as int? ?? 0;
+        final hasRating = avgRating != null && avgRating > 0;
+
+        return Container(
+          padding: const EdgeInsetsDirectional.all(20),
+          decoration: BoxDecoration(
+            color: colors.card,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: colors.border.withValues(alpha: 0.7)),
+            boxShadow: [
+              BoxShadow(
+                color: colors.text.withValues(alpha: 0.06),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: colors.warning.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.star_rounded,
+                      color: colors.warning,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.riderRatingTitle,
+                          style: typo.titleMedium.copyWith(
+                            color: colors.text,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          l10n.riderRatingSubtitle,
+                          style: typo.bodySmall.copyWith(
+                            color: colors.textMid,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (hasRating) ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      avgRating.toStringAsFixed(1),
+                      style: typo.displaySmall.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -1,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: List.generate(5, (i) {
+                          final filled = i < (avgRating).round();
+                          return Icon(
+                            filled
+                                ? Icons.star_rounded
+                                : Icons.star_outline_rounded,
+                            color: filled ? colors.warning : colors.border,
+                            size: 20,
+                          );
+                        }),
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      l10n.riderRatingTrips(tripCount),
+                      style: typo.bodySmall.copyWith(
+                        color: colors.textMid,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                Row(
+                  children: [
+                    Icon(Icons.star_outline_rounded,
+                        color: colors.border, size: 28),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.riderRatingNoRating,
+                            style: typo.titleSmall.copyWith(
+                              color: colors.text,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            l10n.riderRatingNoRatingBody,
+                            style: typo.bodySmall.copyWith(
+                              color: colors.textMid,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<Map<String, dynamic>?> _fetchRiderRating() async {
+    try {
+      final client = HeyCabySupabase.client;
+      final userId = client.auth.currentUser?.id;
+      if (userId == null) return null;
+      final result = await client
+          .from('ride_ratings')
+          .select('driver_rating_of_rider')
+          .not('driver_rating_of_rider', 'is', null)
+          .order('created_at', ascending: false);
+      final ratings = result
+          .map((r) => r['driver_rating_of_rider'])
+          .whereType<num>()
+          .toList();
+      if (ratings.isEmpty) return {'avg_rating': 0.0, 'trip_count': 0};
+      final avg = ratings.fold<num>(0, (a, b) => a + b) / ratings.length;
+      return {
+        'avg_rating': avg.toDouble(),
+        'trip_count': ratings.length,
+      };
+    } catch (_) {
+      return null;
+    }
   }
 
   Widget _buildPassportCard(

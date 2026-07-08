@@ -134,6 +134,11 @@ class DriverLocationService {
     await _uploadLocation();
   }
 
+  /// Refresh GPS immediately before accepting a ride (accept RPC requires fresh location).
+  Future<void> uploadNowForAccept() async {
+    await _uploadLocation();
+  }
+
   /// Resolve drivers.id from auth uid (cached after first call)
   Future<String?> _resolveDriverId() async {
     if (_cachedDriverId != null) return _cachedDriverId;

@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../utils/driver_address_clipboard.dart';
 import '../l10n/driver_strings.dart';
+import '../providers/driver_nav_app_pref_provider.dart';
+import '../services/driver_nav_app_pref.dart';
 import '../theme/driver_colors.dart';
-import '../theme/driver_motion_presets.dart';
-import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
+import '../ui/driver_button.dart';
 import '../ui/driver_status_badge.dart';
+import 'driver_ride_bolt_layout.dart';
 import 'driver_ride_flow_common.dart';
 
-/// **Navigation Focus** — driving-first; minimal distraction.
-class DriverNavigationFocusBody extends StatelessWidget {
+/// **Navigation Focus** — Bolt-style trip in progress.
+class DriverNavigationFocusBody extends ConsumerWidget {
   const DriverNavigationFocusBody({
     super.key,
     required this.colors,
@@ -19,12 +24,22 @@ class DriverNavigationFocusBody extends StatelessWidget {
     required this.riderName,
     required this.expectedAmountLabel,
     required this.completing,
-    required this.onBack,
     required this.onNavigate,
     required this.onCompleteRide,
     required this.onOpenCommunication,
     required this.onCancelRide,
+    this.onToggleRequests,
+    this.requestsPaused = false,
+    this.statusBusy = false,
     this.showNearDestinationAssist = false,
+    this.pickupLat,
+    this.pickupLng,
+    this.destLat,
+    this.destLng,
+    this.driverLat,
+    this.driverLng,
+    this.etaLabel,
+    this.onSafety,
   });
 
   final DriverColors colors;
@@ -34,79 +49,117 @@ class DriverNavigationFocusBody extends StatelessWidget {
   final String? riderName;
   final String? expectedAmountLabel;
   final bool completing;
-  final VoidCallback onBack;
   final VoidCallback onNavigate;
   final VoidCallback onCompleteRide;
   final VoidCallback onOpenCommunication;
   final VoidCallback onCancelRide;
+  final VoidCallback? onToggleRequests;
+  final bool requestsPaused;
+  final bool statusBusy;
   final bool showNearDestinationAssist;
+  final double? pickupLat;
+  final double? pickupLng;
+  final double? destLat;
+  final double? destLng;
+  final double? driverLat;
+  final double? driverLng;
+  final String? etaLabel;
+  final VoidCallback? onSafety;
 
-  @override
-  Widget build(BuildContext context) {
-    return DriverRideFlowScaffold(
-      title: DriverStrings.rideInProgress,
+  String _navLabel(WidgetRef ref) {
+    final app = ref.watch(driverNavAppPrefProvider).valueOrNull ?? DriverNavApp.waze;
+    return switch (app) {
+      DriverNavApp.waze => 'Waze',
+      DriverNavApp.google => 'Google Maps',
+    };
+  }
+
+  void _openRouteDetails(BuildContext context, WidgetRef ref) {
+    showDriverRideRouteDetailsSheet(
+      context: context,
       colors: colors,
       typography: typography,
-      onBack: onBack,
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DriverRidePhaseHero(
-            colors: colors,
-            typography: typography,
-            eyebrow: DriverStrings.rideInProgress,
-            title: DriverStrings.inProgressHeroTitle,
-            body: DriverStrings.inProgressHeroBody,
-            icon: Icons.directions_car_rounded,
-            tone: DriverStatusTone.online,
-            metric: expectedAmountLabel,
-          ),
-          if (showNearDestinationAssist) ...[
-            const SizedBox(height: DriverSpacing.sm),
-            DriverStatusBadge(
-              label: DriverStrings.nearDestinationAssistBanner,
-              colors: colors,
-              typography: typography,
-              tone: DriverStatusTone.success,
-              icon: Icons.flag_circle_outlined,
-            ).driverFadeSlideIn(staggerIndex: 0),
-          ],
-          const SizedBox(height: DriverSpacing.lg),
-          DriverRideTripSummary(
-            colors: colors,
-            typography: typography,
-            pickupLabel: pickupAddress,
-            dropoffLabel: destinationAddress,
-            riderName: riderName,
-            statusLabel: DriverStrings.destination,
-            statusTone: DriverStatusTone.success,
-            staggerIndex: 1,
-          ),
-          const SizedBox(height: DriverSpacing.xl),
-          DriverRideActionGrid(
-            colors: colors,
-            typography: typography,
-            actions: [
-              DriverRideFlowAction(
-                label: DriverStrings.navigate,
-                icon: Icons.navigation_outlined,
-                onTap: onNavigate,
-              ),
-              DriverRideFlowAction(
-                label: DriverStrings.pingRiderAction,
-                icon: Icons.forum_outlined,
-                onTap: onOpenCommunication,
-                enabled: !completing,
-              ),
-              DriverRideFlowAction(
-                label: DriverStrings.cancelOrder,
-                icon: Icons.cancel_outlined,
-                onTap: onCancelRide,
-                enabled: !completing,
-              ),
-            ],
-          ),
-        ],
+      destinationAddress: destinationAddress,
+      farePill: driverRideBoltFarePill(expectedAmountLabel),
+      riderName: riderName,
+      navAppLabel: _navLabel(ref),
+      onContact: onOpenCommunication,
+      onNavigate: onNavigate,
+      onCancelRide: onCancelRide,
+      onToggleRequests: onToggleRequests,
+      requestsPaused: requestsPaused,
+    );
+  }
+
+  Future<void> _handleToggleRequests(BuildContext context) async {
+    if (onToggleRequests == null) return;
+    if (!requestsPaused) {
+      final themeColors = Theme.of(context).extension<HeyCabyColorTokens>();
+      final themeTypo = Theme.of(context).extension<HeyCabyTypography>();
+      if (themeColors == null || themeTypo == null) return;
+      final confirmed = await showHeyCabyConfirmSheet(
+        context,
+        colors: themeColors,
+        typography: themeTypo,
+        title: DriverStrings.breakConfirmTitle,
+        message: DriverStrings.breakConfirmBodyActiveRide,
+        dismissLabel: DriverStrings.cancel,
+        confirmLabel: DriverStrings.shiftStartBreak,
+        icon: Icons.coffee_rounded,
+      );
+      if (confirmed != true) return;
+    }
+    onToggleRequests!();
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final farePill = driverRideBoltFarePill(expectedAmountLabel);
+
+    return DriverRideBoltScaffold(
+      colors: colors,
+      typography: typography,
+      phase: DriverRideBoltPhase.inProgress,
+      pickupLat: pickupLat,
+      pickupLng: pickupLng,
+      destLat: destLat,
+      destLng: destLng,
+      driverLat: driverLat,
+      driverLng: driverLng,
+      onToggleRequests: onToggleRequests == null
+          ? null
+          : () => _handleToggleRequests(context),
+      onSafety: onSafety,
+      onChat: onOpenCommunication,
+      onNavigate: onNavigate,
+      requestsPaused: requestsPaused,
+      statusBusy: statusBusy,
+      infoCard: DriverRideBoltInfoCard(
+        colors: colors,
+        typography: typography,
+        heroPrimary: etaLabel ?? DriverStrings.destination,
+        heroSecondary: etaLabel != null ? null : null,
+        focusAddress: destinationAddress,
+        riderName: riderName,
+        farePill: farePill,
+        onOpenRouteDetails: () => _openRouteDetails(context, ref),
+        onCopyAddress: destinationAddress.trim().isEmpty
+            ? null
+            : () => copyDriverRideAddress(
+                  context,
+                  address: destinationAddress,
+                  colors: colors,
+                  typography: typography,
+                ),
+        assistBanner: showNearDestinationAssist
+            ? DriverStatusBadge(
+                label: DriverStrings.nearDestinationAssistBanner,
+                colors: colors,
+                typography: typography,
+                tone: DriverStatusTone.success,
+                icon: Icons.flag_circle_outlined,
+              )
+            : null,
       ),
       bottomBar: DriverRideFlowBottomBar(
         colors: colors,
@@ -115,6 +168,7 @@ class DriverNavigationFocusBody extends StatelessWidget {
         primaryIcon: Icons.flag_rounded,
         onPrimary: completing ? null : onCompleteRide,
         primaryLoading: completing,
+        primaryVariant: DriverButtonVariant.destructive,
       ),
     );
   }

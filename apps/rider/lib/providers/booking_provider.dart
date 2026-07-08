@@ -4,7 +4,7 @@ import 'package:heycaby_models/heycaby_models.dart';
 
 import '../models/rider_vehicle_category.dart';
 
-enum BookingMode { instant, marketplace, scheduled }
+enum BookingMode { instant, marketplace, scheduled, terug }
 
 /// Who receives a marketplace trip request (maps to ride_requests flags).
 enum MarketplaceDriverAudience {
@@ -25,21 +25,54 @@ class BookingState {
   final String? paymentMethod;
   final List<String> paymentMethods;
   final String? vehicleCategory;
+
   /// When non-empty, matching uses all listed keys (see ride_requests.vehicle_categories).
   final List<String> vehicleCategories;
   final bool petFriendly;
+
   /// ID of the specific driver the rider selected (null = post to all).
   final String? selectedDriverId;
+
   /// Estimated fare for the selected driver's pricing (null when post-to-all).
   final double? estimatedFareEuro;
+
   /// Smart-bundle trip estimate (multi-category); shown on summary when set.
   final double? tripPriceBandMinEuro;
   final double? tripPriceBandMaxEuro;
+
   /// Marketplace rider offer in whole euros (maps to `ride_requests.marketplace_offered_fare`).
   final int? marketplaceBidEuro;
+
   /// When true, nearby driver supply uses each driver's [active_return_discount_pct] on the
   /// heuristic tariff estimate (return-trip offers only). When false, estimates use full tariff.
   final bool returnTripFareEstimatesEnabled;
+
+  /// Mapbox route distance/duration from trip summary (preferred over haversine at booking).
+  final double? routeDistanceKm;
+  final int? routeDurationMin;
+
+  /// Best single € quote for persistence and summary UI.
+  double? get quotedFareEuro {
+    if (marketplaceBidEuro != null && marketplaceBidEuro! > 0) {
+      return marketplaceBidEuro!.toDouble();
+    }
+    if (estimatedFareEuro != null && estimatedFareEuro! > 0) {
+      return estimatedFareEuro;
+    }
+    if (tripPriceBandMinEuro != null &&
+        tripPriceBandMaxEuro != null &&
+        tripPriceBandMinEuro! > 0 &&
+        tripPriceBandMaxEuro! > 0) {
+      return (tripPriceBandMinEuro! + tripPriceBandMaxEuro!) / 2;
+    }
+    if (tripPriceBandMaxEuro != null && tripPriceBandMaxEuro! > 0) {
+      return tripPriceBandMaxEuro;
+    }
+    if (tripPriceBandMinEuro != null && tripPriceBandMinEuro! > 0) {
+      return tripPriceBandMinEuro;
+    }
+    return null;
+  }
 
   const BookingState({
     this.mode = BookingMode.instant,
@@ -61,6 +94,8 @@ class BookingState {
     this.tripPriceBandMaxEuro,
     this.marketplaceBidEuro,
     this.returnTripFareEstimatesEnabled = false,
+    this.routeDistanceKm,
+    this.routeDurationMin,
   });
 
   BookingState copyWith({
@@ -83,6 +118,8 @@ class BookingState {
     Object? tripPriceBandMaxEuro = _sentinel,
     Object? marketplaceBidEuro = _sentinel,
     Object? returnTripFareEstimatesEnabled = _sentinel,
+    Object? routeDistanceKm = _sentinel,
+    Object? routeDurationMin = _sentinel,
   }) =>
       BookingState(
         mode: mode ?? this.mode,
@@ -116,15 +153,23 @@ class BookingState {
         marketplaceBidEuro: marketplaceBidEuro == _sentinel
             ? this.marketplaceBidEuro
             : marketplaceBidEuro as int?,
-        returnTripFareEstimatesEnabled: returnTripFareEstimatesEnabled == _sentinel
-            ? this.returnTripFareEstimatesEnabled
-            : returnTripFareEstimatesEnabled as bool,
+        returnTripFareEstimatesEnabled:
+            returnTripFareEstimatesEnabled == _sentinel
+                ? this.returnTripFareEstimatesEnabled
+                : returnTripFareEstimatesEnabled as bool,
+        routeDistanceKm: routeDistanceKm == _sentinel
+            ? this.routeDistanceKm
+            : routeDistanceKm as double?,
+        routeDurationMin: routeDurationMin == _sentinel
+            ? this.routeDurationMin
+            : routeDurationMin as int?,
       );
 
   /// Used for `booking_mode` in Supabase and matching-route selection.
-  /// Marketplace wins; any pickup time implies scheduled; otherwise [mode].
+  /// Named-price modes win; any pickup time implies scheduled; otherwise [mode].
   BookingMode get effectiveRideMode {
     if (mode == BookingMode.marketplace) return BookingMode.marketplace;
+    if (mode == BookingMode.terug) return BookingMode.terug;
     if (scheduledAt != null) return BookingMode.scheduled;
     return mode;
   }
@@ -141,7 +186,9 @@ class BookingNotifier extends Notifier<BookingState> {
         mode: BookingMode.instant,
         marketplaceBidEuro: null,
       );
-  void setMarketplace() => state = state.copyWith(mode: BookingMode.marketplace);
+  void setMarketplace() =>
+      state = state.copyWith(mode: BookingMode.marketplace);
+  void setTaxiTerug() => state = state.copyWith(mode: BookingMode.terug);
 
   void setMarketplaceBidEuro(int euros) =>
       state = state.copyWith(marketplaceBidEuro: euros);
@@ -150,12 +197,27 @@ class BookingNotifier extends Notifier<BookingState> {
         marketplaceBidEuro: null,
       );
 
-  void setPickup(AddressResult pickup) => state = state.copyWith(pickup: pickup);
-  void setDestination(AddressResult destination) =>
-      state = state.copyWith(destination: destination);
+  void setPickup(AddressResult pickup) => state = state.copyWith(
+        pickup: pickup,
+        routeDistanceKm: null,
+        routeDurationMin: null,
+      );
+  void setDestination(AddressResult destination) => state = state.copyWith(
+        destination: destination,
+        routeDistanceKm: null,
+        routeDurationMin: null,
+      );
 
-  void clearPickup() => state = state.copyWith(pickup: null);
-  void clearDestination() => state = state.copyWith(destination: null);
+  void clearPickup() => state = state.copyWith(
+        pickup: null,
+        routeDistanceKm: null,
+        routeDurationMin: null,
+      );
+  void clearDestination() => state = state.copyWith(
+        destination: null,
+        routeDistanceKm: null,
+        routeDurationMin: null,
+      );
 
   void setFavoritesFirst(bool value) =>
       state = state.copyWith(favoritesFirst: value);
@@ -187,7 +249,8 @@ class BookingNotifier extends Notifier<BookingState> {
         paymentMethod: null,
       );
 
-  void applyVehicleSelection(List<String> categories, {required bool petFriendly}) {
+  void applyVehicleSelection(List<String> categories,
+      {required bool petFriendly}) {
     if (categories.isEmpty) return;
     state = state.copyWith(
       vehicleCategories: List<String>.from(categories),
@@ -200,16 +263,31 @@ class BookingNotifier extends Notifier<BookingState> {
       applyVehicleSelection([category], petFriendly: petFriendly);
 
   void setTripPriceBand({double? minEuro, double? maxEuro}) {
+    double? midpoint;
+    if (minEuro != null && maxEuro != null && minEuro > 0 && maxEuro > 0) {
+      midpoint = (minEuro + maxEuro) / 2;
+    } else if (maxEuro != null && maxEuro > 0) {
+      midpoint = maxEuro;
+    } else if (minEuro != null && minEuro > 0) {
+      midpoint = minEuro;
+    }
     state = state.copyWith(
       tripPriceBandMinEuro: minEuro,
       tripPriceBandMaxEuro: maxEuro,
+      estimatedFareEuro: midpoint ?? state.estimatedFareEuro,
     );
   }
 
-  /// Select a specific driver and store their estimated fare.
-  void setSelectedDriver(String driverId, double fare) => state = state.copyWith(
+  /// Select a specific driver without forcing a €0 fare into the booking.
+  void setPreferredDriver(String driverId) => state = state.copyWith(
         selectedDriverId: driverId,
-        estimatedFareEuro: fare,
+      );
+
+  /// Select a specific driver and store their estimated fare.
+  void setSelectedDriver(String driverId, double fare) =>
+      state = state.copyWith(
+        selectedDriverId: driverId,
+        estimatedFareEuro: fare > 0 ? fare : null,
       );
 
   /// Clear specific-driver selection — ride will be posted to all nearby drivers.
@@ -221,6 +299,15 @@ class BookingNotifier extends Notifier<BookingState> {
   /// Rider-only: use return-trip discount on heuristic supply fares (see [BookingState.returnTripFareEstimatesEnabled]).
   void setReturnTripFareEstimatesEnabled(bool enabled) =>
       state = state.copyWith(returnTripFareEstimatesEnabled: enabled);
+
+  void setRouteMetrics({
+    required double distanceKm,
+    required int durationMin,
+  }) =>
+      state = state.copyWith(
+        routeDistanceKm: distanceKm,
+        routeDurationMin: durationMin,
+      );
 
   void reset() => state = const BookingState();
 

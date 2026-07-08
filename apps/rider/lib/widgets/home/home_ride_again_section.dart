@@ -33,7 +33,7 @@ class HomeRideAgainSection extends ConsumerWidget {
     if (!ok) return;
     ref.read(bookingProvider.notifier)
       ..setInstant()
-      ..setSelectedDriver(driver.driverId, 0);
+      ..setPreferredDriver(driver.driverId);
     await fillPickupFromCurrentLocation(ref);
     if (context.mounted) context.go('/search');
   }

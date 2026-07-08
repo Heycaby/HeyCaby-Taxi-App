@@ -14,16 +14,25 @@ import '../theme/driver_typography.dart';
 import '../utils/driver_ride_proximity.dart';
 import '../utils/driver_rider_ping.dart';
 
+enum DriverSmartPingPresentation {
+  banner,
+  inline,
+}
+
 /// GPS/time-assisted one-tap ping suggestion (Program 3C).
 class DriverSmartPingBanner extends ConsumerStatefulWidget {
   const DriverSmartPingBanner({
     super.key,
     required this.rideRequestId,
     required this.phase,
+    this.presentation = DriverSmartPingPresentation.banner,
+    this.onlyOnMyWay = false,
   });
 
   final String rideRequestId;
   final DriverRideCommunicationPhase phase;
+  final DriverSmartPingPresentation presentation;
+  final bool onlyOnMyWay;
 
   @override
   ConsumerState<DriverSmartPingBanner> createState() =>
@@ -87,7 +96,7 @@ class _DriverSmartPingBannerState extends ConsumerState<DriverSmartPingBanner> {
     );
 
     if (!mounted) return;
-    final next = resolveSmartPingSuggestion(
+    var next = resolveSmartPingSuggestion(
       phase: widget.phase,
       enRouteDuration: DateTime.now().difference(_enRouteStarted),
       distanceToPickupM: distanceM,
@@ -96,6 +105,10 @@ class _DriverSmartPingBannerState extends ConsumerState<DriverSmartPingBanner> {
       onMyWayDismissed: onMyWayDismissed,
       outsideDismissed: outsideDismissed,
     );
+    if (widget.onlyOnMyWay &&
+        next == DriverSmartPingSuggestion.outside) {
+      next = null;
+    }
     if (next != _suggestion) {
       setState(() => _suggestion = next);
     }
@@ -147,6 +160,50 @@ class _DriverSmartPingBannerState extends ConsumerState<DriverSmartPingBanner> {
         ),
     };
 
+    return switch (widget.presentation) {
+      DriverSmartPingPresentation.banner => _BannerLayout(
+          colors: colors,
+          typography: typography,
+          title: title,
+          body: body,
+          busy: _busy,
+          onDismiss: _dismiss,
+          onSend: _send,
+        ),
+      DriverSmartPingPresentation.inline => _InlineLayout(
+          colors: colors,
+          typography: typography,
+          title: title,
+          body: body,
+          busy: _busy,
+          onDismiss: _dismiss,
+          onSend: _send,
+        ),
+    };
+  }
+}
+
+class _BannerLayout extends StatelessWidget {
+  const _BannerLayout({
+    required this.colors,
+    required this.typography,
+    required this.title,
+    required this.body,
+    required this.busy,
+    required this.onDismiss,
+    required this.onSend,
+  });
+
+  final DriverColors colors;
+  final DriverTypography typography;
+  final String title;
+  final String body;
+  final bool busy;
+  final VoidCallback onDismiss;
+  final VoidCallback onSend;
+
+  @override
+  Widget build(BuildContext context) {
     return SafeArea(
       bottom: false,
       child: Padding(
@@ -199,7 +256,7 @@ class _DriverSmartPingBannerState extends ConsumerState<DriverSmartPingBanner> {
                         title,
                         style: typography.titleSmall.copyWith(
                           color: colors.text,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -219,13 +276,13 @@ class _DriverSmartPingBannerState extends ConsumerState<DriverSmartPingBanner> {
                 ),
                 const SizedBox(width: 10),
                 TextButton(
-                  onPressed: _busy ? null : _dismiss,
+                  onPressed: busy ? null : onDismiss,
                   child: const Text(DriverStrings.smartPingDismiss),
                 ),
                 const SizedBox(width: 4),
                 FilledButton(
-                  onPressed: _busy ? null : _send,
-                  child: _busy
+                  onPressed: busy ? null : onSend,
+                  child: busy
                       ? SizedBox(
                           width: 18,
                           height: 18,
@@ -240,6 +297,116 @@ class _DriverSmartPingBannerState extends ConsumerState<DriverSmartPingBanner> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _InlineLayout extends StatelessWidget {
+  const _InlineLayout({
+    required this.colors,
+    required this.typography,
+    required this.title,
+    required this.body,
+    required this.busy,
+    required this.onDismiss,
+    required this.onSend,
+  });
+
+  final DriverColors colors;
+  final DriverTypography typography;
+  final String title;
+  final String body;
+  final bool busy;
+  final VoidCallback onDismiss;
+  final VoidCallback onSend;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: colors.success.withValues(alpha: 0.08),
+        border: Border.all(color: colors.success.withValues(alpha: 0.20)),
+      ),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.notifications_active_outlined,
+                color: colors.success,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: typography.titleSmall.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      body,
+                      style: typography.bodySmall.copyWith(
+                        color: colors.textSecondary,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              FilledButton.tonal(
+                onPressed: busy ? null : onSend,
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                ),
+                child: busy
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: colors.primary,
+                        ),
+                      )
+                    : Text(
+                        DriverStrings.smartPingSend,
+                        style: typography.labelLarge.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            ],
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: busy ? null : onDismiss,
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              child: Text(
+                DriverStrings.smartPingDismiss,
+                style: typography.labelMedium.copyWith(
+                  color: colors.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

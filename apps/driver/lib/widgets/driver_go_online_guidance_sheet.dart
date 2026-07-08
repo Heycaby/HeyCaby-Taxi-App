@@ -53,20 +53,13 @@ Future<void> showDriverGoOnlineGuidanceSheet(
         top: false,
         child: Padding(
           padding: EdgeInsets.fromLTRB(12, 0, 12, bottom + 12),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: colors.card,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(22)),
-              border: Border.all(color: colors.border),
-              boxShadow: [
-                BoxShadow(
-                  color: colors.text.withValues(alpha: 0.12),
-                  blurRadius: 24,
-                  offset: const Offset(0, -4),
-                ),
-              ],
-            ),
+          child: GlassPanel(
+            colors: colors,
+            typography: typo,
+            padding: EdgeInsets.zero,
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(22)),
+            tintColor: colors.card,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

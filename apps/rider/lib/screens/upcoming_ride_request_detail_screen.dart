@@ -128,29 +128,16 @@ class _UpcomingRideRequestDetailScreenState
     final l10n = AppLocalizations.of(context);
     final colors = ref.read(colorsProvider);
     final typo = ref.read(typographyProvider);
-    final go = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: colors.card,
-        title: Text(
-          l10n.cancelRide,
-          style: typo.titleMedium.copyWith(color: colors.text),
-        ),
-        content: Text(
-          l10n.cancelRideConfirm,
-          style: typo.bodyMedium.copyWith(color: colors.textMid),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.cancelRide),
-          ),
-        ],
-      ),
+    final go = await showHeyCabyConfirmSheet(
+      context,
+      colors: colors,
+      typography: typo,
+      title: l10n.cancelRide,
+      message: l10n.cancelRideConfirm,
+      dismissLabel: l10n.cancel,
+      confirmLabel: l10n.cancelRide,
+      icon: Icons.close_rounded,
+      confirmDestructive: true,
     );
     if (go != true || !mounted) return;
     final identity = await ref.read(riderIdentityProvider.future);
@@ -176,29 +163,16 @@ class _UpcomingRideRequestDetailScreenState
     final l10n = AppLocalizations.of(context);
     final colors = ref.read(colorsProvider);
     final typo = ref.read(typographyProvider);
-    final go = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: colors.card,
-        title: Text(
-          l10n.upcomingRideEditBookAgain,
-          style: typo.titleMedium.copyWith(color: colors.text),
-        ),
-        content: Text(
-          l10n.upcomingRideEditBookAgainSubtitle,
-          style: typo.bodyMedium.copyWith(color: colors.textMid),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.upcomingRideEditBookAgain),
-          ),
-        ],
-      ),
+    final go = await showHeyCabyConfirmSheet(
+      context,
+      colors: colors,
+      typography: typo,
+      title: l10n.upcomingRideEditBookAgain,
+      message: l10n.upcomingRideEditBookAgainSubtitle,
+      dismissLabel: l10n.cancel,
+      confirmLabel: l10n.upcomingRideEditBookAgain,
+      icon: Icons.edit_location_alt_rounded,
+      confirmDestructive: false,
     );
     if (go != true || !mounted) return;
     final ok = await ref

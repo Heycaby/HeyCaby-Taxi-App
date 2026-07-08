@@ -37,6 +37,9 @@ class DriverRiderConversationBody extends StatelessWidget {
     required this.onSend,
     required this.onBackWhenBlocked,
     this.menu,
+    this.subtitle,
+    this.quickReplies = const [],
+    this.onQuickReply,
   });
 
   final DriverColors colors;
@@ -51,6 +54,9 @@ class DriverRiderConversationBody extends StatelessWidget {
   final VoidCallback onSend;
   final VoidCallback onBackWhenBlocked;
   final Widget? menu;
+  final String? subtitle;
+  final List<String> quickReplies;
+  final ValueChanged<String>? onQuickReply;
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +83,23 @@ class DriverRiderConversationBody extends StatelessWidget {
                 )
               : Column(
                   children: [
+                    if (subtitle != null && subtitle!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          DriverSpacing.lg,
+                          DriverSpacing.sm,
+                          DriverSpacing.lg,
+                          0,
+                        ),
+                        child: Text(
+                          subtitle!,
+                          textAlign: TextAlign.center,
+                          style: typography.bodySmall.copyWith(
+                            color: colors.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     Expanded(
                       child: loading
                           ? const Center(child: CircularProgressIndicator())
@@ -104,6 +127,34 @@ class DriverRiderConversationBody extends StatelessWidget {
                                   },
                                 ),
                     ),
+                    if (quickReplies.isNotEmpty)
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.fromLTRB(
+                          DriverSpacing.lg,
+                          DriverSpacing.sm,
+                          DriverSpacing.lg,
+                          0,
+                        ),
+                        child: Row(
+                          children: [
+                            for (final reply in quickReplies) ...[
+                              ActionChip(
+                                label: Text(reply),
+                                onPressed: onQuickReply == null
+                                    ? null
+                                    : () => onQuickReply!(reply),
+                                backgroundColor:
+                                    colors.primaryLight.withValues(alpha: 0.55),
+                                side: BorderSide(
+                                  color: colors.primary.withValues(alpha: 0.25),
+                                ),
+                              ),
+                              const SizedBox(width: DriverSpacing.sm),
+                            ],
+                          ],
+                        ),
+                      ),
                     Container(
                       padding: EdgeInsets.fromLTRB(
                         DriverSpacing.lg,

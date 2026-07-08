@@ -245,7 +245,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                         ],
                       ),
                     ),
-                    SizedBox(height: HeyCabySpacing.section),
+                    const SizedBox(height: HeyCabySpacing.section),
                     Text(
                       l10n.selectAllThatApply,
                       style: typo.titleLarge.copyWith(
@@ -262,7 +262,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                         height: 1.45,
                       ),
                     ),
-                    SizedBox(height: HeyCabySpacing.component),
+                    const SizedBox(height: HeyCabySpacing.component),
                     _GroupedPaymentMethods(
                       methods: methods,
                       selectedIds: _selectedMethods,
@@ -270,14 +270,14 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                       typo: typo,
                       onToggle: _toggleMethod,
                     ),
-                    SizedBox(height: HeyCabySpacing.section),
+                    const SizedBox(height: HeyCabySpacing.section),
                     _CommunityPledge(colors: colors, typo: typo, l10n: l10n),
                   ],
                 ),
               ),
               if (_selectedMethods.isNotEmpty)
                 Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(
+                  padding: const EdgeInsetsDirectional.fromSTEB(
                     HeyCabySpacing.screenEdge,
                     0,
                     HeyCabySpacing.screenEdge,

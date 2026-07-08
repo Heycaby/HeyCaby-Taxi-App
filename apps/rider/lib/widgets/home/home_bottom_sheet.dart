@@ -4,11 +4,17 @@ import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../booking_draft_resume_card.dart';
+import '../active_booking_card.dart';
+import '../../providers/near_term_ride_request_provider.dart';
 import '../../providers/rider_home_banners_provider.dart';
+import '../../services/nearby_supply_service.dart';
 import 'home_announcement_banner.dart';
+import 'home_favorite_supply_insight.dart';
+import 'home_supply_insight.dart';
 import 'home_booking_options_grid.dart';
 import 'home_recent_places_section.dart';
 import 'home_ride_again_section.dart';
+import 'home_saved_trips_section.dart';
 import 'home_search_hero_card.dart';
 
 /// Draggable home sheet — V2 information hierarchy (search first).
@@ -20,6 +26,9 @@ class HomeBottomSheet extends ConsumerWidget {
     required this.l10n,
     required this.sheetController,
     required this.nearbyTaxiCount,
+    required this.nearbySupplyKnown,
+    required this.supplySnapshot,
+    required this.favoriteSupplySnapshot,
   });
 
   final HeyCabyColorTokens colors;
@@ -27,16 +36,29 @@ class HomeBottomSheet extends ConsumerWidget {
   final AppLocalizations l10n;
   final DraggableScrollableController sheetController;
   final int nearbyTaxiCount;
+  final bool nearbySupplyKnown;
+  final RiderSupplySnapshot supplySnapshot;
+  final RiderFavoriteSupplySnapshot favoriteSupplySnapshot;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bannersAsync = ref.watch(riderHomeBannersProvider);
     final banners = bannersAsync.valueOrNull ?? const [];
+    final hasActiveBooking =
+        ref.watch(nearTermRideRequestProvider).valueOrNull != null;
     final announcement = pickRiderHomeBanner(
       banners: banners,
       nearbyTaxiCount: nearbyTaxiCount,
     );
-    final showFallbackNoSupply = announcement == null && nearbyTaxiCount == 0;
+    final showFavoriteSupplyInsight = !hasActiveBooking &&
+        announcement == null &&
+        favoriteSupplySnapshot.rpcSucceeded &&
+        favoriteSupplySnapshot.onlineCount > 0;
+    final showSupplyInsight = !hasActiveBooking &&
+        nearbySupplyKnown &&
+        announcement == null &&
+        !showFavoriteSupplyInsight &&
+        resolveHomeSupplyInsight(snapshot: supplySnapshot, l10n: l10n) != null;
 
     return DraggableScrollableSheet(
       controller: sheetController,
@@ -63,6 +85,9 @@ class HomeBottomSheet extends ConsumerWidget {
           children: [
             _DragHandle(colors: colors),
             const BookingDraftResumeCard(),
+            const ActiveBookingCard(
+              placement: ActiveBookingCardPlacement.homeSheet,
+            ),
             HomeSearchHeroCard(colors: colors, typo: typo, l10n: l10n),
             if (announcement != null)
               HomeAnnouncementBanner(
@@ -70,9 +95,22 @@ class HomeBottomSheet extends ConsumerWidget {
                 colors: colors,
                 typo: typo,
               ),
-            if (showFallbackNoSupply)
-              HomeAvailabilityCard(colors: colors, typo: typo, l10n: l10n),
+            if (showFavoriteSupplyInsight)
+              HomeFavoriteSupplyInsightCard(
+                snapshot: favoriteSupplySnapshot,
+                colors: colors,
+                typo: typo,
+                l10n: l10n,
+              ),
+            if (showSupplyInsight)
+              HomeSupplyInsightCard(
+                snapshot: supplySnapshot,
+                colors: colors,
+                typo: typo,
+                l10n: l10n,
+              ),
             HomeRideAgainSection(colors: colors, typo: typo, l10n: l10n),
+            HomeSavedTripsSection(colors: colors, typo: typo, l10n: l10n),
             HomeBookingOptionsGrid(colors: colors, typo: typo, l10n: l10n),
             HomeRecentPlacesSection(colors: colors, typo: typo, l10n: l10n),
             SizedBox(

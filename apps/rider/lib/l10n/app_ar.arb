@@ -21,6 +21,8 @@
   "homeSmartOptionsTitle": "كيف تريد أن تركب؟",
   "homeBestPriceTitle": "السوق",
   "homeBestPriceSubtitle": "السائقون يتنافسون على رحلتك.",
+  "homeTaxiTerugTitle": "TAXI TERUG",
+  "homeTaxiTerugSubtitle": "ابحث عن سائقين متجهين نحوك بالفعل.",
   "homeScheduleLaterTitle": "جدولة لاحقاً",
   "homeScheduleLaterSubtitle": "اختر وقت الالتقاط المناسب لك.",
   "homePopularAirportsTitle": "شائع",
@@ -29,7 +31,50 @@
   "homeGreetingAfternoon": "مساء الخير،",
   "homeGreetingEvening": "مساء الخير،",
   "homeEnterDestination": "أدخل وجهتك",
-  "homeNoTaxisNearbySubtitle": "يمكنك طلب رحلة — سنُعلمك عند توفر سائق.",
+  "homeNoTaxisNearbySubtitle": "يمكنك طلب رحلة. سنُعلمك عندما يقبل سائق.",
+  "homeSupplyNoneTitle": "لا سائقين قريبين منك",
+  "homeSupplyNoneSubtitle": "جرّب السوق أو جدول رحلة لاحقًا.",
+  "homeSupplyNearbyTitle": "{count, plural, one{سائق واحد قريب} other{{count} سائقين قريبين}}",
+  "@homeSupplyNearbyTitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "homeSupplyNearbySubtitle": "الأقرب على بعد نحو {distanceKm} كم",
+  "@homeSupplyNearbySubtitle": {
+    "placeholders": {
+      "distanceKm": { "type": "String" }
+    }
+  },
+  "homeSupplyNearbySubtitleShort": "عادةً استلام سريع من هنا",
+  "homeSupplyZoneEmptyTitle": "لا سائقين في منطقتك",
+  "homeSupplyZoneEmptySubtitle": "{count, plural, one{سائق واحد ضمن 10 كم} other{{count} سائقين ضمن 10 كم}}",
+  "@homeSupplyZoneEmptySubtitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "homeSupplyFarTitle": "السائقون أبعد",
+  "homeSupplyFarSubtitle": "{count, plural, one{سائق واحد متصل} other{{count} سائقين متصلين}} · الأقرب نحو {distanceKm} كم",
+  "@homeSupplyFarSubtitle": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "distanceKm": { "type": "String" }
+    }
+  },
+  "homeFavoriteSupplyTitle": "{count, plural, =1{سائق مفضل واحد متصل} other{{count} من سائقيك المفضلين متصلون}}",
+  "@homeFavoriteSupplyTitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "homeFavoriteSupplySubtitle": "الأقرب على بعد {distanceKm} كم · احجز الآن",
+  "@homeFavoriteSupplySubtitle": {
+    "placeholders": {
+      "distanceKm": { "type": "String" }
+    }
+  },
+  "homeFavoriteSupplySubtitleShort": "بالقرب الآن · احجز الآن",
   "homeRideAgainTitle": "اركب مجدداً",
   "homeRideAgainViewAll": "عرض الكل",
   "homeRideAgainBookAgain": "احجز مجدداً",
@@ -48,6 +93,7 @@
   },
   "homeRecentPlacesTitle": "أماكن حديثة",
   "homeRecentPlacesEdit": "تعديل",
+  "savedTripsTitle": "الرحلات المحفوظة",
   "homeCompleteProfile": "أكمل الملف",
   "vehicleCategoryTitle": "هل تحتاج إلى مركبة محددة؟",
   "homeAirportChipSchiphol": "سخيبول",
@@ -75,6 +121,7 @@
   "confirmDestination": "تأكيد الوجهة",
   "rateYourDriver": "قيّم سائقك",
   "howWasYourRide": "كيف كانت رحلتك؟",
+  "ratingAddNoteOptional": "أضف ملاحظة (اختياري)",
   "whatDidYouLike": "ما الذي أعجبك؟",
   "additionalFeedback": "ملاحظات إضافية (اختياري)",
   "tellUsMore": "أخبرنا المزيد عن تجربتك...",
@@ -315,12 +362,29 @@
     }
   },
   "noFavouritesYet": "لا يوجد مفضلون بعد",
+  "saveDriverLabel": "احفظ هذا السائق",
+  "saveDriverSubtitle": "أضف إلى سائقين الموثوقين للحجز السريع",
+  "saveDriverModalTitle": "حفظ هذا السائق؟",
+  "saveDriverModalBody": "لقد قدمت تقييماً جيداً. أضف هذا السائق إلى مفضلتك للحجز بشكل أسرع لاحقاً.",
+  "saveDriverModalConfirm": "حفظ في المفضلة",
+  "saveDriverModalDismiss": "ليس الآن",
+  "saveDriverWillSaveHint": "سيُحفظ في مفضلتك عند الإرسال",
+  "driverSaved": "تم حفظ السائق في المفضلين",
+  "removeFromFavorites": "إزالة من المفضلين",
+  "driverRemoved": "تمت إزالة السائق من المفضلين",
+  "driverOffline": "غير متصل",
+  "driverAvailableNow": "متاح الآن",
+  "favoritesLimitReached": "لديك بالفعل 10 سائقين مفضلين. أزل واحدًا قبل إضافة سائق جديد.",
   "paymentMethod": "طريقة الدفع",
   "cash": "نقداً",
   "pin": "بطاقة",
   "tikkie": "تيكي",
   "instantRide": "فوري",
   "scheduledRide": "مجدول",
+  "marketplaceStepRoute": "المسار",
+  "marketplaceStepOffer": "عرضك",
+  "marketplaceStepPost": "نشر",
+  "marketplaceIntroBody": "حدد سعرك. يختار السائقون القبول أو العرض المقابل أو التجاوز. وأنت تختار من تركب معه.",
   "marketplace": "السوق",
   "marketplaceTagline": "السائقون يتنافسون على رحلتك.",
   "makeAnOffer": "السوق",
@@ -520,6 +584,12 @@
   "riderProfileHomeNudgeNameOnly": "أضف اسم الحجز من الحساب للوصول إلى 100٪.",
   "riderProfileHomeNudgeEmailOnly": "أضف بريدك من الحساب للوصول إلى 100٪.",
   "yourRoute": "مسارك",
+  "rideTimeline": "تقدم الرحلة",
+  "rideTimelineStepAccepted": "قبل السائق الرحلة",
+  "rideTimelineStepEnRoute": "في الطريق إلى نقطة الالتقاط",
+  "rideTimelineStepArrived": "عند نقطة الالتقاط",
+  "rideTimelineStepInProgress": "الرحلة جارية",
+  "rideTimelineStepCompleted": "اكتملت الرحلة",
   "howDoYouWantToBook": "كيف تريد الحجز؟",
   "howWillYouPay": "كيف ستدفع؟",
   "laterButton": "لاحقاً",
@@ -770,11 +840,11 @@
   "searchFactIndependentDrivers": "السائقون المستقلون يحددون أسعارهم",
   "searchFactOwnPrices": "لا رسوم مبالغ فيها - أبداً",
   "searchFactOwnFuel": "السائقون يدفعون ثمن وقودهم",
-  "searchFactVerifiedDrivers": "جميع السائقين موثقون",
+  "searchFactVerifiedDrivers": "السائقون على HeyCaby يعملون كمحترفي تاكسي مرخصين",
   "searchFactFavorites": "نرسل طلبك أولاً لسائقيك المحفوظين، ثم لأي سائق متاح قريباً إن لم يقبل أحد.",
   "searchEnterPickupHint": "أدخل موقع الالتقاط",
   "goWhereverWhenever": "اذهب أينما تشاء، متى تشاء.",
-  "noTaxisInZone": "لا توجد سيارات أجرة في منطقتك",
+  "noTaxisInZone": "لا يوجد سائقون قريبون حالياً",
   "oneTaxiInZone": "سيارة أجرة واحدة في منطقتك",
   "taxisInZone": "{count}+ سيارة أجرة في منطقتك",
   "@taxisInZone": {
@@ -1122,17 +1192,31 @@
   "deleteSavedAddress": "حذف",
   "searchFactDriversKeep100": "السائقون يحتفظون بـ 100٪ من أرباحهم. HeyCaby لا تأخذ أي عمولة.",
   "searchFactNoSurgePricing": "لا توجد أسعار متضاعفة. أبدًا. السعر الذي تراه هو السعر الذي تدفعه.",
-  "searchFactAllVerified": "كل رخصة، كل تأمين، كل تصريح — تم التحقق منها قبل البدء.",
+  "searchFactAllVerified": "HeyCaby مخصصة للتاكسي المرخص — نقل مهني حقيقي، وليس سيارات خاصة كتطبيقات التوصيل.",
   "searchFactMarketplace": "السائقون العائدون إلى مدنهم يقدمون أحيانًا أسعارًا أقل. تحقق من السوق للحصول على أفضل سعر.",
   "searchFactZZP": "كل سائق Caby محترف مستقل. أنت تسافر مع شخص فخور بعمله.",
   "searchFactSaveAddresses": "هل تسكن في روتردام؟ انقر على أيقونة المنزل مرة واحدة وسيتم ملء وجهتك تلقائيًا.",
   "searchFactPayHowYouWant": "نقدًا أو Tikkie أو بطاقة — سيخبرك سائقك بالخيارات المتاحة.",
+  "searchDidYouKnowEyebrow": "هل تعلم؟",
   "searchingTitle": "نبحث عن أقرب Caby…",
   "matchingTitleMarketplace": "نبحث عن Caby من السوق…",
   "matchingTitleScheduled": "نبحث عن Caby لرحلتك المجدولة…",
   "matchingStatusLive": "مباشر",
   "matchingStatusWindow": "الوقت",
   "matchingStatusOffers": "العروض",
+  "dispatchWave0Title": "نحاول ربطك بـ {name} أولاً…",
+  "dispatchWave1Title": "جاري البحث عن سائق",
+  "dispatchWave2Title": "ما زلنا نبحث…",
+  "dispatchWave3Title": "نصل إلى المزيد من السائقين…",
+  "dispatchWave4Title": "نبحث في نطاق أوسع…",
+  "dispatchNoDriversTitle": "لا يوجد سائقون متاحون الآن",
+  "dispatchWaveDriversNotified": "{count, plural, one{تم إبلاغ سائق واحد} other{تم إبلاغ {count} سائقين}}",
+  "dispatchWaveClosestEta": "الأقرب: {km} كم · ~{minutes} د",
+  "dispatchWaveExpandKm": "توسيع البحث إلى {km} كم",
+  "dispatchWaveFarEta": "سائق على بعد {km} كم قد يصل خلال ~{minutes} د",
+  "dispatchSurgeBanner": "طلب مرتفع — نبحث بسرعة",
+  "dispatchLowDensityBanner": "نبحث في منطقة أوسع — سائقون أقل متصلين",
+  "dispatchNoDriversBody": "جميع السائقين القريبين مشغولون أو غير متصلين. حاول لاحقاً أو جدول رحلة.",
   "homeNearTermTitleInstant": "جارٍ العثور على Caby",
   "homeNearTermTitleMarketplace": "طلب من السوق",
   "homeNearTermTitleScheduled": "رحلة مجدولة",
@@ -1143,6 +1227,7 @@
   "activeBookingMarketplaceTitle": "جارٍ البحث عن عروض",
   "activeBookingScheduledTitle": "الرحلة المجدولة نشطة",
   "activeBookingTapForDetails": "اضغط لعرض التقدم مع بقاء الخريطة أمامك.",
+  "activeBookingCollapseHome": "طي إلى الملخص",
   "activeBookingKeepAliveTitle": "طلبك ما زال يعمل",
   "activeBookingKeepAliveBody": "يمكنك الرجوع إلى الرئيسية أو قفل هاتفك. سنواصل البحث ونخبرك عند حدوث أي تغيير.",
   "activeBookingDriversNotified": "{count, plural, =0{لم يستلم أي سائق طلبك} one{استلم سائق واحد طلبك} other{استلم {count} سائقين طلبك}}",
@@ -1194,8 +1279,17 @@
     }
   },
   "activeBookingScheduledSearchingBody": "بدأ البحث عن سائق لرحلتك المجدولة.",
+  "activeBookingScheduledSearchStarts": "يبدأ البحث عن سائق {searchStarts}",
+  "@activeBookingScheduledSearchStarts": {
+    "placeholders": {
+      "searchStarts": { "type": "String" }
+    }
+  },
+  "activeBookingScheduledQueuedTitle": "الرحلة المجدولة في قائمة الانتظار",
+  "activeBookingScheduledQueuedBody": "سنبدأ البحث قبل 30 دقيقة من موعد الاستلام ونخطرك.",
   "rideMatchingTypeLabelInstant": "رحلة فورية",
   "rideMatchingTypeLabelMarketplace": "السوق",
+  "rideMatchingTypeLabelTerug": "TAXI TERUG",
   "rideMatchingTypeLabelScheduled": "مجدولة",
   "activeSearchStopTitle": "إيقاف البحث؟",
   "activeSearchStopBody": "سنلغي طلب الرحلة هذا. لن يراه السائقون ولن تصلك إشعارات منهم. يمكنك الحجز مجددًا في أي وقت.",
@@ -1211,6 +1305,21 @@
   },
   "ridesScheduledMatchingSection": "طلبات مجدولة قادمة",
   "noDriverFoundCard": "لم يُعثر على Caby بعد. ماذا تريد أن تفعل؟",
+  "searchNoSupplyInlineTitle": "لا سائقين قريبين",
+  "searchNoSupplyInlineBody": "لم نعثر على سائقين قرب نقطة الالتقاط. جدول لاحقًا أو جرّب السوق. سنستمر في البحث.",
+  "searchNoSupplySheetTitle": "لا سائقين قريبين",
+  "searchExpiredSheetTitle": "لم يقبل أي سائق بعد",
+  "searchExpiredSheetBody": "انتهى بحثك الذي استمر {minutes} دقيقة دون مطابقة. اختر خطوتك التالية.",
+  "@searchExpiredSheetBody": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "searchKeepSearching": "متابعة البحث",
+  "searchSeeOptions": "جدولة أو السوق",
+  "searchExpiredShareSecondary": "تعرف سائقًا؟ شارك HeyCaby",
   "notifyMeWhenFound": "أعلمني",
   "scheduleRideInstead": "جدولة",
   "activeSearchBannerSubtitle": "سنرسل إشعارًا فور العثور على سائق.",
@@ -1250,7 +1359,37 @@
   "activeRidePlateNumber": "رقم اللوحة",
   "activeRideUnknownPlate": "غير معروف",
   "activeRideFoundingMember": "عضو مؤسس",
-  "activeRideVerifyPlate": "يرجى التحقق من هذه اللوحة قبل دخول المركبة.",
+  "activeRideVerifyPlate": "تحقق من تطابق رقم اللوحة قبل الصعود.",
+  "activeRideVerifyPlateButton": "تأكيد اللوحة",
+  "activeRidePlateVerifiedSaved": "تم حفظ التحقق من اللوحة",
+  "activeRidePlateVerifiedOffline": "تم الحفظ على جهازك — سيتم المزامنة عند عودة الاتصال",
+  "ridePayDriverTitle": "ادفع لسائقك",
+  "ridePayDriverBody": "أنهى سائقك الرحلة للتو. ادفع الأجرة الآن قبل مغادرة المركبة.",
+  "ridePayDriverAmountCaption": "المبلغ المطلوب",
+  "ridePayDriverPayVia": "ادفع عبر {method}",
+  "@ridePayDriverPayVia": {
+    "placeholders": {
+      "method": { "type": "String" }
+    }
+  },
+  "ridePayDriverAddTip": "+ إكرامية",
+  "ridePayDriverTotalCaption": "المجموع المطلوب",
+  "ridePayDriverFareLine": "الأجرة",
+  "ridePayDriverTipLine": "إكرامية",
+  "ridePayDriverConfirmWithTotal": "دفعت {amount}",
+  "@ridePayDriverConfirmWithTotal": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "ridePayDriverAmount": "المبلغ المستحق: {amount}",
+  "@ridePayDriverAmount": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "ridePayDriverConfirm": "لقد دفعت",
+  "ridePayDriverDismiss": "لحظة",
   "activeRideWaitingFeeWaived": "تم التنازل عن رسوم الانتظار",
   "activeRideWaitingFreePickupTime": "وقت استلام مجاني",
   "activeRideWaitingTime": "وقت الانتظار",
@@ -1281,6 +1420,33 @@
       }
     }
   },
+  "activeRideWaitingTripTotal": "إجمالي الرحلة",
+  "activeRideWaitingFeeLine": "+{amount} انتظار",
+  "@activeRideWaitingFeeLine": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideWaitingBaseFare": "الأساس {amount}",
+  "@activeRideWaitingBaseFare": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideWaitingFreeWindow": "{minutes} د مجاناً",
+  "@activeRideWaitingFreeWindow": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideTimelinePickup": "الالتقاط",
+  "activeRideTimelineDestination": "الوجهة",
   "activeRideContactDriver": "اتصل بالسائق",
   "openAction": "فتح",
   "rideReceiptTitle": "إيصال الرحلة",
@@ -1376,6 +1542,7 @@
     }
   },
   "activeRideDriverOutside": "سائقك بالخارج",
+  "activeRideDriverFound": "تم العثور على السائق",
   "activeRideMaxFourSeats": "حتى 4 مقاعد",
   "activeRideSeatsMax": "حتى {seats} مقاعد",
   "@activeRideSeatsMax": {

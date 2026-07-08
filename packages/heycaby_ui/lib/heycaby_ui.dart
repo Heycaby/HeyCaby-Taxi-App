@@ -12,4 +12,6 @@ export 'src/theme/theme_provider.dart';
 export 'src/theme/theme_registry.dart';
 export 'src/theme/typography.dart';
 export 'src/widgets/glass_panel.dart';
+export 'src/widgets/hey_caby_confirm_sheet.dart';
+export 'src/widgets/money_silhouette_icon.dart';
 export 'src/widgets/taf_invite_illustration.dart';

@@ -18,32 +18,24 @@ Future<void> launchDriverNavigation({
   final pref =
       ref.read(driverNavAppPrefProvider).valueOrNull ?? DriverNavApp.waze;
 
-  if (lat == null || lng == null) {
-    final fallback = addressFallback?.trim();
-    if (fallback != null && fallback.isNotEmpty) {
-      HapticService.selectionClick();
-      final opened = await DriverNavigationLauncher.launchAddress(
-        destination: fallback,
-        app: pref,
-      );
-      if (opened || !context.mounted) return;
-    }
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(coordinatesUnavailableMessage)),
-    );
-    return;
-  }
-
   HapticService.selectionClick();
-  final opened = await DriverNavigationLauncher.launchPreferred(
+  final opened = await DriverNavigationLauncher.launchToDestination(
+    app: pref,
     lat: lat,
     lng: lng,
-    app: pref,
+    address: addressFallback,
   );
-  if (!opened && context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text(DriverStrings.noNavigationAppAvailable)),
-    );
-  }
+  if (opened || !context.mounted) return;
+
+  final hasAddress = addressFallback?.trim().isNotEmpty == true;
+  final hasCoords = DriverNavigationLauncher.coordsAreValid(lat, lng);
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        hasAddress || hasCoords
+            ? DriverStrings.noNavigationAppAvailable
+            : coordinatesUnavailableMessage,
+      ),
+    ),
+  );
 }

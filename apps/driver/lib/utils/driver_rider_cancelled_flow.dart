@@ -60,33 +60,15 @@ Future<void> showDriverRiderCancelledModal(
 ) {
   final themeColors = ref.read(colorsProvider);
   final typo = ref.read(typographyProvider);
-  return showDialog<void>(
-    context: context,
+  return showHeyCabyAcknowledgeSheet(
+    context,
+    colors: themeColors,
+    typography: typo,
+    title: DriverStrings.riderCancelledTitle,
+    message: DriverStrings.riderCancelledBody,
+    actionLabel: DriverStrings.riderCancelledCta,
+    icon: Icons.person_off_outlined,
+    iconColor: themeColors.warning,
     barrierDismissible: false,
-    builder: (ctx) => AlertDialog(
-      icon: Icon(Icons.person_off_outlined, color: themeColors.warning, size: 40),
-      title: Text(
-        DriverStrings.riderCancelledTitle,
-        style: typo.titleMedium.copyWith(
-          color: themeColors.text,
-          fontWeight: FontWeight.w800,
-        ),
-        textAlign: TextAlign.center,
-      ),
-      content: Text(
-        DriverStrings.riderCancelledBody,
-        style: typo.bodyMedium.copyWith(color: themeColors.textMid, height: 1.35),
-        textAlign: TextAlign.center,
-      ),
-      actions: [
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text(DriverStrings.riderCancelledCta),
-          ),
-        ),
-      ],
-    ),
   );
 }

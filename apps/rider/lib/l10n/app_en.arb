@@ -21,6 +21,8 @@
   "homeSmartOptionsTitle": "How do you want to ride?",
   "homeBestPriceTitle": "Marketplace",
   "homeBestPriceSubtitle": "Drivers compete for your trip.",
+  "homeTaxiTerugTitle": "TAXI TERUG",
+  "homeTaxiTerugSubtitle": "Find drivers already heading your way.",
   "homeScheduleLaterTitle": "Schedule later",
   "homeScheduleLaterSubtitle": "Pick a pickup time that works for you.",
   "homePopularAirportsTitle": "Popular",
@@ -29,7 +31,50 @@
   "homeGreetingAfternoon": "Good afternoon,",
   "homeGreetingEvening": "Good evening,",
   "homeEnterDestination": "Enter your destination",
-  "homeNoTaxisNearbySubtitle": "You can request and we'll notify you when a driver is available.",
+  "homeNoTaxisNearbySubtitle": "You can still request a ride. We will notify you when a driver accepts.",
+  "homeSupplyNoneTitle": "No drivers near you",
+  "homeSupplyNoneSubtitle": "Try Marketplace or schedule a ride for later.",
+  "homeSupplyNearbyTitle": "{count, plural, one{1 driver nearby} other{{count} drivers nearby}}",
+  "@homeSupplyNearbyTitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "homeSupplyNearbySubtitle": "Closest about {distanceKm} km away",
+  "@homeSupplyNearbySubtitle": {
+    "placeholders": {
+      "distanceKm": { "type": "String" }
+    }
+  },
+  "homeSupplyNearbySubtitleShort": "Usually a quick pickup from here",
+  "homeSupplyZoneEmptyTitle": "No drivers in your zone",
+  "homeSupplyZoneEmptySubtitle": "{count, plural, one{1 driver within 10 km} other{{count} drivers within 10 km}}",
+  "@homeSupplyZoneEmptySubtitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "homeSupplyFarTitle": "Drivers are further away",
+  "homeSupplyFarSubtitle": "{count, plural, one{1 driver online} other{{count} drivers online}} · closest about {distanceKm} km",
+  "@homeSupplyFarSubtitle": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "distanceKm": { "type": "String" }
+    }
+  },
+  "homeFavoriteSupplyTitle": "{count, plural, =1{1 of your favourite drivers is online} other{{count} of your favourite drivers are online}}",
+  "@homeFavoriteSupplyTitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "homeFavoriteSupplySubtitle": "Closest about {distanceKm} km away · Book now",
+  "@homeFavoriteSupplySubtitle": {
+    "placeholders": {
+      "distanceKm": { "type": "String" }
+    }
+  },
+  "homeFavoriteSupplySubtitleShort": "Nearby now · Book now",
   "homeRideAgainTitle": "Ride again",
   "homeRideAgainViewAll": "View all",
   "homeRideAgainBookAgain": "Book again",
@@ -44,6 +89,7 @@
   },
   "homeRecentPlacesTitle": "Recent places",
   "homeRecentPlacesEdit": "Edit",
+  "savedTripsTitle": "Saved trips",
   "homeCompleteProfile": "Complete profile",
   "vehicleCategoryTitle": "Do you need a specific vehicle?",
   "homeAirportChipSchiphol": "Schiphol",
@@ -71,10 +117,17 @@
   "confirmDestination": "Confirm destination",
   "rateYourDriver": "Rate your driver",
   "howWasYourRide": "How was your ride?",
+  "ratingAddNoteOptional": "Add a note (optional)",
   "whatDidYouLike": "What did you like?",
   "additionalFeedback": "Additional feedback (optional)",
   "tellUsMore": "Tell us more about your experience...",
   "submitRating": "Submit Rating",
+  "tipDriverTitle": "Tip your driver",
+  "tipDriverSubtitle": "100% goes to your driver. Added after the ride.",
+  "tipAmountCustom": "Custom",
+  "tipNoTip": "No tip",
+  "tipSubmitWithTip": "Submit Rating + Tip",
+  "tipAdded": "Tip added",
   "ratingCategorySectionTitle": "Rate specific areas",
   "ratingCategorySubtitle": "Each area uses 1–5 stars. They start matching your overall rating — adjust any that differ.",
   "ratingDimensionPunctuality": "Punctuality",
@@ -272,12 +325,29 @@
     }
   },
   "noFavouritesYet": "No favourites yet",
+  "saveDriverLabel": "Save this driver",
+  "saveDriverSubtitle": "Add to your trusted drivers for quick rebooking",
+  "saveDriverModalTitle": "Save this driver?",
+  "saveDriverModalBody": "You gave a great rating. Add this driver to your favourites for quicker booking next time.",
+  "saveDriverModalConfirm": "Save to favourites",
+  "saveDriverModalDismiss": "Not now",
+  "saveDriverWillSaveHint": "Will be saved to your favourites when you submit",
+  "driverSaved": "Driver saved to your favourites",
+  "removeFromFavorites": "Remove from favourites",
+  "driverRemoved": "Driver removed from favourites",
+  "driverOffline": "Offline",
+  "driverAvailableNow": "Available now",
+  "favoritesLimitReached": "You already have 10 favourite drivers. Remove one before adding a new driver.",
   "paymentMethod": "Payment method",
   "cash": "Cash",
   "pin": "PIN",
   "tikkie": "Tikkie",
   "instantRide": "Instant",
   "scheduledRide": "Schedule",
+  "marketplaceStepRoute": "Route",
+  "marketplaceStepOffer": "Your offer",
+  "marketplaceStepPost": "Post",
+  "marketplaceIntroBody": "Set your price. Drivers choose to accept, counter, or pass. You pick who to ride with.",
   "marketplace": "Marketplace",
   "marketplaceTagline": "Drivers compete for your trip.",
   "makeAnOffer": "Marketplace",
@@ -459,6 +529,12 @@
   "riderProfileHomeNudgeNameOnly": "Add your booking name on Account to reach 100%.",
   "riderProfileHomeNudgeEmailOnly": "Add your email on Account to reach 100%.",
   "yourRoute": "Your route",
+  "rideTimeline": "Ride progress",
+  "rideTimelineStepAccepted": "Driver accepted",
+  "rideTimelineStepEnRoute": "On the way to pickup",
+  "rideTimelineStepArrived": "At pickup",
+  "rideTimelineStepInProgress": "Trip in progress",
+  "rideTimelineStepCompleted": "Trip complete",
   "howDoYouWantToBook": "How do you want to book?",
   "howWillYouPay": "How will you pay?",
   "laterButton": "Later",
@@ -618,6 +694,16 @@
   "accountChecklistDone": "Done",
   "accountChecklistMissing": "Missing",
   "accountTripReadyBody": "Your profile helps drivers recognize you and keeps repeat bookings quick.",
+  "riderRatingTitle": "Your rider rating",
+  "riderRatingSubtitle": "Based on driver feedback after completed rides.",
+  "riderRatingNoRating": "No rating yet",
+  "riderRatingNoRatingBody": "Complete a few rides to start building your reputation.",
+  "riderRatingTrips": "{count} trips rated",
+  "@riderRatingTrips": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "accountBookingNameLabel": "Booking name",
   "accountBookingNameHint": "What should drivers call you?",
   "accountBookingNameDescription": "This name will be shown to drivers when you book a ride.",
@@ -694,11 +780,11 @@
   "searchFactIndependentDrivers": "Independent drivers set their own prices",
   "searchFactOwnPrices": "No surge pricing - ever",
   "searchFactOwnFuel": "Drivers pay for their own fuel",
-  "searchFactVerifiedDrivers": "All drivers are verified",
+  "searchFactVerifiedDrivers": "Drivers on HeyCaby work as licensed taxi professionals",
   "searchFactFavorites": "We notify your saved drivers first, then open the ride to everyone nearby if none accept.",
   "searchEnterPickupHint": "Enter pickup location",
   "goWhereverWhenever": "Go wherever, whenever.",
-  "noTaxisInZone": "No taxis in your zone",
+  "noTaxisInZone": "No drivers nearby right now",
   "oneTaxiInZone": "1 taxi in your zone",
   "taxisInZone": "{count}+ taxis in your zone",
   "@taxisInZone": {
@@ -1045,17 +1131,58 @@
   "deleteSavedAddress": "Delete",
   "searchFactDriversKeep100": "Drivers keep 100% of their earnings. HeyCaby takes zero commission per ride.",
   "searchFactNoSurgePricing": "No surge pricing. Ever. The price you see is the price you pay.",
-  "searchFactAllVerified": "Every licence, every insurance, every chauffeurspas — checked by us before going online.",
+  "searchFactAllVerified": "HeyCaby is built for licensed taxis — professional transport, not private gig-hail cars.",
   "searchFactMarketplace": "Drivers heading home sometimes ride for less. Check the marketplace for the best price.",
   "searchFactZZP": "Every Caby driver is an independent professional. You ride with someone proud of their work.",
   "searchFactSaveAddresses": "Live in Rotterdam? Tap the house icon once and your destination is filled in. Always.",
   "searchFactPayHowYouWant": "Cash, Tikkie, card or invoice — your driver will tell you which options are available.",
+  "searchDidYouKnowEyebrow": "Did you know?",
   "searchingTitle": "Finding you a Caby…",
   "matchingTitleMarketplace": "Finding a marketplace Caby…",
   "matchingTitleScheduled": "Finding a Caby for your scheduled ride…",
   "matchingStatusLive": "Live",
   "matchingStatusWindow": "Window",
   "matchingStatusOffers": "Offers",
+  "dispatchWave0Title": "Connecting you with {name} first…",
+  "@dispatchWave0Title": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "dispatchWave1Title": "Finding your driver",
+  "dispatchWave2Title": "Still looking…",
+  "dispatchWave3Title": "Reaching more drivers…",
+  "dispatchWave4Title": "Searching further…",
+  "dispatchNoDriversTitle": "No drivers available right now",
+  "dispatchWaveDriversNotified": "{count, plural, one{1 driver notified} other{{count} drivers notified}}",
+  "@dispatchWaveDriversNotified": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "dispatchWaveClosestEta": "Closest: {km} km · ~{minutes} min",
+  "@dispatchWaveClosestEta": {
+    "placeholders": {
+      "km": {"type": "String"},
+      "minutes": {"type": "int"}
+    }
+  },
+  "dispatchWaveExpandKm": "Expanding search to {km} km",
+  "@dispatchWaveExpandKm": {
+    "placeholders": {
+      "km": {"type": "int"}
+    }
+  },
+  "dispatchWaveFarEta": "Someone {km} km away could be with you in ~{minutes} min",
+  "@dispatchWaveFarEta": {
+    "placeholders": {
+      "km": {"type": "String"},
+      "minutes": {"type": "int"}
+    }
+  },
+  "dispatchSurgeBanner": "High demand right now — searching quickly",
+  "dispatchLowDensityBanner": "Searching across a wider area — fewer drivers online right now",
+  "dispatchNoDriversBody": "All nearby drivers are busy or offline. Try again in a few minutes or schedule for later.",
   "homeNearTermTitleInstant": "Finding your Caby",
   "homeNearTermTitleMarketplace": "Marketplace request",
   "homeNearTermTitleScheduled": "Scheduled ride",
@@ -1066,6 +1193,7 @@
   "activeBookingMarketplaceTitle": "Searching for offers",
   "activeBookingScheduledTitle": "Scheduled ride active",
   "activeBookingTapForDetails": "Tap to view progress without losing the map.",
+  "activeBookingCollapseHome": "Collapse to summary",
   "activeBookingKeepAliveTitle": "Your request keeps running",
   "activeBookingKeepAliveBody": "You can return home or lock your phone. We’ll keep searching and notify you when anything changes.",
   "activeBookingDriversNotified": "{count, plural, =0{0 drivers received your request} one{1 driver received your request} other{{count} drivers received your request}}",
@@ -1117,8 +1245,17 @@
     }
   },
   "activeBookingScheduledSearchingBody": "Driver search has started for your scheduled ride.",
+  "activeBookingScheduledSearchStarts": "Driver search starts {searchStarts}",
+  "@activeBookingScheduledSearchStarts": {
+    "placeholders": {
+      "searchStarts": { "type": "String" }
+    }
+  },
+  "activeBookingScheduledQueuedTitle": "Scheduled ride queued",
+  "activeBookingScheduledQueuedBody": "We'll start searching 30 minutes before pickup and notify you.",
   "rideMatchingTypeLabelInstant": "Instant ride",
   "rideMatchingTypeLabelMarketplace": "Marketplace",
+  "rideMatchingTypeLabelTerug": "TAXI TERUG",
   "rideMatchingTypeLabelScheduled": "Scheduled",
   "activeSearchStopTitle": "Stop searching?",
   "activeSearchStopBody": "We'll cancel this ride request. Drivers will stop seeing it, and you won't get driver notifications for it. You can book again anytime.",
@@ -1134,6 +1271,21 @@
   },
   "ridesScheduledMatchingSection": "Upcoming scheduled requests",
   "noDriverFoundCard": "No Caby found yet. What would you like to do?",
+  "searchNoSupplyInlineTitle": "No drivers close by",
+  "searchNoSupplyInlineBody": "We could not find any drivers near your pickup. Schedule for later or try Marketplace. We will keep searching.",
+  "searchNoSupplySheetTitle": "No drivers close by",
+  "searchExpiredSheetTitle": "No driver accepted yet",
+  "searchExpiredSheetBody": "Your {minutes}-minute search ended without a match. Pick your next step.",
+  "@searchExpiredSheetBody": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "searchKeepSearching": "Keep searching",
+  "searchSeeOptions": "Schedule or Marketplace",
+  "searchExpiredShareSecondary": "Know a driver? Share HeyCaby",
   "notifyMeWhenFound": "Notify Me",
   "scheduleRideInstead": "Schedule",
   "activeSearchBannerSubtitle": "We'll notify you as soon as we find one.",
@@ -1212,6 +1364,7 @@
     }
   },
   "activeRideDriverOutside": "Your driver is outside",
+  "activeRideDriverFound": "Driver found",
   "activeRideMaxFourSeats": "4 seats max",
   "activeRideSeatsMax": "{seats} seats max",
   "@activeRideSeatsMax": {
@@ -1227,6 +1380,14 @@
   "activeRideShareSubtitle": "Share live trip link",
   "activeRideReportSubtitle": "Submit ride report",
   "activeRideSupportSubtitle": "Safety and help",
+  "safetySheetTitle": "Safety",
+  "safetySheetShareTrip": "Share trip",
+  "safetySheetShareTripSubtitle": "Share live trip link with contacts",
+  "safetySheetReport": "Report an issue",
+  "safetySheetReportSubtitle": "Submit a ride report",
+  "safetySheetEmergency": "Emergency call (112)",
+  "safetySheetEmergencySubtitle": "Call European emergency services",
+  "safetySheetCancel": "Cancel",
   "activeRidePickupNotSet": "Pickup not set",
   "activeRideDestinationNotSet": "Destination not set",
   "activeRideShareDetails": "Share ride details",
@@ -1248,7 +1409,37 @@
   "activeRidePlateNumber": "Plate number",
   "activeRideUnknownPlate": "UNKNOWN",
   "activeRideFoundingMember": "Founding Member",
-  "activeRideVerifyPlate": "Please verify this plate before entering the vehicle.",
+  "activeRideVerifyPlate": "Check the plate number matches before you get in.",
+  "activeRideVerifyPlateButton": "Confirm plate",
+  "activeRidePlateVerifiedSaved": "Plate verification saved",
+  "activeRidePlateVerifiedOffline": "Saved on device — will sync when you're back online",
+  "ridePayDriverTitle": "Pay your driver",
+  "ridePayDriverBody": "Your driver just ended the trip. Pay the fare now before you leave the vehicle.",
+  "ridePayDriverAmountCaption": "Amount to pay",
+  "ridePayDriverPayVia": "Pay via {method}",
+  "@ridePayDriverPayVia": {
+    "placeholders": {
+      "method": { "type": "String" }
+    }
+  },
+  "ridePayDriverAddTip": "+ Tip",
+  "ridePayDriverTotalCaption": "Total to pay",
+  "ridePayDriverFareLine": "Fare",
+  "ridePayDriverTipLine": "Tip",
+  "ridePayDriverConfirmWithTotal": "I've paid {amount}",
+  "@ridePayDriverConfirmWithTotal": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "ridePayDriverAmount": "Fare due: {amount}",
+  "@ridePayDriverAmount": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "ridePayDriverConfirm": "I've paid",
+  "ridePayDriverDismiss": "One moment",
   "activeRideWaitingFeeWaived": "Waiting fee waived",
   "activeRideWaitingFreePickupTime": "Free pickup time",
   "activeRideWaitingTime": "Waiting time",
@@ -1279,6 +1470,33 @@
       }
     }
   },
+  "activeRideWaitingTripTotal": "Trip total",
+  "activeRideWaitingFeeLine": "+{amount} waiting",
+  "@activeRideWaitingFeeLine": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideWaitingBaseFare": "Base {amount}",
+  "@activeRideWaitingBaseFare": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideWaitingFreeWindow": "{minutes} min free",
+  "@activeRideWaitingFreeWindow": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideTimelinePickup": "Pickup",
+  "activeRideTimelineDestination": "Drop-off",
   "openAction": "Open",
   "openLinkAction": "Open link",
   "rideReceiptTitle": "Ride receipt",

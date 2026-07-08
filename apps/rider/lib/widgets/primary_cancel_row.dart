@@ -8,39 +8,17 @@ Future<bool> showCancelBookingDialog(
   required HeyCabyTypography typography,
 }) async {
   final l10n = AppLocalizations.of(context);
-  final result = await showDialog<bool>(
-    context: context,
-    builder: (_) => AlertDialog(
-      backgroundColor: colors.card,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      title: Text(
-        l10n.cancelBookingTitle,
-        style: typography.headingMedium.copyWith(color: colors.text),
-      ),
-      content: Text(
-        l10n.cancelBookingMessage,
-        style: typography.bodyMedium.copyWith(color: colors.textMid),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: Text(
-            l10n.keepGoing,
-            style: typography.labelLarge.copyWith(color: colors.textMid),
-          ),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, true),
-          child: Text(
-            l10n.cancel,
-            style: typography.labelLarge.copyWith(color: colors.error),
-          ),
-        ),
-      ],
-    ),
+  return showHeyCabyConfirmSheet(
+    context,
+    colors: colors,
+    typography: typography,
+    title: l10n.cancelBookingTitle,
+    message: l10n.cancelBookingMessage,
+    dismissLabel: l10n.keepGoing,
+    confirmLabel: l10n.cancel,
+    icon: Icons.close_rounded,
+    confirmDestructive: true,
   );
-
-  return result ?? false;
 }
 
 class PrimaryCancelRow extends StatelessWidget {
@@ -111,4 +89,3 @@ class PrimaryCancelRow extends StatelessWidget {
     );
   }
 }
-

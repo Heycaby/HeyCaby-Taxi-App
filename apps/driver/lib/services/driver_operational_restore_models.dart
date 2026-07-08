@@ -1,4 +1,5 @@
 import '../providers/driver_state_provider.dart';
+import '../utils/driver_ride_coord_utils.dart';
 
 /// Maps server `drivers.status` to client availability (no active ride).
 DriverAppState driverAvailabilityFromServerStatus(String? status) {
@@ -88,20 +89,22 @@ class DriverActiveRideSnapshot {
   final String? riderContactName;
 
   factory DriverActiveRideSnapshot.fromRow(Map<String, dynamic> row) {
-    final rideId = row['id'] as String;
-    final status = row['status'] as String?;
+    final map = Map<String, dynamic>.from(row);
+    enrichDriverRideRequestCoords(map);
+    final rideId = map['id'] as String;
+    final status = map['status'] as String?;
     return DriverActiveRideSnapshot(
       rideId: rideId,
       appState: driverAppStateFromRideStatus(status),
-      pickupAddress: row['pickup_address'] as String?,
-      pickupLat: (row['pickup_lat'] as num?)?.toDouble(),
-      pickupLng: (row['pickup_lng'] as num?)?.toDouble(),
-      destinationAddress: row['destination_address'] as String?,
-      destinationLat: (row['destination_lat'] as num?)?.toDouble(),
-      destinationLng: (row['destination_lng'] as num?)?.toDouble(),
-      bookingMode: row['booking_mode'] as String?,
-      paymentMethod: _paymentMethodFromRow(row),
-      riderContactName: row['pickup_contact_name'] as String?,
+      pickupAddress: map['pickup_address'] as String?,
+      pickupLat: (map['pickup_lat'] as num?)?.toDouble(),
+      pickupLng: (map['pickup_lng'] as num?)?.toDouble(),
+      destinationAddress: map['destination_address'] as String?,
+      destinationLat: (map['destination_lat'] as num?)?.toDouble(),
+      destinationLng: (map['destination_lng'] as num?)?.toDouble(),
+      bookingMode: map['booking_mode'] as String?,
+      paymentMethod: _paymentMethodFromRow(map),
+      riderContactName: map['pickup_contact_name'] as String?,
     );
   }
 

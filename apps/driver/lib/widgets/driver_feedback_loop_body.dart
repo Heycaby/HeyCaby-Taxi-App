@@ -7,10 +7,10 @@ import '../theme/driver_motion_presets.dart';
 import '../theme/driver_radius.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
-import '../ui/driver_button.dart';
-import 'driver_trust_flow_common.dart';
+import 'driver_ride_bolt_layout.dart';
+import 'driver_ride_flow_common.dart';
 
-/// **Feedback Loop** — post-ride rider rating.
+/// **Feedback Loop** — Bolt-style post-ride rider rating.
 class DriverFeedbackLoopBody extends StatelessWidget {
   const DriverFeedbackLoopBody({
     super.key,
@@ -28,6 +28,12 @@ class DriverFeedbackLoopBody extends StatelessWidget {
     this.commentHint,
     this.submitLabel,
     this.skipLabel,
+    this.riderName,
+    this.destinationAddress,
+    this.pickupLat,
+    this.pickupLng,
+    this.destLat,
+    this.destLng,
   });
 
   final DriverColors colors;
@@ -44,40 +50,43 @@ class DriverFeedbackLoopBody extends StatelessWidget {
   final String? commentHint;
   final String? submitLabel;
   final String? skipLabel;
+  final String? riderName;
+  final String? destinationAddress;
+  final double? pickupLat;
+  final double? pickupLng;
+  final double? destLat;
+  final double? destLng;
 
   @override
   Widget build(BuildContext context) {
-    final bottomPad = MediaQuery.paddingOf(context).bottom;
     final effectiveHeadline = headline ?? DriverStrings.rateRiderHeadline;
     final effectiveCommentHint =
         commentHint ?? DriverStrings.rateRiderCommentHint;
     final effectiveSubmitLabel = submitLabel ?? DriverStrings.rateRiderSubmit;
     final effectiveSkipLabel = skipLabel ?? DriverStrings.rateRiderSkip;
 
-    return DriverTrustFlowScaffold(
-      title: DriverStrings.rateRider,
+    return DriverRideBoltScaffold(
       colors: colors,
       typography: typography,
-      leadingClose: true,
-      onBack: onClose,
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(
-          DriverSpacing.screenEdge,
-          DriverSpacing.xl,
-          DriverSpacing.screenEdge,
-          bottomPad + DriverSpacing.lg,
-        ),
-        child: Column(
+      phase: DriverRideBoltPhase.completed,
+      pickupLat: pickupLat,
+      pickupLng: pickupLng,
+      destLat: destLat,
+      destLng: destLng,
+      driverLat: destLat,
+      driverLng: destLng,
+      onClose: onClose,
+      infoCard: DriverRideBoltInfoCard(
+        colors: colors,
+        typography: typography,
+        heroPrimary: effectiveHeadline,
+        heroSecondary: null,
+        focusAddress: destinationAddress ?? '',
+        riderName: riderName,
+        successTone: true,
+        extra: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              effectiveHeadline,
-              style: typography.titleLarge.copyWith(
-                color: colors.text,
-                fontWeight: FontWeight.w700,
-              ),
-            ).driverFadeSlideIn(staggerIndex: 0),
-            const SizedBox(height: DriverSpacing.xl),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(5, (i) {
@@ -100,15 +109,15 @@ class DriverFeedbackLoopBody extends StatelessWidget {
                         filled
                             ? Icons.star_rounded
                             : Icons.star_outline_rounded,
-                        size: 40,
+                        size: 44,
                         color: filled ? colors.primary : colors.border,
                       ),
                     ),
                   ),
                 );
               }),
-            ).driverFadeSlideIn(staggerIndex: 1),
-            const SizedBox(height: DriverSpacing.xl),
+            ).driverFadeSlideIn(staggerIndex: 0),
+            const SizedBox(height: DriverSpacing.lg),
             ListenableBuilder(
               listenable: commentController,
               builder: (context, _) {
@@ -120,33 +129,38 @@ class DriverFeedbackLoopBody extends StatelessWidget {
                       controller: commentController,
                       maxLength: maxCommentLength,
                       maxLines: 3,
-                      style: typography.bodyMedium.copyWith(color: colors.text),
+                      style:
+                          typography.bodyMedium.copyWith(color: colors.text),
                       decoration: InputDecoration(
                         hintText: effectiveCommentHint,
                         hintStyle: typography.bodyMedium.copyWith(
                           color: colors.textMuted,
                         ),
                         filled: true,
-                        fillColor: colors.card,
+                        fillColor: colors.backgroundAlt.withValues(alpha: 0.7),
                         counterText: '',
-                        contentPadding: const EdgeInsets.all(DriverSpacing.lg),
+                        contentPadding:
+                            const EdgeInsets.all(DriverSpacing.lg),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(DriverRadius.md),
+                          borderRadius:
+                              BorderRadius.circular(DriverRadius.md),
                           borderSide: BorderSide(color: colors.border),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(DriverRadius.md),
+                          borderRadius:
+                              BorderRadius.circular(DriverRadius.md),
                           borderSide: BorderSide(color: colors.border),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(DriverRadius.md),
+                          borderRadius:
+                              BorderRadius.circular(DriverRadius.md),
                           borderSide: BorderSide(
                             color: colors.primary,
                             width: 2,
                           ),
                         ),
                       ),
-                    ).driverFadeSlideIn(staggerIndex: 2),
+                    ),
                     const SizedBox(height: DriverSpacing.sm),
                     Text(
                       '$commentLength/$maxCommentLength',
@@ -158,25 +172,18 @@ class DriverFeedbackLoopBody extends StatelessWidget {
                 );
               },
             ),
-            const SizedBox(height: DriverSpacing.xl),
-            DriverButton(
-              label: effectiveSubmitLabel,
-              colors: colors,
-              typography: typography,
-              loading: loading,
-              onPressed: loading ? null : onSubmit,
-              size: DriverButtonSize.lg,
-            ).driverFadeSlideIn(staggerIndex: 3),
-            const SizedBox(height: DriverSpacing.md),
-            DriverButton(
-              label: effectiveSkipLabel,
-              colors: colors,
-              typography: typography,
-              variant: DriverButtonVariant.ghost,
-              onPressed: loading ? null : onSkip,
-            ),
           ],
         ),
+      ),
+      bottomBar: DriverRideFlowBottomBar(
+        colors: colors,
+        typography: typography,
+        primaryLabel: effectiveSubmitLabel,
+        primaryIcon: Icons.check_rounded,
+        onPrimary: loading ? null : onSubmit,
+        primaryLoading: loading,
+        tertiaryLabel: effectiveSkipLabel,
+        onTertiary: loading ? null : onSkip,
       ),
     );
   }

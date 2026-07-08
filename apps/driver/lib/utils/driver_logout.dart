@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
+import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
@@ -10,35 +11,27 @@ import '../services/location_service.dart';
 
 /// Signs out of Supabase, clears driver session state, and navigates to [loginRoute].
 ///
-/// Shows a confirmation dialog first. Safe to call from drawer, profile, etc.
+/// Shows a confirmation sheet first. Safe to call from drawer, profile, etc.
 Future<void> performDriverLogout(
   BuildContext context,
   WidgetRef ref, {
   String loginRoute = '/login',
 }) async {
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (ctx) {
-      final err = Theme.of(ctx).colorScheme.error;
-      return AlertDialog(
-        title: Text(DriverStrings.logout),
-        content: const Text(DriverStrings.logoutConfirm),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(DriverStrings.cancel),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: err),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(DriverStrings.logoutConfirmAction),
-          ),
-        ],
-      );
-    },
+  final colors = ref.read(colorsProvider);
+  final typo = ref.read(typographyProvider);
+  final confirmed = await showHeyCabyConfirmSheet(
+    context,
+    colors: colors,
+    typography: typo,
+    title: DriverStrings.logout,
+    message: DriverStrings.logoutConfirm,
+    dismissLabel: DriverStrings.cancel,
+    confirmLabel: DriverStrings.logoutConfirmAction,
+    icon: Icons.logout_rounded,
+    confirmDestructive: true,
   );
 
-  if (confirmed != true || !context.mounted) return;
+  if (!confirmed || !context.mounted) return;
 
   DriverLocationService().resetSession();
 

@@ -57,6 +57,8 @@ class BookingDraftStorage {
       'estimated_fare_euro': s.estimatedFareEuro,
       'marketplace_bid_euro': s.marketplaceBidEuro,
       'favorites_first': s.favoritesFirst,
+      'favorites_only': s.favoritesOnly,
+      'marketplace_driver_audience': s.marketplaceDriverAudience.name,
       'return_trip_fare_estimates': s.returnTripFareEstimatesEnabled,
     };
   }
@@ -99,12 +101,29 @@ class BookingDraftStorage {
         : <String>[];
     final bandMin = m['trip_price_band_min'];
     final bandMax = m['trip_price_band_max'];
+    final favoritesOnly = m['favorites_only'] as bool? ?? false;
+    final favoritesFirst = (m['favorites_first'] as bool?) ?? favoritesOnly;
+    final audienceRaw = m['marketplace_driver_audience'] as String?;
+    MarketplaceDriverAudience audience = MarketplaceDriverAudience.everyone;
+    if (audienceRaw != null) {
+      for (final value in MarketplaceDriverAudience.values) {
+        if (value.name == audienceRaw) {
+          audience = value;
+          break;
+        }
+      }
+    } else if (favoritesOnly) {
+      audience = MarketplaceDriverAudience.myDriversOnly;
+    } else if (favoritesFirst) {
+      audience = MarketplaceDriverAudience.myDriversFirst;
+    }
     return BookingState(
       mode: mode,
       pickup: pickup,
       destination: dest,
-      favoritesFirst: (m['favorites_first'] as bool?) ??
-          (m['favorites_only'] as bool? ?? false),
+      favoritesFirst: favoritesFirst,
+      favoritesOnly: favoritesOnly,
+      marketplaceDriverAudience: audience,
       scheduledAt: sched,
       pickupContactName: m['pickup_contact_name'] as String?,
       paymentMethods: methods,

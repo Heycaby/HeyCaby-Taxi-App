@@ -1,6 +1,15 @@
 # Supabase migrations (HeyCaby)
 
-Apply with the [Supabase CLI](https://supabase.com/docs/guides/cli) linked to project `fvrprxguoternoxnyhoj`, or paste SQL into **Dashboard → SQL Editor**.
+## Projects
+
+| Environment | Dashboard name | Project ref (`project_id`) | URL |
+|-------------|----------------|----------------------------|-----|
+| **Staging (QA / device tests)** | HeyCaby Staging | `fdavszxncggswuiwggcp` | `https://fdavszxncggswuiwggcp.supabase.co` |
+| Production | HEYCABY-TAXI | `fvrprxguoternoxnyhoj` | `https://fvrprxguoternoxnyhoj.supabase.co` |
+
+**Always apply and smoke-test migrations on staging first.** Promote to production only after staging passes or when explicitly requested.
+
+Apply with the [Supabase CLI](https://supabase.com/docs/guides/cli) linked to the target project, or paste SQL into **Dashboard → SQL Editor** (use MCP `apply_migration` with the correct `project_id`).
 
 ## Environment-specific webhook config
 

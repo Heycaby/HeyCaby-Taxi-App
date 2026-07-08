@@ -28,6 +28,28 @@ void main() {
       );
     });
 
+    test('builds Waze address deep link with optional coordinates', () {
+      expect(
+        DriverNavigationLauncher.wazeNativeAddressUri(
+          'Coolsingel 40, Rotterdam',
+          lat: 51.9225,
+          lng: 4.47917,
+        ).toString(),
+        'waze://?q=Coolsingel%2040%2C%20Rotterdam&ll=51.9225,4.47917&navigate=yes',
+      );
+      expect(
+        DriverNavigationLauncher.wazeNativeAddressUri(
+          'Stationplein 17A, Rotterdam',
+        ).toString(),
+        'waze://?q=Stationplein%2017A%2C%20Rotterdam&navigate=yes',
+      );
+    });
+
+    test('coordsAreValid rejects null island', () {
+      expect(DriverNavigationLauncher.coordsAreValid(0, 0), isFalse);
+      expect(DriverNavigationLauncher.coordsAreValid(52.37, 4.89), isTrue);
+    });
+
     test('builds address fallback web links', () {
       final googleFallback = DriverNavigationLauncher.googleWebSearchUri(
         'H.B.S. Laan 8, Oud-Beijerland',

@@ -1,7 +1,7 @@
 import '../providers/booking_provider.dart';
 
-/// Which matching UX to show — separate routes for instant vs marketplace vs scheduled.
-enum RideMatchingVariant { instant, marketplace, scheduled }
+/// Which matching UX to show — TAXI TERUG reuses the marketplace-style route.
+enum RideMatchingVariant { instant, marketplace, scheduled, terug }
 
 extension RideMatchingVariantRoute on RideMatchingVariant {
   String get routePath {
@@ -9,6 +9,7 @@ extension RideMatchingVariantRoute on RideMatchingVariant {
       case RideMatchingVariant.instant:
         return '/searching';
       case RideMatchingVariant.marketplace:
+      case RideMatchingVariant.terug:
         return '/marketplace-matching';
       case RideMatchingVariant.scheduled:
         return '/scheduled-matching';
@@ -20,6 +21,8 @@ RideMatchingVariant rideMatchingVariantForBookingModeString(String? mode) {
   switch (mode) {
     case 'marketplace':
       return RideMatchingVariant.marketplace;
+    case 'terug':
+      return RideMatchingVariant.terug;
     case 'scheduled':
       return RideMatchingVariant.scheduled;
     default:
@@ -31,6 +34,8 @@ RideMatchingVariant rideMatchingVariantForBookingMode(BookingMode mode) {
   switch (mode) {
     case BookingMode.marketplace:
       return RideMatchingVariant.marketplace;
+    case BookingMode.terug:
+      return RideMatchingVariant.terug;
     case BookingMode.scheduled:
       return RideMatchingVariant.scheduled;
     case BookingMode.instant:
@@ -47,5 +52,7 @@ String bookingModeStorageString(BookingMode mode) {
       return 'marketplace';
     case BookingMode.scheduled:
       return 'scheduled';
+    case BookingMode.terug:
+      return 'terug';
   }
 }

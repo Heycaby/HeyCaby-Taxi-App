@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:heycaby_api/src/app_notifications_service.dart';
 import 'package:heycaby_api/src/driver_billing_edge_service.dart';
@@ -7,10 +8,20 @@ import 'package:heycaby_api/src/supabase_client.dart';
 
 /// Supabase RPC [fn_driver_accept_ride_invite] returned a business error (no HTTP fallback).
 class DriverAcceptRideException implements Exception {
-  const DriverAcceptRideException(this.code);
+  const DriverAcceptRideException(
+    this.code, {
+    this.message,
+    this.reason,
+    this.details,
+  });
+
   final String code;
+  final String? message;
+  final String? reason;
+  final Map<String, dynamic>? details;
+
   @override
-  String toString() => code;
+  String toString() => message ?? code;
 }
 
 /// Supabase ride lifecycle RPC returned a business error.
@@ -245,21 +256,55 @@ class DriverApi {
     throw UnsupportedError('Use driver-agent Edge for rider pings.');
   }
 
-  /// Atomic Supabase RPC [fn_driver_accept_ride_invite] — no HTTP fallback.
+  /// Atomic Supabase RPC [fn_driver_accept_ride_invite] — instant / invite rides.
   Future<void> acceptRide({required String rideRequestId}) async {
+    await _invokeAcceptRpc('fn_driver_accept_ride_invite', rideRequestId);
+  }
+
+  /// Planned scheduled work — no live invite required.
+  Future<void> acceptScheduledRide({required String rideRequestId}) async {
+    await _invokeAcceptRpc('fn_driver_accept_scheduled_ride', rideRequestId);
+  }
+
+  Future<void> _invokeAcceptRpc(String rpcName, String rideRequestId) async {
     try {
       final r = await HeyCabySupabase.client.rpc(
-        'fn_driver_accept_ride_invite',
+        rpcName,
         params: {'p_ride_request_id': rideRequestId},
       );
-      if (r is Map && r['ok'] == true) return;
-      final err =
-          r is Map ? r['error']?.toString() ?? 'rpc_failed' : 'rpc_failed';
-      throw DriverAcceptRideException(err);
+      if (r is Map) {
+        if (r['ok'] == true) return;
+        final details = r['details'];
+        throw DriverAcceptRideException(
+          r['error']?.toString() ??
+              r['reason']?.toString() ??
+              'rpc_failed',
+          message: r['message']?.toString(),
+          reason: r['reason']?.toString(),
+          details: details is Map
+              ? Map<String, dynamic>.from(details)
+              : null,
+        );
+      }
+      throw const DriverAcceptRideException('rpc_failed');
     } on DriverAcceptRideException {
       rethrow;
+    } on PostgrestException catch (e) {
+      throw DriverAcceptRideException(
+        e.code ?? 'rpc_error',
+        message: e.message,
+        reason: 'rpc_error',
+        details: {
+          if (e.hint != null) 'hint': e.hint,
+          if (e.details != null) 'details': e.details,
+        },
+      );
     } catch (e) {
-      throw DriverAcceptRideException('rpc_unavailable:${e.toString()}');
+      throw DriverAcceptRideException(
+        'rpc_unavailable',
+        message: e.toString(),
+        reason: 'rpc_unavailable',
+      );
     }
   }
 

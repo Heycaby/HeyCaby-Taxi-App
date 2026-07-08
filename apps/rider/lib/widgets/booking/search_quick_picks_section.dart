@@ -7,6 +7,7 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../../providers/local_recent_addresses_provider.dart';
 import '../../providers/saved_addresses_provider.dart';
+import '../home/home_ride_again_section.dart';
 import 'local_recent_addresses_sheet.dart';
 
 int _savedTypeOrder(String type) {
@@ -76,59 +77,13 @@ class SearchQuickPicksSection extends ConsumerWidget {
     }
 
     Widget browseRow() {
-      return Row(
-        children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () => context.push('/saved-addresses'),
-              icon: Icon(Icons.bookmark_outline_rounded,
-                  color: colors.accent, size: 20),
-              label: Text(
-                l10n.searchBrowseSavedPlaces,
-                style: typo.labelMedium.copyWith(
-                  color: colors.accent,
-                  fontWeight: FontWeight.w700,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: colors.accent.withValues(alpha: 0.45)),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: openRecentSheet,
-              icon: Icon(Icons.history_rounded, color: colors.accent, size: 20),
-              label: Text(
-                l10n.searchBrowseRecentPlaces,
-                style: typo.labelMedium.copyWith(
-                  color: colors.accent,
-                  fontWeight: FontWeight.w700,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: colors.accent.withValues(alpha: 0.45)),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-              ),
-            ),
-          ),
-        ],
+      return _SearchBrowseLinks(
+        colors: colors,
+        typo: typo,
+        savedLabel: l10n.searchBrowseSavedPlaces,
+        recentLabel: l10n.searchBrowseRecentPlaces,
+        onBrowseSaved: () => context.push('/saved-addresses'),
+        onBrowseRecent: openRecentSheet,
       );
     }
 
@@ -138,11 +93,12 @@ class SearchQuickPicksSection extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            HomeRideAgainSection(colors: colors, typo: typo, l10n: l10n),
             Text(
               l10n.searchStartTypingHint,
               style: typo.bodyMedium.copyWith(color: colors.textMid, height: 1.5),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
             browseRow(),
           ],
         ),
@@ -154,6 +110,7 @@ class SearchQuickPicksSection extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          HomeRideAgainSection(colors: colors, typo: typo, l10n: l10n),
           if (pinned.isNotEmpty) ...[
             Text(
               l10n.savedAddresses,
@@ -238,15 +195,113 @@ class SearchQuickPicksSection extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
           ],
           browseRow(),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             l10n.searchStartTypingHint,
             style: typo.bodySmall.copyWith(color: colors.textSoft, height: 1.45),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Compact secondary links — saved places & full recent list.
+class _SearchBrowseLinks extends StatelessWidget {
+  const _SearchBrowseLinks({
+    required this.colors,
+    required this.typo,
+    required this.savedLabel,
+    required this.recentLabel,
+    required this.onBrowseSaved,
+    required this.onBrowseRecent,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final String savedLabel;
+  final String recentLabel;
+  final VoidCallback onBrowseSaved;
+  final VoidCallback onBrowseRecent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 4,
+        runSpacing: 2,
+        children: [
+          _BrowseLink(
+            colors: colors,
+            typo: typo,
+            icon: Icons.bookmark_outline_rounded,
+            label: savedLabel,
+            onTap: onBrowseSaved,
+          ),
+          Text(
+            '·',
+            style: typo.labelLarge.copyWith(color: colors.textSoft),
+          ),
+          _BrowseLink(
+            colors: colors,
+            typo: typo,
+            icon: Icons.history_rounded,
+            label: recentLabel,
+            onTap: onBrowseRecent,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BrowseLink extends StatelessWidget {
+  const _BrowseLink({
+    required this.colors,
+    required this.typo,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        HapticService.lightTap();
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsetsDirectional.symmetric(
+          horizontal: 6,
+          vertical: 4,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: colors.accent),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: typo.labelLarge.copyWith(
+                color: colors.accent,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

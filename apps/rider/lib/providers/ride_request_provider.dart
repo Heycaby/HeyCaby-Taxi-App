@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_models/heycaby_models.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
+import 'package:heycaby_utils/heycaby_utils.dart';
 
 import '../constants/rider_search_window.dart';
 import '../models/ride_matching_variant.dart';
@@ -121,7 +122,9 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
       final activeRide = await HeyCabySupabase.client
           .from('ride_requests')
           .select(
-            'id, status, created_at, booking_mode, pickup_address, destination_address',
+            'id, status, created_at, booking_mode, pickup_address, destination_address, '
+            'offered_fare, quoted_fare, estimated_fare, marketplace_offered_fare, '
+            'pickup_coords, destination_coords',
           )
           .eq('rider_token', identity.riderToken!)
           .inFilter('status', [
@@ -207,6 +210,7 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
                 : null),
         bookingMode: resolvedBookingMode,
       );
+      _hydrateBookingFromRideRequestRow(Map<String, dynamic>.from(activeRide));
       return true;
     } catch (e) {
       if (kDebugMode) debugPrint('tryRestoreActiveRideRequest: $e');
@@ -241,12 +245,15 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
       }
       return false;
     }
-    if (booking.effectiveRideMode == BookingMode.marketplace &&
+    final requiresNamedPrice =
+        booking.effectiveRideMode == BookingMode.marketplace ||
+            booking.effectiveRideMode == BookingMode.terug;
+    if (requiresNamedPrice &&
         (booking.marketplaceBidEuro == null ||
             booking.marketplaceBidEuro! <= 0)) {
       if (kDebugMode) {
         debugPrint(
-            'CreateRide failed: marketplace requires marketplaceBidEuro');
+            'CreateRide failed: named-price ride requires marketplaceBidEuro');
       }
       return false;
     }
@@ -291,14 +298,13 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
       }
       if (verifiedIdentityId != null && verifiedIdentityId.isNotEmpty) {
         try {
-          dynamic query = supabase
+          // Look up by id only — the identity may have user_id = null
+          // (guest riders created via fn_create_rider_session).
+          final row = await supabase
               .from('rider_identities')
               .select('id')
-              .eq('id', verifiedIdentityId);
-          if (authUserId != null && authUserId.isNotEmpty) {
-            query = query.eq('user_id', authUserId);
-          }
-          final row = await query.maybeSingle();
+              .eq('id', verifiedIdentityId)
+              .maybeSingle();
           if (row == null) {
             verifiedIdentityId = null;
           }
@@ -311,6 +317,8 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
       }
 
       // Fallback: resolve the rider identity that belongs to the current auth user.
+      // Try by user_id first, then by email (identities created via
+      // fn_create_rider_session have user_id = null but do have email).
       if ((verifiedIdentityId == null || verifiedIdentityId.isEmpty) &&
           authUserId != null &&
           authUserId.isNotEmpty) {
@@ -331,9 +339,29 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
         }
       }
 
+      // Fallback 2: try by email when user_id lookup failed (guest identities).
+      final email = (identity.email ?? '').trim().toLowerCase();
+      if ((verifiedIdentityId == null || verifiedIdentityId.isEmpty) &&
+          email.isNotEmpty) {
+        try {
+          final byEmail = await supabase
+              .from('rider_identities')
+              .select('id')
+              .eq('email', email)
+              .order('created_at', ascending: false)
+              .limit(1)
+              .maybeSingle();
+          final emailId = byEmail?['id'] as String?;
+          if (emailId != null && emailId.isNotEmpty) {
+            verifiedIdentityId = emailId;
+          }
+        } catch (_) {
+          // Keep null; fn_create_rider_session fallback below may still work.
+        }
+      }
+
       // Final fallback: re-issue rider session from backend (email-based) so
       // session_token + rider_identity_id are aligned for current auth context.
-      final email = (identity.email ?? '').trim().toLowerCase();
       if ((verifiedIdentityId == null || verifiedIdentityId.isEmpty) &&
           email.isNotEmpty) {
         try {
@@ -373,13 +401,19 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
       final destLng = booking.destination!.lng;
       final destLat = booking.destination!.lat;
 
-      final tripKm = NearbySupplyService.distanceKm(
-        pickupLat,
-        pickupLng,
-        destLat,
-        destLng,
-      );
-      final durationMin = (tripKm / 0.5).ceil().clamp(1, 480);
+      final tripKm = booking.routeDistanceKm ??
+          NearbySupplyService.distanceKm(
+            pickupLat,
+            pickupLng,
+            destLat,
+            destLng,
+          );
+      final durationMin = booking.routeDurationMin ??
+          HeyCabyFormatters.estimateDrivingMinutes(tripKm);
+
+      // Keep Supabase flags aligned with marketplace audience picker.
+      final favoritesOnly = booking.favoritesOnly;
+      final favoritesFirst = favoritesOnly || booking.favoritesFirst;
 
       final body = <String, dynamic>{
         // PostGIS geography coordinates - POINT(lng lat)
@@ -415,23 +449,25 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
         if (riderToken != null && riderToken.isNotEmpty)
           'rider_token': riderToken,
         if (verifiedIdentityId != null) 'rider_identity_id': verifiedIdentityId,
-        // Marketplace: DB chk_marketplace_requires_fare → marketplace_offered_fare NOT NULL
-        if (booking.effectiveRideMode ==
-            BookingMode.marketplace) ...<String, dynamic>{
+        // Named-price rides: DB constraint requires marketplace_offered_fare.
+        if (requiresNamedPrice) ...<String, dynamic>{
           'marketplace_offered_fare': booking.marketplaceBidEuro!,
-          'offered_fare': booking.marketplaceBidEuro,
+          ...HeyCabyRideFare.fareSnapshotForInsert(
+            booking.marketplaceBidEuro!.toDouble(),
+          ),
         },
-        if (booking.effectiveRideMode != BookingMode.marketplace &&
-            booking.estimatedFareEuro != null)
-          'offered_fare': booking.estimatedFareEuro,
+        if (!requiresNamedPrice &&
+            booking.quotedFareEuro != null &&
+            booking.quotedFareEuro! > 0)
+          ...HeyCabyRideFare.fareSnapshotForInsert(booking.quotedFareEuro!),
 
         // Direct dispatch: target a specific driver (1 driver per job enforced by DB)
         if (booking.selectedDriverId != null)
           'preferred_driver_id': booking.selectedDriverId,
         if (booking.paymentMethods.isNotEmpty)
           'payment_methods': booking.paymentMethods,
-        'favorites_first': booking.favoritesFirst,
-        'favorites_only': booking.favoritesOnly,
+        'favorites_first': favoritesFirst,
+        'favorites_only': favoritesOnly,
       };
 
       // Save booking name progressively if newly entered
@@ -518,7 +554,8 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
           .from('ride_requests')
           .select(
             'id, status, created_at, booking_mode, pickup_address, destination_address, '
-            'scheduled_pickup_at, pickup_coords, destination_coords, marketplace_offered_fare',
+            'scheduled_pickup_at, pickup_coords, destination_coords, marketplace_offered_fare, '
+            'offered_fare, quoted_fare, estimated_fare',
           )
           .eq('id', rideRequestId)
           .eq('rider_token', identity.riderToken!)
@@ -581,6 +618,9 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
       case 'scheduled':
         mode = BookingMode.scheduled;
         break;
+      case 'terug':
+        mode = BookingMode.terug;
+        break;
       default:
         mode = BookingMode.instant;
     }
@@ -593,9 +633,11 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
 
     final fareRaw = m['marketplace_offered_fare'];
     int? marketplaceBid;
-    if (fareRaw is num) {
+    if (fareRaw is num && fareRaw > 0) {
       marketplaceBid = fareRaw.round();
     }
+
+    final restoredFare = HeyCabyRideFare.resolveEuroFromRow(m);
 
     ref.read(bookingProvider.notifier).restoreFromDraft(
           BookingState(
@@ -604,6 +646,9 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
             destination: de,
             scheduledAt: scheduledAt,
             marketplaceBidEuro: marketplaceBid,
+            estimatedFareEuro: restoredFare,
+            tripPriceBandMinEuro: restoredFare,
+            tripPriceBandMaxEuro: restoredFare,
           ),
         );
   }

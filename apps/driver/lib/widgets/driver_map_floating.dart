@@ -8,6 +8,7 @@ import '../theme/app_icons.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
+import '../theme/driver_motion.dart';
 import '../theme/driver_motion_presets.dart';
 import '../providers/driver_data_providers.dart';
 import '../providers/driver_resilience_inset_provider.dart';
@@ -175,11 +176,13 @@ class DriverMapFloating extends ConsumerWidget {
         : driver.appState == DriverAppState.onBreak
             ? DriverStatusKind.onBreak
             : DriverStatusKind.offline;
-    showDialog(
+    showGeneralDialog<void>(
       context: context,
       barrierDismissible: true,
       barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-      builder: (dialogContext) => DriverEarningsModal(
+      barrierColor: Colors.transparent,
+      transitionDuration: DriverMotion.standard,
+      pageBuilder: (dialogContext, _, __) => DriverEarningsModal(
         todayEarnings: todayStr,
         zoneName: zoneName,
         statusKind: statusKind,
@@ -233,6 +236,9 @@ class DriverMapFloating extends ConsumerWidget {
           if (context.mounted) Navigator.of(dialogContext).pop();
         },
       ),
+      transitionBuilder: (context, animation, _, child) {
+        return FadeTransition(opacity: animation, child: child);
+      },
     );
   }
 

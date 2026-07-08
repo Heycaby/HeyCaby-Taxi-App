@@ -12,6 +12,7 @@ import '../theme/driver_radius.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_ping_history_section.dart';
+import '../widgets/driver_ride_premium_style.dart';
 import '../utils/driver_rider_ping.dart';
 
 /// Communication center — chat + quick status pings (no phone numbers).
@@ -115,26 +116,18 @@ class _DriverRideCommunicationSheetState
           constraints: BoxConstraints(
             maxHeight: MediaQuery.sizeOf(context).height * 0.86,
           ),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: widget.colors.card,
-              borderRadius: DriverRadius.sheetTop,
-              border: Border.all(color: widget.colors.border),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.14),
-                  blurRadius: 30,
-                  offset: const Offset(0, -10),
-                ),
-              ],
+          child: DriverRidePremiumStyle.glassSurface(
+            colors: widget.colors,
+            borderRadius: DriverRadius.sheetTop,
+            blurSigma: 26,
+            tintOpacity: 0.8,
+            padding: EdgeInsets.fromLTRB(
+              DriverSpacing.lg,
+              DriverSpacing.md,
+              DriverSpacing.lg,
+              DriverSpacing.lg + bottom,
             ),
             child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                DriverSpacing.lg,
-                DriverSpacing.md,
-                DriverSpacing.lg,
-                DriverSpacing.lg + bottom,
-              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,

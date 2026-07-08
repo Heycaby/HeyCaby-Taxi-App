@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../theme/driver_colors.dart';
 import '../theme/driver_radius.dart';
-import '../theme/driver_shadows.dart';
 import '../theme/driver_spacing.dart';
+import '../widgets/driver_ride_premium_style.dart';
 
 /// Elevated surface card — soft shadow, token radii.
 class DriverCard extends StatelessWidget {
@@ -27,10 +27,11 @@ class DriverCard extends StatelessWidget {
     final content = Container(
       margin: margin,
       padding: padding ?? const EdgeInsets.all(DriverSpacing.lg),
-      decoration: BoxDecoration(
-        color: colors.card,
+      decoration: DriverRidePremiumStyle.frostedFill(
+        colors,
         borderRadius: DriverRadius.mdAll,
-        boxShadow: DriverShadows.card(colors),
+        tint: colors.card,
+        tintOpacity: 0.62,
       ),
       child: child,
     );

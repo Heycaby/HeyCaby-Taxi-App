@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:local_auth/local_auth.dart';
 
 import '../l10n/driver_strings.dart';
@@ -19,27 +20,21 @@ Future<bool> confirmShiftHandoverHighRiskAction(BuildContext context) async {
       );
     }
   } catch (_) {
-    // Fall through to dialog confirm.
+    // Fall through to sheet confirm.
   }
 
   if (!context.mounted) return false;
-  final confirmed = await showDialog<bool>(
-    context: context,
+  final theme = kThemes[kDriverDefaultTheme]!;
+  return showHeyCabyConfirmSheet(
+    context,
+    colors: theme.colors,
+    typography: theme.typography,
+    title: DriverStrings.shiftHandoverEndShiftConfirmTitle,
+    message: DriverStrings.shiftHandoverEndShiftConfirmBody,
+    dismissLabel: DriverStrings.cancel,
+    confirmLabel: DriverStrings.shiftHandoverEndShift,
+    icon: Icons.handshake_rounded,
+    confirmDestructive: true,
     barrierDismissible: false,
-    builder: (ctx) => AlertDialog(
-      title: const Text(DriverStrings.shiftHandoverEndShiftConfirmTitle),
-      content: const Text(DriverStrings.shiftHandoverEndShiftConfirmBody),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(false),
-          child: Text(DriverStrings.cancel),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(ctx).pop(true),
-          child: const Text(DriverStrings.shiftHandoverEndShift),
-        ),
-      ],
-    ),
   );
-  return confirmed == true;
 }

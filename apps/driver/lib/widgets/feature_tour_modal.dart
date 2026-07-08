@@ -124,33 +124,34 @@ class _FeatureTourSheetState extends ConsumerState<_FeatureTourSheet> {
     final typo = ref.watch(typographyProvider);
     final isLast = _page == _kCards.length - 1;
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.52,
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        border: Border.all(color: colors.border),
-      ),
-      child: Column(
-        children: [
-          // Drag handle
-          Padding(
-            padding: const EdgeInsets.only(top: 12, bottom: 8),
-            child: Column(
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colors.border,
-                    borderRadius: BorderRadius.circular(100),
+    return GlassPanel(
+      colors: colors,
+      typography: typo,
+      padding: EdgeInsets.zero,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      tintColor: colors.card,
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.52,
+        child: Column(
+          children: [
+            // Drag handle
+            Padding(
+              padding: const EdgeInsets.only(top: 12, bottom: 8),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.border,
+                      borderRadius: BorderRadius.circular(100),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                const HeyCabyDriverLogo(width: 100),
-              ],
+                  const SizedBox(height: 10),
+                  const HeyCabyDriverLogo(width: 100),
+                ],
+              ),
             ),
-          ),
 
           // Page indicator dots
           Padding(
@@ -229,6 +230,7 @@ class _FeatureTourSheetState extends ConsumerState<_FeatureTourSheet> {
             ),
           ),
         ],
+        ),
       ),
     );
   }

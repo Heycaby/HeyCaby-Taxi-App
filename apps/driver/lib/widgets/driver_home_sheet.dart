@@ -7,7 +7,6 @@ import '../l10n/driver_strings.dart';
 import '../theme/app_icons.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_radius.dart';
-import '../theme/driver_shadows.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
 import '../theme/driver_motion_presets.dart';
@@ -17,6 +16,7 @@ import '../providers/driver_state_provider.dart';
 import '../services/driver_data_service.dart';
 import 'driver_home_live_rides_section.dart';
 import 'driver_home_premium_style.dart';
+import 'driver_hub_saved_by_riders_section.dart';
 import 'driver_progressive_verification_banner.dart';
 import 'three_state_toggle.dart';
 
@@ -42,7 +42,6 @@ class DriverHomeSheet extends ConsumerWidget {
     final driverTypo = DriverTypography.fromTheme(typo);
     final driver = ref.watch(driverStateProvider);
     final scheduledAsync = ref.watch(scheduledRidesProvider);
-    final feasibleCountAsync = ref.watch(feasibleScheduledCountProvider);
     final earningsAsync = ref.watch(driverEarningsProvider);
     final statsAsync = ref.watch(driverShiftStatsProvider);
     final returnTripsAsync = ref.watch(filteredReturnTripsProvider);
@@ -53,19 +52,18 @@ class DriverHomeSheet extends ConsumerWidget {
             driver.activeRideId != null;
     final rides = scheduledAsync.valueOrNull ?? [];
     final openSwapsCount = swapFeedAsync.valueOrNull?.length;
-    final feasibleCount = feasibleCountAsync.valueOrNull;
     final earnings = earningsAsync.valueOrNull;
     final todayRides =
         statsAsync.valueOrNull?.shiftRidesToday ?? earnings?.todayRides ?? 0;
     final returnTripsCount = returnTripsAsync.valueOrNull?.length;
     final returnMode = returnModeAsync.valueOrNull;
 
-    return Container(
-      decoration: BoxDecoration(
-        gradient: DriverHomePremiumStyle.sheetTopGradient,
-        borderRadius: DriverRadius.sheetTop,
-        boxShadow: DriverShadows.floating(driverColors),
-      ),
+    return GlassPanel(
+      colors: colors,
+      typography: typo,
+      padding: EdgeInsets.zero,
+      borderRadius: DriverRadius.sheetTop,
+      tintColor: colors.card,
       child: ClipRRect(
         borderRadius: DriverRadius.sheetTop,
         child: ListView(
@@ -147,6 +145,8 @@ class DriverHomeSheet extends ConsumerWidget {
                     typo: typo,
                     onTap: onOpenDriverHub,
                   ).driverFadeSlideIn(staggerIndex: 2),
+                  const DriverHomeSavedByRidersCard()
+                      .driverFadeSlideIn(staggerIndex: 2),
                   const DriverProgressiveVerificationBanner(),
                   if (showLiveRidesSection) ...[
                     const SizedBox(height: DriverSpacing.lg),
@@ -169,7 +169,6 @@ class DriverHomeSheet extends ConsumerWidget {
                     colors: colors,
                     typo: typo,
                     scheduledCount: rides.length,
-                    feasibleCount: feasibleCount,
                     todayRides: todayRides,
                     openSwapsCount: openSwapsCount,
                     returnTripsCount: returnTripsCount,
@@ -257,7 +256,7 @@ class _ReturnModeCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(DriverSpacing.lg),
         decoration: BoxDecoration(
-          color: colors.card,
+          color: colors.card.withValues(alpha: 0.55),
           borderRadius: DriverRadius.lgAll,
           border: Border.all(
             color: hasMatches
@@ -637,7 +636,6 @@ class _RidesActionGrid extends StatelessWidget {
     required this.colors,
     required this.typo,
     required this.scheduledCount,
-    required this.feasibleCount,
     required this.todayRides,
     required this.openSwapsCount,
     required this.returnTripsCount,
@@ -651,7 +649,6 @@ class _RidesActionGrid extends StatelessWidget {
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
   final int scheduledCount;
-  final int? feasibleCount;
   final int todayRides;
   final int? openSwapsCount;
   final int? returnTripsCount;
@@ -662,9 +659,8 @@ class _RidesActionGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheduledSubtitle = feasibleCount != null
-        ? DriverStrings.homeMatchingScheduledCount(feasibleCount!)
-        : DriverStrings.homePlannedScheduledCount(scheduledCount);
+    final scheduledSubtitle =
+        DriverStrings.homePlannedScheduledCount(scheduledCount);
     return Column(
       children: [
         Row(

@@ -27,6 +27,9 @@ class _RiderNotificationsListenerState
   bool _busy = false;
   final Set<String> _handledIds = <String>{};
 
+  String? _lastSubscribedIdentityId;
+  ProviderSubscription<AsyncValue<RiderIdentityState>>? _identitySub;
+
   @override
   void initState() {
     super.initState();
@@ -34,6 +37,13 @@ class _RiderNotificationsListenerState
     _subscribeRealtime();
     _poll();
     _backupPollTimer = Timer.periodic(const Duration(seconds: 60), (_) => _poll());
+    _identitySub = ref.listenManual(riderIdentityProvider, (prev, next) {
+      final id = next.valueOrNull?.identityId;
+      if (id != null && id.isNotEmpty && id != _lastSubscribedIdentityId) {
+        _subscribeRealtime();
+        _poll();
+      }
+    });
   }
 
   @override
@@ -42,13 +52,14 @@ class _RiderNotificationsListenerState
     _backupPollTimer?.cancel();
     _debounceTimer?.cancel();
     _realtimeChannel?.unsubscribe();
+    _identitySub?.close();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed) {
+    if (state == AppLifecycleState.resumed && mounted) {
       _poll();
     }
   }
@@ -58,9 +69,14 @@ class _RiderNotificationsListenerState
     if (uid == null || uid.isEmpty) return;
 
     _realtimeChannel?.unsubscribe();
+    final identity = ref.read(riderIdentityProvider).valueOrNull;
+    final riderIdentityId = identity?.identityId;
+    _lastSubscribedIdentityId = riderIdentityId;
     _realtimeChannel = _notifications.subscribeToTableChanges(
       channelName: 'rider-notifications-$uid',
       onChange: (_) => _schedulePoll(),
+      filterUserId: riderIdentityId,
+      filterUserType: 'rider',
     );
   }
 

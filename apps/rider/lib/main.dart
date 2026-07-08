@@ -48,6 +48,16 @@ void main() async {
 
   await HeyCabySupabase.initialize();
 
+  // Ensure an anonymous auth session so realtime subscriptions and
+  // RLS-protected queries work for guest riders who haven't signed in.
+  try {
+    if (HeyCabySupabase.client.auth.currentSession == null) {
+      await HeyCabySupabase.client.auth.signInAnonymously();
+    }
+  } catch (e) {
+    debugPrint('Anonymous sign-in failed: $e');
+  }
+
   runApp(
     const ProviderScope(
       child: RiderPermissionBootstrap(

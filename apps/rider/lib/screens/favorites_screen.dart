@@ -5,7 +5,9 @@ import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../widgets/booking/booking_flow_screen_header.dart';
+import '../providers/booking_provider.dart';
 import '../providers/favorites_provider.dart';
+import '../services/booking_pickup_from_location.dart';
 import 'location_required_screen.dart';
 
 class FavoritesScreen extends ConsumerStatefulWidget {
@@ -78,9 +80,42 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                     });
                   },
                   onPostRide: () async {
-                    final ok = await ensureLocationForBooking(context: context, ref: ref);
+                    final ok = await ensureLocationForBooking(
+                        context: context, ref: ref);
                     if (!ok) return;
+                    final bookingNotifier =
+                        ref.read(bookingProvider.notifier);
+                    bookingNotifier.setInstant();
+                    if (_selectedDrivers.length == 1) {
+                      final favId = _selectedDrivers.first;
+                      final driver = drivers
+                          .where((d) => d.id == favId)
+                          .firstOrNull;
+                      if (driver != null) {
+                        bookingNotifier
+                            .setPreferredDriver(driver.driverId);
+                      }
+                    } else {
+                      bookingNotifier.setFavoritesFirst(true);
+                    }
+                    await fillPickupFromCurrentLocation(ref);
                     if (context.mounted) context.go('/search');
+                  },
+                  onRemoveDriver: (driver) async {
+                    await ref
+                        .read(favoritesProvider.notifier)
+                        .removeFavorite(driver.driverId);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(l10n.driverRemoved),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                      setState(() {
+                        _selectedDrivers.remove(driver.id);
+                      });
+                    }
                   },
                 );
               },
@@ -107,6 +142,7 @@ class _FavoritesList extends StatelessWidget {
   final ValueChanged<bool> onSelectAllChanged;
   final ValueChanged<FavoriteDriver> onDriverTap;
   final VoidCallback onPostRide;
+  final ValueChanged<FavoriteDriver> onRemoveDriver;
 
   const _FavoritesList({
     required this.drivers,
@@ -118,6 +154,7 @@ class _FavoritesList extends StatelessWidget {
     required this.onSelectAllChanged,
     required this.onDriverTap,
     required this.onPostRide,
+    required this.onRemoveDriver,
   });
 
   @override
@@ -140,13 +177,31 @@ class _FavoritesList extends StatelessWidget {
               itemBuilder: (context, index) {
                 final driver = drivers[index];
                 final isSelected = selectedDrivers.contains(driver.id);
-                return _DriverCard(
-                  driver: driver,
-                  isSelected: isSelected,
-                  colors: colors,
-                  typo: typo,
-                  l10n: l10n,
-                  onTap: () => onDriverTap(driver),
+                return Dismissible(
+                  key: ValueKey(driver.id),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsetsDirectional.only(end: 20),
+                    margin: const EdgeInsetsDirectional.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: colors.error,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(Icons.delete_rounded, color: colors.onAccent),
+                  ),
+                  confirmDismiss: (_) async {
+                    onRemoveDriver(driver);
+                    return false;
+                  },
+                  child: _DriverCard(
+                    driver: driver,
+                    isSelected: isSelected,
+                    colors: colors,
+                    typo: typo,
+                    l10n: l10n,
+                    onTap: () => onDriverTap(driver),
+                  ),
                 );
               },
             ),
@@ -352,20 +407,67 @@ class _DriverCard extends StatelessWidget {
                         width: 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: colors.success,
+                          color: driver.isAvailable
+                              ? colors.success
+                              : colors.textSoft,
                           shape: BoxShape.circle,
                         ),
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        _getStatusText(),
+                        driver.isAvailable
+                            ? l10n.driverAvailableNow
+                            : l10n.driverOffline,
                         style: typo.bodySmall.copyWith(
-                          color: colors.success,
+                          color: driver.isAvailable
+                              ? colors.success
+                              : colors.textSoft,
                           fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '·',
+                        style: typo.bodySmall.copyWith(
+                          color: colors.textSoft,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${driver.rating.toStringAsFixed(1)} ★ · ${driver.totalRides} ${l10n.rides.toLowerCase()}',
+                        style: typo.bodySmall.copyWith(
+                          color: colors.textMid,
                         ),
                       ),
                     ],
                   ),
+                  if (driver.vehicleDescription.isNotEmpty ||
+                      (driver.vehiclePlate ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.directions_car_rounded,
+                            size: 14, color: colors.textSoft),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            [
+                              driver.vehicleDescription,
+                              driver.vehiclePlate,
+                            ]
+                                .where((s) =>
+                                    s != null && s.isNotEmpty)
+                                .join(' · '),
+                            style: typo.bodySmall.copyWith(
+                              color: colors.textSoft,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -377,10 +479,6 @@ class _DriverCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _getStatusText() {
-    return '${l10n.rateDriver}: ${driver.rating.toStringAsFixed(1)} · ${driver.totalRides} ${l10n.rides.toLowerCase()}';
   }
 }
 

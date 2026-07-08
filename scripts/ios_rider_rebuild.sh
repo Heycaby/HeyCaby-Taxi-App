@@ -12,7 +12,7 @@ flutter clean
 
 echo "== remove iOS ephemeral pods / lock (will pod install) =="
 rm -rf ios/Pods ios/Podfile.lock ios/.symlinks ios/Flutter/Flutter.podspec 2>/dev/null || true
-rm -rf build
+rm -rf build build/native_assets .dart_tool/hooks_runner 2>/dev/null || true
 
 echo "== pub get =="
 flutter pub get

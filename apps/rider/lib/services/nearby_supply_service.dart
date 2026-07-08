@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_models/heycaby_models.dart';
 
@@ -60,6 +62,66 @@ class CategorySupplySnapshot {
       );
 }
 
+/// Zone-based supply counts from SDA supply snapshot RPC.
+class RiderSupplySnapshot {
+  const RiderSupplySnapshot({
+    required this.zone1Count,
+    required this.zone2Count,
+    required this.zone3Count,
+    required this.totalCount,
+    this.closestKm,
+    this.fastestEtaMin,
+    required this.rpcSucceeded,
+  });
+
+  final int zone1Count;
+  final int zone2Count;
+  final int zone3Count;
+  final int totalCount;
+  final double? closestKm;
+  final double? fastestEtaMin;
+  final bool rpcSucceeded;
+
+  static const RiderSupplySnapshot empty = RiderSupplySnapshot(
+    zone1Count: 0,
+    zone2Count: 0,
+    zone3Count: 0,
+    totalCount: 0,
+    rpcSucceeded: false,
+  );
+}
+
+/// Online favourite drivers near the rider's pickup probe point.
+class RiderFavoriteSupplySnapshot {
+  const RiderFavoriteSupplySnapshot({
+    required this.onlineCount,
+    this.closestKm,
+    required this.rpcSucceeded,
+  });
+
+  final int onlineCount;
+  final double? closestKm;
+  final bool rpcSucceeded;
+
+  static const RiderFavoriteSupplySnapshot empty = RiderFavoriteSupplySnapshot(
+    onlineCount: 0,
+    rpcSucceeded: false,
+  );
+}
+
+/// Result of a live supply probe at pickup — distinguishes empty vs failed RPC.
+class NearbySupplyProbe {
+  const NearbySupplyProbe({
+    required this.driverCount,
+    required this.rpcSucceeded,
+  });
+
+  final int driverCount;
+  final bool rpcSucceeded;
+
+  bool get hasKnownEmptySupply => rpcSucceeded && driverCount == 0;
+}
+
 /// Loads live driver supply near pickup, joins real driver pricing + profile.
 class NearbySupplyService {
   static String _fallbackDriverLabel() {
@@ -118,6 +180,142 @@ class NearbySupplyService {
     return (v * 10).roundToDouble() / 10;
   }
 
+  static List<dynamic> _parseRpcRows(dynamic raw) {
+    if (raw is List) return raw;
+    if (raw is String && raw.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is List) return decoded;
+      } catch (_) {}
+    }
+    return const [];
+  }
+
+  /// Quick count for home map / no-supply banners.
+  static Future<NearbySupplyProbe> probeDriverCount({
+    required AddressResult pickup,
+  }) async {
+    final snapshot = await loadSupplySnapshot(pickup: pickup);
+    if (snapshot.rpcSucceeded) {
+      return NearbySupplyProbe(
+        driverCount: snapshot.totalCount,
+        rpcSucceeded: true,
+      );
+    }
+    return _probeDriverCountLegacy(pickup: pickup);
+  }
+
+  /// SDA zone counts for the home supply chip.
+  static Future<RiderSupplySnapshot> loadSupplySnapshot({
+    required AddressResult pickup,
+  }) async {
+    try {
+      final raw = await HeyCabySupabase.client.rpc(
+        'fn_rider_supply_snapshot',
+        params: {
+          'p_lat': pickup.lat,
+          'p_lng': pickup.lng,
+        },
+      );
+      if (raw is! Map) return RiderSupplySnapshot.empty;
+      final row = Map<String, dynamic>.from(raw);
+      return RiderSupplySnapshot(
+        zone1Count: (row['zone1_count'] as num?)?.toInt() ?? 0,
+        zone2Count: (row['zone2_count'] as num?)?.toInt() ?? 0,
+        zone3Count: (row['zone3_count'] as num?)?.toInt() ?? 0,
+        totalCount: (row['total_count'] as num?)?.toInt() ?? 0,
+        closestKm: (row['closest_km'] as num?)?.toDouble(),
+        fastestEtaMin: (row['fastest_eta_min'] as num?)?.toDouble(),
+        rpcSucceeded: true,
+      );
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('NearbySupplyService.loadSupplySnapshot failed: $e\n$st');
+      }
+      return RiderSupplySnapshot.empty;
+    }
+  }
+
+  /// Favourite drivers who are online with a fresh location near [pickup].
+  static Future<RiderFavoriteSupplySnapshot> loadFavoriteSupplySnapshot({
+    required AddressResult pickup,
+    required Set<String> favoriteDriverIds,
+  }) async {
+    if (favoriteDriverIds.isEmpty) {
+      return RiderFavoriteSupplySnapshot.empty;
+    }
+    try {
+      final raw = await HeyCabySupabase.client.rpc(
+        'fn_rider_nearby_supply',
+        params: {
+          'p_lat': pickup.lat,
+          'p_lng': pickup.lng,
+          'p_radius_km': searchRadiusKm,
+          'p_max_age_minutes': maxLocationAge.inMinutes,
+        },
+      );
+      final rows = _parseRpcRows(raw);
+      var count = 0;
+      double? closestKm;
+      for (final row in rows) {
+        if (row is! Map) continue;
+        final driverId = row['driver_id']?.toString();
+        if (driverId == null || !favoriteDriverIds.contains(driverId)) {
+          continue;
+        }
+        final dKm = (row['distance_km'] as num?)?.toDouble();
+        if (dKm == null || dKm > searchRadiusKm) continue;
+        count++;
+        if (closestKm == null || dKm < closestKm) {
+          closestKm = dKm;
+        }
+      }
+      return RiderFavoriteSupplySnapshot(
+        onlineCount: count,
+        closestKm: closestKm,
+        rpcSucceeded: true,
+      );
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint(
+          'NearbySupplyService.loadFavoriteSupplySnapshot failed: $e\n$st',
+        );
+      }
+      return RiderFavoriteSupplySnapshot.empty;
+    }
+  }
+
+  /// Legacy row-based supply probe (falls back when snapshot RPC unavailable).
+  static Future<NearbySupplyProbe> _probeDriverCountLegacy({
+    required AddressResult pickup,
+  }) async {
+    try {
+      final raw = await HeyCabySupabase.client.rpc(
+        'fn_rider_nearby_supply',
+        params: {
+          'p_lat': pickup.lat,
+          'p_lng': pickup.lng,
+          'p_radius_km': searchRadiusKm,
+          'p_max_age_minutes': maxLocationAge.inMinutes,
+        },
+      );
+      final rows = _parseRpcRows(raw);
+      var count = 0;
+      for (final row in rows) {
+        if (row is! Map) continue;
+        final driverId = row['driver_id']?.toString();
+        if (driverId == null || driverId.isEmpty) continue;
+        count++;
+      }
+      return NearbySupplyProbe(driverCount: count, rpcSucceeded: true);
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('NearbySupplyService._probeDriverCountLegacy failed: $e\n$st');
+      }
+      return const NearbySupplyProbe(driverCount: 0, rpcSucceeded: false);
+    }
+  }
+
   static Future<Map<RiderVehicleCategory, CategorySupplySnapshot>>
       loadForPickup({
     required AddressResult pickup,
@@ -155,7 +353,7 @@ class NearbySupplyService {
           'p_max_age_minutes': maxLocationAge.inMinutes,
         },
       );
-      rows = raw is List ? raw : const [];
+      rows = _parseRpcRows(raw);
     } catch (_) {
       rows = const [];
     }

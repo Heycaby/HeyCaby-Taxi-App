@@ -75,6 +75,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeBestPriceSubtitle => 'السائقون يتنافسون على رحلتك.';
 
   @override
+  String get homeTaxiTerugTitle => 'TAXI TERUG';
+
+  @override
+  String get homeTaxiTerugSubtitle => 'ابحث عن سائقين متجهين نحوك بالفعل.';
+
+  @override
   String get homeScheduleLaterTitle => 'جدولة لاحقاً';
 
   @override
@@ -100,7 +106,79 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get homeNoTaxisNearbySubtitle =>
-      'يمكنك طلب رحلة — سنُعلمك عند توفر سائق.';
+      'يمكنك طلب رحلة. سنُعلمك عندما يقبل سائق.';
+
+  @override
+  String get homeSupplyNoneTitle => 'لا سائقين قريبين منك';
+
+  @override
+  String get homeSupplyNoneSubtitle => 'جرّب السوق أو جدول رحلة لاحقًا.';
+
+  @override
+  String homeSupplyNearbyTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count سائقين قريبين',
+      one: 'سائق واحد قريب',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeSupplyNearbySubtitle(String distanceKm) {
+    return 'الأقرب على بعد نحو $distanceKm كم';
+  }
+
+  @override
+  String get homeSupplyNearbySubtitleShort => 'عادةً استلام سريع من هنا';
+
+  @override
+  String get homeSupplyZoneEmptyTitle => 'لا سائقين في منطقتك';
+
+  @override
+  String homeSupplyZoneEmptySubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count سائقين ضمن 10 كم',
+      one: 'سائق واحد ضمن 10 كم',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeSupplyFarTitle => 'السائقون أبعد';
+
+  @override
+  String homeSupplyFarSubtitle(int count, String distanceKm) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count سائقين متصلين',
+      one: 'سائق واحد متصل',
+    );
+    return '$_temp0 · الأقرب نحو $distanceKm كم';
+  }
+
+  @override
+  String homeFavoriteSupplyTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count من سائقيك المفضلين متصلون',
+      one: 'سائق مفضل واحد متصل',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeFavoriteSupplySubtitle(String distanceKm) {
+    return 'الأقرب على بعد $distanceKm كم · احجز الآن';
+  }
+
+  @override
+  String get homeFavoriteSupplySubtitleShort => 'بالقرب الآن · احجز الآن';
 
   @override
   String get homeRideAgainTitle => 'اركب مجدداً';
@@ -127,6 +205,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get homeRecentPlacesEdit => 'تعديل';
+
+  @override
+  String get savedTripsTitle => 'الرحلات المحفوظة';
 
   @override
   String get homeCompleteProfile => 'أكمل الملف';
@@ -191,6 +272,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get howWasYourRide => 'كيف كانت رحلتك؟';
 
   @override
+  String get ratingAddNoteOptional => 'أضف ملاحظة (اختياري)';
+
+  @override
   String get whatDidYouLike => 'ما الذي أعجبك؟';
 
   @override
@@ -201,6 +285,25 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get submitRating => 'إرسال التقييم';
+
+  @override
+  String get tipDriverTitle => 'Tip your driver';
+
+  @override
+  String get tipDriverSubtitle =>
+      '100% goes to your driver. Added after the ride.';
+
+  @override
+  String get tipAmountCustom => 'Custom';
+
+  @override
+  String get tipNoTip => 'No tip';
+
+  @override
+  String get tipSubmitWithTip => 'Submit Rating + Tip';
+
+  @override
+  String get tipAdded => 'Tip added';
 
   @override
   String get ratingCategorySectionTitle => 'قيّم جوانب محددة';
@@ -613,6 +716,47 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noFavouritesYet => 'لا يوجد مفضلون بعد';
 
   @override
+  String get saveDriverLabel => 'احفظ هذا السائق';
+
+  @override
+  String get saveDriverSubtitle => 'أضف إلى سائقين الموثوقين للحجز السريع';
+
+  @override
+  String get saveDriverModalTitle => 'حفظ هذا السائق؟';
+
+  @override
+  String get saveDriverModalBody =>
+      'لقد قدمت تقييماً جيداً. أضف هذا السائق إلى مفضلتك للحجز بشكل أسرع لاحقاً.';
+
+  @override
+  String get saveDriverModalConfirm => 'حفظ في المفضلة';
+
+  @override
+  String get saveDriverModalDismiss => 'ليس الآن';
+
+  @override
+  String get saveDriverWillSaveHint => 'سيُحفظ في مفضلتك عند الإرسال';
+
+  @override
+  String get driverSaved => 'تم حفظ السائق في المفضلين';
+
+  @override
+  String get removeFromFavorites => 'إزالة من المفضلين';
+
+  @override
+  String get driverRemoved => 'تمت إزالة السائق من المفضلين';
+
+  @override
+  String get driverOffline => 'غير متصل';
+
+  @override
+  String get driverAvailableNow => 'متاح الآن';
+
+  @override
+  String get favoritesLimitReached =>
+      'لديك بالفعل 10 سائقين مفضلين. أزل واحدًا قبل إضافة سائق جديد.';
+
+  @override
   String get paymentMethod => 'طريقة الدفع';
 
   @override
@@ -629,6 +773,19 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get scheduledRide => 'مجدول';
+
+  @override
+  String get marketplaceStepRoute => 'المسار';
+
+  @override
+  String get marketplaceStepOffer => 'عرضك';
+
+  @override
+  String get marketplaceStepPost => 'نشر';
+
+  @override
+  String get marketplaceIntroBody =>
+      'حدد سعرك. يختار السائقون القبول أو العرض المقابل أو التجاوز. وأنت تختار من تركب معه.';
 
   @override
   String get marketplace => 'السوق';
@@ -1047,6 +1204,24 @@ class AppLocalizationsAr extends AppLocalizations {
   String get yourRoute => 'مسارك';
 
   @override
+  String get rideTimeline => 'تقدم الرحلة';
+
+  @override
+  String get rideTimelineStepAccepted => 'قبل السائق الرحلة';
+
+  @override
+  String get rideTimelineStepEnRoute => 'في الطريق إلى نقطة الالتقاط';
+
+  @override
+  String get rideTimelineStepArrived => 'عند نقطة الالتقاط';
+
+  @override
+  String get rideTimelineStepInProgress => 'الرحلة جارية';
+
+  @override
+  String get rideTimelineStepCompleted => 'اكتملت الرحلة';
+
+  @override
   String get howDoYouWantToBook => 'كيف تريد الحجز؟';
 
   @override
@@ -1441,6 +1616,25 @@ class AppLocalizationsAr extends AppLocalizations {
       'يساعد ملفك السائقين على التعرف عليك ويجعل الحجز المتكرر أسرع.';
 
   @override
+  String get riderRatingTitle => 'Your rider rating';
+
+  @override
+  String get riderRatingSubtitle =>
+      'Based on driver feedback after completed rides.';
+
+  @override
+  String get riderRatingNoRating => 'No rating yet';
+
+  @override
+  String get riderRatingNoRatingBody =>
+      'Complete a few rides to start building your reputation.';
+
+  @override
+  String riderRatingTrips(int count) {
+    return '$count trips rated';
+  }
+
+  @override
   String get accountBookingNameLabel => 'اسم الحجز';
 
   @override
@@ -1584,7 +1778,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get searchFactOwnFuel => 'السائقون يدفعون ثمن وقودهم';
 
   @override
-  String get searchFactVerifiedDrivers => 'جميع السائقين موثقون';
+  String get searchFactVerifiedDrivers =>
+      'السائقون على HeyCaby يعملون كمحترفي تاكسي مرخصين';
 
   @override
   String get searchFactFavorites =>
@@ -1597,7 +1792,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get goWhereverWhenever => 'اذهب أينما تشاء، متى تشاء.';
 
   @override
-  String get noTaxisInZone => 'لا توجد سيارات أجرة في منطقتك';
+  String get noTaxisInZone => 'لا يوجد سائقون قريبون حالياً';
 
   @override
   String get oneTaxiInZone => 'سيارة أجرة واحدة في منطقتك';
@@ -2557,7 +2752,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get searchFactAllVerified =>
-      'كل رخصة، كل تأمين، كل تصريح — تم التحقق منها قبل البدء.';
+      'HeyCaby مخصصة للتاكسي المرخص — نقل مهني حقيقي، وليس سيارات خاصة كتطبيقات التوصيل.';
 
   @override
   String get searchFactMarketplace =>
@@ -2576,6 +2771,9 @@ class AppLocalizationsAr extends AppLocalizations {
       'نقدًا أو Tikkie أو بطاقة — سيخبرك سائقك بالخيارات المتاحة.';
 
   @override
+  String get searchDidYouKnowEyebrow => 'هل تعلم؟';
+
+  @override
   String get searchingTitle => 'نبحث عن أقرب Caby…';
 
   @override
@@ -2592,6 +2790,63 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get matchingStatusOffers => 'العروض';
+
+  @override
+  String dispatchWave0Title(String name) {
+    return 'نحاول ربطك بـ $name أولاً…';
+  }
+
+  @override
+  String get dispatchWave1Title => 'جاري البحث عن سائق';
+
+  @override
+  String get dispatchWave2Title => 'ما زلنا نبحث…';
+
+  @override
+  String get dispatchWave3Title => 'نصل إلى المزيد من السائقين…';
+
+  @override
+  String get dispatchWave4Title => 'نبحث في نطاق أوسع…';
+
+  @override
+  String get dispatchNoDriversTitle => 'لا يوجد سائقون متاحون الآن';
+
+  @override
+  String dispatchWaveDriversNotified(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'تم إبلاغ $count سائقين',
+      one: 'تم إبلاغ سائق واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String dispatchWaveClosestEta(String km, int minutes) {
+    return 'الأقرب: $km كم · ~$minutes د';
+  }
+
+  @override
+  String dispatchWaveExpandKm(int km) {
+    return 'توسيع البحث إلى $km كم';
+  }
+
+  @override
+  String dispatchWaveFarEta(String km, int minutes) {
+    return 'سائق على بعد $km كم قد يصل خلال ~$minutes د';
+  }
+
+  @override
+  String get dispatchSurgeBanner => 'طلب مرتفع — نبحث بسرعة';
+
+  @override
+  String get dispatchLowDensityBanner =>
+      'نبحث في منطقة أوسع — سائقون أقل متصلين';
+
+  @override
+  String get dispatchNoDriversBody =>
+      'جميع السائقين القريبين مشغولون أو غير متصلين. حاول لاحقاً أو جدول رحلة.';
 
   @override
   String get homeNearTermTitleInstant => 'جارٍ العثور على Caby';
@@ -2625,6 +2880,9 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get activeBookingTapForDetails =>
       'اضغط لعرض التقدم مع بقاء الخريطة أمامك.';
+
+  @override
+  String get activeBookingCollapseHome => 'طي إلى الملخص';
 
   @override
   String get activeBookingKeepAliveTitle => 'طلبك ما زال يعمل';
@@ -2691,10 +2949,26 @@ class AppLocalizationsAr extends AppLocalizations {
       'بدأ البحث عن سائق لرحلتك المجدولة.';
 
   @override
+  String activeBookingScheduledSearchStarts(String searchStarts) {
+    return 'يبدأ البحث عن سائق $searchStarts';
+  }
+
+  @override
+  String get activeBookingScheduledQueuedTitle =>
+      'الرحلة المجدولة في قائمة الانتظار';
+
+  @override
+  String get activeBookingScheduledQueuedBody =>
+      'سنبدأ البحث قبل 30 دقيقة من موعد الاستلام ونخطرك.';
+
+  @override
   String get rideMatchingTypeLabelInstant => 'رحلة فورية';
 
   @override
   String get rideMatchingTypeLabelMarketplace => 'السوق';
+
+  @override
+  String get rideMatchingTypeLabelTerug => 'TAXI TERUG';
 
   @override
   String get rideMatchingTypeLabelScheduled => 'مجدولة';
@@ -2722,6 +2996,33 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get noDriverFoundCard => 'لم يُعثر على Caby بعد. ماذا تريد أن تفعل؟';
+
+  @override
+  String get searchNoSupplyInlineTitle => 'لا سائقين قريبين';
+
+  @override
+  String get searchNoSupplyInlineBody =>
+      'لم نعثر على سائقين قرب نقطة الالتقاط. جدول لاحقًا أو جرّب السوق. سنستمر في البحث.';
+
+  @override
+  String get searchNoSupplySheetTitle => 'لا سائقين قريبين';
+
+  @override
+  String get searchExpiredSheetTitle => 'لم يقبل أي سائق بعد';
+
+  @override
+  String searchExpiredSheetBody(int minutes) {
+    return 'انتهى بحثك الذي استمر $minutes دقيقة دون مطابقة. اختر خطوتك التالية.';
+  }
+
+  @override
+  String get searchKeepSearching => 'متابعة البحث';
+
+  @override
+  String get searchSeeOptions => 'جدولة أو السوق';
+
+  @override
+  String get searchExpiredShareSecondary => 'تعرف سائقًا؟ شارك HeyCaby';
 
   @override
   String get notifyMeWhenFound => 'أعلمني';
@@ -2849,6 +3150,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get activeRideDriverOutside => 'سائقك بالخارج';
 
   @override
+  String get activeRideDriverFound => 'تم العثور على السائق';
+
+  @override
   String get activeRideMaxFourSeats => 'حتى 4 مقاعد';
 
   @override
@@ -2873,6 +3177,31 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get activeRideSupportSubtitle => 'السلامة والمساعدة';
+
+  @override
+  String get safetySheetTitle => 'Safety';
+
+  @override
+  String get safetySheetShareTrip => 'Share trip';
+
+  @override
+  String get safetySheetShareTripSubtitle =>
+      'Share live trip link with contacts';
+
+  @override
+  String get safetySheetReport => 'Report an issue';
+
+  @override
+  String get safetySheetReportSubtitle => 'Submit a ride report';
+
+  @override
+  String get safetySheetEmergency => 'Emergency call (112)';
+
+  @override
+  String get safetySheetEmergencySubtitle => 'Call European emergency services';
+
+  @override
+  String get safetySheetCancel => 'Cancel';
 
   @override
   String get activeRidePickupNotSet => 'نقطة الالتقاط غير محددة';
@@ -2920,8 +3249,60 @@ class AppLocalizationsAr extends AppLocalizations {
   String get activeRideFoundingMember => 'عضو مؤسس';
 
   @override
-  String get activeRideVerifyPlate =>
-      'يرجى التحقق من هذه اللوحة قبل دخول المركبة.';
+  String get activeRideVerifyPlate => 'تحقق من تطابق رقم اللوحة قبل الصعود.';
+
+  @override
+  String get activeRideVerifyPlateButton => 'تأكيد اللوحة';
+
+  @override
+  String get activeRidePlateVerifiedSaved => 'تم حفظ التحقق من اللوحة';
+
+  @override
+  String get activeRidePlateVerifiedOffline =>
+      'تم الحفظ على جهازك — سيتم المزامنة عند عودة الاتصال';
+
+  @override
+  String get ridePayDriverTitle => 'ادفع لسائقك';
+
+  @override
+  String get ridePayDriverBody =>
+      'أنهى سائقك الرحلة للتو. ادفع الأجرة الآن قبل مغادرة المركبة.';
+
+  @override
+  String get ridePayDriverAmountCaption => 'المبلغ المطلوب';
+
+  @override
+  String ridePayDriverPayVia(String method) {
+    return 'ادفع عبر $method';
+  }
+
+  @override
+  String get ridePayDriverAddTip => '+ إكرامية';
+
+  @override
+  String get ridePayDriverTotalCaption => 'المجموع المطلوب';
+
+  @override
+  String get ridePayDriverFareLine => 'الأجرة';
+
+  @override
+  String get ridePayDriverTipLine => 'إكرامية';
+
+  @override
+  String ridePayDriverConfirmWithTotal(String amount) {
+    return 'دفعت $amount';
+  }
+
+  @override
+  String ridePayDriverAmount(String amount) {
+    return 'المبلغ المستحق: $amount';
+  }
+
+  @override
+  String get ridePayDriverConfirm => 'لقد دفعت';
+
+  @override
+  String get ridePayDriverDismiss => 'لحظة';
 
   @override
   String get activeRideWaitingFeeWaived => 'تم التنازل عن رسوم الانتظار';
@@ -2955,6 +3336,30 @@ class AppLocalizationsAr extends AppLocalizations {
   String activeRideWaitingRateLive(String rate) {
     return '$rate · مباشر';
   }
+
+  @override
+  String get activeRideWaitingTripTotal => 'إجمالي الرحلة';
+
+  @override
+  String activeRideWaitingFeeLine(String amount) {
+    return '+$amount انتظار';
+  }
+
+  @override
+  String activeRideWaitingBaseFare(String amount) {
+    return 'الأساس $amount';
+  }
+
+  @override
+  String activeRideWaitingFreeWindow(String minutes) {
+    return '$minutes د مجاناً';
+  }
+
+  @override
+  String get activeRideTimelinePickup => 'الالتقاط';
+
+  @override
+  String get activeRideTimelineDestination => 'الوجهة';
 
   @override
   String get openAction => 'فتح';

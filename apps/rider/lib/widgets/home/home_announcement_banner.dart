@@ -41,29 +41,3 @@ class HomeAnnouncementBanner extends StatelessWidget {
     );
   }
 }
-
-/// Local fallback when no server banner covers the no-supply case.
-class HomeAvailabilityCard extends StatelessWidget {
-  const HomeAvailabilityCard({
-    super.key,
-    required this.colors,
-    required this.typo,
-    required this.l10n,
-  });
-
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    return HomeInlineBanner(
-      colors: colors,
-      typo: typo,
-      title: l10n.noTaxisInZone,
-      subtitle: l10n.homeNoTaxisNearbySubtitle,
-      variant: RiderHomeBannerVariant.accent,
-      icon: Icons.auto_awesome_rounded,
-    );
-  }
-}

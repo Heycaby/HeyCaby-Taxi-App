@@ -103,7 +103,7 @@ Future<void> playRiderNotificationFeedback(
 String riderDeepLinkForBehavior(RiderNotificationBehavior behavior) {
   switch (behavior) {
     case RiderNotificationBehavior.chat:
-      return '/support';
+      return '/chat';
     case RiderNotificationBehavior.payment:
       return '/account';
     case RiderNotificationBehavior.rideOffer:

@@ -23,10 +23,19 @@ class HomeGreetingHeader extends ConsumerWidget {
     final settings = ref.watch(settingsProvider).valueOrNull;
     final identity = ref.watch(riderIdentityProvider).valueOrNull;
     final fromSettings = (settings?.userName ?? '').trim();
-    if (fromSettings.isNotEmpty) return fromSettings;
+    if (fromSettings.isNotEmpty) return _formatDisplayName(fromSettings);
     final fromIdentity = (identity?.bookingName ?? '').trim();
-    if (fromIdentity.isNotEmpty) return fromIdentity;
+    if (fromIdentity.isNotEmpty) return _formatDisplayName(fromIdentity);
     return l10n.rider;
+  }
+
+  static String _formatDisplayName(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return trimmed;
+    return trimmed.split(RegExp(r'\s+')).map((part) {
+      if (part.isEmpty) return part;
+      return part[0].toUpperCase() + part.substring(1).toLowerCase();
+    }).join(' ');
   }
 
   /// Light halo so greeting/name stay readable on the map (any tile brightness).

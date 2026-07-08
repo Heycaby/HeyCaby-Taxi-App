@@ -75,6 +75,13 @@ class AppLocalizationsNl extends AppLocalizations {
   String get homeBestPriceSubtitle => 'Chauffeurs strijden om jouw rit.';
 
   @override
+  String get homeTaxiTerugTitle => 'TAXI TERUG';
+
+  @override
+  String get homeTaxiTerugSubtitle =>
+      'Vind chauffeurs die al jouw richting op gaan.';
+
+  @override
   String get homeScheduleLaterTitle => 'Later plannen';
 
   @override
@@ -101,7 +108,81 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get homeNoTaxisNearbySubtitle =>
-      'Je kunt een rit aanvragen — we laten het weten zodra er een chauffeur beschikbaar is.';
+      'Je kunt toch een rit aanvragen. We laten het weten zodra een chauffeur accepteert.';
+
+  @override
+  String get homeSupplyNoneTitle => 'Geen chauffeurs bij jou in de buurt';
+
+  @override
+  String get homeSupplyNoneSubtitle =>
+      'Probeer Marktplaats of plan een rit voor later.';
+
+  @override
+  String homeSupplyNearbyTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count chauffeurs in de buurt',
+      one: '1 chauffeur in de buurt',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeSupplyNearbySubtitle(String distanceKm) {
+    return 'Dichtstbijzijnde op ongeveer $distanceKm km';
+  }
+
+  @override
+  String get homeSupplyNearbySubtitleShort =>
+      'Meestal snel opgehaald vanaf hier';
+
+  @override
+  String get homeSupplyZoneEmptyTitle => 'Geen chauffeurs in jouw zone';
+
+  @override
+  String homeSupplyZoneEmptySubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count chauffeurs binnen 10 km',
+      one: '1 chauffeur binnen 10 km',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeSupplyFarTitle => 'Chauffeurs zijn verder weg';
+
+  @override
+  String homeSupplyFarSubtitle(int count, String distanceKm) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count chauffeurs online',
+      one: '1 chauffeur online',
+    );
+    return '$_temp0 · dichtstbijzijnde op ongeveer $distanceKm km';
+  }
+
+  @override
+  String homeFavoriteSupplyTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count van je favoriete chauffeurs zijn online',
+      one: '1 van je favoriete chauffeurs is online',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeFavoriteSupplySubtitle(String distanceKm) {
+    return 'Dichtstbijzijnde op ongeveer $distanceKm km · Boek nu';
+  }
+
+  @override
+  String get homeFavoriteSupplySubtitleShort => 'Nu in de buurt · Boek nu';
 
   @override
   String get homeRideAgainTitle => 'Opnieuw rijden';
@@ -128,6 +209,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get homeRecentPlacesEdit => 'Bewerken';
+
+  @override
+  String get savedTripsTitle => 'Opgeslagen ritten';
 
   @override
   String get homeCompleteProfile => 'Profiel aanvullen';
@@ -192,6 +276,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get howWasYourRide => 'Hoe was je rit?';
 
   @override
+  String get ratingAddNoteOptional => 'Notitie toevoegen (optioneel)';
+
+  @override
   String get whatDidYouLike => 'Wat vond je goed?';
 
   @override
@@ -202,6 +289,25 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get submitRating => 'Beoordeling Versturen';
+
+  @override
+  String get tipDriverTitle => 'Fooi voor je chauffeur';
+
+  @override
+  String get tipDriverSubtitle =>
+      '100% gaat naar je chauffeur. Toegevoegd na de rit.';
+
+  @override
+  String get tipAmountCustom => 'Aangepast';
+
+  @override
+  String get tipNoTip => 'Geen fooi';
+
+  @override
+  String get tipSubmitWithTip => 'Beoordeling + Fooi Versturen';
+
+  @override
+  String get tipAdded => 'Fooi toegevoegd';
 
   @override
   String get ratingCategorySectionTitle => 'Beoordeel specifieke onderdelen';
@@ -621,6 +727,49 @@ class AppLocalizationsNl extends AppLocalizations {
   String get noFavouritesYet => 'Nog geen favorieten';
 
   @override
+  String get saveDriverLabel => 'Deze chauffeur opslaan';
+
+  @override
+  String get saveDriverSubtitle =>
+      'Toevoegen aan je vertrouwde chauffeurs voor snel boeken';
+
+  @override
+  String get saveDriverModalTitle => 'Deze chauffeur opslaan?';
+
+  @override
+  String get saveDriverModalBody =>
+      'Je gaf een goede beoordeling. Voeg deze chauffeur toe aan je favorieten voor sneller boeken.';
+
+  @override
+  String get saveDriverModalConfirm => 'Opslaan in favorieten';
+
+  @override
+  String get saveDriverModalDismiss => 'Niet nu';
+
+  @override
+  String get saveDriverWillSaveHint =>
+      'Wordt opgeslagen in je favorieten bij verzenden';
+
+  @override
+  String get driverSaved => 'Chauffeur toegevoegd aan je favorieten';
+
+  @override
+  String get removeFromFavorites => 'Uit favorieten verwijderen';
+
+  @override
+  String get driverRemoved => 'Chauffeur verwijderd uit favorieten';
+
+  @override
+  String get driverOffline => 'Offline';
+
+  @override
+  String get driverAvailableNow => 'Nu beschikbaar';
+
+  @override
+  String get favoritesLimitReached =>
+      'Je hebt al 10 favoriete chauffeurs. Verwijder er een voordat je een nieuwe chauffeur toevoegt.';
+
+  @override
   String get paymentMethod => 'Betaalmethode';
 
   @override
@@ -637,6 +786,19 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get scheduledRide => 'Plannen';
+
+  @override
+  String get marketplaceStepRoute => 'Route';
+
+  @override
+  String get marketplaceStepOffer => 'Jouw bod';
+
+  @override
+  String get marketplaceStepPost => 'Plaatsen';
+
+  @override
+  String get marketplaceIntroBody =>
+      'Bepaal je prijs. Chauffeurs kiezen om te accepteren, tegen te bieden of over te slaan. Jij kiest met wie je rijdt.';
 
   @override
   String get marketplace => 'Marktplaats';
@@ -1065,6 +1227,24 @@ class AppLocalizationsNl extends AppLocalizations {
   String get yourRoute => 'Jouw route';
 
   @override
+  String get rideTimeline => 'Ritvoortgang';
+
+  @override
+  String get rideTimelineStepAccepted => 'Chauffeur geaccepteerd';
+
+  @override
+  String get rideTimelineStepEnRoute => 'Onderweg naar ophaal';
+
+  @override
+  String get rideTimelineStepArrived => 'Bij ophaalpunt';
+
+  @override
+  String get rideTimelineStepInProgress => 'Rit bezig';
+
+  @override
+  String get rideTimelineStepCompleted => 'Rit voltooid';
+
+  @override
   String get howDoYouWantToBook => 'Hoe wil je boeken?';
 
   @override
@@ -1466,6 +1646,25 @@ class AppLocalizationsNl extends AppLocalizations {
       'Je profiel helpt chauffeurs je te herkennen en maakt opnieuw boeken sneller.';
 
   @override
+  String get riderRatingTitle => 'Jouw beoordeling';
+
+  @override
+  String get riderRatingSubtitle =>
+      'Gebaseerd op chauffeursfeedback na voltooide ritten.';
+
+  @override
+  String get riderRatingNoRating => 'Nog geen beoordeling';
+
+  @override
+  String get riderRatingNoRatingBody =>
+      'Voltooi een paar ritten om je reputatie op te bouwen.';
+
+  @override
+  String riderRatingTrips(int count) {
+    return '$count ritten beoordeeld';
+  }
+
+  @override
   String get accountBookingNameLabel => 'Boekingsnaam';
 
   @override
@@ -1609,7 +1808,8 @@ class AppLocalizationsNl extends AppLocalizations {
   String get searchFactOwnFuel => 'Chauffeurs betalen hun eigen brandstof';
 
   @override
-  String get searchFactVerifiedDrivers => 'Alle chauffeurs zijn geverifieerd';
+  String get searchFactVerifiedDrivers =>
+      'Chauffeurs op HeyCaby werken als erkende taxiprofessionals';
 
   @override
   String get searchFactFavorites =>
@@ -1622,7 +1822,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get goWhereverWhenever => 'Ga waarheen, wanneer je wilt.';
 
   @override
-  String get noTaxisInZone => 'Geen taxi\'s in je zone';
+  String get noTaxisInZone => 'Op dit moment geen chauffeurs in de buurt';
 
   @override
   String get oneTaxiInZone => '1 taxi in je zone';
@@ -2598,7 +2798,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get searchFactAllVerified =>
-      'Elk rijbewijs, elke verzekering, elke chauffeurspas — door ons gecheckt voordat ze online gaan.';
+      'HeyCaby is gemaakt voor echte taxi\'s — erkend beroepsvervoer, geen privé-gig-auto\'s.';
 
   @override
   String get searchFactMarketplace =>
@@ -2615,6 +2815,9 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get searchFactPayHowYouWant =>
       'Contant, Tikkie, pin of factuur — jouw chauffeur vertelt je welke opties beschikbaar zijn.';
+
+  @override
+  String get searchDidYouKnowEyebrow => 'Wist je dat?';
 
   @override
   String get searchingTitle => 'We zoeken de dichtstbijzijnde Caby…';
@@ -2634,6 +2837,63 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get matchingStatusOffers => 'Biedingen';
+
+  @override
+  String dispatchWave0Title(String name) {
+    return 'We proberen je eerst met $name te verbinden…';
+  }
+
+  @override
+  String get dispatchWave1Title => 'Chauffeur zoeken';
+
+  @override
+  String get dispatchWave2Title => 'Nog steeds zoeken…';
+
+  @override
+  String get dispatchWave3Title => 'Meer chauffeurs bereiken…';
+
+  @override
+  String get dispatchWave4Title => 'Verder zoeken…';
+
+  @override
+  String get dispatchNoDriversTitle => 'Geen chauffeurs beschikbaar';
+
+  @override
+  String dispatchWaveDriversNotified(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count chauffeurs op de hoogte',
+      one: '1 chauffeur op de hoogte',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String dispatchWaveClosestEta(String km, int minutes) {
+    return 'Dichtstbij: $km km · ~$minutes min';
+  }
+
+  @override
+  String dispatchWaveExpandKm(int km) {
+    return 'Zoekgebied uitgebreid tot $km km';
+  }
+
+  @override
+  String dispatchWaveFarEta(String km, int minutes) {
+    return 'Iemand op $km km kan er over ~$minutes min zijn';
+  }
+
+  @override
+  String get dispatchSurgeBanner => 'Hoge vraag — we zoeken snel';
+
+  @override
+  String get dispatchLowDensityBanner =>
+      'Zoeken in een groter gebied — minder chauffeurs online';
+
+  @override
+  String get dispatchNoDriversBody =>
+      'Alle chauffeurs in de buurt zijn bezet of offline. Probeer het later opnieuw of plan een rit.';
 
   @override
   String get homeNearTermTitleInstant => 'We zoeken je Caby';
@@ -2667,6 +2927,9 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get activeBookingTapForDetails =>
       'Tik om de voortgang te zien zonder de kaart kwijt te raken.';
+
+  @override
+  String get activeBookingCollapseHome => 'Inklappen naar overzicht';
 
   @override
   String get activeBookingKeepAliveTitle => 'Je aanvraag blijft actief';
@@ -2733,10 +2996,25 @@ class AppLocalizationsNl extends AppLocalizations {
       'We zoeken nu een chauffeur voor je geplande rit.';
 
   @override
+  String activeBookingScheduledSearchStarts(String searchStarts) {
+    return 'Chauffeur zoeken start $searchStarts';
+  }
+
+  @override
+  String get activeBookingScheduledQueuedTitle => 'Geplande rit in de wachtrij';
+
+  @override
+  String get activeBookingScheduledQueuedBody =>
+      'We beginnen 30 minuten voor ophalen met zoeken en laten het je weten.';
+
+  @override
   String get rideMatchingTypeLabelInstant => 'Directe rit';
 
   @override
   String get rideMatchingTypeLabelMarketplace => 'Marktplaats';
+
+  @override
+  String get rideMatchingTypeLabelTerug => 'TAXI TERUG';
 
   @override
   String get rideMatchingTypeLabelScheduled => 'Gepland';
@@ -2764,6 +3042,34 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get noDriverFoundCard => 'Nog geen Caby gevonden. Wat wil je doen?';
+
+  @override
+  String get searchNoSupplyInlineTitle => 'Geen chauffeurs in de buurt';
+
+  @override
+  String get searchNoSupplyInlineBody =>
+      'We vinden geen chauffeurs bij je opstapplaats. Plan voor later of probeer Marktplaats. We blijven zoeken.';
+
+  @override
+  String get searchNoSupplySheetTitle => 'Geen chauffeurs in de buurt';
+
+  @override
+  String get searchExpiredSheetTitle => 'Nog geen chauffeur geaccepteerd';
+
+  @override
+  String searchExpiredSheetBody(int minutes) {
+    return 'Je zoektocht van $minutes minuten is zonder match geëindigd. Kies je volgende stap.';
+  }
+
+  @override
+  String get searchKeepSearching => 'Blijf zoeken';
+
+  @override
+  String get searchSeeOptions => 'Inplannen of Marktplaats';
+
+  @override
+  String get searchExpiredShareSecondary =>
+      'Ken je een chauffeur? Deel HeyCaby';
 
   @override
   String get notifyMeWhenFound => 'Meld mij';
@@ -2900,6 +3206,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get activeRideDriverOutside => 'Je chauffeur is buiten';
 
   @override
+  String get activeRideDriverFound => 'Chauffeur gevonden';
+
+  @override
   String get activeRideMaxFourSeats => 'Max 4 zitplaatsen';
 
   @override
@@ -2924,6 +3233,31 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get activeRideSupportSubtitle => 'Veiligheid en hulp';
+
+  @override
+  String get safetySheetTitle => 'Veiligheid';
+
+  @override
+  String get safetySheetShareTrip => 'Rit delen';
+
+  @override
+  String get safetySheetShareTripSubtitle =>
+      'Deel je live ritlink met contacten';
+
+  @override
+  String get safetySheetReport => 'Probleem melden';
+
+  @override
+  String get safetySheetReportSubtitle => 'Dien een ritmelding in';
+
+  @override
+  String get safetySheetEmergency => 'Noodoproep (112)';
+
+  @override
+  String get safetySheetEmergencySubtitle => 'Bel de Europese nooddiensten';
+
+  @override
+  String get safetySheetCancel => 'Annuleren';
 
   @override
   String get activeRidePickupNotSet => 'Ophaallocatie niet ingesteld';
@@ -2975,7 +3309,60 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get activeRideVerifyPlate =>
-      'Controleer dit kenteken voordat je instapt.';
+      'Controleer of het kenteken klopt voordat je instapt.';
+
+  @override
+  String get activeRideVerifyPlateButton => 'Kenteken bevestigen';
+
+  @override
+  String get activeRidePlateVerifiedSaved => 'Kentekencontrole opgeslagen';
+
+  @override
+  String get activeRidePlateVerifiedOffline =>
+      'Opgeslagen op je telefoon — synchroniseert zodra je weer online bent';
+
+  @override
+  String get ridePayDriverTitle => 'Betaal je chauffeur';
+
+  @override
+  String get ridePayDriverBody =>
+      'Je chauffeur heeft de rit zojuist beëindigd. Betaal nu voordat je uitstapt.';
+
+  @override
+  String get ridePayDriverAmountCaption => 'Te betalen';
+
+  @override
+  String ridePayDriverPayVia(String method) {
+    return 'Betaal via $method';
+  }
+
+  @override
+  String get ridePayDriverAddTip => '+ Fooi';
+
+  @override
+  String get ridePayDriverTotalCaption => 'Totaal te betalen';
+
+  @override
+  String get ridePayDriverFareLine => 'Rit';
+
+  @override
+  String get ridePayDriverTipLine => 'Fooi';
+
+  @override
+  String ridePayDriverConfirmWithTotal(String amount) {
+    return 'Ik heb $amount betaald';
+  }
+
+  @override
+  String ridePayDriverAmount(String amount) {
+    return 'Te betalen: $amount';
+  }
+
+  @override
+  String get ridePayDriverConfirm => 'Ik heb betaald';
+
+  @override
+  String get ridePayDriverDismiss => 'Nog even';
 
   @override
   String get activeRideWaitingFeeWaived => 'Wachttarief kwijtgescholden';
@@ -3011,6 +3398,30 @@ class AppLocalizationsNl extends AppLocalizations {
   String activeRideWaitingRateLive(String rate) {
     return '$rate · live';
   }
+
+  @override
+  String get activeRideWaitingTripTotal => 'Rit totaal';
+
+  @override
+  String activeRideWaitingFeeLine(String amount) {
+    return '+$amount wachttijd';
+  }
+
+  @override
+  String activeRideWaitingBaseFare(String amount) {
+    return 'Basis $amount';
+  }
+
+  @override
+  String activeRideWaitingFreeWindow(String minutes) {
+    return '$minutes min gratis';
+  }
+
+  @override
+  String get activeRideTimelinePickup => 'Ophaalpunt';
+
+  @override
+  String get activeRideTimelineDestination => 'Bestemming';
 
   @override
   String get openAction => 'Openen';

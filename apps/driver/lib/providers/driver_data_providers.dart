@@ -251,7 +251,11 @@ final myRidesProvider = FutureProvider<List<MyRideSummary>>((ref) async {
 final myRideDetailsProvider =
     FutureProvider.family<MyRideDetails?, String>((ref, rideId) async {
   if (rideId.trim().isEmpty) return null;
-  return ref.read(driverDataServiceProvider).getMyRideDetails(rideId);
+  final driverId = await ref.watch(driverIdProvider.future);
+  return ref.read(driverDataServiceProvider).getMyRideDetails(
+        rideId,
+        driverId: driverId,
+      );
 });
 
 /// Last 7 days daily earnings for weekly chart.
@@ -335,7 +339,9 @@ final filteredReturnTripsProvider =
   final cityLower = homeCity?.toLowerCase().trim();
   return all.where((ride) {
     if (ride.destinationZoneId != null &&
-        ride.destinationZoneId == headingHomeZoneId) return true;
+        ride.destinationZoneId == headingHomeZoneId) {
+      return true;
+    }
     final destCity = ride.destinationCity?.toLowerCase().trim();
     if (cityLower != null &&
         cityLower.isNotEmpty &&
@@ -369,3 +375,66 @@ final driverFinanceMetricsProvider =
         range: range,
       );
 });
+
+/// "Saved by Riders" summary for driver home card + hub section.
+/// Returns total count, this-week count, and recent 5 (first name only).
+final driverFavoriteSummaryProvider =
+    FutureProvider<DriverFavoriteSummary?>((ref) async {
+  final id = await ref.watch(driverIdProvider.future);
+  if (id == null) return null;
+  try {
+    final response = await HeyCabySupabase.client.rpc(
+      'fn_driver_favorite_summary',
+      params: {'p_driver_id': id},
+    );
+    final data = Map<String, dynamic>.from(response as Map);
+    if (data['success'] != true) return null;
+    return DriverFavoriteSummary.fromJson(data);
+  } catch (_) {
+    return null;
+  }
+});
+
+class DriverFavoriteSummary {
+  final int totalSavedByRiders;
+  final int addedThisWeek;
+  final List<DriverFavoriteRecent> recent;
+
+  const DriverFavoriteSummary({
+    required this.totalSavedByRiders,
+    required this.addedThisWeek,
+    required this.recent,
+  });
+
+  factory DriverFavoriteSummary.fromJson(Map<String, dynamic> json) {
+    final recentRaw = json['recent'] as List? ?? [];
+    return DriverFavoriteSummary(
+      totalSavedByRiders: (json['total_saved_by_riders'] as num?)?.toInt() ?? 0,
+      addedThisWeek: (json['added_this_week'] as num?)?.toInt() ?? 0,
+      recent: recentRaw
+          .map((e) => DriverFavoriteRecent.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+class DriverFavoriteRecent {
+  final String riderFirstName;
+  final DateTime addedAt;
+  final int? rating;
+
+  const DriverFavoriteRecent({
+    required this.riderFirstName,
+    required this.addedAt,
+    this.rating,
+  });
+
+  factory DriverFavoriteRecent.fromJson(Map<String, dynamic> json) {
+    return DriverFavoriteRecent(
+      riderFirstName: (json['rider_first_name'] as String?) ?? '',
+      addedAt: DateTime.tryParse(json['added_at'] as String? ?? '') ??
+          DateTime.now(),
+      rating: (json['rating'] as num?)?.toInt(),
+    );
+  }
+}

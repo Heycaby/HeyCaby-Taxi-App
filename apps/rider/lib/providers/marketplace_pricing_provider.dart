@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_models/heycaby_models.dart';
+import 'package:heycaby_utils/heycaby_utils.dart';
 
 import '../models/rider_vehicle_category.dart';
 import '../services/nearby_supply_service.dart';
@@ -37,22 +38,25 @@ final marketplaceReferenceFareEuroProvider =
   }
   if (best != null) return best;
 
-  return _medianFareFromRpc(pickup, destination);
+  return _medianFareFromRpc(booking, pickup, destination);
 });
 
 Future<double?> _medianFareFromRpc(
+  BookingState booking,
   AddressResult pickup,
   AddressResult destination,
 ) async {
-  final tripKm = NearbySupplyService.distanceKm(
-    pickup.lat,
-    pickup.lng,
-    destination.lat,
-    destination.lng,
-  );
+  final tripKm = booking.routeDistanceKm ??
+      NearbySupplyService.distanceKm(
+        pickup.lat,
+        pickup.lng,
+        destination.lat,
+        destination.lng,
+      );
   if (tripKm <= 0) return null;
 
-  final durationMin = (tripKm / 0.5).ceil().clamp(5, 240);
+  final durationMin = booking.routeDurationMin ??
+      HeyCabyFormatters.estimateDrivingMinutes(tripKm);
   try {
     final rows = await HeyCabySupabase.client.rpc(
       'calculate_trip_fares',

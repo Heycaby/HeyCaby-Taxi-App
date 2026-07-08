@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:heycaby_map/heycaby_map.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
@@ -15,6 +17,35 @@ import '../ui/driver_ride_card.dart';
 import '../ui/driver_status_badge.dart';
 import 'driver_ride_premium_style.dart';
 
+/// Guards map camera fitting from null island / stale GPS that zooms to a globe.
+bool driverMapCoordIsValid(double? lat, double? lng) {
+  if (lat == null || lng == null) return false;
+  if (lat.abs() > 90 || lng.abs() > 180) return false;
+  if (lat.abs() < 0.0001 && lng.abs() < 0.0001) return false;
+  return true;
+}
+
+bool driverMapIncludeDriverLeg({
+  required double driverLat,
+  required double driverLng,
+  required double pickupLat,
+  required double pickupLng,
+  double maxKm = 120,
+}) {
+  if (!driverMapCoordIsValid(driverLat, driverLng)) return false;
+  const r = 6371.0;
+  double rad(double deg) => deg * math.pi / 180.0;
+  final dLat = rad(pickupLat - driverLat);
+  final dLng = rad(pickupLng - driverLng);
+  final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+      math.cos(rad(driverLat)) *
+          math.cos(rad(pickupLat)) *
+          math.sin(dLng / 2) *
+          math.sin(dLng / 2);
+  final km = r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+  return km <= maxKm;
+}
+
 /// Shared scaffold for core ride-flow screens.
 class DriverRideFlowScaffold extends StatelessWidget {
   const DriverRideFlowScaffold({
@@ -25,6 +56,10 @@ class DriverRideFlowScaffold extends StatelessWidget {
     required this.onBack,
     required this.content,
     this.bottomBar,
+    this.pickupLat,
+    this.pickupLng,
+    this.destLat,
+    this.destLng,
   });
 
   final String title;
@@ -33,6 +68,10 @@ class DriverRideFlowScaffold extends StatelessWidget {
   final VoidCallback? onBack;
   final Widget content;
   final Widget? bottomBar;
+  final double? pickupLat;
+  final double? pickupLng;
+  final double? destLat;
+  final double? destLng;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +80,14 @@ class DriverRideFlowScaffold extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          const _DriverRideMapBackdrop(),
+          _DriverRideMapBackdrop(
+            pickupLat: pickupLat,
+            pickupLng: pickupLng,
+            destLat: destLat,
+            destLng: destLng,
+            accentColor: colors.primary,
+            errorColor: colors.error,
+          ),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -74,19 +120,17 @@ class DriverRideFlowScaffold extends StatelessWidget {
                           bottomBar == null
                               ? DriverSpacing.xl +
                                   MediaQuery.paddingOf(context).bottom
-                              : DriverSpacing.md,
+                              : 280,
                         ),
-                        child: DecoratedBox(
-                          decoration:
-                              DriverRidePremiumStyle.modalSurface(colors),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(
-                              DriverSpacing.md,
-                              DriverSpacing.md,
-                              DriverSpacing.md,
-                              DriverSpacing.lg,
-                            ),
-                            child: Column(
+                        child: DriverRidePremiumStyle.glassSurface(
+                          colors: colors,
+                          padding: const EdgeInsets.fromLTRB(
+                            DriverSpacing.md,
+                            DriverSpacing.md,
+                            DriverSpacing.md,
+                            DriverSpacing.lg,
+                          ),
+                          child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 DriverRidePremiumStyle.sheetHandle(colors),
@@ -104,7 +148,6 @@ class DriverRideFlowScaffold extends StatelessWidget {
                                 content,
                               ],
                             ),
-                          ),
                         ),
                       );
                     },
@@ -120,12 +163,116 @@ class DriverRideFlowScaffold extends StatelessWidget {
   }
 }
 
-class _DriverRideMapBackdrop extends StatelessWidget {
-  const _DriverRideMapBackdrop();
+class _DriverRideMapBackdrop extends StatefulWidget {
+  const _DriverRideMapBackdrop({
+    this.pickupLat,
+    this.pickupLng,
+    this.destLat,
+    this.destLng,
+    this.accentColor,
+    this.errorColor,
+  });
+
+  final double? pickupLat;
+  final double? pickupLng;
+  final double? destLat;
+  final double? destLng;
+  final Color? accentColor;
+  final Color? errorColor;
+
+  @override
+  State<_DriverRideMapBackdrop> createState() => _DriverRideMapBackdropState();
+}
+
+class _DriverRideMapBackdropState extends State<_DriverRideMapBackdrop> {
+  MapboxMap? _mapboxMap;
+  PolylineAnnotationManager? _lineManager;
+  PointAnnotationManager? _pointManager;
+  bool _initialized = false;
+
+  void _onMapCreated(MapboxMap map) async {
+    _mapboxMap = map;
+    await _mapboxMap!.scaleBar.updateSettings(ScaleBarSettings(enabled: false));
+    await _mapboxMap!.compass.updateSettings(CompassSettings(enabled: false));
+    await _mapboxMap!.attribution.updateSettings(AttributionSettings(enabled: false));
+    await _mapboxMap!.logo.updateSettings(LogoSettings(enabled: false));
+    _lineManager = await _mapboxMap!.annotations.createPolylineAnnotationManager();
+    _pointManager = await _mapboxMap!.annotations.createPointAnnotationManager();
+    _initialized = true;
+    _fitAndDraw();
+  }
+
+  @override
+  void didUpdateWidget(_DriverRideMapBackdrop oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_initialized &&
+        (oldWidget.pickupLat != widget.pickupLat ||
+            oldWidget.destLat != widget.destLat)) {
+      _fitAndDraw();
+    }
+  }
+
+  Future<void> _fitAndDraw() async {
+    if (_mapboxMap == null) return;
+    final pLat = widget.pickupLat;
+    final pLng = widget.pickupLng;
+    final dLat = widget.destLat;
+    final dLng = widget.destLng;
+    if (pLat == null || pLng == null || dLat == null || dLng == null) return;
+
+    final minLat = pLat < dLat ? pLat : dLat;
+    final maxLat = pLat > dLat ? pLat : dLat;
+    final minLng = pLng < dLng ? pLng : dLng;
+    final maxLng = pLng > dLng ? pLng : dLng;
+    final latPad = (maxLat - minLat) * 0.3 + 0.01;
+    final lngPad = (maxLng - minLng) * 0.3 + 0.01;
+
+    final camera = await _mapboxMap!.cameraForCoordinateBounds(
+      CoordinateBounds(
+        southwest: Point(coordinates: Position(minLng - lngPad, minLat - latPad)),
+        northeast: Point(coordinates: Position(maxLng + lngPad, maxLat + latPad)),
+        infiniteBounds: false,
+      ),
+      MbxEdgeInsets(top: 40, left: 20, bottom: 40, right: 20),
+      null, null, null, null,
+    );
+    await _mapboxMap!.setCamera(camera);
+
+    // Draw straight-line route (backdrop is non-interactive, no Directions API)
+    if (_lineManager != null) {
+      await _lineManager!.deleteAll();
+      await _lineManager!.create(PolylineAnnotationOptions(
+        geometry: LineString(coordinates: [
+          Position(pLng, pLat),
+          Position(dLng, dLat),
+        ]),
+        lineColor: (widget.accentColor ?? Colors.blue).toARGB32(),
+        lineWidth: 3,
+      ));
+    }
+
+    // Markers
+    if (_pointManager != null) {
+      await _pointManager!.deleteAll();
+      await _pointManager!.create(PointAnnotationOptions(
+        geometry: Point(coordinates: Position(pLng, pLat)),
+        iconImage: 'marker-15',
+        iconSize: 1.5,
+        iconColor: (widget.accentColor ?? Colors.green).toARGB32(),
+      ));
+      await _pointManager!.create(PointAnnotationOptions(
+        geometry: Point(coordinates: Position(dLng, dLat)),
+        iconImage: 'marker-15',
+        iconSize: 1.5,
+        iconColor: (widget.errorColor ?? Colors.red).toARGB32(),
+      ));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final themeId = HeyCabyAppChrome.themeIdOf(context);
+    final hasCoords = widget.pickupLat != null && widget.destLat != null;
     return IgnorePointer(
       child: Stack(
         fit: StackFit.expand,
@@ -133,11 +280,14 @@ class _DriverRideMapBackdrop extends StatelessWidget {
           MapWidget(
             key: ValueKey('driver-ride-map-$themeId'),
             styleUri: mapboxStyleUriForTheme(themeId),
-            cameraOptions: CameraOptions(
-              center: Point(coordinates: Position(4.9041, 52.3676)),
-              zoom: 14.2,
-              pitch: 18,
-            ),
+            cameraOptions: hasCoords
+                ? null
+                : CameraOptions(
+                    center: Point(coordinates: Position(4.9041, 52.3676)),
+                    zoom: 14.2,
+                    pitch: 18,
+                  ),
+            onMapCreated: hasCoords ? _onMapCreated : null,
           ),
           DecoratedBox(
             decoration: BoxDecoration(
@@ -169,6 +319,7 @@ class DriverRideFlowBottomBar extends StatelessWidget {
     required this.onPrimary,
     this.primaryLoading = false,
     this.primaryIcon,
+    this.primaryVariant = DriverButtonVariant.primary,
     this.secondaryLabel,
     this.onSecondary,
     this.secondaryLoading = false,
@@ -184,6 +335,7 @@ class DriverRideFlowBottomBar extends StatelessWidget {
   final VoidCallback? onPrimary;
   final bool primaryLoading;
   final IconData? primaryIcon;
+  final DriverButtonVariant primaryVariant;
   final String? secondaryLabel;
   final VoidCallback? onSecondary;
   final bool secondaryLoading;
@@ -194,20 +346,19 @@ class DriverRideFlowBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: DriverRadius.sheetTop,
-        boxShadow: DriverShadows.floating(colors),
+    return DriverRidePremiumStyle.glassSurface(
+      colors: colors,
+      borderRadius: DriverRadius.sheetTop,
+      blurSigma: 26,
+      tintOpacity: 0.8,
+      boxShadow: DriverShadows.floating(colors),
+      padding: EdgeInsets.fromLTRB(
+        DriverSpacing.screenEdge,
+        DriverSpacing.md,
+        DriverSpacing.screenEdge,
+        DriverSpacing.lg + MediaQuery.paddingOf(context).bottom,
       ),
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          DriverSpacing.screenEdge,
-          DriverSpacing.md,
-          DriverSpacing.screenEdge,
-          DriverSpacing.lg + MediaQuery.paddingOf(context).bottom,
-        ),
-        child: Column(
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -218,6 +369,7 @@ class DriverRideFlowBottomBar extends StatelessWidget {
               icon: primaryIcon,
               onPressed: onPrimary,
               loading: primaryLoading,
+              variant: primaryVariant,
               size: DriverButtonSize.lg,
               colors: colors,
               typography: typography,
@@ -247,7 +399,6 @@ class DriverRideFlowBottomBar extends StatelessWidget {
             ],
           ],
         ),
-      ),
     );
   }
 }

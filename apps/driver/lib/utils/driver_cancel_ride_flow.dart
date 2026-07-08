@@ -9,6 +9,7 @@ import '../providers/driver_state_provider.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
+import '../widgets/driver_ride_premium_style.dart';
 
 /// Confirms, calls cancel API, clears active ride, returns home.
 Future<bool> confirmAndCancelDriverRide({
@@ -108,28 +109,21 @@ class _CancelRideReasonSheetState extends State<_CancelRideReasonSheet> {
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOutCubic,
         padding: EdgeInsets.only(bottom: bottomInset),
-        child: Container(
-          margin: const EdgeInsets.all(DriverSpacing.sm),
-          padding: const EdgeInsets.fromLTRB(
-            DriverSpacing.lg,
-            DriverSpacing.sm,
-            DriverSpacing.lg,
-            DriverSpacing.lg,
-          ),
-          decoration: BoxDecoration(
-            color: colors.card,
+        child: Padding(
+          padding: const EdgeInsets.all(DriverSpacing.sm),
+          child: DriverRidePremiumStyle.glassSurface(
+            colors: colors,
             borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: colors.border.withValues(alpha: 0.72)),
-            boxShadow: [
-              BoxShadow(
-                color: colors.text.withValues(alpha: 0.12),
-                blurRadius: 36,
-                offset: const Offset(0, 18),
-              ),
-            ],
-          ),
-          child: SingleChildScrollView(
-            child: Column(
+            blurSigma: 24,
+            tintOpacity: 0.82,
+            padding: const EdgeInsets.fromLTRB(
+              DriverSpacing.lg,
+              DriverSpacing.sm,
+              DriverSpacing.lg,
+              DriverSpacing.lg,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -263,6 +257,7 @@ class _CancelRideReasonSheetState extends State<_CancelRideReasonSheet> {
               ],
             ),
           ),
+        ),
         ),
       ),
     );

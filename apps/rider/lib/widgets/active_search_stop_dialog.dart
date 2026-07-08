@@ -9,39 +9,15 @@ Future<bool> showActiveSearchStopDialog({
   required HeyCabyTypography typo,
   required AppLocalizations l10n,
 }) async {
-  final result = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      backgroundColor: colors.card,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: Text(
-        l10n.activeSearchStopTitle,
-        style: typo.titleLarge.copyWith(
-          color: colors.text,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-      content: Text(
-        l10n.activeSearchStopBody,
-        style: typo.bodyMedium.copyWith(
-          color: colors.textMid,
-          height: 1.45,
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: Text(
-            l10n.activeSearchStopKeep,
-            style: typo.labelLarge.copyWith(color: colors.textMid),
-          ),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          child: Text(l10n.activeSearchStopConfirm),
-        ),
-      ],
-    ),
+  return showHeyCabyConfirmSheet(
+    context,
+    colors: colors,
+    typography: typo,
+    title: l10n.activeSearchStopTitle,
+    message: l10n.activeSearchStopBody,
+    dismissLabel: l10n.activeSearchStopKeep,
+    confirmLabel: l10n.activeSearchStopConfirm,
+    icon: Icons.notifications_off_rounded,
+    confirmDestructive: true,
   );
-  return result ?? false;
 }

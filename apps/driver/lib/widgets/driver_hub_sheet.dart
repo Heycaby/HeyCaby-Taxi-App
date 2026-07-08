@@ -6,6 +6,7 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
 import '../providers/driver_state_provider.dart';
+import 'driver_hub_saved_by_riders_section.dart';
 import 'driver_hub_sections.dart';
 
 /// Driver Hub bottom sheet — 85% height, drag handle, 4 sections + Pro tools.
@@ -41,11 +42,12 @@ class DriverHubSheet extends ConsumerWidget {
         statusColor = colors.textSoft;
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+    return GlassPanel(
+      colors: colors,
+      typography: typo,
+      padding: EdgeInsets.zero,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      tintColor: colors.card,
       child: DraggableScrollableSheet(
         initialChildSize: 0.85,
         minChildSize: 0.5,
@@ -132,6 +134,13 @@ class DriverHubSheet extends ConsumerWidget {
               ),
               SliverToBoxAdapter(
                 child: DriverHubRatesSection(colors: colors, typo: typo),
+              ),
+              SliverToBoxAdapter(
+                child: _Divider(colors: colors),
+              ),
+              SliverToBoxAdapter(
+                child: DriverHubSavedByRidersSection(
+                    colors: colors, typo: typo),
               ),
               SliverToBoxAdapter(
                 child: _Divider(colors: colors),

@@ -310,7 +310,7 @@ class _HomeAddressModalState extends ConsumerState<_HomeAddressModal> {
                               ),
                             ),
                           );
-                        }).toList(),
+                        }),
                         const SizedBox(height: 24),
                       ] else ...[
                         const SizedBox(height: 24),

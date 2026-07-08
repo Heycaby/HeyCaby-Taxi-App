@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../constants/rider_search_window.dart';
 import '../models/marketplace_driver_offer.dart';
+import '../models/ride_matching_variant.dart';
 import '../providers/active_search_provider.dart';
 import '../providers/booking_provider.dart';
 import '../providers/marketplace_offers_provider.dart';
@@ -135,6 +136,7 @@ class _MarketplaceMatchingScreenState
       context,
       ref,
       markGrowthModalDismissedAfter: false,
+      variant: RideMatchingVariant.marketplace,
     );
     if (mounted) context.go('/home');
   }
@@ -213,36 +215,16 @@ class _MarketplaceMatchingScreenState
     final typo = ref.read(typographyProvider);
     final l10n = AppLocalizations.of(context);
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: colors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          l10n.marketplaceCancelRequest,
-          style: typo.titleLarge.copyWith(
-            fontWeight: FontWeight.w800,
-            color: colors.text,
-          ),
-        ),
-        content: Text(
-          l10n.marketplaceCancelRequestConfirm,
-          style: typo.bodyMedium.copyWith(color: colors.textMid),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.back),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: colors.error,
-            ),
-            child: Text(l10n.marketplaceCancelRequest),
-          ),
-        ],
-      ),
+    final confirmed = await showHeyCabyConfirmSheet(
+      context,
+      colors: colors,
+      typography: typo,
+      title: l10n.marketplaceCancelRequest,
+      message: l10n.marketplaceCancelRequestConfirm,
+      dismissLabel: l10n.back,
+      confirmLabel: l10n.marketplaceCancelRequest,
+      icon: Icons.close_rounded,
+      confirmDestructive: true,
     );
 
     if (confirmed == true && mounted) {

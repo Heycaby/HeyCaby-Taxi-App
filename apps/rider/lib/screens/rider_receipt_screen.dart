@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
+import 'package:intl/intl.dart';
 
 import '../widgets/booking/booking_flow_screen_header.dart';
 
@@ -113,11 +114,41 @@ class _ReceiptContent extends StatelessWidget {
     final note = receipt['note']?.toString();
     final receiptId = receipt['receipt_id']?.toString();
     final currency = receipt['currency']?.toString() ?? 'EUR';
+    final pickupAddress = receipt['pickup_address']?.toString().trim();
+    final destinationAddress =
+        receipt['destination_address']?.toString().trim();
+    final completedAt = _parseDateTime(
+      receipt['completed_at'] ?? receipt['issued_at'],
+    );
     final diff = (expected != null && paid != null) ? paid - expected : null;
 
     return ListView(
       padding: const EdgeInsetsDirectional.fromSTEB(20, 4, 20, 28),
       children: [
+        if (completedAt != null) ...[
+          Text(
+            DateFormat.yMMMd(
+              Localizations.localeOf(context).toString(),
+            ).add_jm().format(completedAt.toLocal()),
+            style: typo.bodyMedium.copyWith(
+              color: colors.textMid,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+        if ((pickupAddress != null && pickupAddress.isNotEmpty) ||
+            (destinationAddress != null && destinationAddress.isNotEmpty))
+          _ReceiptRouteCard(
+            colors: colors,
+            typo: typo,
+            l10n: l10n,
+            pickupAddress: pickupAddress ?? '',
+            destinationAddress: destinationAddress ?? '',
+          ),
+        if ((pickupAddress != null && pickupAddress.isNotEmpty) ||
+            (destinationAddress != null && destinationAddress.isNotEmpty))
+          const SizedBox(height: 14),
         _ReceiptHero(
           amount: paid ?? expected,
           currency: currency,
@@ -197,6 +228,127 @@ class _ReceiptContent extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         _ReceiptTrustCard(colors: colors, typo: typo, l10n: l10n),
+      ],
+    );
+  }
+}
+
+class _ReceiptRouteCard extends StatelessWidget {
+  const _ReceiptRouteCard({
+    required this.colors,
+    required this.typo,
+    required this.l10n,
+    required this.pickupAddress,
+    required this.destinationAddress,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final AppLocalizations l10n;
+  final String pickupAddress;
+  final String destinationAddress;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: colors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.yourRoute,
+            style: typo.titleMedium.copyWith(
+              color: colors.text,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 14),
+          if (pickupAddress.isNotEmpty)
+            _RouteStopRow(
+              colors: colors,
+              typo: typo,
+              dotColor: colors.accent,
+              label: l10n.pickup,
+              address: pickupAddress,
+            ),
+          if (pickupAddress.isNotEmpty && destinationAddress.isNotEmpty)
+            Padding(
+              padding: const EdgeInsetsDirectional.only(start: 11, top: 4, bottom: 4),
+              child: Container(width: 2, height: 18, color: colors.border),
+            ),
+          if (destinationAddress.isNotEmpty)
+            _RouteStopRow(
+              colors: colors,
+              typo: typo,
+              dotColor: colors.text,
+              label: l10n.destination,
+              address: destinationAddress,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RouteStopRow extends StatelessWidget {
+  const _RouteStopRow({
+    required this.colors,
+    required this.typo,
+    required this.dotColor,
+    required this.label,
+    required this.address,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final Color dotColor;
+  final String label;
+  final String address;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          margin: const EdgeInsets.only(top: 6),
+          decoration: BoxDecoration(
+            color: dotColor,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: typo.labelMedium.copyWith(
+                  color: colors.textMid,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                address,
+                style: typo.bodyMedium.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -563,4 +715,10 @@ String _formatMoney(double amount, String currency) {
 String _compactId(String value) {
   if (value.length <= 12) return value;
   return '${value.substring(0, 8)}...${value.substring(value.length - 4)}';
+}
+
+DateTime? _parseDateTime(dynamic raw) {
+  if (raw == null) return null;
+  if (raw is DateTime) return raw;
+  return DateTime.tryParse(raw.toString());
 }

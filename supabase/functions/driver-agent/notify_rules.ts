@@ -213,7 +213,6 @@ export function buildAgentNotification(
     (table === "messages" || table === "ride_messages") && type === "INSERT"
   ) {
     const senderType = record?.sender_type as string | undefined;
-    if (senderType !== "rider") return null;
     const rideRequestId = record?.ride_request_id as string | undefined;
     if (!rideRequestId) return null;
     const content = (record?.content as string) || (record?.body as string) ||
@@ -221,18 +220,59 @@ export function buildAgentNotification(
     const preview = content.length > 60
       ? content.slice(0, 57) + "..."
       : content;
-    return {
-      target: "driver",
-      user_type: "driver",
-      user_id: "",
-      agent: "driver_agent",
-      category: "chat",
-      title: "💬 [Rider]: " + preview,
-      body: preview,
-      data: { ride_request_id: rideRequestId },
-      priority: "medium",
-      channel: "both",
-    };
+
+    // Rider → Driver chat message
+    if (senderType === "rider") {
+      return {
+        target: "driver",
+        user_type: "driver",
+        user_id: "",
+        agent: "driver_agent",
+        category: "chat",
+        title: "💬 [Rider]: " + preview,
+        body: preview,
+        data: { ride_request_id: rideRequestId },
+        priority: "medium",
+        channel: "both",
+      };
+    }
+
+    // Driver → Rider chat message
+    if (senderType === "driver") {
+      // Look up rider_identity_id from the ride request
+      const oldRiderIdentityId = record?.rider_identity_id as
+        | string
+        | undefined;
+      if (oldRiderIdentityId) {
+        return {
+          target: "rider",
+          user_type: "rider",
+          user_id: oldRiderIdentityId,
+          agent: "driver_agent",
+          category: "chat",
+          title: "💬 [Driver]: " + preview,
+          body: preview,
+          data: { ride_request_id: rideRequestId, screen: "chat" },
+          priority: "medium",
+          channel: "both",
+        };
+      }
+      // Fallback: deliverNotification will resolve rider_identity_id from ride_requests
+      return {
+        target: "rider",
+        user_type: "rider",
+        user_id: "",
+        agent: "driver_agent",
+        category: "chat",
+        title: "💬 [Driver]: " + preview,
+        body: preview,
+        data: { ride_request_id: rideRequestId, screen: "chat" },
+        priority: "medium",
+        channel: "both",
+      };
+    }
+
+    return null;
   }
 
   if (table === "ride_ratings" && type === "UPDATE") {

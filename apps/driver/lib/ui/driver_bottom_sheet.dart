@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../theme/driver_colors.dart';
 import '../theme/driver_radius.dart';
+import '../theme/driver_shadows.dart';
 import '../theme/driver_spacing.dart';
+import '../widgets/driver_ride_premium_style.dart';
 
 /// Shows a token-styled modal bottom sheet.
 Future<T?> showDriverBottomSheet<T>({
@@ -38,11 +40,13 @@ class DriverBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: DriverRadius.sheetTop,
-      ),
+    return DriverRidePremiumStyle.glassSurface(
+      colors: colors,
+      borderRadius: DriverRadius.sheetTop,
+      blurSigma: 26,
+      tintOpacity: 0.8,
+      boxShadow: DriverShadows.floating(colors),
+      padding: EdgeInsets.zero,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -53,7 +57,7 @@ class DriverBottomSheet extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: colors.border,
+                  color: colors.border.withValues(alpha: 0.85),
                   borderRadius: BorderRadius.circular(DriverRadius.pill),
                 ),
               ),

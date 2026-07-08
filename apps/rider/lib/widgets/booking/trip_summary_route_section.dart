@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
+
 import '../../providers/booking_provider.dart';
 
+/// Legacy chip — kept for any external references; prefer [TripSummaryRouteCard].
 class TripSummaryStatChip extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -26,13 +28,6 @@ class TripSummaryStatChip extends StatelessWidget {
           color: colors.card,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: colors.border),
-          boxShadow: [
-            BoxShadow(
-              color: colors.text.withValues(alpha: 0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -56,13 +51,8 @@ class TripSummaryStatChip extends StatelessWidget {
   }
 }
 
+/// One card: trip metrics + pickup + drop-off.
 class TripSummaryRouteCard extends StatelessWidget {
-  final BookingState booking;
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final AppLocalizations l10n;
-  final void Function(bool isPickup) onEditAddress;
-
   const TripSummaryRouteCard({
     super.key,
     required this.booking,
@@ -70,67 +60,141 @@ class TripSummaryRouteCard extends StatelessWidget {
     required this.typo,
     required this.l10n,
     required this.onEditAddress,
+    this.distanceKm,
+    this.etaText,
+    this.priceLabel,
   });
+
+  final BookingState booking;
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final AppLocalizations l10n;
+  final void Function(bool isPickup) onEditAddress;
+  final double? distanceKm;
+  final String? etaText;
+  final String? priceLabel;
 
   @override
   Widget build(BuildContext context) {
+    final distanceLabel = distanceKm != null && distanceKm! > 0
+        ? '${distanceKm!.toStringAsFixed(1)} km'
+        : null;
+    final durationLabel =
+        etaText != null && etaText!.trim().isNotEmpty && etaText != '—'
+            ? etaText
+            : null;
+    final showMetrics =
+        distanceLabel != null || durationLabel != null || priceLabel != null;
+
+    final pickupFull = booking.pickup?.fullAddress ?? l10n.pickup;
+    final dropoffFull = booking.destination?.fullAddress ?? l10n.destination;
+    final pickupLines = _addressLines(pickupFull);
+    final dropoffLines = _addressLines(dropoffFull);
+
     return Container(
-      padding: const EdgeInsetsDirectional.all(20),
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors.border),
+        color: colors.card.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: colors.border.withValues(alpha: 0.42)),
         boxShadow: [
           BoxShadow(
-            color: colors.text.withValues(alpha: 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
+            color: colors.text.withValues(alpha: 0.06),
+            blurRadius: 28,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _TripSummaryRouteRow(
-            dotColor: colors.success,
-            typeLabel: l10n.pickup,
-            addressLabel: booking.pickup?.fullAddress ?? l10n.pickup,
-            isPickup: true,
-            colors: colors,
-            typo: typo,
-            onEdit: () {
-              HapticService.lightTap();
-              onEditAddress(true);
-            },
-          ),
-          Padding(
-            padding: const EdgeInsetsDirectional.only(start: 11, top: 6, bottom: 6),
-            child: Column(
-              children: List.generate(
-                4,
-                (i) => Container(
-                  width: 2,
-                  height: 5,
-                  margin: const EdgeInsets.only(bottom: 3),
-                  decoration: BoxDecoration(
-                    color: colors.border,
-                    borderRadius: BorderRadius.circular(1),
+          if (showMetrics)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsetsDirectional.fromSTEB(16, 11, 16, 11),
+              decoration: BoxDecoration(
+                color: colors.accentL.withValues(alpha: 0.42),
+                border: Border(
+                  bottom: BorderSide(
+                    color: colors.accent.withValues(alpha: 0.08),
                   ),
                 ),
               ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (distanceLabel != null)
+                    _TripMetric(
+                      icon: Icons.route_rounded,
+                      label: distanceLabel,
+                      colors: colors,
+                      typo: typo,
+                    ),
+                  if (distanceLabel != null && durationLabel != null)
+                    _MetricDot(colors: colors),
+                  if (durationLabel != null)
+                    _TripMetric(
+                      icon: Icons.schedule_rounded,
+                      label: durationLabel,
+                      colors: colors,
+                      typo: typo,
+                    ),
+                  if (priceLabel != null &&
+                      (distanceLabel != null || durationLabel != null))
+                    _MetricDot(colors: colors),
+                  if (priceLabel != null)
+                    _TripMetric(
+                      icon: Icons.euro_rounded,
+                      label: priceLabel!,
+                      colors: colors,
+                      typo: typo,
+                    ),
+                ],
+              ),
             ),
-          ),
-          _TripSummaryRouteRow(
-            dotColor: colors.error,
-            typeLabel: l10n.tripSummaryDropoffLabel,
-            addressLabel:
-                booking.destination?.fullAddress ?? l10n.destination,
-            isPickup: false,
-            colors: colors,
-            typo: typo,
-            onEdit: () {
-              HapticService.lightTap();
-              onEditAddress(false);
-            },
+          Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 10, 16),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(
+                    width: 18,
+                    child: _RouteTimeline(colors: colors),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _RouteStopRow(
+                          primary: pickupLines.$1,
+                          secondary: pickupLines.$2,
+                          colors: colors,
+                          typo: typo,
+                          onTap: () {
+                            HapticService.lightTap();
+                            onEditAddress(true);
+                          },
+                        ),
+                        _RouteStopRow(
+                          primary: dropoffLines.$1,
+                          secondary: dropoffLines.$2,
+                          colors: colors,
+                          typo: typo,
+                          onTap: () {
+                            HapticService.lightTap();
+                            onEditAddress(false);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -138,79 +202,200 @@ class TripSummaryRouteCard extends StatelessWidget {
   }
 }
 
-class _TripSummaryRouteRow extends StatelessWidget {
-  final Color dotColor;
-  final String typeLabel;
-  final String addressLabel;
-  final bool isPickup;
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final VoidCallback onEdit;
+(String primary, String? secondary) _addressLines(String full) {
+  final trimmed = full.trim();
+  if (trimmed.isEmpty) return ('', null);
+  final comma = trimmed.indexOf(',');
+  if (comma <= 0 || comma >= trimmed.length - 1) {
+    return (trimmed, null);
+  }
+  final primary = trimmed.substring(0, comma).trim();
+  final secondary = trimmed.substring(comma + 1).trim();
+  if (secondary.isEmpty) return (trimmed, null);
+  return (primary, secondary);
+}
 
-  const _TripSummaryRouteRow({
-    required this.dotColor,
-    required this.typeLabel,
-    required this.addressLabel,
-    required this.isPickup,
-    required this.colors,
-    required this.typo,
-    required this.onEdit,
-  });
+class _RouteTimeline extends StatelessWidget {
+  const _RouteTimeline({required this.colors});
+
+  final HeyCabyColorTokens colors;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
       children: [
         Container(
-          width: 24,
-          height: 24,
-          margin: const EdgeInsets.only(top: 2),
+          width: 11,
+          height: 11,
           decoration: BoxDecoration(
-            color: dotColor.withValues(alpha: 0.15),
             shape: BoxShape.circle,
-          ),
-          child: Icon(
-            isPickup ? Icons.radio_button_checked : Icons.location_on,
-            color: dotColor,
-            size: 14,
+            border: Border.all(color: colors.warning, width: 2.5),
+            color: colors.warning.withValues(alpha: 0.22),
           ),
         ),
-        const SizedBox(width: 12),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                typeLabel,
-                style: typo.bodySmall.copyWith(color: colors.textSoft),
+          child: Container(
+            width: 2,
+            margin: const EdgeInsets.symmetric(vertical: 5),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  colors.warning.withValues(alpha: 0.28),
+                  colors.border.withValues(alpha: 0.85),
+                  colors.success.withValues(alpha: 0.45),
+                ],
               ),
-              const SizedBox(height: 2),
-              Text(
-                addressLabel,
-                style: typo.bodyMedium.copyWith(
-                  color: colors.text,
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              borderRadius: BorderRadius.circular(1),
+            ),
+          ),
+        ),
+        Container(
+          width: 11,
+          height: 11,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: colors.success,
+            boxShadow: [
+              BoxShadow(
+                color: colors.success.withValues(alpha: 0.28),
+                blurRadius: 5,
               ),
             ],
           ),
         ),
-        const SizedBox(width: 8),
-        GestureDetector(
-          onTap: onEdit,
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: colors.bgAlt,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(Icons.edit_outlined, color: colors.textMid, size: 16),
+      ],
+    );
+  }
+}
+
+class _MetricDot extends StatelessWidget {
+  const _MetricDot({required this.colors});
+
+  final HeyCabyColorTokens colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Text(
+        '·',
+        style: TextStyle(
+          color: colors.textSoft.withValues(alpha: 0.9),
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          height: 1,
+        ),
+      ),
+    );
+  }
+}
+
+class _TripMetric extends StatelessWidget {
+  const _TripMetric({
+    required this.icon,
+    required this.label,
+    required this.colors,
+    required this.typo,
+  });
+
+  final IconData icon;
+  final String label;
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: colors.accent, size: 15),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: typo.labelLarge.copyWith(
+            color: colors.text,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
           ),
         ),
       ],
+    );
+  }
+}
+
+class _RouteStopRow extends StatelessWidget {
+  const _RouteStopRow({
+    required this.primary,
+    required this.secondary,
+    required this.colors,
+    required this.typo,
+    required this.onTap,
+  });
+
+  final String primary;
+  final String? secondary;
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(0, 2, 4, 2),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      primary,
+                      style: typo.titleSmall.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w700,
+                        height: 1.25,
+                        letterSpacing: -0.15,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (secondary != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        secondary!,
+                        style: typo.bodySmall.copyWith(
+                          color: colors.textMid,
+                          fontWeight: FontWeight.w500,
+                          height: 1.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 4),
+              Padding(
+                padding: const EdgeInsetsDirectional.only(top: 1),
+                child: Icon(
+                  Icons.edit_outlined,
+                  color: colors.textSoft.withValues(alpha: 0.85),
+                  size: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

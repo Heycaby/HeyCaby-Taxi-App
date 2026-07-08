@@ -16,6 +16,7 @@ import '../providers/near_term_ride_request_provider.dart';
 import '../services/heycaby_widget_sync.dart';
 import '../services/rider_notify_search_notifications.dart';
 import '../services/location_service.dart';
+import '../providers/favorites_provider.dart';
 import '../services/nearby_supply_service.dart';
 import '../services/rider_runtime_config_service.dart';
 import '../services/sound_service.dart';
@@ -23,7 +24,6 @@ import '../services/stale_ride_cleanup.dart';
 import '../utils/map_style_helper.dart';
 import '../constants/rider_search_window.dart';
 import '../widgets/driver_search_expired_dialog.dart';
-import '../widgets/active_booking_card.dart';
 import '../widgets/home/home_bottom_sheet.dart';
 import '../widgets/home/home_map_overlay.dart';
 import '../widgets/rider_preride_home_banner.dart';
@@ -40,9 +40,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     with WidgetsBindingObserver {
   MapboxMap? _mapboxMap;
   PointAnnotationManager? _annotationManager;
+  RiderSupplySnapshot _supplySnapshot = RiderSupplySnapshot.empty;
+  RiderFavoriteSupplySnapshot _favoriteSupplySnapshot =
+      RiderFavoriteSupplySnapshot.empty;
   int _nearbyTaxiCount = 0;
+  bool _nearbySupplyKnown = false;
   late final DraggableScrollableController _sheetController;
   Timer? _notifyExpiryTimer;
+  Timer? _supplyRefreshTimer;
   DateTime? _notifyExpiryScheduledFor;
   Timer? _globalSearchExpiryTimer;
   bool _globalExpiryModalShowing = false;
@@ -56,6 +61,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(locationProvider.notifier).refreshIfPermitted();
+      _supplyRefreshTimer?.cancel();
+      _supplyRefreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+        final loc = ref.read(locationProvider).valueOrNull;
+        if (loc != null) {
+          unawaited(_fetchNearbyTaxiCount(loc.latitude, loc.longitude));
+        }
+      });
       _welcomeProfileTimer = Timer(const Duration(seconds: 3), () {
         unawaited(
           maybePresentWelcomeProfileFlow(context: context, ref: ref),
@@ -67,6 +79,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void dispose() {
     _welcomeProfileTimer?.cancel();
+    _supplyRefreshTimer?.cancel();
     _notifyWidgetSyncTimer?.cancel();
     _notifyExpiryTimer?.cancel();
     _globalSearchExpiryTimer?.cancel();
@@ -295,32 +308,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Future<void> _fetchNearbyTaxiCount(double lat, double lng) async {
-    try {
-      final pickup = AddressResult(
-        displayName: '',
-        fullAddress: '',
-        lat: lat,
-        lng: lng,
-      );
-      final snapshots = await NearbySupplyService.loadForPickup(pickup: pickup);
-      final count = snapshots.values.fold<int>(
-        0,
-        (sum, snapshot) => sum + snapshot.driverCount,
-      );
-
-      if (mounted) {
-        setState(() {
-          _nearbyTaxiCount = count;
-        });
-      }
-    } catch (e) {
-      // Error fetching taxi count
-      if (mounted) {
-        setState(() {
-          _nearbyTaxiCount = 0;
-        });
-      }
-    }
+    final pickup = AddressResult(
+      displayName: '',
+      fullAddress: '',
+      lat: lat,
+      lng: lng,
+    );
+    final favorites = await ref.read(favoritesProvider.future);
+    final favoriteIds = favorites.map((f) => f.driverId).toSet();
+    final results = await Future.wait([
+      NearbySupplyService.loadSupplySnapshot(pickup: pickup),
+      NearbySupplyService.loadFavoriteSupplySnapshot(
+        pickup: pickup,
+        favoriteDriverIds: favoriteIds,
+      ),
+    ]);
+    if (!mounted) return;
+    final snapshot = results[0] as RiderSupplySnapshot;
+    final favoriteSnapshot = results[1] as RiderFavoriteSupplySnapshot;
+    setState(() {
+      _supplySnapshot = snapshot;
+      _favoriteSupplySnapshot = favoriteSnapshot;
+      _nearbyTaxiCount = snapshot.totalCount;
+      _nearbySupplyKnown = snapshot.rpcSucceeded;
+    });
   }
 
   Future<void> _reverseGeocodeLocation(double lat, double lng) async {
@@ -436,12 +447,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             l10n: l10n,
             sheetController: _sheetController,
             nearbyTaxiCount: _nearbyTaxiCount,
-          ),
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: MediaQuery.sizeOf(context).height * 0.29,
-            child: const ActiveBookingCard(),
+            nearbySupplyKnown: _nearbySupplyKnown,
+            supplySnapshot: _supplySnapshot,
+            favoriteSupplySnapshot: _favoriteSupplySnapshot,
           ),
           Positioned(
             top: MediaQuery.paddingOf(context).top + 8,

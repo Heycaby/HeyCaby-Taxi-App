@@ -12,6 +12,7 @@ import '../theme/driver_colors.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
 import '../ui/driver_button.dart';
+import '../widgets/driver_ride_premium_style.dart';
 
 /// Step-up before requesting Secure Shift Handover (biometric preferred, OTP fallback).
 Future<String?> showDriverShiftHandoverStepUpSheet({
@@ -204,19 +205,18 @@ class _DriverShiftHandoverStepUpSheetState
           bottom: MediaQuery.viewInsetsOf(context).bottom + DriverSpacing.lg,
           top: DriverSpacing.screenEdge,
         ),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(DriverSpacing.lg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  DriverStrings.shiftHandoverStepUpTitle,
+        child: DriverRidePremiumStyle.glassSurface(
+          colors: colors,
+          borderRadius: BorderRadius.circular(20),
+          blurSigma: 24,
+          tintOpacity: 0.82,
+          padding: const EdgeInsets.all(DriverSpacing.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                DriverStrings.shiftHandoverStepUpTitle,
                   style: typography.titleLarge.copyWith(
                     color: colors.text,
                     fontWeight: FontWeight.w800,
@@ -307,7 +307,6 @@ class _DriverShiftHandoverStepUpSheetState
                 ),
               ],
             ),
-          ),
         ),
       ),
     );

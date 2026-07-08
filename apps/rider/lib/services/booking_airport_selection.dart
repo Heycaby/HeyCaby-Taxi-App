@@ -30,6 +30,7 @@ Future<void> startBookingWithAirportDestination({
         ),
   );
 
+  if (!context.mounted) return;
   final locationOk = await ensureLocationForBooking(
     context: context,
     ref: ref,

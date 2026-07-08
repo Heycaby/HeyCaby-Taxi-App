@@ -12,6 +12,7 @@ import {
 import { buildAgentNotification } from "./notify_rules.ts";
 import type {
   AgentNotificationRow,
+  FavoriteAddedPayload,
   ManualDriverPingPayload,
   ManualPreridePayload,
   WebhookPayload,
@@ -20,6 +21,7 @@ import {
   authorizeManualPreride,
   deliverNotification,
 } from "./notify_deliver.ts";
+import { sendFcmNotification } from "./notify_push.ts";
 import {
   appendPingAudit,
   buildPingCopy,
@@ -31,16 +33,60 @@ import {
 } from "./ping_helpers.ts";
 import { json, ok, safeCompare } from "./util.ts";
 
+async function enrichInviteNotification(
+  supabase: { from: (table: string) => any },
+  payload: WebhookPayload,
+  notification: AgentNotificationRow,
+): Promise<AgentNotificationRow> {
+  if (
+    payload.table !== "ride_request_invites" ||
+    payload.type !== "INSERT" ||
+    notification.category !== "incoming_ride"
+  ) {
+    return notification;
+  }
+
+  const rideRequestId = payload.record?.ride_request_id as string | undefined;
+  if (!rideRequestId) return notification;
+
+  const { data: ride, error } = await supabase
+    .from("ride_requests")
+    .select("booking_mode, return_mode_active")
+    .eq("id", rideRequestId)
+    .maybeSingle();
+  const rideRow = ride as
+    | { booking_mode?: string | null; return_mode_active?: boolean | null }
+    | null;
+
+  if (error) {
+    console.warn(
+      "driver-agent: could not enrich invite notification",
+      rideRequestId,
+      error.message,
+    );
+    return notification;
+  }
+
+  const bookingMode = rideRow?.booking_mode ?? undefined;
+  const isTaxiTerug = bookingMode === "terug" ||
+    rideRow?.return_mode_active === true;
+  if (!isTaxiTerug) return notification;
+
+  return {
+    ...notification,
+    title: "TAXI TERUG request",
+    body: "This ride may fit your route back.",
+    data: {
+      ...(notification.data ?? {}),
+      booking_mode: "terug",
+      taxi_terug: true,
+    },
+  };
+}
+
 Deno.serve(async (req) => {
   try {
     if (req.method === "OPTIONS") return ok();
-
-    if (!WEBHOOK_SECRET) {
-      console.error(
-        "AGENT_WEBHOOK_SECRET env var not set — rejecting all requests",
-      );
-      return json({ error: "Misconfigured" }, 500);
-    }
 
     const raw = await req.text();
     let body: unknown;
@@ -54,7 +100,10 @@ Deno.serve(async (req) => {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    const manual = body as ManualPreridePayload | ManualDriverPingPayload;
+    const manual = body as
+      | ManualPreridePayload
+      | ManualDriverPingPayload
+      | FavoriteAddedPayload;
 
     if (manual?.event === "driver_ping" && manual.ride_request_id) {
       const ping = manual as ManualDriverPingPayload;
@@ -200,6 +249,63 @@ Deno.serve(async (req) => {
       return await deliverNotification(supabase, notification, manual);
     }
 
+    if (
+      manual?.event === "favorite_added" &&
+      (manual as FavoriteAddedPayload).notification_id
+    ) {
+      const fav = manual as FavoriteAddedPayload;
+
+      // Auth: webhook secret or service-role (RPC calls via net.http_post)
+      if (WEBHOOK_SECRET) {
+        const incomingSecret = req.headers.get("x-webhook-secret") ?? "";
+        const valid = await safeCompare(incomingSecret, WEBHOOK_SECRET);
+        if (!valid) {
+          return json({ error: "Unauthorized" }, 401);
+        }
+      }
+
+      // Notification already inserted by fn_rider_add_favorite_driver RPC.
+      // Just send FCM push to the driver's registered devices.
+      const { data: pushRows } = await supabase
+        .from("push_devices")
+        .select("fcm_token")
+        .eq("driver_id", fav.driver_id)
+        .eq("app_role", "driver");
+
+      let pushed = 0;
+      for (const row of pushRows ?? []) {
+        const token = row?.fcm_token as string | null;
+        if (!token || token.length < 10) continue;
+        await sendFcmNotification(token, {
+          title: fav.title,
+          body: fav.body,
+          data: {
+            ...(fav.data ?? {}),
+            notification_id: fav.notification_id,
+            category: "favorite_added",
+          },
+          priority: fav.priority ?? "medium",
+        });
+        pushed++;
+      }
+
+      // Mark push_sent_at on the notification row
+      await supabase
+        .from("notifications")
+        .update({ push_sent_at: new Date().toISOString() })
+        .eq("id", fav.notification_id);
+
+      return json({ ok: true, pushed });
+    }
+
+    // Webhook fallback path — requires WEBHOOK_SECRET
+    if (!WEBHOOK_SECRET) {
+      console.error(
+        "AGENT_WEBHOOK_SECRET env var not set — rejecting webhook request",
+      );
+      return json({ error: "Misconfigured" }, 500);
+    }
+
     const incomingSecret = req.headers.get("x-webhook-secret") ?? "";
     const valid = await safeCompare(incomingSecret, WEBHOOK_SECRET);
     if (!valid) {
@@ -216,9 +322,36 @@ Deno.serve(async (req) => {
     }
 
     const notification = buildAgentNotification(payload);
-    if (!notification) return ok();
+    if (!notification) {
+      console.log(
+        "driver-agent: no notification for",
+        payload.type,
+        payload.table,
+        "status=",
+        payload.record?.status,
+        "old_status=",
+        payload.old_record?.status,
+        "driver_id=",
+        payload.record?.driver_id,
+        "rider_identity_id=",
+        payload.record?.rider_identity_id,
+      );
+      await supabase.from("agent_logs").insert({
+        agent: "driver_agent",
+        event_type: `${payload.table}_${payload.type}_skipped`,
+        input: payload,
+        output: { reason: "no_notification_built" },
+      });
+      return ok();
+    }
 
-    return await deliverNotification(supabase, notification, payload);
+    const enrichedNotification = await enrichInviteNotification(
+      supabase,
+      payload,
+      notification,
+    );
+
+    return await deliverNotification(supabase, enrichedNotification, payload);
   } catch (e) {
     console.error("driver-agent error:", e);
     return json({ error: String(e) }, 500);

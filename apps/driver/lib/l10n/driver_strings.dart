@@ -250,6 +250,24 @@ class DriverStrings {
         es: 'Iniciar descanso',
         ar: 'ابدأ الاستراحة',
       );
+  static String get breakConfirmTitle => _t(
+        'Even pauze?',
+        en: 'Need a break?',
+        es: '¿Necesitas un descanso?',
+        ar: 'بحاجة إلى استراحة؟',
+      );
+  static String get breakConfirmBodyActiveRide => _t(
+        'Na je huidige rit krijg je geen nieuwe aanvragen meer.',
+        en: 'After your current ride you will stop receiving new requests.',
+        es: 'Después de tu viaje actual dejarás de recibir nuevas solicitudes.',
+        ar: 'بعد رحلتك الحالية ستتوقف عن تلقي طلبات جديدة.',
+      );
+  static String get breakConfirmBodyIdle => _t(
+        'Je krijgt geen nieuwe aanvragen meer totdat je weer online gaat.',
+        en: 'You will stop receiving new requests until you go back online.',
+        es: 'Dejarás de recibir nuevas solicitudes hasta que vuelvas a estar disponible.',
+        ar: 'ستتوقف عن تلقي طلبات جديدة حتى تعود متصلا.',
+      );
   static String get shiftBreakTarget => _t(
         'Pauzedoel',
         en: 'Break target',
@@ -322,6 +340,48 @@ class DriverStrings {
       );
   static const String rideDetails = 'Ritdetails';
   static const String rideDetailsNotFound = 'Rit niet gevonden.';
+  static String get rideDetailFinished => _t(
+        'Voltooid',
+        en: 'Finished',
+        es: 'Finalizado',
+        ar: 'مكتملة',
+      );
+  static String get rideDetailBreakdown => _t(
+        'Specificatie',
+        en: 'Breakdown',
+        es: 'Desglose',
+        ar: 'التفاصيل',
+      );
+  static String get rideDetailTripFare => _t(
+        'Ritprijs',
+        en: 'Trip fare',
+        es: 'Tarifa del viaje',
+        ar: 'أجرة الرحلة',
+      );
+  static String get rideDetailGetHelp => _t(
+        'Hulp bij deze rit',
+        en: 'Get help with this trip',
+        es: 'Ayuda con este viaje',
+        ar: 'مساعدة بشأن هذه الرحلة',
+      );
+  static String get rideDetailContactWindowClosed => _t(
+        'Contact met de reiziger is niet meer beschikbaar (meer dan 2 uur na de rit).',
+        en: 'Rider contact is no longer available (more than 2 hours after the trip).',
+        es: 'El contacto con el pasajero ya no está disponible (más de 2 horas después del viaje).',
+        ar: 'لم يعد التواصل مع الراكب متاحًا (أكثر من ساعتين بعد الرحلة).',
+      );
+  static String rideDetailDistanceKm(String km) => _t(
+        '$km km',
+        en: '$km km',
+        es: '$km km',
+        ar: '$km كم',
+      );
+  static String rideDetailDurationMin(String minutes) => _t(
+        '$minutes min',
+        en: '$minutes min',
+        es: '$minutes min',
+        ar: '$minutes د',
+      );
   static String get noRidesYet => _t(
         'Nog geen ritten.',
         en: 'No rides yet.',
@@ -880,13 +940,46 @@ class DriverStrings {
   static const String sendOutsideMessage = 'Bericht sturen: ik sta buiten';
   static const String outsideMessageSent = 'Bericht naar passagier verstuurd.';
   static const String outsideMessageFailed = 'Bericht versturen mislukt.';
-  static const String collectPaymentTitle = 'Betaal eerst voordat je afsluit';
-  static const String collectPaymentBody =
-      'Vergeet niet het tarief bij de passagier te innen voordat je deze rit afrondt.';
-  static String collectPaymentAmount(String amountLabel) =>
-      'Innen: $amountLabel nu.';
-  static const String collectPaymentContinue = 'Ik heb betaald ontvangen';
-  static const String collectPaymentBack = 'Terug';
+  static String get collectPaymentTitle => _t(
+        'Tarief innen bij je passagier',
+        en: 'Collect fare from passenger',
+        es: 'Cobra la tarifa al pasajero',
+        ar: 'احصل على الأجرة من الراكب',
+      );
+  static String get collectPaymentBody => _t(
+        'Rond de rit pas af nadat je passagier het tarief hieronder heeft betaald.',
+        en: 'Only complete the ride after your passenger has paid the fare below.',
+        es: 'Solo completa el viaje cuando el pasajero haya pagado la tarifa indicada.',
+        ar: 'أكمل الرحلة فقط بعد أن يدفع الراكب الأجرة أدناه.',
+      );
+  static String get collectPaymentAmountCaption => _t(
+        'Te innen',
+        en: 'Amount to collect',
+        es: 'A cobrar',
+        ar: 'المبلغ المطلوب',
+      );
+  static String collectPaymentAmount(String amountLabel) {
+    final normalized = amountLabel.replaceFirst('EUR ', '€');
+    return _t(
+      'Te innen: $normalized',
+      en: 'Amount to collect: $normalized',
+      es: 'A cobrar: $normalized',
+      ar: 'المبلغ المطلوب: $normalized',
+    );
+  }
+
+  static String get collectPaymentContinue => _t(
+        'Passagier heeft betaald',
+        en: 'Passenger has paid',
+        es: 'El pasajero ya pagó',
+        ar: 'الراكب دفع',
+      );
+  static String get collectPaymentBack => _t(
+        'Nog niet',
+        en: 'Not yet',
+        es: 'Aún no',
+        ar: 'ليس بعد',
+      );
   static String get recordPaymentReceived => _t(
         'Betaling vastleggen',
         en: 'Record payment',
@@ -2768,11 +2861,11 @@ class DriverStrings {
         es: 'Tarifa inicial',
         ar: 'رسوم البداية',
       );
-  static String get initialTariffVat => _t(
-        'BTW %',
-        en: 'VAT %',
-        es: 'IVA %',
-        ar: 'ضريبة القيمة المضافة %',
+  static String get initialTariffWaitingRate => _t(
+        'Wachttarief per minuut',
+        en: 'Wait time price',
+        es: 'Precio por tiempo de espera',
+        ar: 'سعر وقت الانتظار',
       );
   static String get initialTariffSave => _t(
         'Tarief opslaan',
@@ -3046,7 +3139,12 @@ class DriverStrings {
     return '$matchChance: $label';
   }
 
-  static const String accept = 'Accepteren';
+  static String get accept => _t(
+        'Accepteren',
+        en: 'Accept',
+        es: 'Aceptar',
+        ar: 'قبول',
+      );
 
   // Status timestamps
   static const String onlineSince = 'Online · sinds';
@@ -3495,6 +3593,38 @@ class DriverStrings {
         es: 'La acción falló. Revisa tu conexión e inténtalo de nuevo.',
         ar: 'فشل الإجراء. تحقق من اتصالك وحاول مرة أخرى.',
       );
+
+  static String rideLifecycleErrorMessage(String code) {
+    final normalized = code.split(':').first.trim();
+    switch (normalized) {
+      case 'too_far_from_pickup':
+        return _t(
+          'Je bent te ver van het ophaalpunt (max. 500 m). Rijd dichterbij en tik opnieuw op Ik ben gearriveerd.',
+          en: 'You\'re too far from the pickup (max 500 m). Move closer, then tap I\'ve arrived again.',
+          es: 'Estás demasiado lejos del punto de recogida (máx. 500 m). Acércate y pulsa He llegado de nuevo.',
+          ar: 'أنت بعيد جدا عن نقطة الالتقاط (500 م كحد أقصى). اقترب ثم اضغط وصلت مرة أخرى.',
+        );
+      case 'invalid_transition':
+        return _t(
+          'Deze actie is nu niet mogelijk voor deze rit. Vernieuw het scherm en probeer opnieuw.',
+          en: 'This action is not available for this ride right now. Refresh the screen and try again.',
+          es: 'Esta acción no está disponible para este viaje ahora. Actualiza la pantalla e inténtalo de nuevo.',
+          ar: 'هذا الإجراء غير متاح لهذه الرحلة الآن. حدّث الشاشة وحاول مرة أخرى.',
+        );
+      case 'not_a_driver':
+        return _t(
+          'Je chauffeursprofiel kon niet worden gevonden. Log opnieuw in.',
+          en: 'Your driver profile could not be found. Sign in again.',
+          es: 'No se encontró tu perfil de conductor. Inicia sesión de nuevo.',
+          ar: 'تعذر العثور على ملف السائق. سجّل الدخول مرة أخرى.',
+        );
+      case 'rpc_unavailable':
+        return rideActionFailedMessage;
+      default:
+        return rideActionFailedMessage;
+    }
+  }
+
   static String get rideRequestLoadFailedMessage => _t(
         'Ritaanvraag laden mislukt. Controleer je verbinding.',
         en: 'Could not load the ride request. Check your connection.',
@@ -3502,10 +3632,155 @@ class DriverStrings {
         ar: 'تعذر تحميل طلب الرحلة. تحقق من اتصالك.',
       );
   static String get acceptRideFailedMessage => _t(
-        'Rit accepteren mislukt. De aanvraag is mogelijk al verlopen.',
-        en: 'Could not accept the ride. The request may have expired.',
-        es: 'No se pudo aceptar el viaje. Es posible que la solicitud haya caducado.',
-        ar: 'تعذر قبول الرحلة. ربما انتهت صلاحية الطلب.',
+        'Rit accepteren mislukt. Probeer opnieuw of controleer je verbinding.',
+        en: 'Could not accept the ride. Try again or check your connection.',
+        es: 'No se pudo aceptar el viaje. Inténtalo de nuevo o revisa tu conexión.',
+        ar: 'تعذر قبول الرحلة. حاول مرة أخرى أو تحقق من اتصالك.',
+      );
+
+  static String acceptRideErrorMessage(String code) {
+    final normalized = code.split(':').first.trim();
+    switch (normalized) {
+      case 'no_valid_invite':
+      case 'invite_missing':
+        return _t(
+          'Je bent nog niet uitgenodigd voor deze rit. Zet je status op Online, controleer GPS, en probeer opnieuw.',
+          en: 'You were not invited to this ride yet. Set your status to Online, check GPS, and try again.',
+          es: 'Aún no fuiste invitado a este viaje. Pon tu estado en En línea, activa el GPS e inténtalo de nuevo.',
+          ar: 'لم تتم دعوتك لهذه الرحلة بعد. اجعل حالتك متصلة، فعّل GPS، ثم حاول مرة أخرى.',
+        );
+      case 'invite_expired':
+      case 'invite_not_pending':
+        return _t(
+          'Je uitnodiging voor deze rit is verlopen. Wacht op een nieuwe rit.',
+          en: 'Your invite for this ride has expired. Wait for a new request.',
+          es: 'Tu invitación para este viaje ha caducado. Espera una nueva solicitud.',
+          ar: 'انتهت دعوتك لهذه الرحلة. انتظر طلبًا جديدًا.',
+        );
+      case 'stale_location':
+      case 'gps_stale':
+        return _t(
+          'Je locatie is verouderd. Schakel locatie in en probeer opnieuw.',
+          en: 'Your location is outdated. Enable location services and try again.',
+          es: 'Tu ubicación está desactualizada. Activa la ubicación e inténtalo de nuevo.',
+          ar: 'موقعك قديم. فعّل خدمات الموقع ثم حاول مرة أخرى.',
+        );
+      case 'billing_locked':
+        return _t(
+          'Rit accepteren geblokkeerd door openstaande platformkosten. Los dit op via Financiën.',
+          en: 'Accept is blocked by outstanding platform fees. Resolve this in Finance.',
+          es: 'Aceptar está bloqueado por tarifas pendientes. Resuélvelo en Finanzas.',
+          ar: 'القبول محظور بسبب رسوم منصة مستحقة. حل ذلك من Finance.',
+        );
+      case 'missing_tariff':
+        return _t(
+          'Stel eerst je tarief in voordat je ritten accepteert.',
+          en: 'Set your tariff before accepting rides.',
+          es: 'Configura tu tarifa antes de aceptar viajes.',
+          ar: 'حدّد تعرفتك قبل قبول الرحلات.',
+        );
+      case 'payment_incompatible':
+      case 'payment_mismatch':
+        return _t(
+          'Deze rit gebruikt een betaalmethode die je niet ondersteunt.',
+          en: 'This ride uses a payment method you do not support.',
+          es: 'Este viaje usa un método de pago que no admites.',
+          ar: 'هذه الرحلة تستخدم طريقة دفع لا تدعمها.',
+        );
+      case 'race_lost':
+      case 'ride_not_pending':
+      case 'database_conflict':
+        return _t(
+          'Een andere chauffeur heeft deze rit al geaccepteerd.',
+          en: 'Another driver already accepted this ride.',
+          es: 'Otro conductor ya aceptó este viaje.',
+          ar: 'قبل سائق آخر هذه الرحلة بالفعل.',
+        );
+      case 'ride_not_found':
+        return _t(
+          'Deze rit bestaat niet meer.',
+          en: 'This ride no longer exists.',
+          es: 'Este viaje ya no existe.',
+          ar: 'هذه الرحلة لم تعد موجودة.',
+        );
+      case 'ride_cancelled':
+        return _t(
+          'De rit is geannuleerd door de passagier.',
+          en: 'The rider cancelled this trip.',
+          es: 'El pasajero canceló este viaje.',
+          ar: 'ألغى الراكب هذه الرحلة.',
+        );
+      case 'schedule_overlap':
+        return _t(
+          'Deze rit overlapt met een andere geplande rit in je agenda.',
+          en: 'This trip overlaps another scheduled ride on your calendar.',
+          es: 'Este viaje se solapa con otro viaje programado.',
+          ar: 'هذه الرحلة تتداخل مع رحلة مجدولة أخرى.',
+        );
+      case 'not_scheduled':
+        return _t(
+          'Dit is geen geplande rit. Gebruik het live-aanbod scherm.',
+          en: 'This is not a scheduled ride. Use the live offer screen.',
+          es: 'Este no es un viaje programado. Usa la pantalla de oferta en vivo.',
+          ar: 'هذه ليست رحلة مجدولة. استخدم شاشة العرض المباشر.',
+        );
+      case 'not_a_driver':
+        return _t(
+          'Geen chauffeursprofiel gevonden voor dit account.',
+          en: 'No driver profile found for this account.',
+          es: 'No se encontró perfil de conductor para esta cuenta.',
+          ar: 'لم يتم العثور على ملف سائق لهذا الحساب.',
+        );
+      case 'rpc_failed':
+      case 'rpc_error':
+      case 'rpc_unavailable':
+        return rideActionFailedMessage;
+      default:
+        return acceptRideFailedMessage;
+    }
+  }
+
+  static String get scheduledRideDetailTitle => _t(
+        'Geplande rit',
+        en: 'Scheduled ride',
+        es: 'Viaje programado',
+        ar: 'رحلة مجدولة',
+      );
+  static String get acceptScheduledRide => _t(
+        'Geplande rit accepteren',
+        en: 'Accept scheduled ride',
+        es: 'Aceptar viaje programado',
+        ar: 'قبول الرحلة المجدولة',
+      );
+  static String get notInterestedScheduledRide => _t(
+        'Niet geïnteresseerd',
+        en: 'Not interested',
+        es: 'No me interesa',
+        ar: 'غير مهتم',
+      );
+  static String get scheduledRideAcceptedMessage => _t(
+        'Geplande rit geaccepteerd. Je vindt hem bij Bevestigd.',
+        en: 'Scheduled ride accepted. Find it under Confirmed.',
+        es: 'Viaje programado aceptado. Búscalo en Confirmados.',
+        ar: 'تم قبول الرحلة المجدولة. ستجدها ضمن المؤكدة.',
+      );
+  static String get scheduledRideAcceptFailedMessage => _t(
+        'Geplande rit accepteren mislukt. Probeer opnieuw.',
+        en: 'Could not accept the scheduled ride. Try again.',
+        es: 'No se pudo aceptar el viaje programado. Inténtalo de nuevo.',
+        ar: 'تعذر قبول الرحلة المجدولة. حاول مرة أخرى.',
+      );
+  static String get scheduledRideNotesLabel => _t(
+        'Opmerkingen',
+        en: 'Notes',
+        es: 'Notas',
+        ar: 'ملاحظات',
+      );
+  static String get scheduledRideWrongEntryMessage => _t(
+        'Geplande ritten open je via Geplande ritten — niet via een live alarm.',
+        en: 'Open scheduled rides from Scheduled rides — not the live alert screen.',
+        es: 'Abre los viajes programados desde Viajes programados, no desde la alerta en vivo.',
+        ar: 'افتح الرحلات المجدولة من الرحلات المجدولة — وليس من شاشة التنبيه المباشر.',
       );
   static String get requestStatusUpdateFailedMessage => _t(
         'Aanvraagstatus bijwerken mislukt. Probeer opnieuw.',
@@ -3548,6 +3823,20 @@ class DriverStrings {
         es: 'Navegar a la recogida',
         ar: 'التنقل إلى نقطة الالتقاط',
       );
+  static String get navigateToDestination => _t(
+        'Navigeer naar bestemming',
+        en: 'Navigate to destination',
+        es: 'Navegar al destino',
+        ar: 'التنقل إلى الوجهة',
+      );
+  static String navigateOpensIn(String appLabel) => _t(
+        'Opent in $appLabel',
+        en: 'Opens in $appLabel',
+        es: 'Se abre en $appLabel',
+        ar: 'يفتح في $appLabel',
+      );
+  static const String copyAddress = 'Adres kopiëren';
+  static const String addressCopied = 'Adres gekopieerd';
   static String get enRouteToPickupTitle => _t(
         'Onderweg naar reiziger',
         en: 'On your way to the rider',
@@ -3701,6 +3990,132 @@ class DriverStrings {
         es: 'Pago flexible',
         ar: 'دفع مرن',
       );
+  static String get incomingRidePickupDeadhead => _t(
+        'Ophalen (deadhead)',
+        en: 'Pickup (deadhead)',
+        es: 'Recogida (vacío)',
+        ar: 'الالتقاط (بدون أجر)',
+      );
+  static String get incomingRideTripPaid => _t(
+        'Rit (betaald)',
+        en: 'Trip (paid)',
+        es: 'Viaje (pagado)',
+        ar: 'الرحلة (مدفوعة)',
+      );
+  static String get incomingRideTerugTaxiBadge => _t(
+        'TAXI TERUG',
+        en: 'TAXI TERUG',
+        es: 'TAXI TERUG',
+        ar: 'TAXI TERUG',
+      );
+  static String get incomingRideMarketplaceBadge => _t(
+        'Marktplaats',
+        en: 'Marketplace',
+        es: 'Mercado',
+        ar: 'السوق',
+      );
+  static String get incomingRideOutOfRadius => _t(
+        'Buiten radius',
+        en: 'Out of radius',
+        es: 'Fuera de radio',
+        ar: 'خارج النطاق',
+      );
+  static String incomingRideReturnFit(String destination) => _t(
+        'Richting $destination',
+        en: 'Toward $destination',
+        es: 'Hacia $destination',
+        ar: 'باتجاه $destination',
+      );
+  static String incomingRideRiderOffered(String amount) => _t(
+        'Rider bood $amount',
+        en: 'Rider offered $amount',
+        es: 'El pasajero ofreció $amount',
+        ar: 'عرض الراكب $amount',
+      );
+  static String get incomingRideTariffEstimate => _t(
+        'Op basis van jouw tarief',
+        en: 'Based on your tariff',
+        es: 'Según tu tarifa',
+        ar: 'بناءً على تعريفتك',
+      );
+  static String get incomingRideRiderNamedPrice => _t(
+        'Rider heeft een prijs gekozen',
+        en: 'Rider named a price',
+        es: 'El pasajero fijó un precio',
+        ar: 'حدد الراكب سعراً',
+      );
+  static String incomingRideFareFromDistance(String km) => _t(
+        'Ca. €? · $km km rit',
+        en: 'Est. from $km km trip',
+        es: 'Est. por $km km de viaje',
+        ar: 'تقدير من $km كم',
+      );
+  static String get incomingRideMapDecline => _t(
+        'Weigeren',
+        en: 'Decline',
+        es: 'Rechazar',
+        ar: 'رفض',
+      );
+  static String get rideRouteDetailsTitle => _t(
+        'Ritdetails',
+        en: 'Route details',
+        es: 'Detalles de la ruta',
+        ar: 'تفاصيل المسار',
+      );
+  static String rideRouteDetailsContact(String name) => _t(
+        'Contact $name',
+        en: 'Contact $name',
+        es: 'Contactar a $name',
+        ar: 'تواصل مع $name',
+      );
+  static String get rideRouteDetailsChangeNav => _t(
+        'Wijzigen',
+        en: 'Change',
+        es: 'Cambiar',
+        ar: 'تغيير',
+      );
+  static String get rideMapWaitHere => _t(
+        'Wacht hier',
+        en: 'Wait here',
+        es: 'Espera aquí',
+        ar: 'انتظر هنا',
+      );
+  static String get rideSafetyToolkitTitle => _t(
+        'Veiligheidskit',
+        en: 'Safety toolkit',
+        es: 'Kit de seguridad',
+        ar: 'أدوات السلامة',
+      );
+  static String get rideSafetyToolkitBody => _t(
+        'Hulp om je veilig te voelen tijdens het rijden.',
+        en: 'Features to help you feel safe and secure while driving.',
+        es: 'Funciones para sentirte seguro mientras conduces.',
+        ar: 'ميزات لمساعدتك على الشعور بالأمان أثناء القيادة.',
+      );
+  static String rideFarePill(String amount) => _t(
+        'HeyCaby · $amount',
+        en: 'HeyCaby · $amount',
+        es: 'HeyCaby · $amount',
+        ar: 'HeyCaby · $amount',
+      );
+  static String get chatQuickImHere => _t(
+        'Ik ben er',
+        en: "I'm here",
+        es: 'Ya llegué',
+        ar: 'وصلت',
+      );
+  static String get chatQuickOnMyWay => _t(
+        'Onderweg',
+        en: 'On my way',
+        es: 'En camino',
+        ar: 'في الطريق',
+      );
+  static String get chatQuickTwoMinutes => _t(
+        'Ik ben er over 2 min',
+        en: "I'll arrive in 2 min",
+        es: 'Llego en 2 min',
+        ar: 'أصل خلال دقيقتين',
+      );
   static String get paymentCash => _t(
         'Contant',
         en: 'Cash',
@@ -3748,6 +4163,12 @@ class DriverStrings {
         en: 'Start ride',
         es: 'Iniciar viaje',
         ar: 'بدء الرحلة',
+      );
+  static String startRideAndNavigate(String appLabel) => _t(
+        'Start rit · $appLabel',
+        en: 'Start trip · $appLabel',
+        es: 'Iniciar viaje · $appLabel',
+        ar: 'بدء الرحلة · $appLabel',
       );
   static String get completeRide => _t(
         'Rit voltooien',
@@ -4534,4 +4955,72 @@ class DriverStrings {
   static const String featureTour6Body =
       'Lees en begrijp alle algemene voorwaarden en privacyteksten voordat je het platform gebruikt. '
       'Verifieer daarna je documenten en ga online.';
+
+  // ── Saved by Riders (driver-side favorite feedback) ──
+  static String get savedByRidersTitle => _t(
+        'Opgeslagen door passagiers',
+        en: 'Saved by Riders',
+        es: 'Guardado por pasajeros',
+        ar: 'محفوظ من قبل الركاب',
+      );
+  static String get savedByRidersSubtitle => _t(
+        'Passagiers die je toevoegen aan hun favorieten',
+        en: 'Riders who added you to their favorites',
+        es: 'Pasajeros que te añadieron a sus favoritos',
+        ar: 'الركاب الذين أضافوك إلى المفضلين',
+      );
+  static String savedByRidersTotal(int n) => _t(
+        '$n passagiers hebben je opgeslagen',
+        en: '$n riders saved you',
+        es: '$n pasajeros te guardaron',
+        ar: '$n راكب حفظك',
+      );
+  static String savedByRidersThisWeek(int n) => _t(
+        '+$n deze week',
+        en: '+$n this week',
+        es: '+$n esta semana',
+        ar: '+$n هذا الأسبوع',
+      );
+  static String get savedByRidersKeepItUp => _t(
+        'Blijf geweldige service leveren.',
+        en: 'Keep delivering great service.',
+        es: 'Sigue brindando un excelente servicio.',
+        ar: 'استمر في تقديم خدمة رائعة.',
+      );
+  static String get savedByRidersRecent => _t(
+        'Recent',
+        en: 'Recent',
+        es: 'Reciente',
+        ar: 'الأخيرة',
+      );
+  static String get savedByRidersMicrocopy => _t(
+        'Passagiers die je opslaan kunnen je de volgende keer eerst vragen.',
+        en: 'Riders who save you can request you first next time.',
+        es: 'Los pasajeros que te guardan pueden solicitarte primero la próxima vez.',
+        ar: 'الركاب الذين يحفظونك يمكنهم طلبك أولاً في المرة القادمة.',
+      );
+  static String savedByRiderEntry(String name, String when) => _t(
+        '$name · $when',
+        en: '$name · $when',
+        es: '$name · $when',
+        ar: '$name · $when',
+      );
+  static String get savedByRidersToday => _t(
+        'Vandaag',
+        en: 'Today',
+        es: 'Hoy',
+        ar: 'اليوم',
+      );
+  static String get savedByRidersYesterday => _t(
+        'Gisteren',
+        en: 'Yesterday',
+        es: 'Ayer',
+        ar: 'أمس',
+      );
+  static String get savedByRidersDaysAgo => _t(
+        'dagen geleden',
+        en: 'days ago',
+        es: 'días atrás',
+        ar: 'أيام مضت',
+      );
 }

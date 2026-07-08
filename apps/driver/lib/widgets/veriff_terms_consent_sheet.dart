@@ -44,19 +44,12 @@ class _VeriffTermsSheetState extends ConsumerState<_VeriffTermsSheet> {
 
     return Material(
       color: Colors.transparent,
-      child: Container(
-        decoration: BoxDecoration(
-          color: colors.card,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          boxShadow: [
-            BoxShadow(
-              color: colors.text.withValues(alpha: 0.08),
-              blurRadius: 24,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
+      child: GlassPanel(
+        colors: colors,
+        typography: typo,
         padding: EdgeInsets.fromLTRB(20, 12, 20, 16 + bottomInset),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        tintColor: colors.card,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,

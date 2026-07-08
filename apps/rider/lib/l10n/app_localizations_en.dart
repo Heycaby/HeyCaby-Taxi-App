@@ -75,6 +75,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeBestPriceSubtitle => 'Drivers compete for your trip.';
 
   @override
+  String get homeTaxiTerugTitle => 'TAXI TERUG';
+
+  @override
+  String get homeTaxiTerugSubtitle => 'Find drivers already heading your way.';
+
+  @override
   String get homeScheduleLaterTitle => 'Schedule later';
 
   @override
@@ -101,7 +107,81 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeNoTaxisNearbySubtitle =>
-      'You can request and we\'ll notify you when a driver is available.';
+      'You can still request a ride. We will notify you when a driver accepts.';
+
+  @override
+  String get homeSupplyNoneTitle => 'No drivers near you';
+
+  @override
+  String get homeSupplyNoneSubtitle =>
+      'Try Marketplace or schedule a ride for later.';
+
+  @override
+  String homeSupplyNearbyTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count drivers nearby',
+      one: '1 driver nearby',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeSupplyNearbySubtitle(String distanceKm) {
+    return 'Closest about $distanceKm km away';
+  }
+
+  @override
+  String get homeSupplyNearbySubtitleShort =>
+      'Usually a quick pickup from here';
+
+  @override
+  String get homeSupplyZoneEmptyTitle => 'No drivers in your zone';
+
+  @override
+  String homeSupplyZoneEmptySubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count drivers within 10 km',
+      one: '1 driver within 10 km',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeSupplyFarTitle => 'Drivers are further away';
+
+  @override
+  String homeSupplyFarSubtitle(int count, String distanceKm) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count drivers online',
+      one: '1 driver online',
+    );
+    return '$_temp0 · closest about $distanceKm km';
+  }
+
+  @override
+  String homeFavoriteSupplyTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count of your favourite drivers are online',
+      one: '1 of your favourite drivers is online',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeFavoriteSupplySubtitle(String distanceKm) {
+    return 'Closest about $distanceKm km away · Book now';
+  }
+
+  @override
+  String get homeFavoriteSupplySubtitleShort => 'Nearby now · Book now';
 
   @override
   String get homeRideAgainTitle => 'Ride again';
@@ -128,6 +208,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeRecentPlacesEdit => 'Edit';
+
+  @override
+  String get savedTripsTitle => 'Saved trips';
 
   @override
   String get homeCompleteProfile => 'Complete profile';
@@ -192,6 +275,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get howWasYourRide => 'How was your ride?';
 
   @override
+  String get ratingAddNoteOptional => 'Add a note (optional)';
+
+  @override
   String get whatDidYouLike => 'What did you like?';
 
   @override
@@ -202,6 +288,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get submitRating => 'Submit Rating';
+
+  @override
+  String get tipDriverTitle => 'Tip your driver';
+
+  @override
+  String get tipDriverSubtitle =>
+      '100% goes to your driver. Added after the ride.';
+
+  @override
+  String get tipAmountCustom => 'Custom';
+
+  @override
+  String get tipNoTip => 'No tip';
+
+  @override
+  String get tipSubmitWithTip => 'Submit Rating + Tip';
+
+  @override
+  String get tipAdded => 'Tip added';
 
   @override
   String get ratingCategorySectionTitle => 'Rate specific areas';
@@ -617,6 +722,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noFavouritesYet => 'No favourites yet';
 
   @override
+  String get saveDriverLabel => 'Save this driver';
+
+  @override
+  String get saveDriverSubtitle =>
+      'Add to your trusted drivers for quick rebooking';
+
+  @override
+  String get saveDriverModalTitle => 'Save this driver?';
+
+  @override
+  String get saveDriverModalBody =>
+      'You gave a great rating. Add this driver to your favourites for quicker booking next time.';
+
+  @override
+  String get saveDriverModalConfirm => 'Save to favourites';
+
+  @override
+  String get saveDriverModalDismiss => 'Not now';
+
+  @override
+  String get saveDriverWillSaveHint =>
+      'Will be saved to your favourites when you submit';
+
+  @override
+  String get driverSaved => 'Driver saved to your favourites';
+
+  @override
+  String get removeFromFavorites => 'Remove from favourites';
+
+  @override
+  String get driverRemoved => 'Driver removed from favourites';
+
+  @override
+  String get driverOffline => 'Offline';
+
+  @override
+  String get driverAvailableNow => 'Available now';
+
+  @override
+  String get favoritesLimitReached =>
+      'You already have 10 favourite drivers. Remove one before adding a new driver.';
+
+  @override
   String get paymentMethod => 'Payment method';
 
   @override
@@ -633,6 +781,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scheduledRide => 'Schedule';
+
+  @override
+  String get marketplaceStepRoute => 'Route';
+
+  @override
+  String get marketplaceStepOffer => 'Your offer';
+
+  @override
+  String get marketplaceStepPost => 'Post';
+
+  @override
+  String get marketplaceIntroBody =>
+      'Set your price. Drivers choose to accept, counter, or pass. You pick who to ride with.';
 
   @override
   String get marketplace => 'Marketplace';
@@ -1058,6 +1219,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get yourRoute => 'Your route';
 
   @override
+  String get rideTimeline => 'Ride progress';
+
+  @override
+  String get rideTimelineStepAccepted => 'Driver accepted';
+
+  @override
+  String get rideTimelineStepEnRoute => 'On the way to pickup';
+
+  @override
+  String get rideTimelineStepArrived => 'At pickup';
+
+  @override
+  String get rideTimelineStepInProgress => 'Trip in progress';
+
+  @override
+  String get rideTimelineStepCompleted => 'Trip complete';
+
+  @override
   String get howDoYouWantToBook => 'How do you want to book?';
 
   @override
@@ -1457,6 +1636,25 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your profile helps drivers recognize you and keeps repeat bookings quick.';
 
   @override
+  String get riderRatingTitle => 'Your rider rating';
+
+  @override
+  String get riderRatingSubtitle =>
+      'Based on driver feedback after completed rides.';
+
+  @override
+  String get riderRatingNoRating => 'No rating yet';
+
+  @override
+  String get riderRatingNoRatingBody =>
+      'Complete a few rides to start building your reputation.';
+
+  @override
+  String riderRatingTrips(int count) {
+    return '$count trips rated';
+  }
+
+  @override
   String get accountBookingNameLabel => 'Booking name';
 
   @override
@@ -1599,7 +1797,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchFactOwnFuel => 'Drivers pay for their own fuel';
 
   @override
-  String get searchFactVerifiedDrivers => 'All drivers are verified';
+  String get searchFactVerifiedDrivers =>
+      'Drivers on HeyCaby work as licensed taxi professionals';
 
   @override
   String get searchFactFavorites =>
@@ -1612,7 +1811,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goWhereverWhenever => 'Go wherever, whenever.';
 
   @override
-  String get noTaxisInZone => 'No taxis in your zone';
+  String get noTaxisInZone => 'No drivers nearby right now';
 
   @override
   String get oneTaxiInZone => '1 taxi in your zone';
@@ -2579,7 +2778,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchFactAllVerified =>
-      'Every licence, every insurance, every chauffeurspas — checked by us before going online.';
+      'HeyCaby is built for licensed taxis — professional transport, not private gig-hail cars.';
 
   @override
   String get searchFactMarketplace =>
@@ -2596,6 +2795,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get searchFactPayHowYouWant =>
       'Cash, Tikkie, card or invoice — your driver will tell you which options are available.';
+
+  @override
+  String get searchDidYouKnowEyebrow => 'Did you know?';
 
   @override
   String get searchingTitle => 'Finding you a Caby…';
@@ -2615,6 +2817,63 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get matchingStatusOffers => 'Offers';
+
+  @override
+  String dispatchWave0Title(String name) {
+    return 'Connecting you with $name first…';
+  }
+
+  @override
+  String get dispatchWave1Title => 'Finding your driver';
+
+  @override
+  String get dispatchWave2Title => 'Still looking…';
+
+  @override
+  String get dispatchWave3Title => 'Reaching more drivers…';
+
+  @override
+  String get dispatchWave4Title => 'Searching further…';
+
+  @override
+  String get dispatchNoDriversTitle => 'No drivers available right now';
+
+  @override
+  String dispatchWaveDriversNotified(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count drivers notified',
+      one: '1 driver notified',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String dispatchWaveClosestEta(String km, int minutes) {
+    return 'Closest: $km km · ~$minutes min';
+  }
+
+  @override
+  String dispatchWaveExpandKm(int km) {
+    return 'Expanding search to $km km';
+  }
+
+  @override
+  String dispatchWaveFarEta(String km, int minutes) {
+    return 'Someone $km km away could be with you in ~$minutes min';
+  }
+
+  @override
+  String get dispatchSurgeBanner => 'High demand right now — searching quickly';
+
+  @override
+  String get dispatchLowDensityBanner =>
+      'Searching across a wider area — fewer drivers online right now';
+
+  @override
+  String get dispatchNoDriversBody =>
+      'All nearby drivers are busy or offline. Try again in a few minutes or schedule for later.';
 
   @override
   String get homeNearTermTitleInstant => 'Finding your Caby';
@@ -2648,6 +2907,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get activeBookingTapForDetails =>
       'Tap to view progress without losing the map.';
+
+  @override
+  String get activeBookingCollapseHome => 'Collapse to summary';
 
   @override
   String get activeBookingKeepAliveTitle => 'Your request keeps running';
@@ -2714,10 +2976,25 @@ class AppLocalizationsEn extends AppLocalizations {
       'Driver search has started for your scheduled ride.';
 
   @override
+  String activeBookingScheduledSearchStarts(String searchStarts) {
+    return 'Driver search starts $searchStarts';
+  }
+
+  @override
+  String get activeBookingScheduledQueuedTitle => 'Scheduled ride queued';
+
+  @override
+  String get activeBookingScheduledQueuedBody =>
+      'We\'ll start searching 30 minutes before pickup and notify you.';
+
+  @override
   String get rideMatchingTypeLabelInstant => 'Instant ride';
 
   @override
   String get rideMatchingTypeLabelMarketplace => 'Marketplace';
+
+  @override
+  String get rideMatchingTypeLabelTerug => 'TAXI TERUG';
 
   @override
   String get rideMatchingTypeLabelScheduled => 'Scheduled';
@@ -2746,6 +3023,33 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get noDriverFoundCard =>
       'No Caby found yet. What would you like to do?';
+
+  @override
+  String get searchNoSupplyInlineTitle => 'No drivers close by';
+
+  @override
+  String get searchNoSupplyInlineBody =>
+      'We could not find any drivers near your pickup. Schedule for later or try Marketplace. We will keep searching.';
+
+  @override
+  String get searchNoSupplySheetTitle => 'No drivers close by';
+
+  @override
+  String get searchExpiredSheetTitle => 'No driver accepted yet';
+
+  @override
+  String searchExpiredSheetBody(int minutes) {
+    return 'Your $minutes-minute search ended without a match. Pick your next step.';
+  }
+
+  @override
+  String get searchKeepSearching => 'Keep searching';
+
+  @override
+  String get searchSeeOptions => 'Schedule or Marketplace';
+
+  @override
+  String get searchExpiredShareSecondary => 'Know a driver? Share HeyCaby';
 
   @override
   String get notifyMeWhenFound => 'Notify Me';
@@ -2880,6 +3184,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activeRideDriverOutside => 'Your driver is outside';
 
   @override
+  String get activeRideDriverFound => 'Driver found';
+
+  @override
   String get activeRideMaxFourSeats => '4 seats max';
 
   @override
@@ -2904,6 +3211,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activeRideSupportSubtitle => 'Safety and help';
+
+  @override
+  String get safetySheetTitle => 'Safety';
+
+  @override
+  String get safetySheetShareTrip => 'Share trip';
+
+  @override
+  String get safetySheetShareTripSubtitle =>
+      'Share live trip link with contacts';
+
+  @override
+  String get safetySheetReport => 'Report an issue';
+
+  @override
+  String get safetySheetReportSubtitle => 'Submit a ride report';
+
+  @override
+  String get safetySheetEmergency => 'Emergency call (112)';
+
+  @override
+  String get safetySheetEmergencySubtitle => 'Call European emergency services';
+
+  @override
+  String get safetySheetCancel => 'Cancel';
 
   @override
   String get activeRidePickupNotSet => 'Pickup not set';
@@ -2955,7 +3287,60 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activeRideVerifyPlate =>
-      'Please verify this plate before entering the vehicle.';
+      'Check the plate number matches before you get in.';
+
+  @override
+  String get activeRideVerifyPlateButton => 'Confirm plate';
+
+  @override
+  String get activeRidePlateVerifiedSaved => 'Plate verification saved';
+
+  @override
+  String get activeRidePlateVerifiedOffline =>
+      'Saved on device — will sync when you\'re back online';
+
+  @override
+  String get ridePayDriverTitle => 'Pay your driver';
+
+  @override
+  String get ridePayDriverBody =>
+      'Your driver just ended the trip. Pay the fare now before you leave the vehicle.';
+
+  @override
+  String get ridePayDriverAmountCaption => 'Amount to pay';
+
+  @override
+  String ridePayDriverPayVia(String method) {
+    return 'Pay via $method';
+  }
+
+  @override
+  String get ridePayDriverAddTip => '+ Tip';
+
+  @override
+  String get ridePayDriverTotalCaption => 'Total to pay';
+
+  @override
+  String get ridePayDriverFareLine => 'Fare';
+
+  @override
+  String get ridePayDriverTipLine => 'Tip';
+
+  @override
+  String ridePayDriverConfirmWithTotal(String amount) {
+    return 'I\'ve paid $amount';
+  }
+
+  @override
+  String ridePayDriverAmount(String amount) {
+    return 'Fare due: $amount';
+  }
+
+  @override
+  String get ridePayDriverConfirm => 'I\'ve paid';
+
+  @override
+  String get ridePayDriverDismiss => 'One moment';
 
   @override
   String get activeRideWaitingFeeWaived => 'Waiting fee waived';
@@ -2991,6 +3376,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String activeRideWaitingRateLive(String rate) {
     return '$rate · live';
   }
+
+  @override
+  String get activeRideWaitingTripTotal => 'Trip total';
+
+  @override
+  String activeRideWaitingFeeLine(String amount) {
+    return '+$amount waiting';
+  }
+
+  @override
+  String activeRideWaitingBaseFare(String amount) {
+    return 'Base $amount';
+  }
+
+  @override
+  String activeRideWaitingFreeWindow(String minutes) {
+    return '$minutes min free';
+  }
+
+  @override
+  String get activeRideTimelinePickup => 'Pickup';
+
+  @override
+  String get activeRideTimelineDestination => 'Drop-off';
 
   @override
   String get openAction => 'Open';

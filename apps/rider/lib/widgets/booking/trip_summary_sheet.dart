@@ -7,8 +7,9 @@ import '../../providers/booking_provider.dart';
 import 'trip_summary_details_section.dart';
 import 'trip_summary_route_section.dart';
 
-/// Bottom sheet-style panel for trip summary (map stays on the screen).
+/// Draggable bottom sheet for trip summary (map stays full-screen behind).
 class TripSummarySheet extends StatelessWidget {
+  final ScrollController scrollController;
   final BookingState booking;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
@@ -26,6 +27,7 @@ class TripSummarySheet extends StatelessWidget {
 
   const TripSummarySheet({
     super.key,
+    required this.scrollController,
     required this.booking,
     required this.colors,
     required this.typo,
@@ -44,33 +46,28 @@ class TripSummarySheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.bg,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        boxShadow: [
-          BoxShadow(
-            color: colors.text.withValues(alpha: 0.18),
-            blurRadius: 28,
-            offset: const Offset(0, -6),
-          ),
-        ],
-      ),
+    return GlassPanel(
+      colors: colors,
+      typography: typo,
+      padding: EdgeInsets.zero,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      tintColor: colors.card,
       child: Column(
         children: [
           Center(
             child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(top: 12, bottom: 20),
+              width: 44,
+              height: 5,
+              margin: const EdgeInsets.only(top: 10, bottom: 14),
               decoration: BoxDecoration(
-                color: colors.border,
-                borderRadius: BorderRadius.circular(2),
+                color: colors.border.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(999),
               ),
             ),
           ),
           Expanded(
             child: SingleChildScrollView(
+              controller: scrollController,
               padding: const EdgeInsetsDirectional.fromSTEB(20, 0, 20, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,66 +113,20 @@ class TripSummarySheet extends StatelessWidget {
                       .animate()
                       .fadeIn(duration: 300.ms, curve: Curves.easeOut)
                       .slideY(begin: 0.06, end: 0, duration: 300.ms),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      TripSummaryStatChip(
-                        icon: Icons.route_rounded,
-                        label: distanceKm > 0
-                            ? '${distanceKm.toStringAsFixed(1)} km'
-                            : '— km',
-                        colors: colors,
-                        typo: typo,
-                      ),
-                      const SizedBox(width: 12),
-                      TripSummaryStatChip(
-                        icon: Icons.schedule_rounded,
-                        label: distanceKm > 0 ? etaText : '—',
-                        colors: colors,
-                        typo: typo,
-                      ),
-                      if (booking.tripPriceBandMinEuro != null &&
-                          booking.tripPriceBandMaxEuro != null) ...[
-                        const SizedBox(width: 12),
-                        TripSummaryStatChip(
-                          icon: Icons.euro_rounded,
-                          label: (booking.tripPriceBandMinEuro! -
-                                          booking.tripPriceBandMaxEuro!)
-                                      .abs() <
-                                  0.01
-                              ? '€${_fmtTripEuro(booking.tripPriceBandMinEuro!)}'
-                              : '€${_fmtTripEuro(booking.tripPriceBandMinEuro!)}–${_fmtTripEuro(booking.tripPriceBandMaxEuro!)}',
-                          colors: colors,
-                          typo: typo,
-                        ),
-                      ] else if (booking.estimatedFareEuro != null) ...[
-                        const SizedBox(width: 12),
-                        TripSummaryStatChip(
-                          icon: Icons.euro_rounded,
-                          label: booking.estimatedFareEuro! ==
-                                  booking.estimatedFareEuro!.roundToDouble()
-                              ? '€${booking.estimatedFareEuro!.toStringAsFixed(0)}'
-                              : '€${booking.estimatedFareEuro!.toStringAsFixed(1)}',
-                          colors: colors,
-                          typo: typo,
-                        ),
-                      ],
-                    ],
-                  )
-                      .animate(delay: 60.ms)
-                      .fadeIn(duration: 300.ms)
-                      .slideY(begin: 0.06, end: 0, duration: 300.ms),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   TripSummaryRouteCard(
                     booking: booking,
                     colors: colors,
                     typo: typo,
                     l10n: l10n,
+                    distanceKm: distanceKm,
+                    etaText: etaText,
+                    priceLabel: _priceLabel(booking),
                     onEditAddress: onEditAddress,
                   )
-                      .animate(delay: 120.ms)
-                      .fadeIn(duration: 320.ms)
-                      .slideY(begin: 0.06, end: 0, duration: 320.ms),
+                      .animate(delay: 60.ms)
+                      .fadeIn(duration: 300.ms)
+                      .slideY(begin: 0.06, end: 0, duration: 300.ms),
                   const SizedBox(height: 20),
                   TripSummaryPreferencesSection(
                     booking: booking,
@@ -293,6 +244,23 @@ class TripSummarySheet extends StatelessWidget {
       ),
     );
   }
+}
+
+String? _priceLabel(BookingState booking) {
+  if (booking.tripPriceBandMinEuro != null &&
+      booking.tripPriceBandMaxEuro != null) {
+    final min = booking.tripPriceBandMinEuro!;
+    final max = booking.tripPriceBandMaxEuro!;
+    if ((min - max).abs() < 0.01) {
+      return '€${_fmtTripEuro(min)}';
+    }
+    return '€${_fmtTripEuro(min)}–${_fmtTripEuro(max)}';
+  }
+  final fare = booking.estimatedFareEuro;
+  if (fare == null) return null;
+  return fare == fare.roundToDouble()
+      ? '€${fare.toStringAsFixed(0)}'
+      : '€${fare.toStringAsFixed(1)}';
 }
 
 String _fmtTripEuro(double v) =>

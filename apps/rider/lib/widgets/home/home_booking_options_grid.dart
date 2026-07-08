@@ -85,6 +85,25 @@ class HomeBookingOptionsGrid extends ConsumerWidget {
                 child: _BookingOptionTile(
                   colors: colors,
                   typo: typo,
+                  icon: Icons.keyboard_return_rounded,
+                  title: l10n.homeTaxiTerugTitle,
+                  subtitle: l10n.homeTaxiTerugSubtitle,
+                  onTap: () async {
+                    final ok = await ensureLocationForBooking(
+                      context: context,
+                      ref: ref,
+                    );
+                    if (!ok) return;
+                    ref.read(bookingProvider.notifier).setTaxiTerug();
+                    if (context.mounted) context.push('/marketplace');
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _BookingOptionTile(
+                  colors: colors,
+                  typo: typo,
                   icon: Icons.flight_takeoff_rounded,
                   title: l10n.homeAirportBookingTitle,
                   subtitle: l10n.homeAirportBookingSubtitle,
@@ -99,7 +118,11 @@ class HomeBookingOptionsGrid extends ConsumerWidget {
                   },
                 ),
               ),
-              const SizedBox(width: 10),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
               Expanded(
                 child: _BookingOptionTile(
                   colors: colors,

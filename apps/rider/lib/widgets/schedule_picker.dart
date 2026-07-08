@@ -5,11 +5,18 @@ import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:intl/intl.dart';
 
+class SchedulePickerResult {
+  final DateTime dateTime;
+  final bool saveTrip;
+
+  const SchedulePickerResult(this.dateTime, {this.saveTrip = false});
+}
+
 /// Sleek date + time scheduling using inline Cupertino wheels (alarm / iOS-style),
 /// themed with HeyCaby tokens — not a dense time-chip grid.
 class SchedulePickerModal extends ConsumerStatefulWidget {
   final DateTime? initialDate;
-  final void Function(DateTime) onConfirm;
+  final void Function(SchedulePickerResult) onConfirm;
   final VoidCallback onCancel;
 
   const SchedulePickerModal({
@@ -27,6 +34,7 @@ class _SchedulePickerModalState extends ConsumerState<SchedulePickerModal> {
   late DateTime _selected;
   late DateTime _minDate;
   late DateTime _maxDate;
+  bool _saveTripForNextTime = false;
 
   static const _pickerH = 172.0;
   static const _maxDaysAhead = 30;
@@ -273,6 +281,50 @@ class _SchedulePickerModalState extends ConsumerState<SchedulePickerModal> {
             ),
             const Spacer(),
             Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(20, 8, 20, 8),
+              child: Container(
+                padding: const EdgeInsetsDirectional.fromSTEB(14, 10, 10, 10),
+                decoration: BoxDecoration(
+                  color: colors.card,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: colors.border),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.saveTripForNextTimeLabel,
+                            style: typo.titleSmall.copyWith(
+                              color: colors.text,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            l10n.saveTripForNextTimeSubtitle,
+                            style: typo.bodySmall.copyWith(
+                              color: colors.textMid,
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: _saveTripForNextTime,
+                      onChanged: (v) =>
+                          setState(() => _saveTripForNextTime = v),
+                      activeTrackColor: colors.accent,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
               padding: const EdgeInsetsDirectional.fromSTEB(20, 12, 20, 16),
               child: SizedBox(
                 width: double.infinity,
@@ -280,7 +332,12 @@ class _SchedulePickerModalState extends ConsumerState<SchedulePickerModal> {
                 child: FilledButton(
                   onPressed: () {
                     _coerceSelection();
-                    widget.onConfirm(_selected);
+                    widget.onConfirm(
+                      SchedulePickerResult(
+                        _selected,
+                        saveTrip: _saveTripForNextTime,
+                      ),
+                    );
                   },
                   style: FilledButton.styleFrom(
                     shape: RoundedRectangleBorder(
@@ -303,9 +360,12 @@ class _SchedulePickerModalState extends ConsumerState<SchedulePickerModal> {
   }
 }
 
-Future<DateTime?> showSchedulePicker(BuildContext context, {DateTime? initialDate}) {
+Future<SchedulePickerResult?> showSchedulePicker(
+  BuildContext context, {
+  DateTime? initialDate,
+}) {
   final h = MediaQuery.sizeOf(context).height * 0.82;
-  return showModalBottomSheet<DateTime>(
+  return showModalBottomSheet<SchedulePickerResult>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
@@ -313,7 +373,7 @@ Future<DateTime?> showSchedulePicker(BuildContext context, {DateTime? initialDat
       height: h,
       child: SchedulePickerModal(
         initialDate: initialDate,
-        onConfirm: (date) => Navigator.pop(context, date),
+        onConfirm: (result) => Navigator.pop(context, result),
         onCancel: () => Navigator.pop(context),
       ),
     ),

@@ -41,7 +41,7 @@ class HeycabyWidgetSync {
     }
   }
 
-  static const _iosKinds = ['WidgetA', 'WidgetB', 'WidgetC', 'WidgetD'];
+  static const _iosKinds = ['HeyCabyStatusWidget'];
 
   static Future<void> _reloadKinds() async {
     if (!_nativeMobile) return;
@@ -133,6 +133,7 @@ class HeycabyWidgetSync {
   static Future<void> refreshInstantDriverFromRide({
     required String rideId,
     required String pickup,
+    int? etaMinutes,
   }) async {
     if (!_nativeMobile) return;
     try {
@@ -174,12 +175,29 @@ class HeycabyWidgetSync {
       await _save('widget_a_plate', d['vehicle_plate'] as String? ?? '');
       final score = trust?['score'];
       await _save('widget_a_rating', score != null ? '$score' : '');
-      await _save('widget_a_eta_minutes', '');
+      await _save(
+        'widget_a_eta_minutes',
+        etaMinutes != null ? '$etaMinutes' : '',
+      );
       await _save('widget_a_search_elapsed', '0');
       await _reloadKinds();
     } catch (e) {
       if (kDebugMode) debugPrint('HeycabyWidgetSync.refreshInstantDriver: $e');
     }
+  }
+
+  static Future<void> syncDriverEnRouteEta({
+    required int? etaMinutes,
+    required String pickup,
+  }) async {
+    if (!_nativeMobile) return;
+    await _save('widget_a_status', 'driver_found');
+    await _save('widget_a_pickup', pickup);
+    await _save(
+      'widget_a_eta_minutes',
+      etaMinutes != null ? '$etaMinutes' : '',
+    );
+    await _reloadKinds();
   }
 
   static Future<void> syncScheduledRide({

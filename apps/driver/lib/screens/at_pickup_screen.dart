@@ -5,16 +5,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
+import 'package:heycaby_utils/heycaby_utils.dart';
 
 import '../l10n/driver_strings.dart';
+import '../providers/driver_location_provider.dart';
 import '../providers/driver_state_provider.dart';
 import '../services/driver_pickup_wait_service.dart';
 import '../utils/driver_cancel_ride_flow.dart';
 import '../utils/driver_communication_distance.dart';
+import '../utils/driver_navigation_launch.dart';
+import '../utils/driver_ride_coord_utils.dart';
 import '../widgets/driver_ride_communication_sheet.dart';
-import '../widgets/driver_smart_ping_banner.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
+import '../widgets/driver_ride_bolt_layout.dart';
 import '../widgets/driver_pickup_arrival_body.dart';
 
 /// **Pickup Arrival** — confirm arrival; start trip friction-free.
@@ -31,25 +35,48 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
   bool _loading = false;
   bool _waivingWaitingFee = false;
   bool _waitingFeeWaived = false;
+  bool _statusBusy = false;
   int _waitSeconds = 0;
   int _waitingGraceSeconds = 120;
   double _waitingRatePerMinute = 0;
+  String? _farePill;
   Timer? _waitTimer;
   static const int _noShowAfterSeconds = 300;
   static const _pickupWaitService = DriverPickupWaitService();
-
-  void _handleBack() {
-    if (context.canPop()) {
-      context.pop();
-      return;
-    }
-    context.go('/driver');
-  }
 
   @override
   void initState() {
     super.initState();
     unawaited(_bootstrapWaitTimer());
+    unawaited(_loadFarePill());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(hydrateDriverRideCoordsIfNeeded(ref, widget.rideId));
+    });
+  }
+
+  Future<void> _loadFarePill() async {
+    try {
+      final row = await HeyCabySupabase.client
+          .from('ride_requests')
+          .select(
+            'quoted_fare, offered_fare, estimated_fare, final_fare, marketplace_offered_fare, currency',
+          )
+          .eq('id', widget.rideId)
+          .maybeSingle();
+      if (!mounted || row == null) return;
+      final fareAmount = HeyCabyRideFare.resolveEuroFromRow(
+        Map<String, dynamic>.from(row),
+      );
+      if (fareAmount == null) return;
+      final currency = (row['currency'] as String?)?.trim().toUpperCase();
+      final prefix =
+          (currency == null || currency == 'EUR') ? 'EUR ' : '$currency ';
+      setState(
+        () => _farePill = driverRideBoltFarePill(
+          '$prefix${fareAmount.toStringAsFixed(2)}',
+        ),
+      );
+    } catch (_) {}
   }
 
   Future<void> _bootstrapWaitTimer() async {
@@ -110,6 +137,8 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
           .read(driverStateProvider.notifier)
           .setStatus(DriverAppState.inProgress);
       if (!mounted) return;
+      await _openNavigationApp();
+      if (!mounted) return;
       context.go('/driver/ride/progress/${widget.rideId}');
     } catch (_) {
       if (!mounted) return;
@@ -122,22 +151,18 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
   }
 
   Future<void> _reportNoShow() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text(DriverStrings.noShowConfirmTitle),
-        content: const Text(DriverStrings.noShowConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(DriverStrings.back),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(DriverStrings.noShowConfirmAction),
-          ),
-        ],
-      ),
+    final colors = ref.read(colorsProvider);
+    final typo = ref.read(typographyProvider);
+    final confirm = await showHeyCabyConfirmSheet(
+      context,
+      colors: colors,
+      typography: typo,
+      title: DriverStrings.noShowConfirmTitle,
+      message: DriverStrings.noShowConfirmBody,
+      dismissLabel: DriverStrings.back,
+      confirmLabel: DriverStrings.noShowConfirmAction,
+      icon: Icons.person_off_rounded,
+      confirmDestructive: true,
     );
     if (confirm != true || !mounted) return;
 
@@ -209,43 +234,108 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
     if (mounted) setState(() => _loading = false);
   }
 
+  Future<void> _toggleNewRequests() async {
+    if (_statusBusy) return;
+    setState(() => _statusBusy = true);
+    final driver = ref.read(driverStateProvider);
+    final currentlyOnBreak = driver.appState == DriverAppState.onBreak;
+    final nextStatus = currentlyOnBreak ? 'available' : 'on_break';
+    final nextAppState = currentlyOnBreak
+        ? DriverAppState.onlineAvailable
+        : DriverAppState.onBreak;
+    try {
+      await ref.read(driverApiProvider).setStatus(status: nextStatus);
+      ref.read(driverStateProvider.notifier).setStatus(nextAppState);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            currentlyOnBreak
+                ? DriverStrings.requestsResumed
+                : DriverStrings.requestsPaused,
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(DriverStrings.requestStatusUpdateFailedMessage),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _statusBusy = false);
+    }
+  }
+
+  void _openSafety() {
+    final colors = DriverColors.fromTheme(ref.read(colorsProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.read(typographyProvider));
+    unawaited(showDriverRideSafetyToolkitSheet(
+      context: context,
+      ref: ref,
+      colors: colors,
+      typography: typography,
+      rideRequestId: widget.rideId,
+      canShareTrip: true,
+    ));
+  }
+
+  Future<void> _openNavigationApp() async {
+    final driver = ref.read(driverStateProvider);
+    final destinationAddress =
+        driver.destinationAddress ?? DriverStrings.destination;
+    await launchDriverNavigation(
+      context: context,
+      ref: ref,
+      lat: driver.destinationLat,
+      lng: driver.destinationLng,
+      addressFallback: destinationAddress,
+      coordinatesUnavailableMessage:
+          DriverStrings.destinationCoordinatesUnavailable,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
     final typography =
         DriverTypography.fromTheme(ref.watch(typographyProvider));
     final driver = ref.watch(driverStateProvider);
+    final driverPos = ref.watch(driverLocationProvider).valueOrNull;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        DriverSmartPingBanner(
-          rideRequestId: widget.rideId,
-          phase: DriverRideCommunicationPhase.atPickup,
-        ),
-        Expanded(
-          child: DriverPickupArrivalBody(
-            colors: colors,
-            typography: typography,
-            pickupAddress: driver.pickupAddress ?? DriverStrings.pickupAddress,
-            destinationAddress:
-                driver.destinationAddress ?? DriverStrings.destination,
-            riderName: driver.riderContactName,
-            waitSeconds: _waitSeconds,
-            waitingGraceSeconds: _waitingGraceSeconds,
-            waitingRatePerMinute: _waitingRatePerMinute,
-            waitingFeeWaived: _waitingFeeWaived,
-            canReportNoShow: _waitSeconds >= _noShowAfterSeconds,
-            loading: _loading || _waivingWaitingFee,
-            onBack: _handleBack,
-            onStartRide: _startRide,
-            onOpenCommunication: _openCommunication,
-            onWaiveWaitingFee: _waiveWaitingFee,
-            onReportNoShow: _reportNoShow,
-            onCancelRide: _cancelRide,
-          ),
-        ),
-      ],
+    return DriverPickupArrivalBody(
+      colors: colors,
+      typography: typography,
+      rideId: widget.rideId,
+      pickupAddress: driver.pickupAddress ?? DriverStrings.pickupAddress,
+      destinationAddress:
+          driver.destinationAddress ?? DriverStrings.destination,
+      riderName: driver.riderContactName,
+      waitSeconds: _waitSeconds,
+      waitingGraceSeconds: _waitingGraceSeconds,
+      waitingRatePerMinute: _waitingRatePerMinute,
+      waitingFeeWaived: _waitingFeeWaived,
+      canReportNoShow: _waitSeconds >= _noShowAfterSeconds,
+      loading: _loading || _waivingWaitingFee,
+      pickupLat: driver.pickupLat,
+      pickupLng: driver.pickupLng,
+      destLat: driver.destinationLat,
+      destLng: driver.destinationLng,
+      driverLat: driverPos?.latitude,
+      driverLng: driverPos?.longitude,
+      farePill: _farePill,
+      onStartRide: _startRide,
+      onOpenCommunication: _openCommunication,
+      onNavigate: _openNavigationApp,
+      onWaiveWaitingFee: _waiveWaitingFee,
+      onReportNoShow: _reportNoShow,
+      onCancelRide: _cancelRide,
+      onToggleRequests: _toggleNewRequests,
+      onSafety: _openSafety,
+      requestsPaused: driver.appState == DriverAppState.onBreak,
+      statusBusy: _statusBusy,
     );
   }
 }

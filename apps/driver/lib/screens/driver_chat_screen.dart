@@ -293,6 +293,11 @@ class _DriverChatScreenState extends ConsumerState<DriverChatScreen> {
     Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
   }
 
+  Future<void> _sendQuickReply(String text) async {
+    _messageController.text = text;
+    await _sendMessage();
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeColors = Theme.of(context).extension<HeyCabyColorTokens>()!;
@@ -302,6 +307,12 @@ class _DriverChatScreenState extends ConsumerState<DriverChatScreen> {
     final chatState = ref.watch(driverChatProvider);
     final driver = ref.watch(driverStateProvider);
     final canUseChat = _chatAllowedForCurrentState(driver);
+    final quickReplies = [
+      DriverStrings.chatQuickImHere,
+      DriverStrings.chatQuickOnMyWay,
+      DriverStrings.chatQuickTwoMinutes,
+    ];
+    final chatSubtitle = driver.pickupAddress;
 
     final menu = chatState.maybeWhen(
       data: (s) {
@@ -349,6 +360,9 @@ class _DriverChatScreenState extends ConsumerState<DriverChatScreen> {
           onBack: () => context.pop(),
           onSend: _sendMessage,
           onBackWhenBlocked: () => context.pop(),
+          subtitle: chatSubtitle,
+          quickReplies: quickReplies,
+          onQuickReply: _sendQuickReply,
           menu: menu != null
               ? Padding(
                   padding: const EdgeInsets.only(right: 8),

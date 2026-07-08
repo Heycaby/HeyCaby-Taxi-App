@@ -107,37 +107,33 @@ class _MarketplaceOfferPricePanelState
     );
 
     return Container(
-      padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 20),
+      padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 16),
       decoration: BoxDecoration(
         color: widget.colors.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: widget.colors.border.withValues(alpha: 0.45),
+          color: widget.colors.border.withValues(alpha: 0.55),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: widget.colors.text.withValues(alpha: 0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            widget.l10n.marketplaceNameYourPrice,
-            style: widget.typo.titleLarge.copyWith(
+            widget.l10n.marketplaceYourBid,
+            style: widget.typo.labelLarge.copyWith(
               fontWeight: FontWeight.w800,
               color: widget.colors.text,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            widget.l10n.marketplaceNameYourPriceSubtitle,
-            style: widget.typo.bodyMedium.copyWith(color: widget.colors.textMid),
+            widget.l10n.marketplaceDriversAcceptHint,
+            style: widget.typo.bodySmall.copyWith(
+              color: widget.colors.textMid,
+              height: 1.35,
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -149,99 +145,83 @@ class _MarketplaceOfferPricePanelState
                     : null,
               ),
               Expanded(
-                child: Column(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        HapticService.lightTap();
-                        _amountFocus.requestFocus();
-                        _amountController.selection = TextSelection(
-                          baseOffset: 0,
-                          extentOffset: _amountController.text.length,
-                        );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: widget.colors.bg,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: _isEditingAmount
-                                ? widget.colors.accent
-                                : widget.colors.border.withValues(alpha: 0.6),
-                            width: _isEditingAmount ? 2 : 1,
+                child: GestureDetector(
+                  onTap: () {
+                    HapticService.lightTap();
+                    _amountFocus.requestFocus();
+                    _amountController.selection = TextSelection(
+                      baseOffset: 0,
+                      extentOffset: _amountController.text.length,
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: widget.colors.bgAlt,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: _isEditingAmount
+                            ? widget.colors.accent
+                            : widget.colors.border.withValues(alpha: 0.5),
+                        width: _isEditingAmount ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '€',
+                          style: widget.typo.headingLarge.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: widget.colors.accent,
+                            fontSize: 36,
+                            height: 1,
                           ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              '€',
-                              style: widget.typo.headingLarge.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: widget.colors.accent,
-                                fontSize: 40,
-                                height: 1,
-                              ),
+                        const SizedBox(width: 2),
+                        IntrinsicWidth(
+                          child: TextField(
+                            controller: _amountController,
+                            focusNode: _amountFocus,
+                            keyboardType: TextInputType.number,
+                            textInputAction: TextInputAction.done,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(4),
+                            ],
+                            textAlign: TextAlign.center,
+                            style: widget.typo.headingLarge.copyWith(
+                              fontWeight: FontWeight.w900,
+                              color: widget.colors.accent,
+                              fontSize: 36,
+                              height: 1.1,
                             ),
-                            const SizedBox(width: 4),
-                            IntrinsicWidth(
-                              child: TextField(
-                                controller: _amountController,
-                                focusNode: _amountFocus,
-                                keyboardType: TextInputType.number,
-                                textInputAction: TextInputAction.done,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                  LengthLimitingTextInputFormatter(4),
-                                ],
-                                textAlign: TextAlign.center,
-                                style: widget.typo.headingLarge.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: widget.colors.accent,
-                                  fontSize: 40,
-                                  height: 1.1,
-                                ),
-                                decoration: InputDecoration(
-                                  isDense: true,
-                                  border: InputBorder.none,
-                                  hintText: widget.l10n.marketplacePriceHint,
-                                  hintStyle: widget.typo.headingLarge.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    color: widget.colors.textSoft,
-                                    fontSize: 40,
-                                  ),
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                                onSubmitted: (_) => _commitTypedAmount(bounds),
-                                onEditingComplete: () =>
-                                    _commitTypedAmount(bounds),
-                                onChanged: (raw) {
-                                  final parsed = int.tryParse(raw);
-                                  if (parsed != null &&
-                                      parsed >= kMarketplaceBidMinEuro &&
-                                      parsed <= kMarketplaceBidMaxEuro) {
-                                    widget.onBidChanged(parsed);
-                                  }
-                                },
+                            decoration: InputDecoration(
+                              isDense: true,
+                              border: InputBorder.none,
+                              hintText: widget.l10n.marketplacePriceHint,
+                              hintStyle: widget.typo.headingLarge.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: widget.colors.textSoft,
+                                fontSize: 36,
                               ),
+                              contentPadding: EdgeInsets.zero,
                             ),
-                          ],
+                            onSubmitted: (_) => _commitTypedAmount(bounds),
+                            onEditingComplete: () => _commitTypedAmount(bounds),
+                            onChanged: (raw) {
+                              final parsed = int.tryParse(raw);
+                              if (parsed != null &&
+                                  parsed >= kMarketplaceBidMinEuro &&
+                                  parsed <= kMarketplaceBidMaxEuro) {
+                                widget.onBidChanged(parsed);
+                              }
+                            },
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      widget.l10n.marketplaceEnterCustomPrice,
-                      style: widget.typo.labelSmall.copyWith(
-                        color: widget.colors.textSoft,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
               _StepButton(
@@ -253,42 +233,23 @@ class _MarketplaceOfferPricePanelState
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Flexible(
-                child: Text(
-                  widget.l10n.marketplaceTypicalRangeLabel(typical),
-                  style: widget.typo.bodySmall.copyWith(
-                    color: widget.colors.textSoft,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Icon(Icons.info_outline, size: 14, color: widget.colors.textSoft),
-            ],
-          ),
           const SizedBox(height: 8),
           Text(
-            widget.l10n.marketplaceBidRangeHint(
-              bounds.minEuro,
-              bounds.maxEuro,
-            ),
+            widget.l10n.marketplaceEnterCustomPrice,
             textAlign: TextAlign.center,
-            style: widget.typo.labelSmall.copyWith(color: widget.colors.textSoft),
+            style: widget.typo.labelSmall.copyWith(
+              color: widget.colors.textSoft,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           SliderTheme(
             data: SliderThemeData(
               activeTrackColor: widget.colors.accent,
-              inactiveTrackColor: widget.colors.border,
+              inactiveTrackColor: widget.colors.border.withValues(alpha: 0.5),
               thumbColor: widget.colors.accent,
-              overlayColor: widget.colors.accent.withValues(alpha: 0.12),
-              trackHeight: 8,
-              trackShape: const RoundedRectSliderTrackShape(),
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 14),
+              overlayColor: widget.colors.accent.withValues(alpha: 0.1),
+              trackHeight: 4,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 11),
             ),
             child: Slider(
               value: widget.bidAmount
@@ -309,6 +270,13 @@ class _MarketplaceOfferPricePanelState
                 ),
               ),
               Text(
+                widget.l10n.marketplaceTypicalRangeLabel(typical),
+                style: widget.typo.labelSmall.copyWith(
+                  color: widget.colors.textMid,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
                 formatMarketplaceEuro(bounds.maxEuro.toDouble()),
                 style: widget.typo.labelSmall.copyWith(
                   color: widget.colors.textSoft,
@@ -316,60 +284,22 @@ class _MarketplaceOfferPricePanelState
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsetsDirectional.all(16),
-            decoration: BoxDecoration(
-              color: widget.colors.accent.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.gps_fixed, color: widget.colors.accent, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    widget.l10n.marketplaceControlBanner,
-                    style: widget.typo.bodySmall.copyWith(
-                      color: widget.colors.textMid,
-                      height: 1.4,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => _step(2, bounds),
-              borderRadius: BorderRadius.circular(18),
-              child: Ink(
-                padding: const EdgeInsetsDirectional.all(16),
-                decoration: BoxDecoration(
-                  color: widget.colors.bg,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: widget.colors.border.withValues(alpha: 0.6),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.local_taxi_outlined, color: widget.colors.textMid),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        widget.l10n.marketplaceFasterOffersTip,
-                        style: widget.typo.bodySmall.copyWith(
-                          color: widget.colors.textMid,
-                        ),
-                      ),
-                    ),
-                    Icon(Icons.chevron_right, color: widget.colors.textSoft),
-                  ],
+          const SizedBox(height: 10),
+          Center(
+            child: TextButton(
+              onPressed: widget.bidAmount < bounds.maxEuro
+                  ? () => _step(2, bounds)
+                  : null,
+              style: TextButton.styleFrom(
+                foregroundColor: widget.colors.accent,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                widget.l10n.marketplaceBoostOfferSubtitle,
+                style: widget.typo.labelSmall.copyWith(
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
@@ -395,26 +325,18 @@ class _StepButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final enabled = onTap != null;
     return Material(
-      color: colors.bg,
-      borderRadius: BorderRadius.circular(16),
+      color: colors.bgAlt,
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: enabled
-                  ? colors.border.withValues(alpha: 0.7)
-                  : colors.border.withValues(alpha: 0.35),
-            ),
-          ),
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          width: 44,
+          height: 44,
           child: Icon(
             icon,
             color: enabled ? colors.text : colors.textSoft,
-            size: 28,
+            size: 22,
           ),
         ),
       ),

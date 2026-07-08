@@ -5,14 +5,13 @@ import '../theme/driver_colors.dart';
 import '../theme/driver_motion_presets.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
-import '../ui/driver_button.dart';
-import '../ui/driver_card.dart';
 import '../ui/driver_chip.dart';
 import '../ui/driver_text_field.dart';
+import 'driver_ride_bolt_layout.dart';
 import 'driver_ride_flow_common.dart';
 
-/// **Reward Screen** — celebrate completion; record payment; rate rider.
-class DriverRewardScreenBody extends StatelessWidget {
+/// **Reward Screen** — minimalist trip complete; record payment; rate rider.
+class DriverRewardScreenBody extends StatefulWidget {
   const DriverRewardScreenBody({
     super.key,
     required this.colors,
@@ -27,7 +26,10 @@ class DriverRewardScreenBody extends StatelessWidget {
     required this.onSendReceipt,
     required this.onRateRider,
     required this.onSkip,
-    required this.onBack,
+    this.pickupLat,
+    this.pickupLng,
+    this.destLat,
+    this.destLng,
     this.baseFareLabel,
     this.waitingFeeLabel,
     this.waitingFeeWaived = false,
@@ -48,7 +50,17 @@ class DriverRewardScreenBody extends StatelessWidget {
   final VoidCallback onSendReceipt;
   final VoidCallback onRateRider;
   final VoidCallback onSkip;
-  final VoidCallback onBack;
+  final double? pickupLat;
+  final double? pickupLng;
+  final double? destLat;
+  final double? destLng;
+
+  @override
+  State<DriverRewardScreenBody> createState() => _DriverRewardScreenBodyState();
+}
+
+class _DriverRewardScreenBodyState extends State<DriverRewardScreenBody> {
+  bool _noteExpanded = false;
 
   List<(String, String)> _paymentMethods() => [
         ('cash', DriverStrings.cash),
@@ -57,259 +69,208 @@ class DriverRewardScreenBody extends StatelessWidget {
         ('other', DriverStrings.other),
       ];
 
+  String _formatEuro(String? label) {
+    if (label == null || label.trim().isEmpty) return '—';
+    return label.replaceFirst('EUR ', '€');
+  }
+
   @override
   Widget build(BuildContext context) {
-    return DriverRideFlowScaffold(
-      title: DriverStrings.rideCompleteTitle,
+    final colors = widget.colors;
+    final typography = widget.typography;
+    final waitingLabel = widget.waitingFeeWaived
+        ? DriverStrings.waitingFeeWaived
+        : _formatEuro(widget.waitingFeeLabel);
+
+    return DriverRideBoltScaffold(
       colors: colors,
       typography: typography,
-      onBack: onBack,
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Icon(
-            Icons.check_circle_rounded,
-            size: 72,
-            color: colors.primary,
-          ).driverSuccessPop(),
-          const SizedBox(height: DriverSpacing.md),
-          Text(
-            DriverStrings.rideCompleted,
-            style: typography.headlineMedium.copyWith(
-              color: colors.text,
-              fontWeight: FontWeight.w800,
+      phase: DriverRideBoltPhase.completed,
+      pickupLat: widget.pickupLat,
+      pickupLng: widget.pickupLng,
+      destLat: widget.destLat,
+      destLng: widget.destLng,
+      driverLat: widget.destLat,
+      driverLng: widget.destLng,
+      onClose: widget.onSkip,
+      scrollableInfoCard: true,
+      infoCard: DriverRideBoltInfoCard(
+        colors: colors,
+        typography: typography,
+        heroPrimary: driverRideBoltFareHero(widget.expectedLabel),
+        heroSecondary: DriverStrings.rideCompleted,
+        focusAddress: widget.destinationAddress,
+        successTone: true,
+        extra: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: DriverSpacing.xs),
+            _MinimalFareLine(
+              colors: colors,
+              typography: typography,
+              label: DriverStrings.rideFareLabel,
+              value: _formatEuro(widget.baseFareLabel),
             ),
-            textAlign: TextAlign.center,
-          ).driverFadeSlideIn(staggerIndex: 0),
-          const SizedBox(height: DriverSpacing.sm),
-          Text(
-            destinationAddress,
-            style: typography.bodyMedium.copyWith(color: colors.textSecondary),
-            textAlign: TextAlign.center,
-          ).driverFadeSlideIn(staggerIndex: 1),
-          const SizedBox(height: DriverSpacing.xl),
-          DriverCard(
-            colors: colors,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            const SizedBox(height: DriverSpacing.sm),
+            _MinimalFareLine(
+              colors: colors,
+              typography: typography,
+              label: DriverStrings.waitingFeeLabel,
+              value: waitingLabel,
+              muted: widget.waitingFeeWaived,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: DriverSpacing.lg),
+              child: Divider(
+                color: colors.border.withValues(alpha: 0.45),
+                height: 1,
+              ),
+            ),
+            Text(
+              DriverStrings.recordPaymentReceived,
+              style: typography.labelMedium.copyWith(
+                color: colors.textSecondary,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.1,
+              ),
+            ).driverFadeSlideIn(staggerIndex: 0),
+            const SizedBox(height: DriverSpacing.md),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  DriverStrings.recordPaymentReceived,
-                  style: typography.titleMedium.copyWith(
-                    color: colors.text,
-                    fontWeight: FontWeight.w800,
+                Expanded(
+                  child: DriverTextField(
+                    controller: widget.paidController,
+                    colors: colors,
+                    typography: typography,
+                    label: DriverStrings.paidAmountLabel,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                   ),
-                ),
-                const SizedBox(height: DriverSpacing.sm),
-                _FareBreakdownCard(
-                  colors: colors,
-                  typography: typography,
-                  baseFareLabel: baseFareLabel ?? expectedLabel,
-                  waitingFeeLabel: waitingFeeLabel,
-                  waitingFeeWaived: waitingFeeWaived,
-                  totalLabel: expectedLabel,
-                ),
-                const SizedBox(height: DriverSpacing.lg),
-                DriverTextField(
-                  controller: paidController,
-                  colors: colors,
-                  typography: typography,
-                  label: DriverStrings.paidAmountLabel,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                ),
-                const SizedBox(height: DriverSpacing.md),
-                Text(
-                  DriverStrings.paymentMethodLabel,
-                  style: typography.labelMedium.copyWith(
-                    color: colors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: DriverSpacing.sm),
-                Wrap(
-                  spacing: DriverSpacing.sm,
-                  runSpacing: DriverSpacing.sm,
-                  children: [
-                    for (final (value, label) in _paymentMethods())
-                      DriverChip(
-                        label: label,
-                        colors: colors,
-                        typography: typography,
-                        selected: paymentMethod == value,
-                        onTap: () => onPaymentMethodChanged(value),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: DriverSpacing.md),
-                DriverTextField(
-                  controller: noteController,
-                  colors: colors,
-                  typography: typography,
-                  label: DriverStrings.accountingNoteLabel,
-                  hint: DriverStrings.accountingNoteLabel,
-                ),
-                const SizedBox(height: DriverSpacing.lg),
-                DriverButton(
-                  label: sendingReceipt
-                      ? DriverStrings.sendingReceipt
-                      : DriverStrings.sendReceipt,
-                  icon: Icons.receipt_long_rounded,
-                  onPressed: sendingReceipt ? null : onSendReceipt,
-                  loading: sendingReceipt,
-                  colors: colors,
-                  typography: typography,
-                  variant: DriverButtonVariant.secondary,
                 ),
               ],
             ),
-          ).driverFadeSlideIn(staggerIndex: 2),
-        ],
+            const SizedBox(height: DriverSpacing.md),
+            Wrap(
+              spacing: DriverSpacing.sm,
+              runSpacing: DriverSpacing.sm,
+              children: [
+                for (final (value, label) in _paymentMethods())
+                  DriverChip(
+                    label: label,
+                    colors: colors,
+                    typography: typography,
+                    selected: widget.paymentMethod == value,
+                    onTap: () => widget.onPaymentMethodChanged(value),
+                  ),
+              ],
+            ),
+            const SizedBox(height: DriverSpacing.sm),
+            if (!_noteExpanded)
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton(
+                  onPressed: () => setState(() => _noteExpanded = true),
+                  style: TextButton.styleFrom(
+                    foregroundColor: colors.textSecondary,
+                    padding: EdgeInsets.zero,
+                    minimumSize: const Size(0, 36),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    DriverStrings.accountingNoteLabel,
+                    style: typography.bodySmall.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              )
+            else ...[
+              const SizedBox(height: DriverSpacing.sm),
+              DriverTextField(
+                controller: widget.noteController,
+                colors: colors,
+                typography: typography,
+                label: DriverStrings.accountingNoteLabel,
+                hint: DriverStrings.accountingNoteLabel,
+              ),
+            ],
+            const SizedBox(height: DriverSpacing.md),
+            Align(
+              alignment: AlignmentDirectional.center,
+              child: TextButton.icon(
+                onPressed: widget.sendingReceipt ? null : widget.onSendReceipt,
+                icon: widget.sendingReceipt
+                    ? SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: colors.primary,
+                        ),
+                      )
+                    : Icon(
+                        Icons.receipt_long_outlined,
+                        size: 18,
+                        color: colors.textSecondary,
+                      ),
+                label: Text(
+                  widget.sendingReceipt
+                      ? DriverStrings.sendingReceipt
+                      : DriverStrings.sendReceipt,
+                  style: typography.bodySmall.copyWith(
+                    color: colors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
       bottomBar: DriverRideFlowBottomBar(
         colors: colors,
         typography: typography,
         primaryLabel: DriverStrings.rateRider,
         primaryIcon: Icons.star_rounded,
-        onPrimary: onRateRider,
+        onPrimary: widget.onRateRider,
         tertiaryLabel: DriverStrings.skip,
-        onTertiary: onSkip,
+        onTertiary: widget.onSkip,
       ),
     );
   }
 }
 
-class _FareBreakdownCard extends StatelessWidget {
-  const _FareBreakdownCard({
-    required this.colors,
-    required this.typography,
-    required this.baseFareLabel,
-    required this.waitingFeeLabel,
-    required this.waitingFeeWaived,
-    required this.totalLabel,
-  });
-
-  final DriverColors colors;
-  final DriverTypography typography;
-  final String? baseFareLabel;
-  final String? waitingFeeLabel;
-  final bool waitingFeeWaived;
-  final String? totalLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final waitingLabel = waitingFeeWaived
-        ? DriverStrings.waitingFeeWaived
-        : waitingFeeLabel ?? '-';
-
-    return Container(
-      padding: const EdgeInsets.all(DriverSpacing.md),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: colors.border.withValues(alpha: 0.75)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  Icons.receipt_long_rounded,
-                  color: colors.primary,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: DriverSpacing.sm),
-              Expanded(
-                child: Text(
-                  DriverStrings.fareBreakdownTitle,
-                  style: typography.titleSmall.copyWith(
-                    color: colors.text,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: DriverSpacing.md),
-          _FareRow(
-            colors: colors,
-            typography: typography,
-            label: DriverStrings.rideFareLabel,
-            value: baseFareLabel ?? '-',
-          ),
-          const SizedBox(height: DriverSpacing.sm),
-          _FareRow(
-            colors: colors,
-            typography: typography,
-            label: DriverStrings.waitingFeeLabel,
-            value: waitingLabel,
-            highlight: waitingFeeWaived,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: DriverSpacing.md),
-            child: Divider(color: colors.border, height: 1),
-          ),
-          _FareRow(
-            colors: colors,
-            typography: typography,
-            label: DriverStrings.totalToRecordLabel,
-            value: totalLabel ?? '-',
-            strong: true,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FareRow extends StatelessWidget {
-  const _FareRow({
+class _MinimalFareLine extends StatelessWidget {
+  const _MinimalFareLine({
     required this.colors,
     required this.typography,
     required this.label,
     required this.value,
-    this.strong = false,
-    this.highlight = false,
+    this.muted = false,
   });
 
   final DriverColors colors;
   final DriverTypography typography;
   final String label;
   final String value;
-  final bool strong;
-  final bool highlight;
+  final bool muted;
 
   @override
   Widget build(BuildContext context) {
+    final labelStyle = typography.bodySmall.copyWith(
+      color: colors.textSecondary,
+      fontWeight: FontWeight.w500,
+    );
+    final valueStyle = typography.bodyMedium.copyWith(
+      color: muted ? colors.primary : colors.text,
+      fontWeight: FontWeight.w600,
+    );
+
     return Row(
       children: [
-        Expanded(
-          child: Text(
-            label,
-            style: (strong ? typography.labelLarge : typography.bodySmall)
-                .copyWith(
-              color: strong ? colors.text : colors.textSecondary,
-              fontWeight: strong ? FontWeight.w900 : FontWeight.w700,
-            ),
-          ),
-        ),
-        const SizedBox(width: DriverSpacing.md),
-        Text(
-          value,
-          style: (strong ? typography.titleMedium : typography.bodyMedium)
-              .copyWith(
-            color: highlight ? colors.primary : colors.text,
-            fontWeight: strong ? FontWeight.w900 : FontWeight.w800,
-          ),
-        ),
+        Expanded(child: Text(label, style: labelStyle)),
+        Text(value, style: valueStyle),
       ],
     );
   }

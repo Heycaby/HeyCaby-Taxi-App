@@ -6,6 +6,20 @@ import 'package:heycaby_driver/l10n/driver_strings.dart';
 void main() {
   tearDown(() => DriverStrings.useLocale(const Locale('nl')));
 
+  test('DriverStrings.accept is localized per locale', () {
+    DriverStrings.useLocale(const Locale('en'));
+    expect(DriverStrings.accept, 'Accept');
+
+    DriverStrings.useLocale(const Locale('nl'));
+    expect(DriverStrings.accept, 'Accepteren');
+
+    DriverStrings.useLocale(const Locale('es'));
+    expect(DriverStrings.accept, 'Aceptar');
+
+    DriverStrings.useLocale(const Locale('ar'));
+    expect(DriverStrings.accept, 'قبول');
+  });
+
   test('DriverStrings defaults to English for unsupported or missing locales',
       () {
     DriverStrings.useLocale(null);
@@ -180,7 +194,7 @@ void main() {
     );
     expect(
       DriverStrings.acceptRideFailedMessage,
-      'Could not accept the ride. The request may have expired.',
+      'Could not accept the ride. Try again or check your connection.',
     );
     expect(DriverStrings.preferencesPlayPreviewTooltip, 'Play 10s preview');
     expect(DriverStrings.insuranceProviderLabel, 'Insurer');

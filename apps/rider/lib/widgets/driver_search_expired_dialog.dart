@@ -1,78 +1,67 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
-import 'package:share_plus/share_plus.dart';
 
+import '../constants/rider_search_window.dart';
+import '../models/ride_matching_variant.dart';
 import '../providers/active_search_provider.dart';
+import '../services/rider_matching_recovery_actions.dart';
+import 'booking/matching_recovery_sheet.dart';
 
-Rect _shareOriginFromContext(BuildContext context) {
-  final box = context.findRenderObject();
-  if (box is RenderBox && box.hasSize) {
-    final offset = box.localToGlobal(Offset.zero);
-    return offset & box.size;
-  }
-  final size = MediaQuery.sizeOf(context);
-  return Rect.fromLTWH(size.width / 2 - 1, size.height / 2 - 1, 2, 2);
-}
-
-/// Friendly "we're new, help spread the word" message after a 30 min search window ends.
+/// Shown when the full search window ends without a driver match.
 Future<void> showDriverSearchExpiredDialog(
   BuildContext context,
   WidgetRef ref, {
   bool markGrowthModalDismissedAfter = false,
+  RideMatchingVariant variant = RideMatchingVariant.instant,
 }) async {
   final colors = ref.read(colorsProvider);
   final typo = ref.read(typographyProvider);
   final l10n = AppLocalizations.of(context);
+  final minutes = kRiderDriverSearchWindow.inMinutes;
 
-  await showDialog<void>(
+  await showModalBottomSheet<void>(
     context: context,
-    barrierDismissible: true,
-    builder: (ctx) => AlertDialog(
-      backgroundColor: colors.card,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: Text(
-        l10n.noCabyFoundModalTitle,
-        style: typo.headingMedium.copyWith(color: colors.text, fontSize: 22),
-      ),
-      content: SingleChildScrollView(
-        child: Text(
-          l10n.noCabyFoundModalBody,
-          style: typo.bodyLarge.copyWith(
-            color: colors.text,
-            height: 1.55,
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-          ),
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    barrierColor: colors.text.withValues(alpha: 0.42),
+    builder: (sheetContext) {
+      final bottom = MediaQuery.paddingOf(sheetContext).bottom;
+      void closeAnd(VoidCallback action) {
+        Navigator.of(sheetContext).pop();
+        action();
+      }
+
+      return Padding(
+        padding: EdgeInsets.fromLTRB(12, 0, 12, bottom + 12),
+        child: MatchingRecoverySheet(
+          colors: colors,
+          typo: typo,
+          l10n: l10n,
+          title: l10n.searchExpiredSheetTitle,
+          body: l10n.searchExpiredSheetBody(minutes),
+          variant: variant,
+          showTryAgain: true,
+          onTryAgain: () => closeAnd(() {
+            unawaited(RiderMatchingRecoveryActions.tryAgain(ref, context));
+          }),
+          onNotifyMe: () => closeAnd(() {
+            unawaited(RiderMatchingRecoveryActions.notifyMe(ref, context));
+          }),
+          onSchedule: () => closeAnd(() {
+            RiderMatchingRecoveryActions.schedule(ref, context);
+          }),
+          onMarketplace: () => closeAnd(() {
+            RiderMatchingRecoveryActions.marketplace(ref, context);
+          }),
+          showDismiss: true,
+          onDismiss: () => Navigator.of(sheetContext).pop(),
         ),
-      ),
-      actions: [
-        SizedBox(
-          width: double.infinity,
-          child: Builder(
-            builder: (buttonCtx) => FilledButton(
-              onPressed: () async {
-                final origin = _shareOriginFromContext(buttonCtx);
-                await Share.share(
-                  l10n.shareHeyCabyMessage(kAppPublicSiteRoot),
-                  sharePositionOrigin: origin,
-                );
-              },
-              child: Text(l10n.shareHeyCabyInvite),
-            ),
-          ),
-        ),
-        Align(
-          alignment: AlignmentDirectional.centerEnd,
-          child: TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(l10n.growthModalClose),
-          ),
-        ),
-      ],
-    ),
+      );
+    },
   );
 
   if (markGrowthModalDismissedAfter) {

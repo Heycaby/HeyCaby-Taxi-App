@@ -20,9 +20,9 @@ class RidesScreen extends ConsumerStatefulWidget {
 }
 
 class _RidesScreenState extends ConsumerState<RidesScreen> {
-  int _selectedTab = 0;
+  int _selectedTab = 2;
 
-  /// 0 = upcoming open requests, 1 = history from `rides` table.
+  /// 0 = upcoming open requests, 1 = history from `ride_requests`.
   int _segment = 0;
 
   @override
@@ -30,6 +30,8 @@ class _RidesScreenState extends ConsumerState<RidesScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _setFilter();
+      ref.read(rideHistoryProvider.notifier).refresh();
+      ref.invalidate(ridesTabUpcomingRequestsProvider);
     });
   }
 
@@ -71,7 +73,6 @@ class _RidesScreenState extends ConsumerState<RidesScreen> {
               ),
             ),
             const SizedBox(height: 14),
-            const _RidesActiveBookingCardSlot(),
             Expanded(
               child: IndexedStack(
                 index: _segment,
@@ -117,20 +118,6 @@ class _RidesScreenState extends ConsumerState<RidesScreen> {
       default:
         return 'all';
     }
-  }
-}
-
-class _RidesActiveBookingCardSlot extends ConsumerWidget {
-  const _RidesActiveBookingCardSlot();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final snap = ref.watch(nearTermRideRequestProvider).valueOrNull;
-    if (snap == null) return const SizedBox.shrink();
-    return const Padding(
-      padding: EdgeInsetsDirectional.fromSTEB(20, 0, 20, 14),
-      child: ActiveBookingCard(),
-    );
   }
 }
 
@@ -258,15 +245,33 @@ class _UpcomingRidesTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final upcoming = ref.watch(ridesTabUpcomingRequestsProvider);
+    final nearTermSnap = ref.watch(nearTermRideRequestProvider).valueOrNull;
     final locale = Localizations.localeOf(context).toString();
     final now = DateTime.now();
 
     return upcoming.when(
       loading: () =>
           Center(child: CircularProgressIndicator(color: colors.accent)),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (e, _) => RefreshIndicator(
+        color: colors.accent,
+        onRefresh: onRefresh,
+        child: ListView(
+          padding: const EdgeInsetsDirectional.fromSTEB(24, 48, 24, 24),
+          children: [
+            Text(
+              l10n.error,
+              textAlign: TextAlign.center,
+              style: typo.bodyMedium.copyWith(color: colors.textMid),
+            ),
+          ],
+        ),
+      ),
       data: (items) {
-        if (items.isEmpty) {
+        final listItems = nearTermSnap == null
+            ? items
+            : items.where((item) => item.id != nearTermSnap.id).toList();
+
+        if (listItems.isEmpty && nearTermSnap == null) {
           return RefreshIndicator(
             color: colors.accent,
             onRefresh: onRefresh,
@@ -283,10 +288,13 @@ class _UpcomingRidesTab extends ConsumerWidget {
           onRefresh: onRefresh,
           child: ListView.separated(
             padding: const EdgeInsetsDirectional.fromSTEB(20, 4, 20, 24),
-            itemCount: items.length,
+            itemCount: (nearTermSnap != null ? 1 : 0) + listItems.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
-              final snap = items[index];
+              if (nearTermSnap != null && index == 0) {
+                return const ActiveBookingCard();
+              }
+              final snap = listItems[nearTermSnap != null ? index - 1 : index];
               final isFutureScheduled = snap.scheduledPickupAt != null &&
                   snap.scheduledPickupAt!.isAfter(now);
               return _UpcomingRideRequestCard(
@@ -297,6 +305,10 @@ class _UpcomingRidesTab extends ConsumerWidget {
                 locale: locale,
                 isFutureScheduled: isFutureScheduled,
                 onTap: () {
+                  if (snap.isLiveRide) {
+                    context.push('/active');
+                    return;
+                  }
                   context.push(
                     '/upcoming-ride',
                     extra: snap,
@@ -384,10 +396,16 @@ class _UpcomingRideRequestCard extends StatelessWidget {
         ? DateFormat.yMMMd(locale).add_Hm().format(when)
         : null;
 
-    final badgeLabel = isFutureScheduled
-        ? l10n.ridesUpcomingScheduledBadge
-        : l10n.ridesUpcomingMatchingBadge;
-    final badgeColor = isFutureScheduled ? colors.accent : colors.warning;
+    final badgeLabel = snap.isLiveRide
+        ? l10n.rideStatusInProgress
+        : isFutureScheduled
+            ? l10n.ridesUpcomingScheduledBadge
+            : l10n.ridesUpcomingMatchingBadge;
+    final badgeColor = snap.isLiveRide
+        ? colors.success
+        : isFutureScheduled
+            ? colors.accent
+            : colors.warning;
 
     return Material(
       color: Colors.transparent,
@@ -625,7 +643,6 @@ class _FilterTabs extends StatelessWidget {
           const SizedBox(width: 8),
           _Tab(
               label: l10n.ridesFilterCancelled,
-              badge: '1',
               isSelected: selected == 3,
               colors: colors,
               typo: typo,
@@ -639,7 +656,6 @@ class _FilterTabs extends StatelessWidget {
 class _Tab extends StatelessWidget {
   final String label;
   final IconData? icon;
-  final String? badge;
   final bool isSelected;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
@@ -648,7 +664,6 @@ class _Tab extends StatelessWidget {
   const _Tab({
     required this.label,
     this.icon,
-    this.badge,
     required this.isSelected,
     required this.colors,
     required this.typo,
@@ -685,27 +700,6 @@ class _Tab extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            if (badge != null) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? colors.bg.withValues(alpha: 0.2)
-                      : colors.error,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  badge!,
-                  style: typo.labelSmall.copyWith(
-                    color: isSelected ? colors.bg : colors.bg,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 11,
-                  ),
-                ),
-              ),
-            ],
           ],
         ),
       ),
@@ -782,10 +776,17 @@ class _RideCard extends StatelessWidget {
       case 'completed':
         return colors.success;
       case 'cancelled':
+      case 'expired':
+      case 'no_driver':
         return colors.error;
       case 'pending':
+      case 'bidding':
+      case 'marketplace':
       case 'assigned':
+      case 'accepted':
+      case 'driver_found':
       case 'arrived':
+      case 'driver_arrived':
       case 'in_progress':
         return colors.accent;
       default:
@@ -798,12 +799,19 @@ class _RideCard extends StatelessWidget {
       case 'completed':
         return l10n.tripComplete;
       case 'cancelled':
+      case 'expired':
+      case 'no_driver':
         return l10n.rideStatusCancelled;
       case 'pending':
         return l10n.rideStatusSearching;
+      case 'bidding':
+        return l10n.ridesUpcomingMatchingBadge;
       case 'assigned':
+      case 'accepted':
+      case 'driver_found':
         return l10n.rideStatusDriverAssigned;
       case 'arrived':
+      case 'driver_arrived':
         return l10n.rideStatusDriverArrived;
       case 'in_progress':
         return l10n.rideStatusInProgress;
@@ -938,7 +946,7 @@ class _RideCard extends StatelessWidget {
                       size: 20,
                     ),
                     label: Text(
-                      'View receipt',
+                      l10n.rideDetailViewReceipt,
                       style: typo.labelLarge.copyWith(
                         color: colors.text,
                         fontWeight: FontWeight.w700,

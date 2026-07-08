@@ -12,6 +12,7 @@ import '../providers/booking_provider.dart';
 import '../providers/local_recent_addresses_provider.dart';
 import '../providers/location_provider.dart';
 import '../providers/recent_destinations_provider.dart';
+import '../providers/saved_trips_provider.dart';
 import '../services/booking_flow_navigation.dart';
 import '../services/booking_pickup_from_location.dart';
 import '../widgets/booking/search_address_form.dart';
@@ -67,6 +68,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      unawaited(
+        ref.read(localRecentAddressesProvider.notifier).refreshFromDisk(),
+      );
       if (_activeFocus == SearchAddressFocus.pickup) {
         _pickupFocus.requestFocus();
       } else {
@@ -77,14 +81,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     _pickupFocus.addListener(() {
       if (_pickupFocus.hasFocus) {
-        setState(() => _activeFocus = SearchAddressFocus.pickup);
-        _onQueryChanged(_pickupController.text);
+        setState(() {
+          _activeFocus = SearchAddressFocus.pickup;
+          _suggestions = [];
+          _suggestionsFromLocal = false;
+        });
       }
     });
     _destinationFocus.addListener(() {
       if (_destinationFocus.hasFocus) {
-        setState(() => _activeFocus = SearchAddressFocus.destination);
-        _onQueryChanged(_destinationController.text);
+        setState(() {
+          _activeFocus = SearchAddressFocus.destination;
+          _suggestions = [];
+          _suggestionsFromLocal = false;
+        });
       }
     });
   }
@@ -272,8 +282,21 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Future<void> _showDateTimePicker() async {
     final result = await showSchedulePicker(context);
     if (result != null && mounted) {
-      ref.read(bookingProvider.notifier).setScheduledAt(result);
+      ref.read(bookingProvider.notifier).setScheduledAt(result.dateTime);
       ref.read(bookingProvider.notifier).setScheduled();
+      if (result.saveTrip) {
+        final booking = ref.read(bookingProvider);
+        final pu = booking.pickup;
+        final de = booking.destination;
+        if (pu != null && de != null) {
+          unawaited(
+            ref.read(savedTripsProvider.notifier).saveTrip(
+              pickup: pu,
+              destination: de,
+            ),
+          );
+        }
+      }
     }
   }
 

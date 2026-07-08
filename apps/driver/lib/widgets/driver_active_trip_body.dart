@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heycaby_api/heycaby_api.dart';
+import 'package:heycaby_ui/heycaby_ui.dart';
 
+import '../utils/driver_address_clipboard.dart';
 import '../l10n/driver_strings.dart';
+import '../providers/driver_nav_app_pref_provider.dart';
+import '../services/driver_nav_app_pref.dart';
 import '../theme/driver_colors.dart';
-import '../theme/driver_motion_presets.dart';
-import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
 import '../ui/driver_status_badge.dart';
+import 'driver_ride_bolt_layout.dart';
 import 'driver_ride_flow_common.dart';
 
-/// **Active Trip** — navigate to pickup; rider + ETA obvious.
-class DriverActiveTripBody extends StatelessWidget {
+/// **Active Trip** — Bolt-style en route to pickup.
+class DriverActiveTripBody extends ConsumerWidget {
   const DriverActiveTripBody({
     super.key,
+    required this.rideId,
     required this.colors,
     required this.typography,
     required this.pickupAddress,
@@ -20,15 +26,23 @@ class DriverActiveTripBody extends StatelessWidget {
     required this.requestsPaused,
     required this.statusBusy,
     required this.arriving,
-    required this.onBack,
     required this.onArrived,
     required this.onNavigate,
     required this.onOpenCommunication,
     required this.onCancelOrder,
     required this.onToggleRequests,
+    this.pickupLat,
+    this.pickupLng,
+    this.destLat,
+    this.destLng,
+    this.driverLat,
+    this.driverLng,
+    this.farePill,
+    this.onSafety,
     this.showNearPickupAssist = false,
   });
 
+  final String rideId;
   final DriverColors colors;
   final DriverTypography typography;
   final String pickupAddress;
@@ -37,86 +51,116 @@ class DriverActiveTripBody extends StatelessWidget {
   final bool requestsPaused;
   final bool statusBusy;
   final bool arriving;
-  final VoidCallback onBack;
   final VoidCallback onArrived;
   final VoidCallback onNavigate;
   final VoidCallback onOpenCommunication;
   final VoidCallback onCancelOrder;
   final VoidCallback onToggleRequests;
+  final double? pickupLat;
+  final double? pickupLng;
+  final double? destLat;
+  final double? destLng;
+  final double? driverLat;
+  final double? driverLng;
+  final String? farePill;
+  final VoidCallback? onSafety;
   final bool showNearPickupAssist;
 
-  @override
-  Widget build(BuildContext context) {
-    return DriverRideFlowScaffold(
-      title: DriverStrings.navigateToPickup,
+  String _navLabel(WidgetRef ref) {
+    final app = ref.watch(driverNavAppPrefProvider).valueOrNull ?? DriverNavApp.waze;
+    return switch (app) {
+      DriverNavApp.waze => 'Waze',
+      DriverNavApp.google => 'Google Maps',
+    };
+  }
+
+  void _openRouteDetails(BuildContext context, WidgetRef ref) {
+    showDriverRideRouteDetailsSheet(
+      context: context,
       colors: colors,
       typography: typography,
-      onBack: onBack,
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DriverRidePhaseHero(
-            colors: colors,
-            typography: typography,
-            eyebrow: DriverStrings.navigateToPickup,
-            title: DriverStrings.enRouteToPickupTitle,
-            body: DriverStrings.enRouteToPickupBody,
-            icon: Icons.navigation_rounded,
-            tone: DriverStatusTone.online,
-            metric: DriverStrings.pickup,
-          ),
-          if (showNearPickupAssist) ...[
-            const SizedBox(height: DriverSpacing.sm),
-            DriverStatusBadge(
-              label: DriverStrings.nearPickupAssistBanner,
-              colors: colors,
-              typography: typography,
-              tone: DriverStatusTone.success,
-              icon: Icons.near_me_rounded,
-            ).driverFadeSlideIn(staggerIndex: 1),
-          ],
-          const SizedBox(height: DriverSpacing.lg),
-          DriverRideTripSummary(
-            colors: colors,
-            typography: typography,
-            pickupLabel: pickupAddress,
-            dropoffLabel: destinationAddress,
-            riderName: riderName,
-            statusLabel: DriverStrings.pickup,
-            statusTone: DriverStatusTone.success,
-          ),
-          const SizedBox(height: DriverSpacing.xl),
-          DriverRideActionGrid(
-            colors: colors,
-            typography: typography,
-            actions: [
-              DriverRideFlowAction(
-                label: DriverStrings.navigate,
-                icon: Icons.navigation_outlined,
-                onTap: onNavigate,
-              ),
-              DriverRideFlowAction(
-                label: DriverStrings.pingRiderAction,
-                icon: Icons.forum_outlined,
-                onTap: onOpenCommunication,
-              ),
-              DriverRideFlowAction(
-                label: requestsPaused
-                    ? DriverStrings.resumeRequests
-                    : DriverStrings.stopNewRequests,
-                icon: Icons.pause_circle_outline,
-                onTap: onToggleRequests,
-                enabled: !statusBusy,
-              ),
-              DriverRideFlowAction(
-                label: DriverStrings.cancelOrder,
-                icon: Icons.cancel_outlined,
-                onTap: onCancelOrder,
-                enabled: !statusBusy,
-              ),
-            ],
-          ),
-        ],
+      destinationAddress: pickupAddress,
+      farePill: farePill,
+      riderName: riderName,
+      navAppLabel: _navLabel(ref),
+      rideRequestId: rideId,
+      smartPingPhase: DriverRideCommunicationPhase.enRouteToPickup,
+      smartPingOnMyWayOnly: true,
+      onContact: onOpenCommunication,
+      onNavigate: onNavigate,
+      onCancelRide: onCancelOrder,
+      onToggleRequests: onToggleRequests,
+      requestsPaused: requestsPaused,
+    );
+  }
+
+  Future<void> _handleToggleRequests(BuildContext context) async {
+    if (!requestsPaused) {
+      final themeColors = Theme.of(context).extension<HeyCabyColorTokens>();
+      final themeTypo = Theme.of(context).extension<HeyCabyTypography>();
+      if (themeColors == null || themeTypo == null) return;
+      final confirmed = await showHeyCabyConfirmSheet(
+        context,
+        colors: themeColors,
+        typography: themeTypo,
+        title: DriverStrings.breakConfirmTitle,
+        message: DriverStrings.breakConfirmBodyActiveRide,
+        dismissLabel: DriverStrings.cancel,
+        confirmLabel: DriverStrings.shiftStartBreak,
+        icon: Icons.coffee_rounded,
+      );
+      if (confirmed != true) return;
+    }
+    onToggleRequests();
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return DriverRideBoltScaffold(
+      colors: colors,
+      typography: typography,
+      phase: DriverRideBoltPhase.enRoutePickup,
+      pickupLat: pickupLat,
+      pickupLng: pickupLng,
+      destLat: destLat,
+      destLng: destLng,
+      driverLat: driverLat,
+      driverLng: driverLng,
+      onToggleRequests: () => _handleToggleRequests(context),
+      onSafety: onSafety,
+      onChat: onOpenCommunication,
+      onNavigate: onNavigate,
+      requestsPaused: requestsPaused,
+      statusBusy: statusBusy,
+      infoCard: DriverRideBoltInfoCard(
+        colors: colors,
+        typography: typography,
+        heroPrimary: DriverStrings.pickup,
+        heroSecondary: null,
+        focusAddress: pickupAddress,
+        riderName: riderName,
+        farePill: farePill,
+        onOpenRouteDetails: () => _openRouteDetails(context, ref),
+        onNavigate: onNavigate,
+        navigateLabel: DriverStrings.navigateToPickup,
+        navAppLabel: _navLabel(ref),
+        onCopyAddress: pickupAddress.trim().isEmpty
+            ? null
+            : () => copyDriverRideAddress(
+                  context,
+                  address: pickupAddress,
+                  colors: colors,
+                  typography: typography,
+                ),
+        assistBanner: showNearPickupAssist
+            ? DriverStatusBadge(
+                label: DriverStrings.nearPickupAssistBanner,
+                colors: colors,
+                typography: typography,
+                tone: DriverStatusTone.success,
+                icon: Icons.near_me_rounded,
+              )
+            : null,
       ),
       bottomBar: DriverRideFlowBottomBar(
         colors: colors,

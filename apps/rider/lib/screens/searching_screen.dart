@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' show sin, pi;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../constants/rider_matching_ui.dart';
@@ -21,12 +19,14 @@ import '../providers/ride_request_provider.dart';
 import '../services/booking_flow_navigation.dart';
 import '../services/heycaby_widget_sync.dart';
 import '../services/nearby_supply_service.dart';
-import '../services/rider_notify_search_notifications.dart';
+import '../services/rider_dispatch_status_service.dart';
+import '../services/rider_matching_recovery_actions.dart';
 import '../services/sound_service.dart';
 import '../services/stale_ride_cleanup.dart';
-import '../widgets/driver_search_expired_dialog.dart';
+import '../widgets/booking/matching_search_map_view.dart';
+import '../widgets/booking/matching_search_sheet.dart';
+import '../widgets/booking/trip_summary_map_view.dart';
 import '../widgets/matching_alternatives_card.dart';
-import '../widgets/matching_marketplace_banner.dart';
 import '../widgets/scheduled_matching_fullscreen.dart';
 
 class SearchingScreen extends ConsumerStatefulWidget {
@@ -43,27 +43,29 @@ class SearchingScreen extends ConsumerStatefulWidget {
 
 class _SearchingScreenState extends ConsumerState<SearchingScreen>
     with TickerProviderStateMixin {
-  // Radar rings — 3 staggered controllers
+  // Radar — staggered ripples + rotating sweep (60% slower than prior tuning)
+  static const int _rippleCount = 5;
+  static const Duration _rippleDuration = Duration(milliseconds: 14000);
+  static const Duration _sweepDuration = Duration(milliseconds: 16000);
+
   late final List<AnimationController> _radarControllers;
-  // Dot orbit controller
-  late final AnimationController _orbitController;
+  late final AnimationController _radarSweepController;
 
   RealtimeChannel? _channel;
   RealtimeChannel? _bidsChannel;
-  Timer? _factsTimer;
   Timer? _clockTimer;
   Timer? _widgetTimer;
   Timer? _scheduledWidgetTimer;
   Timer? _noDriverTimer;
+  Timer? _supplyPollTimer;
   Timer? _matchingExpandTimer;
   Timer? _searchWindowTimer;
-  int _currentFactIndex = 0;
+  Timer? _dispatchPollTimer;
+  RiderDispatchStatus _dispatchStatus = RiderDispatchStatus.empty;
   bool _showNoDriverCard = false;
-  bool _growthNudgeShown = false;
+  bool _searchExpired = false;
   Duration _searchElapsed = Duration.zero;
-  Duration _searchRemaining = kRiderDriverSearchWindow;
 
-  List<String> _facts = [];
   int _marketplaceBidCount = 0;
   String _marketplaceBestPrice = '';
   String _marketplaceBestRating = '';
@@ -71,20 +73,21 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
   @override
   void initState() {
     super.initState();
-    _radarControllers = List.generate(3, (i) {
+    _radarControllers = List.generate(_rippleCount, (i) {
       final ctrl = AnimationController(
         vsync: this,
-        duration: const Duration(milliseconds: 2400),
+        duration: _rippleDuration,
       );
-      Future.delayed(Duration(milliseconds: i * 800), () {
+      final staggerMs =
+          (i * _rippleDuration.inMilliseconds / _rippleCount).round();
+      Future.delayed(Duration(milliseconds: staggerMs), () {
         if (mounted) ctrl.repeat();
       });
       return ctrl;
     });
-
-    _orbitController = AnimationController(
+    _radarSweepController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 5000),
+      duration: _sweepDuration,
     )..repeat();
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrapRideFlow());
@@ -165,9 +168,95 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
         return l10n.searchingTitle;
       case RideMatchingVariant.marketplace:
         return l10n.matchingTitleMarketplace;
+      case RideMatchingVariant.terug:
+        return l10n.rideMatchingTypeLabelTerug;
       case RideMatchingVariant.scheduled:
         return l10n.matchingTitleScheduled;
     }
+  }
+
+  String _dispatchTitle(AppLocalizations l10n) {
+    final status = _dispatchStatus;
+    if (status.isNoDrivers) return l10n.dispatchNoDriversTitle;
+    if (status.wave == 0 && status.favoriteDriverName != null) {
+      return l10n.dispatchWave0Title(status.favoriteDriverName!);
+    }
+    return switch (status.wave) {
+      1 => l10n.dispatchWave1Title,
+      2 => l10n.dispatchWave2Title,
+      3 => l10n.dispatchWave3Title,
+      >= 4 => l10n.dispatchWave4Title,
+      _ => l10n.dispatchWave1Title,
+    };
+  }
+
+  String? _dispatchSubtitle(AppLocalizations l10n) {
+    final status = _dispatchStatus;
+    if (status.isNoDrivers) return l10n.dispatchNoDriversBody;
+    if (status.driversNotified <= 0) return null;
+
+    final closest = status.closestKm;
+    final eta = status.fastestEtaMin;
+    if (closest != null && eta != null) {
+      return l10n.dispatchWaveClosestEta(
+        closest.toStringAsFixed(1),
+        eta.round().clamp(1, 999),
+      );
+    }
+    if (status.wave >= 3 && closest != null && eta != null) {
+      return l10n.dispatchWaveFarEta(
+        closest.toStringAsFixed(0),
+        eta.round().clamp(1, 999),
+      );
+    }
+    if (status.wave >= 2) {
+      return l10n.dispatchWaveExpandKm(status.waveOuterKm.round());
+    }
+    return l10n.dispatchWaveDriversNotified(status.driversNotified);
+  }
+
+  String? _waveCountdownLabel() {
+    if (!_dispatchStatus.ok || !_dispatchStatus.isWaveActive) return null;
+    final remaining = (_dispatchStatus.waveTimeoutSeconds -
+            _dispatchStatus.waveElapsedSeconds)
+        .clamp(0, 999);
+    final m = (remaining ~/ 60).toString().padLeft(2, '0');
+    final s = (remaining % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  String _sheetTitle(AppLocalizations l10n) {
+    if (_showNoDriverCard && !_searchExpired) {
+      return l10n.searchNoSupplyInlineTitle;
+    }
+    if (_dispatchStatus.ok && widget.variant == RideMatchingVariant.instant) {
+      return _dispatchTitle(l10n);
+    }
+    return _matchingTitle(l10n);
+  }
+
+  String _sheetSubtitle(AppLocalizations l10n) {
+    if (_showNoDriverCard && !_searchExpired) {
+      return l10n.searchNoSupplyInlineBody;
+    }
+    if (_dispatchStatus.ok && widget.variant == RideMatchingVariant.instant) {
+      final dispatchLine = _dispatchSubtitle(l10n);
+      if (dispatchLine != null && dispatchLine.trim().isNotEmpty) {
+        return dispatchLine;
+      }
+    }
+    return widget.variant == RideMatchingVariant.marketplace
+        ? l10n.activeBookingMarketplaceBody
+        : l10n.activeBookingInstantBody;
+  }
+
+  double _sheetProgress() {
+    if (_dispatchStatus.ok && widget.variant == RideMatchingVariant.instant) {
+      return _dispatchStatus.progress;
+    }
+    final total = kRiderDriverSearchWindow.inSeconds;
+    if (total <= 0) return 0.1;
+    return _searchElapsed.inSeconds / total;
   }
 
   void _scheduleSearchWindowExpiry() {
@@ -191,12 +280,7 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
     _channel?.unsubscribe();
     await ref.read(rideRequestProvider.notifier).cancelStaleOpenRequest();
     if (!mounted) return;
-    await showDriverSearchExpiredDialog(
-      context,
-      ref,
-      markGrowthModalDismissedAfter: false,
-    );
-    if (mounted) context.go('/home');
+    setState(() => _searchExpired = true);
   }
 
   void _startTimersAndFacts() {
@@ -204,25 +288,7 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
     if (widget.variant == RideMatchingVariant.scheduled) {
       return;
     }
-    final l10n = AppLocalizations.of(context);
-    _facts = [
-      l10n.searchFactDriversKeep100,
-      l10n.searchFactNoSurgePricing,
-      l10n.searchFactAllVerified,
-      l10n.searchFactMarketplace,
-      l10n.searchFactZZP,
-      l10n.searchFactSaveAddresses,
-      l10n.searchFactPayHowYouWant,
-    ];
 
-    _factsTimer?.cancel();
-    _factsTimer = Timer.periodic(const Duration(milliseconds: 4500), (_) {
-      if (mounted && _facts.isNotEmpty) {
-        setState(() {
-          _currentFactIndex = (_currentFactIndex + 1) % _facts.length;
-        });
-      }
-    });
     _clockTimer?.cancel();
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
@@ -232,68 +298,77 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
     _updateSearchClock();
 
     _noDriverTimer?.cancel();
-    _noDriverTimer = Timer(kRiderNoDriverCardDelay, () {
-      unawaited(_runLiveNoSupplyCheck());
+    _supplyPollTimer?.cancel();
+    _noDriverTimer = Timer(kRiderNoSupplyMinSearchElapsed, () {
+      unawaited(_evaluateNoSupplyState());
     });
+    _supplyPollTimer = Timer.periodic(kRiderNoSupplyRecheckInterval, (_) {
+      unawaited(_evaluateNoSupplyState());
+    });
+  }
+
+  void _clearNoSupplyHintIfShown() {
+    if (_showNoDriverCard && mounted) {
+      setState(() => _showNoDriverCard = false);
+    }
+  }
+
+  Future<void> _evaluateNoSupplyState() async {
+    if (!mounted || widget.variant == RideMatchingVariant.scheduled) return;
+    if (_searchExpired) return;
+
+    final ride = ref.read(rideRequestProvider);
+    final st = ride.status;
+    if (st != 'pending' && st != 'bidding') return;
+
+    if (_dispatchStatus.ok) {
+      if (_dispatchStatus.driversPending > 0) {
+        _clearNoSupplyHintIfShown();
+        return;
+      }
+      if (_dispatchStatus.isWaveActive && !_dispatchStatus.isNoDrivers) {
+        _clearNoSupplyHintIfShown();
+        return;
+      }
+    }
+
+    final dispatchExhausted = _dispatchStatus.isNoDrivers;
+    if (!dispatchExhausted && _searchElapsed < kRiderNoSupplyMinSearchElapsed) {
+      return;
+    }
+
+    final booking = ref.read(bookingProvider);
+    final pickup = booking.pickup;
+    if (pickup == null) return;
+
+    NearbySupplyProbe probe;
+    try {
+      probe = await NearbySupplyService.probeDriverCount(pickup: pickup);
+    } catch (_) {
+      return;
+    }
+
+    if (!mounted) return;
+    if (!probe.rpcSucceeded) return;
+
+    if (probe.driverCount > 0) {
+      _clearNoSupplyHintIfShown();
+      return;
+    }
+
+    if (!_showNoDriverCard) {
+      setState(() => _showNoDriverCard = true);
+    }
   }
 
   void _updateSearchClock() {
     final created = ref.read(rideRequestProvider).rideCreatedAt;
     if (created == null) {
       _searchElapsed = Duration.zero;
-      _searchRemaining = kRiderDriverSearchWindow;
       return;
     }
     final elapsed = DateTime.now().difference(created);
-    final remaining = kRiderDriverSearchWindow - elapsed;
     _searchElapsed = elapsed.isNegative ? Duration.zero : elapsed;
-    _searchRemaining = remaining.isNegative ? Duration.zero : remaining;
-  }
-
-  String _formatClock(Duration duration) {
-    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
-  }
-
-  Future<void> _runLiveNoSupplyCheck() async {
-    if (!mounted || widget.variant == RideMatchingVariant.scheduled) return;
-
-    final ride = ref.read(rideRequestProvider);
-    final st = ride.status;
-    if (st != 'pending' && st != 'bidding') return;
-
-    final booking = ref.read(bookingProvider);
-    final pickup = booking.pickup;
-    if (pickup == null) return;
-
-    int totalDrivers = 0;
-    try {
-      final fullRoute = booking.pickup != null && booking.destination != null;
-      final supply = await NearbySupplyService.loadForPickup(
-        pickup: pickup,
-        destination: booking.destination,
-        returnTripFareEstimatesEnabled:
-            fullRoute && booking.returnTripFareEstimatesEnabled,
-      );
-      totalDrivers =
-          supply.values.fold<int>(0, (sum, snap) => sum + snap.driverCount);
-    } catch (_) {
-      // If supply check fails, keep normal matching flow without showing false negatives.
-      return;
-    }
-
-    if (!mounted) return;
-    if (totalDrivers > 0) return;
-
-    setState(() => _showNoDriverCard = true);
-    if (_growthNudgeShown) return;
-    _growthNudgeShown = true;
-    await showDriverSearchExpiredDialog(
-      context,
-      ref,
-      markGrowthModalDismissedAfter: false,
-    );
   }
 
   @override
@@ -301,14 +376,15 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
     for (final c in _radarControllers) {
       c.dispose();
     }
-    _orbitController.dispose();
+    _radarSweepController.dispose();
     _channel?.unsubscribe();
     _bidsChannel?.unsubscribe();
-    _factsTimer?.cancel();
     _clockTimer?.cancel();
     _widgetTimer?.cancel();
     _scheduledWidgetTimer?.cancel();
     _noDriverTimer?.cancel();
+    _supplyPollTimer?.cancel();
+    _dispatchPollTimer?.cancel();
     _matchingExpandTimer?.cancel();
     _searchWindowTimer?.cancel();
     super.dispose();
@@ -369,7 +445,7 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
 
     _matchingExpandTimer?.cancel();
     _matchingExpandTimer =
-        Timer.periodic(const Duration(seconds: 22), (_) async {
+        Timer.periodic(const Duration(seconds: 8), (_) async {
       if (!mounted) return;
       final currentId = ref.read(rideRequestProvider).rideRequestId;
       if (currentId != rideId) return;
@@ -378,14 +454,36 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
       try {
         await HeyCabySupabase.client.rpc(
           'fn_seed_ride_matching_batch',
-          params: {
-            'p_ride_request_id': rideId,
-            'p_batch_size': 4,
-            'p_window_seconds': 30
-          },
+          params: {'p_ride_request_id': rideId},
         );
       } catch (_) {}
     });
+
+    _dispatchPollTimer?.cancel();
+    _dispatchPollTimer = Timer.periodic(
+        const Duration(seconds: 2), (_) => _pollDispatchStatus(rideId));
+    unawaited(_pollDispatchStatus(rideId));
+  }
+
+  Future<void> _pollDispatchStatus(String rideId) async {
+    if (!mounted) return;
+    final status = await RiderDispatchStatusService.fetch(rideId);
+    if (!mounted) return;
+    setState(() => _dispatchStatus = status);
+
+    if (status.driversPending > 0 ||
+        (status.isWaveActive && !status.isNoDrivers)) {
+      _clearNoSupplyHintIfShown();
+    } else if (status.isNoDrivers) {
+      unawaited(_evaluateNoSupplyState());
+    }
+
+    final rideStatus = ref.read(rideRequestProvider).status;
+    if (status.isMatched ||
+        rideStatus == 'accepted' ||
+        rideStatus == 'assigned') {
+      if (mounted) context.go('/active');
+    }
   }
 
   void _pushScheduledWidgetIfNeeded() {
@@ -417,7 +515,10 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
   }
 
   Future<void> _refreshMarketplaceBidsSnapshot() async {
-    if (widget.variant != RideMatchingVariant.marketplace) return;
+    if (widget.variant != RideMatchingVariant.marketplace &&
+        widget.variant != RideMatchingVariant.terug) {
+      return;
+    }
     final rideId = ref.read(rideRequestProvider).rideRequestId;
     if (rideId == null || !mounted) return;
     try {
@@ -458,7 +559,10 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
   }
 
   void _subscribeMarketplaceBids() {
-    if (widget.variant != RideMatchingVariant.marketplace) return;
+    if (widget.variant != RideMatchingVariant.marketplace &&
+        widget.variant != RideMatchingVariant.terug) {
+      return;
+    }
     final rideId = ref.read(rideRequestProvider).rideRequestId;
     if (rideId == null) return;
     unawaited(_refreshMarketplaceBidsSnapshot());
@@ -504,7 +608,8 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
       final created = ride.rideCreatedAt;
       final elapsed =
           created == null ? 0 : DateTime.now().difference(created).inSeconds;
-      if (widget.variant == RideMatchingVariant.marketplace) {
+      if (widget.variant == RideMatchingVariant.marketplace ||
+          widget.variant == RideMatchingVariant.terug) {
         final expiry = created == null
             ? DateTime.now().millisecondsSinceEpoch ~/ 1000
             : created.add(kRiderDriverSearchWindow).millisecondsSinceEpoch ~/
@@ -533,60 +638,29 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
   }
 
   Future<void> _onNotifyMe(BuildContext context) async {
-    final granted =
-        await RiderNotifySearchNotifications.ensureNotifyPermission();
-    if (!granted) {
-      if (!context.mounted) return;
-      final l10n = AppLocalizations.of(context);
-      final messenger = ScaffoldMessenger.maybeOf(context);
-      messenger?.hideCurrentSnackBar();
-      messenger?.showSnackBar(
-        SnackBar(
-          content: Text(l10n.accountNotificationsNeededBody),
-          action: SnackBarAction(
-            label: l10n.openNotificationSettings,
-            onPressed: () => openAppSettings(),
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-    if (!context.mounted) return;
-    final rideId = ref.read(rideRequestProvider).rideRequestId;
-    final booking = ref.read(bookingProvider);
-    final mode = bookingModeStorageString(booking.effectiveRideMode);
-    await ref.read(activeSearchProvider.notifier).start(
-          rideRequestId: rideId,
-          bookingMode: mode,
-          pickupSummary: booking.pickup?.displayName,
-          destinationSummary: booking.destination?.displayName,
-        );
-    ref.read(rideRequestProvider.notifier).reset();
-    if (context.mounted) context.go('/home');
+    await RiderMatchingRecoveryActions.notifyMe(ref, context);
   }
 
   void _onScheduleRide(BuildContext context) {
-    ref.read(rideRequestProvider.notifier).reset();
-    // Keep booking state (pickup/destination already set) and go to schedule
-    ref.read(bookingProvider.notifier).setScheduled();
-    context.go('/search');
+    RiderMatchingRecoveryActions.schedule(ref, context);
   }
 
   void _onTryMarketplace(BuildContext context) {
-    ref.read(rideRequestProvider.notifier).reset();
-    ref.read(bookingProvider.notifier).setMarketplace();
-    if (context.mounted) {
-      context.go(RideMatchingVariant.marketplace.routePath);
-    }
+    RiderMatchingRecoveryActions.marketplace(ref, context);
+  }
+
+  void _onTryAgainFromExpired() {
+    setState(() => _searchExpired = false);
+    unawaited(RiderMatchingRecoveryActions.tryAgain(ref, context));
   }
 
   void _openMatchingAlternativesSheet(
     BuildContext context,
     HeyCabyColorTokens colors,
     HeyCabyTypography typo,
-    AppLocalizations l10n,
-  ) {
+    AppLocalizations l10n, {
+    String? titleOverride,
+  }) {
     unawaited(
       showMatchingAlternativesSheet(
         context: context,
@@ -594,6 +668,9 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
         colors: colors,
         typo: typo,
         l10n: l10n,
+        titleOverride: titleOverride,
+        bodyOverride: l10n.searchNoSupplyInlineBody,
+        initiallyExpanded: false,
         onNotifyMe: () => _onNotifyMe(context),
         onScheduleRide: () => _onScheduleRide(context),
         onTryMarketplace: () => _onTryMarketplace(context),
@@ -601,40 +678,27 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
     );
   }
 
-  void _showCancelDialog(
+  Future<void> _showCancelDialog(
     BuildContext context,
     HeyCabyColorTokens colors,
     HeyCabyTypography typo,
     AppLocalizations l10n,
-  ) {
-    showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: colors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(l10n.cancel,
-            style: typo.headingMedium.copyWith(color: colors.text)),
-        content: Text(l10n.noShowWarning,
-            style: typo.bodyMedium.copyWith(color: colors.textMid)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.back,
-                style: typo.labelLarge.copyWith(color: colors.textMid)),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context, true);
-              if (!mounted) return;
-              context.go('/home');
-              unawaited(_cancelRideGloballyFromSearching());
-            },
-            child: Text(l10n.cancel,
-                style: typo.labelLarge.copyWith(color: colors.error)),
-          ),
-        ],
-      ),
+  ) async {
+    final confirmed = await showHeyCabyConfirmSheet(
+      context,
+      colors: colors,
+      typography: typo,
+      title: l10n.cancelBookingTitle,
+      message: l10n.noShowWarning,
+      dismissLabel: l10n.back,
+      confirmLabel: l10n.cancel,
+      icon: Icons.close_rounded,
+      confirmDestructive: true,
     );
+    if (!confirmed || !mounted) return;
+    if (!context.mounted) return;
+    context.go('/home');
+    unawaited(_cancelRideGloballyFromSearching());
   }
 
   Future<void> _cancelRideGloballyFromSearching() async {
@@ -671,6 +735,9 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
     final typo = ref.watch(typographyProvider);
     final l10n = AppLocalizations.of(context);
     final booking = ref.watch(bookingProvider);
+    final screenH = MediaQuery.sizeOf(context).height;
+    final sheetInitialSize = _searchExpired ? 0.34 : 0.30;
+    final mapActionBottom = screenH * sheetInitialSize + 16;
 
     void onEditRoute(bool isPickup) => context.push(
           '/search',
@@ -702,559 +769,107 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
 
     return Scaffold(
       backgroundColor: colors.bg,
-      floatingActionButton: _showNoDriverCard
-          ? FloatingActionButton(
-              onPressed: () => _openMatchingAlternativesSheet(
-                context,
-                colors,
-                typo,
-                l10n,
-              ),
-              tooltip: l10n.matchingAlternativesFabTooltip,
-              child: const Icon(Icons.add_rounded, size: 28),
-            )
-          : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      colors.accent.withValues(alpha: 0.10),
-                      colors.bg,
-                      colors.bg,
-                    ],
-                    stops: const [0, 0.42, 1],
-                  ),
-                ),
-              ),
-            ),
-            Column(
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned.fill(
+            child: Stack(
+              fit: StackFit.expand,
               children: [
-                _SearchTopBar(
+                TripSummaryMapView(
+                  height: screenH,
+                  cameraBottomPadding: screenH * 0.30 + 28,
+                  pickupFocused: true,
+                  onRouteMetricsChanged: (_, __) {},
+                ),
+                MatchingSearchPulseOverlay(
+                  rippleControllers: _radarControllers,
+                  sweepController: _radarSweepController,
+                  color: colors.accent,
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            left: 14,
+            right: 14,
+            bottom: mapActionBottom,
+            child: Row(
+              children: [
+                _LabeledMapAction(
                   colors: colors,
                   typo: typo,
-                  l10n: l10n,
-                  onHome: () => context.go('/home'),
-                  onCancel: () =>
-                      _showCancelDialog(context, colors, typo, l10n),
+                  icon: Icons.arrow_back_rounded,
+                  label: l10n.back,
+                  tone: _MapActionTone.primary,
+                  onTap: () => context.go('/home'),
                 ),
-                if (widget.variant == RideMatchingVariant.marketplace)
-                  Padding(
-                    padding: const EdgeInsetsDirectional.fromSTEB(20, 0, 20, 8),
-                    child: MarketplaceMatchingBanner(
-                      colors: colors,
-                      typo: typo,
-                      l10n: l10n,
-                    ),
-                  ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsetsDirectional.fromSTEB(
-                      20,
-                      10,
-                      20,
-                      24,
-                    ),
-                    child: Column(
-                      children: [
-                        _SearchHeroPanel(
-                          colors: colors,
-                          typo: typo,
-                          l10n: l10n,
-                          title: _matchingTitle(l10n),
-                          subtitle:
-                              widget.variant == RideMatchingVariant.marketplace
-                                  ? l10n.activeBookingMarketplaceBody
-                                  : l10n.activeBookingInstantBody,
-                          controllers: _radarControllers,
-                          orbitController: _orbitController,
-                        ),
-                        const SizedBox(height: 14),
-                        _RouteContextStrip(
-                          colors: colors,
-                          typo: typo,
-                          pickup: booking.pickup?.displayName ?? '',
-                          destination: booking.destination?.displayName ?? '',
-                        ),
-                        const SizedBox(height: 14),
-                        _MatchingStatusStrip(
-                          colors: colors,
-                          typo: typo,
-                          l10n: l10n,
-                          mode: widget.variant,
-                          elapsed: _formatClock(_searchElapsed),
-                          remaining: _formatClock(_searchRemaining),
-                          bidCount: _marketplaceBidCount,
-                        ),
-                        const SizedBox(height: 14),
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 400),
-                          transitionBuilder: (child, animation) {
-                            final slide = Tween<Offset>(
-                              begin: const Offset(0, 0.08),
-                              end: Offset.zero,
-                            ).animate(CurvedAnimation(
-                              parent: animation,
-                              curve: Curves.easeOutCubic,
-                            ));
-                            return FadeTransition(
-                              opacity: animation,
-                              child: SlideTransition(
-                                  position: slide, child: child),
-                            );
-                          },
-                          child: _DidYouKnowCard(
-                            key: ValueKey<int>(_currentFactIndex),
-                            fact: _facts.isNotEmpty
-                                ? _facts[_currentFactIndex]
-                                : '',
-                            colors: colors,
-                            typo: typo,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        _SearchActionBar(
-                          colors: colors,
-                          typo: typo,
-                          l10n: l10n,
-                          marketplace:
-                              widget.variant == RideMatchingVariant.marketplace,
-                          onHome: () => context.go('/home'),
-                          onCancel: () =>
-                              _showCancelDialog(context, colors, typo, l10n),
-                          onBoost: () => context.go(
-                            RideMatchingVariant.marketplace.routePath,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SearchTopBar extends StatelessWidget {
-  const _SearchTopBar({
-    required this.colors,
-    required this.typo,
-    required this.l10n,
-    required this.onHome,
-    required this.onCancel,
-  });
-
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final AppLocalizations l10n;
-  final VoidCallback onHome;
-  final VoidCallback onCancel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(14, 8, 14, 10),
-      child: Row(
-        children: [
-          _RoundIconButton(
-            colors: colors,
-            icon: Icons.arrow_back_rounded,
-            tooltip: l10n.back,
-            onTap: onHome,
-          ),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: colors.card.withValues(alpha: 0.92),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: colors.border.withValues(alpha: 0.72)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: colors.accent,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  l10n.matchingStatusLive,
-                  style: typo.labelLarge.copyWith(
-                    color: colors.text,
-                    fontWeight: FontWeight.w900,
-                  ),
+                const Spacer(),
+                _LabeledMapAction(
+                  colors: colors,
+                  typo: typo,
+                  icon: Icons.close_rounded,
+                  label: l10n.cancelRide,
+                  tone: _MapActionTone.outlined,
+                  onTap: () => _showCancelDialog(context, colors, typo, l10n),
                 ),
               ],
             ),
           ),
-          const Spacer(),
-          _RoundIconButton(
-            colors: colors,
-            icon: Icons.close_rounded,
-            tooltip: l10n.cancel,
-            onTap: onCancel,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RoundIconButton extends StatelessWidget {
-  const _RoundIconButton({
-    required this.colors,
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  final HeyCabyColorTokens colors;
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: colors.card.withValues(alpha: 0.94),
-      shape: const CircleBorder(),
-      elevation: 8,
-      shadowColor: colors.text.withValues(alpha: 0.08),
-      child: Tooltip(
-        message: tooltip,
-        child: InkWell(
-          onTap: onTap,
-          customBorder: const CircleBorder(),
-          child: SizedBox(
-            width: 46,
-            height: 46,
-            child: Icon(icon, color: colors.text, size: 23),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SearchHeroPanel extends StatelessWidget {
-  const _SearchHeroPanel({
-    required this.colors,
-    required this.typo,
-    required this.l10n,
-    required this.title,
-    required this.subtitle,
-    required this.controllers,
-    required this.orbitController,
-  });
-
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final AppLocalizations l10n;
-  final String title;
-  final String subtitle;
-  final List<AnimationController> controllers;
-  final AnimationController orbitController;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsetsDirectional.fromSTEB(18, 18, 18, 20),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: colors.border.withValues(alpha: 0.78)),
-        boxShadow: [
-          BoxShadow(
-            color: colors.text.withValues(alpha: 0.10),
-            blurRadius: 32,
-            offset: const Offset(0, 18),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          _RadarAnimation(
-            controllers: controllers,
-            orbitController: orbitController,
-            colors: colors,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: typo.headingMedium.copyWith(
-              color: colors.text,
-              fontWeight: FontWeight.w900,
-              height: 1.08,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: typo.bodyMedium.copyWith(
-              color: colors.textMid,
-              fontWeight: FontWeight.w600,
-              height: 1.42,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          _SearchKeepAliveNotice(
-            colors: colors,
-            typo: typo,
-            title: l10n.activeBookingKeepAliveTitle,
-            body: l10n.activeBookingKeepAliveBody,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SearchKeepAliveNotice extends StatelessWidget {
-  const _SearchKeepAliveNotice({
-    required this.colors,
-    required this.typo,
-    required this.title,
-    required this.body,
-  });
-
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 14, 12),
-      decoration: BoxDecoration(
-        color: colors.bg.withValues(alpha: 0.78),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: colors.border.withValues(alpha: 0.72)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: colors.accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.mobile_friendly_rounded,
-              color: colors.accent,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: typo.labelLarge.copyWith(
-                    color: colors.text,
-                    fontWeight: FontWeight.w900,
-                    height: 1.14,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  body,
-                  style: typo.bodySmall.copyWith(
-                    color: colors.textMid,
-                    fontWeight: FontWeight.w600,
-                    height: 1.34,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RouteContextStrip extends StatelessWidget {
-  const _RouteContextStrip({
-    required this.colors,
-    required this.typo,
-    required this.pickup,
-    required this.destination,
-  });
-
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final String pickup;
-  final String destination;
-
-  @override
-  Widget build(BuildContext context) {
-    if (pickup.isEmpty && destination.isEmpty) return const SizedBox.shrink();
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsetsDirectional.all(14),
-      decoration: BoxDecoration(
-        color: colors.card.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: colors.border.withValues(alpha: 0.7)),
-      ),
-      child: Row(
-        children: [
-          _RouteDot(colors: colors, filled: true),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              pickup.isEmpty ? destination : pickup,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: typo.labelLarge.copyWith(
-                color: colors.text,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          if (destination.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsetsDirectional.symmetric(horizontal: 8),
-              child: Icon(
-                Icons.arrow_forward_rounded,
-                color: colors.textSoft,
-                size: 18,
-              ),
-            ),
-            _RouteDot(colors: colors, filled: false),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                destination,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: typo.labelLarge.copyWith(
-                  color: colors.text,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _RouteDot extends StatelessWidget {
-  const _RouteDot({required this.colors, required this.filled});
-
-  final HeyCabyColorTokens colors;
-  final bool filled;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 13,
-      height: 13,
-      decoration: BoxDecoration(
-        color: filled ? colors.accent : colors.card,
-        shape: BoxShape.circle,
-        border: Border.all(color: colors.accent, width: 3),
-      ),
-    );
-  }
-}
-
-class _SearchActionBar extends StatelessWidget {
-  const _SearchActionBar({
-    required this.colors,
-    required this.typo,
-    required this.l10n,
-    required this.marketplace,
-    required this.onHome,
-    required this.onCancel,
-    required this.onBoost,
-  });
-
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final AppLocalizations l10n;
-  final bool marketplace;
-  final VoidCallback onHome;
-  final VoidCallback onCancel;
-  final VoidCallback onBoost;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _SearchActionButton(
-            colors: colors,
-            typo: typo,
-            icon: Icons.home_rounded,
-            label: l10n.home,
-            onTap: onHome,
-          ),
-        ),
-        const SizedBox(width: 10),
-        if (marketplace) ...[
-          Expanded(
-            child: _SearchActionButton(
+          DraggableScrollableSheet(
+            initialChildSize: _searchExpired ? 0.34 : 0.30,
+            minChildSize: _searchExpired ? 0.28 : 0.24,
+            maxChildSize: _searchExpired ? 0.48 : 0.42,
+            snap: true,
+            snapSizes: _searchExpired ? const [0.34, 0.48] : const [0.30, 0.42],
+            builder: (context, scrollController) => MatchingSearchSheet(
+              scrollController: scrollController,
               colors: colors,
               typo: typo,
-              icon: Icons.trending_up_rounded,
-              label: l10n.marketplaceBoostOffer,
-              onTap: onBoost,
+              l10n: l10n,
+              title: _sheetTitle(l10n),
+              subtitle: _sheetSubtitle(l10n),
+              progress: _sheetProgress(),
+              pickup: booking.pickup?.displayName ?? '',
+              destination: booking.destination?.displayName ?? '',
+              variant: widget.variant,
+              marketplaceBidCount: _marketplaceBidCount,
+              showOptionsHint: _showNoDriverCard && !_searchExpired,
+              waveCountdown: _searchExpired ? null : _waveCountdownLabel(),
+              expired: _searchExpired,
+              onTryAgain: _searchExpired ? _onTryAgainFromExpired : null,
+              onNotifyMe: _searchExpired ? () => _onNotifyMe(context) : null,
+              onSchedule:
+                  _searchExpired ? () => _onScheduleRide(context) : null,
+              onMarketplace:
+                  _searchExpired ? () => _onTryMarketplace(context) : null,
+              onSeeOptions: _showNoDriverCard && !_searchExpired
+                  ? () => _openMatchingAlternativesSheet(
+                        context,
+                        colors,
+                        typo,
+                        l10n,
+                        titleOverride: l10n.searchNoSupplySheetTitle,
+                      )
+                  : null,
             ),
           ),
-          const SizedBox(width: 10),
         ],
-        Expanded(
-          child: _SearchActionButton(
-            colors: colors,
-            typo: typo,
-            icon: Icons.close_rounded,
-            label: l10n.cancel,
-            danger: true,
-            onTap: onCancel,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
 
-class _SearchActionButton extends StatelessWidget {
-  const _SearchActionButton({
+enum _MapActionTone { primary, outlined }
+
+class _LabeledMapAction extends StatelessWidget {
+  const _LabeledMapAction({
     required this.colors,
     required this.typo,
     required this.icon,
     required this.label,
     required this.onTap,
-    this.danger = false,
+    this.tone = _MapActionTone.outlined,
   });
 
   final HeyCabyColorTokens colors;
@@ -1262,366 +877,46 @@ class _SearchActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final bool danger;
+  final _MapActionTone tone;
 
   @override
   Widget build(BuildContext context) {
-    final fg = danger ? colors.error : colors.accent;
-    final bg = danger
-        ? colors.error.withValues(alpha: 0.08)
-        : colors.accent.withValues(alpha: 0.10);
+    final isPrimary = tone == _MapActionTone.primary;
+    final bg = isPrimary ? colors.accent : colors.card.withValues(alpha: 0.94);
+    final border = isPrimary
+        ? colors.accent.withValues(alpha: 0.85)
+        : colors.accent.withValues(alpha: 0.45);
+    final fg = isPrimary ? colors.onAccent : colors.accent;
+    final shadow = isPrimary
+        ? colors.accent.withValues(alpha: 0.28)
+        : colors.text.withValues(alpha: 0.08);
+
     return Material(
       color: bg,
-      borderRadius: BorderRadius.circular(999),
+      elevation: isPrimary ? 6 : 8,
+      shadowColor: shadow,
+      shape: StadiumBorder(side: BorderSide(color: border, width: 1.5)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
+        customBorder: const StadiumBorder(),
+        splashColor: isPrimary
+            ? colors.onAccent.withValues(alpha: 0.12)
+            : colors.accent.withValues(alpha: 0.12),
         child: Padding(
-          padding: const EdgeInsetsDirectional.symmetric(
-              horizontal: 12, vertical: 13),
+          padding: const EdgeInsetsDirectional.fromSTEB(12, 10, 14, 10),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: fg, size: 18),
-              const SizedBox(width: 7),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: typo.labelLarge.copyWith(
-                    color: fg,
-                    fontWeight: FontWeight.w900,
-                  ),
+              Icon(icon, color: fg, size: 20),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: typo.labelMedium.copyWith(
+                  color: fg,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ── Did-you-know rotating card (readable type scale) ─────────────────────────
-class _DidYouKnowCard extends StatelessWidget {
-  final String fact;
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-
-  const _DidYouKnowCard({
-    super.key,
-    required this.fact,
-    required this.colors,
-    required this.typo,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final dot = fact.indexOf('. ');
-    final hasSplit = dot > 0 && dot < 100;
-    final title = hasSplit ? fact.substring(0, dot + 1).trim() : fact.trim();
-    final body = hasSplit ? fact.substring(dot + 2).trim() : '';
-
-    return Container(
-      margin: const EdgeInsetsDirectional.symmetric(horizontal: 24),
-      padding: const EdgeInsetsDirectional.all(20),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: colors.border),
-        boxShadow: [
-          BoxShadow(
-            color: colors.text.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            title,
-            style: typo.headingSmall.copyWith(
-              color: colors.text,
-              fontSize: 20,
-              height: 1.3,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          if (body.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Text(
-              body,
-              style: typo.bodyLarge.copyWith(
-                color: colors.textMid,
-                fontSize: 15,
-                height: 1.65,
-                fontWeight: FontWeight.w400,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _MatchingStatusStrip extends StatelessWidget {
-  const _MatchingStatusStrip({
-    required this.colors,
-    required this.typo,
-    required this.l10n,
-    required this.mode,
-    required this.elapsed,
-    required this.remaining,
-    required this.bidCount,
-  });
-
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final AppLocalizations l10n;
-  final RideMatchingVariant mode;
-  final String elapsed;
-  final String remaining;
-  final int bidCount;
-
-  @override
-  Widget build(BuildContext context) {
-    final items = <_StatusPillData>[
-      _StatusPillData(
-        icon: Icons.bolt_rounded,
-        label: l10n.matchingStatusLive,
-        value: elapsed,
-      ),
-      _StatusPillData(
-        icon: Icons.hourglass_bottom_rounded,
-        label: l10n.matchingStatusWindow,
-        value: remaining,
-      ),
-      if (mode == RideMatchingVariant.marketplace)
-        _StatusPillData(
-          icon: Icons.local_offer_rounded,
-          label: l10n.matchingStatusOffers,
-          value: bidCount.toString(),
-        ),
-    ];
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsetsDirectional.all(10),
-      decoration: BoxDecoration(
-        color: colors.card.withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: colors.border.withValues(alpha: 0.72)),
-        boxShadow: [
-          BoxShadow(
-            color: colors.text.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          for (var i = 0; i < items.length; i++) ...[
-            Expanded(
-              child: _StatusPill(colors: colors, typo: typo, data: items[i]),
-            ),
-            if (i != items.length - 1)
-              Container(
-                width: 1,
-                height: 42,
-                margin: const EdgeInsetsDirectional.symmetric(horizontal: 4),
-                color: colors.border.withValues(alpha: 0.72),
-              ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _StatusPillData {
-  const _StatusPillData({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-}
-
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({
-    required this.colors,
-    required this.typo,
-    required this.data,
-  });
-
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final _StatusPillData data;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding:
-          const EdgeInsetsDirectional.symmetric(horizontal: 6, vertical: 4),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(data.icon, color: colors.accent, size: 18),
-          const SizedBox(height: 5),
-          Text(
-            data.value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: typo.titleSmall.copyWith(
-              color: colors.text,
-              fontWeight: FontWeight.w900,
-              height: 1,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            data.label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: typo.labelSmall.copyWith(
-              color: colors.textSoft,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Radar animation ───────────────────────────────────────────────────────────
-class _RadarAnimation extends StatelessWidget {
-  final List<AnimationController> controllers;
-  final AnimationController orbitController;
-  final HeyCabyColorTokens colors;
-
-  const _RadarAnimation({
-    required this.controllers,
-    required this.orbitController,
-    required this.colors,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 200,
-      height: 200,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Radar rings
-          ...controllers.asMap().entries.map((entry) {
-            return AnimatedBuilder(
-              animation: entry.value,
-              builder: (_, __) {
-                final t = entry.value.value;
-                final scale = 0.2 + (t * 0.8);
-                final opacity = (1.0 - t).clamp(0.0, 1.0);
-                return Transform.scale(
-                  scale: scale,
-                  child: Opacity(
-                    opacity: opacity,
-                    child: Container(
-                      width: 200,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: colors.accent.withValues(alpha: 0.5),
-                          width: 1.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            );
-          }),
-
-          // Subtle filled background circle
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: colors.accent.withValues(alpha: 0.08),
-            ),
-          ),
-
-          // Orbiting amber dots
-          AnimatedBuilder(
-            animation: orbitController,
-            builder: (_, __) {
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  for (int i = 0; i < 4; i++)
-                    _orbitDot(i, orbitController.value, colors),
-                ],
-              );
-            },
-          ),
-
-          // Centre icon
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: colors.accent,
-              boxShadow: [
-                BoxShadow(
-                  color: colors.accent.withValues(alpha: 0.4),
-                  blurRadius: 16,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: Icon(Icons.local_taxi, color: colors.bg, size: 26),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _orbitDot(int index, double progress, HeyCabyColorTokens colors) {
-    const orbitRadius = 72.0;
-    const dotSize = 8.0;
-    final angle = (progress + index / 4) * 2 * pi;
-    // Offset into Stack — center is at (100,100) in the 200x200 box
-    final dx = 100.0 + orbitRadius * sin(angle) - dotSize / 2;
-    final dy = 100.0 - orbitRadius * sin(angle + pi / 2) - dotSize / 2;
-    // Vary opacity by position to give depth
-    final opacity = (0.4 + 0.5 * ((sin(angle) + 1) / 2)).clamp(0.0, 1.0);
-
-    return Positioned(
-      left: dx,
-      top: dy,
-      child: Opacity(
-        opacity: opacity,
-        child: Container(
-          width: dotSize,
-          height: dotSize,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: colors.accent,
           ),
         ),
       ),

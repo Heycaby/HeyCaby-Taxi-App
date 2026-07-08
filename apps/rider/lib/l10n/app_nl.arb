@@ -21,6 +21,8 @@
   "homeSmartOptionsTitle": "Hoe wil je rijden?",
   "homeBestPriceTitle": "Marktplaats",
   "homeBestPriceSubtitle": "Chauffeurs strijden om jouw rit.",
+  "homeTaxiTerugTitle": "TAXI TERUG",
+  "homeTaxiTerugSubtitle": "Vind chauffeurs die al jouw richting op gaan.",
   "homeScheduleLaterTitle": "Later plannen",
   "homeScheduleLaterSubtitle": "Kies een ophaaltijd die voor jou werkt.",
   "homePopularAirportsTitle": "Populair",
@@ -29,7 +31,50 @@
   "homeGreetingAfternoon": "Goedemiddag,",
   "homeGreetingEvening": "Goedenavond,",
   "homeEnterDestination": "Voer je bestemming in",
-  "homeNoTaxisNearbySubtitle": "Je kunt een rit aanvragen — we laten het weten zodra er een chauffeur beschikbaar is.",
+  "homeNoTaxisNearbySubtitle": "Je kunt toch een rit aanvragen. We laten het weten zodra een chauffeur accepteert.",
+  "homeSupplyNoneTitle": "Geen chauffeurs bij jou in de buurt",
+  "homeSupplyNoneSubtitle": "Probeer Marktplaats of plan een rit voor later.",
+  "homeSupplyNearbyTitle": "{count, plural, one{1 chauffeur in de buurt} other{{count} chauffeurs in de buurt}}",
+  "@homeSupplyNearbyTitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "homeSupplyNearbySubtitle": "Dichtstbijzijnde op ongeveer {distanceKm} km",
+  "@homeSupplyNearbySubtitle": {
+    "placeholders": {
+      "distanceKm": { "type": "String" }
+    }
+  },
+  "homeSupplyNearbySubtitleShort": "Meestal snel opgehaald vanaf hier",
+  "homeSupplyZoneEmptyTitle": "Geen chauffeurs in jouw zone",
+  "homeSupplyZoneEmptySubtitle": "{count, plural, one{1 chauffeur binnen 10 km} other{{count} chauffeurs binnen 10 km}}",
+  "@homeSupplyZoneEmptySubtitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "homeSupplyFarTitle": "Chauffeurs zijn verder weg",
+  "homeSupplyFarSubtitle": "{count, plural, one{1 chauffeur online} other{{count} chauffeurs online}} · dichtstbijzijnde op ongeveer {distanceKm} km",
+  "@homeSupplyFarSubtitle": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "distanceKm": { "type": "String" }
+    }
+  },
+  "homeFavoriteSupplyTitle": "{count, plural, =1{1 van je favoriete chauffeurs is online} other{{count} van je favoriete chauffeurs zijn online}}",
+  "@homeFavoriteSupplyTitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "homeFavoriteSupplySubtitle": "Dichtstbijzijnde op ongeveer {distanceKm} km · Boek nu",
+  "@homeFavoriteSupplySubtitle": {
+    "placeholders": {
+      "distanceKm": { "type": "String" }
+    }
+  },
+  "homeFavoriteSupplySubtitleShort": "Nu in de buurt · Boek nu",
   "homeRideAgainTitle": "Opnieuw rijden",
   "homeRideAgainViewAll": "Alles bekijken",
   "homeRideAgainBookAgain": "Opnieuw boeken",
@@ -44,6 +89,7 @@
   },
   "homeRecentPlacesTitle": "Recente plaatsen",
   "homeRecentPlacesEdit": "Bewerken",
+  "savedTripsTitle": "Opgeslagen ritten",
   "homeCompleteProfile": "Profiel aanvullen",
   "vehicleCategoryTitle": "Heb je een specifiek voertuig nodig?",
   "homeAirportChipSchiphol": "Schiphol",
@@ -71,10 +117,17 @@
   "confirmDestination": "Bestemming bevestigen",
   "rateYourDriver": "Beoordeel je chauffeur",
   "howWasYourRide": "Hoe was je rit?",
+  "ratingAddNoteOptional": "Notitie toevoegen (optioneel)",
   "whatDidYouLike": "Wat vond je goed?",
   "additionalFeedback": "Extra feedback (optioneel)",
   "tellUsMore": "Vertel ons meer over je ervaring...",
   "submitRating": "Beoordeling Versturen",
+  "tipDriverTitle": "Fooi voor je chauffeur",
+  "tipDriverSubtitle": "100% gaat naar je chauffeur. Toegevoegd na de rit.",
+  "tipAmountCustom": "Aangepast",
+  "tipNoTip": "Geen fooi",
+  "tipSubmitWithTip": "Beoordeling + Fooi Versturen",
+  "tipAdded": "Fooi toegevoegd",
   "ratingCategorySectionTitle": "Beoordeel specifieke onderdelen",
   "ratingCategorySubtitle": "Elk onderdeel 1–5 sterren. Ze beginnen gelijk aan je totaal — pas aan wat anders voelde.",
   "ratingDimensionPunctuality": "Stiptheid",
@@ -272,12 +325,29 @@
     }
   },
   "noFavouritesYet": "Nog geen favorieten",
+  "saveDriverLabel": "Deze chauffeur opslaan",
+  "saveDriverSubtitle": "Toevoegen aan je vertrouwde chauffeurs voor snel boeken",
+  "saveDriverModalTitle": "Deze chauffeur opslaan?",
+  "saveDriverModalBody": "Je gaf een goede beoordeling. Voeg deze chauffeur toe aan je favorieten voor sneller boeken.",
+  "saveDriverModalConfirm": "Opslaan in favorieten",
+  "saveDriverModalDismiss": "Niet nu",
+  "saveDriverWillSaveHint": "Wordt opgeslagen in je favorieten bij verzenden",
+  "driverSaved": "Chauffeur toegevoegd aan je favorieten",
+  "removeFromFavorites": "Uit favorieten verwijderen",
+  "driverRemoved": "Chauffeur verwijderd uit favorieten",
+  "driverOffline": "Offline",
+  "driverAvailableNow": "Nu beschikbaar",
+  "favoritesLimitReached": "Je hebt al 10 favoriete chauffeurs. Verwijder er een voordat je een nieuwe chauffeur toevoegt.",
   "paymentMethod": "Betaalmethode",
   "cash": "Contant",
   "pin": "PIN",
   "tikkie": "Tikkie",
   "instantRide": "Direct",
   "scheduledRide": "Plannen",
+  "marketplaceStepRoute": "Route",
+  "marketplaceStepOffer": "Jouw bod",
+  "marketplaceStepPost": "Plaatsen",
+  "marketplaceIntroBody": "Bepaal je prijs. Chauffeurs kiezen om te accepteren, tegen te bieden of over te slaan. Jij kiest met wie je rijdt.",
   "marketplace": "Marktplaats",
   "marketplaceTagline": "Chauffeurs strijden om jouw rit.",
   "makeAnOffer": "Marktplaats",
@@ -460,6 +530,12 @@
   "riderProfileHomeNudgeNameOnly": "Voeg je boekingsnaam toe bij Account voor 100%.",
   "riderProfileHomeNudgeEmailOnly": "Voeg je e-mail toe bij Account voor 100%.",
   "yourRoute": "Jouw route",
+  "rideTimeline": "Ritvoortgang",
+  "rideTimelineStepAccepted": "Chauffeur geaccepteerd",
+  "rideTimelineStepEnRoute": "Onderweg naar ophaal",
+  "rideTimelineStepArrived": "Bij ophaalpunt",
+  "rideTimelineStepInProgress": "Rit bezig",
+  "rideTimelineStepCompleted": "Rit voltooid",
   "howDoYouWantToBook": "Hoe wil je boeken?",
   "howWillYouPay": "Hoe betaal je?",
   "laterButton": "Later",
@@ -616,6 +692,16 @@
   "accountChecklistDone": "Klaar",
   "accountChecklistMissing": "Ontbreekt",
   "accountTripReadyBody": "Je profiel helpt chauffeurs je te herkennen en maakt opnieuw boeken sneller.",
+  "riderRatingTitle": "Jouw beoordeling",
+  "riderRatingSubtitle": "Gebaseerd op chauffeursfeedback na voltooide ritten.",
+  "riderRatingNoRating": "Nog geen beoordeling",
+  "riderRatingNoRatingBody": "Voltooi een paar ritten om je reputatie op te bouwen.",
+  "riderRatingTrips": "{count} ritten beoordeeld",
+  "@riderRatingTrips": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "accountBookingNameLabel": "Boekingsnaam",
   "accountBookingNameHint": "Hoe moeten chauffeurs je noemen?",
   "accountBookingNameDescription": "Deze naam wordt getoond aan chauffeurs wanneer je een rit boekt.",
@@ -692,11 +778,11 @@
   "searchFactIndependentDrivers": "Onafhankelijke chauffeurs bepalen hun eigen prijzen",
   "searchFactOwnPrices": "Geen surge prijzen - ooit",
   "searchFactOwnFuel": "Chauffeurs betalen hun eigen brandstof",
-  "searchFactVerifiedDrivers": "Alle chauffeurs zijn geverifieerd",
+  "searchFactVerifiedDrivers": "Chauffeurs op HeyCaby werken als erkende taxiprofessionals",
   "searchFactFavorites": "We sturen eerst naar je opgeslagen chauffeurs; geen reactie? Dan naar iedereen in de buurt.",
   "searchEnterPickupHint": "Voer ophaallocatie in",
   "goWhereverWhenever": "Ga waarheen, wanneer je wilt.",
-  "noTaxisInZone": "Geen taxi's in je zone",
+  "noTaxisInZone": "Op dit moment geen chauffeurs in de buurt",
   "oneTaxiInZone": "1 taxi in je zone",
   "taxisInZone": "{count}+ taxi's in je zone",
   "@taxisInZone": {
@@ -1043,17 +1129,31 @@
   "deleteSavedAddress": "Verwijderen",
   "searchFactDriversKeep100": "Alle chauffeurs houden 100% van hun verdiensten. HeyCaby neemt geen commissie per rit.",
   "searchFactNoSurgePricing": "Geen surge pricing. Ooit. De prijs die je ziet is de prijs die je betaalt.",
-  "searchFactAllVerified": "Elk rijbewijs, elke verzekering, elke chauffeurspas — door ons gecheckt voordat ze online gaan.",
+  "searchFactAllVerified": "HeyCaby is gemaakt voor echte taxi's — erkend beroepsvervoer, geen privé-gig-auto's.",
   "searchFactMarketplace": "Chauffeurs die teruggaan naar hun stad rijden soms voor minder. Check de marketplace voor de beste prijs.",
   "searchFactZZP": "Elke Caby-chauffeur is een zelfstandige professional. Je rijdt met iemand die trots is op zijn werk.",
   "searchFactSaveAddresses": "Woon in Rotterdam? Tik één keer op het huis-icoontje en je bestemming is ingevuld. Altijd.",
   "searchFactPayHowYouWant": "Contant, Tikkie, pin of factuur — jouw chauffeur vertelt je welke opties beschikbaar zijn.",
+  "searchDidYouKnowEyebrow": "Wist je dat?",
   "searchingTitle": "We zoeken de dichtstbijzijnde Caby…",
   "matchingTitleMarketplace": "We zoeken een marketplace-Caby…",
   "matchingTitleScheduled": "We zoeken een Caby voor je geplande rit…",
   "matchingStatusLive": "Live",
   "matchingStatusWindow": "Tijdvak",
   "matchingStatusOffers": "Biedingen",
+  "dispatchWave0Title": "We proberen je eerst met {name} te verbinden…",
+  "dispatchWave1Title": "Chauffeur zoeken",
+  "dispatchWave2Title": "Nog steeds zoeken…",
+  "dispatchWave3Title": "Meer chauffeurs bereiken…",
+  "dispatchWave4Title": "Verder zoeken…",
+  "dispatchNoDriversTitle": "Geen chauffeurs beschikbaar",
+  "dispatchWaveDriversNotified": "{count, plural, one{1 chauffeur op de hoogte} other{{count} chauffeurs op de hoogte}}",
+  "dispatchWaveClosestEta": "Dichtstbij: {km} km · ~{minutes} min",
+  "dispatchWaveExpandKm": "Zoekgebied uitgebreid tot {km} km",
+  "dispatchWaveFarEta": "Iemand op {km} km kan er over ~{minutes} min zijn",
+  "dispatchSurgeBanner": "Hoge vraag — we zoeken snel",
+  "dispatchLowDensityBanner": "Zoeken in een groter gebied — minder chauffeurs online",
+  "dispatchNoDriversBody": "Alle chauffeurs in de buurt zijn bezet of offline. Probeer het later opnieuw of plan een rit.",
   "homeNearTermTitleInstant": "We zoeken je Caby",
   "homeNearTermTitleMarketplace": "Marketplace-aanvraag",
   "homeNearTermTitleScheduled": "Geplande rit",
@@ -1064,6 +1164,7 @@
   "activeBookingMarketplaceTitle": "We zoeken biedingen",
   "activeBookingScheduledTitle": "Geplande rit actief",
   "activeBookingTapForDetails": "Tik om de voortgang te zien zonder de kaart kwijt te raken.",
+  "activeBookingCollapseHome": "Inklappen naar overzicht",
   "activeBookingKeepAliveTitle": "Je aanvraag blijft actief",
   "activeBookingKeepAliveBody": "Je kunt terug naar home of je telefoon vergrendelen. Wij blijven zoeken en melden het zodra er iets verandert.",
   "activeBookingDriversNotified": "{count, plural, =0{0 chauffeurs ontvingen je aanvraag} one{1 chauffeur ontving je aanvraag} other{{count} chauffeurs ontvingen je aanvraag}}",
@@ -1115,8 +1216,17 @@
     }
   },
   "activeBookingScheduledSearchingBody": "We zoeken nu een chauffeur voor je geplande rit.",
+  "activeBookingScheduledSearchStarts": "Chauffeur zoeken start {searchStarts}",
+  "@activeBookingScheduledSearchStarts": {
+    "placeholders": {
+      "searchStarts": { "type": "String" }
+    }
+  },
+  "activeBookingScheduledQueuedTitle": "Geplande rit in de wachtrij",
+  "activeBookingScheduledQueuedBody": "We beginnen 30 minuten voor ophalen met zoeken en laten het je weten.",
   "rideMatchingTypeLabelInstant": "Directe rit",
   "rideMatchingTypeLabelMarketplace": "Marktplaats",
+  "rideMatchingTypeLabelTerug": "TAXI TERUG",
   "rideMatchingTypeLabelScheduled": "Gepland",
   "activeSearchStopTitle": "Zoeken stoppen?",
   "activeSearchStopBody": "We annuleren deze ritaanvraag. Chauffeurs zien hem niet meer en je krijgt geen meldingen meer. Je kunt opnieuw boeken wanneer je wilt.",
@@ -1132,6 +1242,21 @@
   },
   "ridesScheduledMatchingSection": "Geplande aanvragen",
   "noDriverFoundCard": "Nog geen Caby gevonden. Wat wil je doen?",
+  "searchNoSupplyInlineTitle": "Geen chauffeurs in de buurt",
+  "searchNoSupplyInlineBody": "We vinden geen chauffeurs bij je opstapplaats. Plan voor later of probeer Marktplaats. We blijven zoeken.",
+  "searchNoSupplySheetTitle": "Geen chauffeurs in de buurt",
+  "searchExpiredSheetTitle": "Nog geen chauffeur geaccepteerd",
+  "searchExpiredSheetBody": "Je zoektocht van {minutes} minuten is zonder match geëindigd. Kies je volgende stap.",
+  "@searchExpiredSheetBody": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "searchKeepSearching": "Blijf zoeken",
+  "searchSeeOptions": "Inplannen of Marktplaats",
+  "searchExpiredShareSecondary": "Ken je een chauffeur? Deel HeyCaby",
   "notifyMeWhenFound": "Meld mij",
   "scheduleRideInstead": "Inplannen",
   "activeSearchBannerSubtitle": "We sturen je een melding zodra we er een hebben.",
@@ -1210,6 +1335,7 @@
     }
   },
   "activeRideDriverOutside": "Je chauffeur is buiten",
+  "activeRideDriverFound": "Chauffeur gevonden",
   "activeRideMaxFourSeats": "Max 4 zitplaatsen",
   "activeRideSeatsMax": "Max {seats} zitplaatsen",
   "@activeRideSeatsMax": {
@@ -1225,6 +1351,14 @@
   "activeRideShareSubtitle": "Deel je live ritlink",
   "activeRideReportSubtitle": "Dien een ritmelding in",
   "activeRideSupportSubtitle": "Veiligheid en hulp",
+  "safetySheetTitle": "Veiligheid",
+  "safetySheetShareTrip": "Rit delen",
+  "safetySheetShareTripSubtitle": "Deel je live ritlink met contacten",
+  "safetySheetReport": "Probleem melden",
+  "safetySheetReportSubtitle": "Dien een ritmelding in",
+  "safetySheetEmergency": "Noodoproep (112)",
+  "safetySheetEmergencySubtitle": "Bel de Europese nooddiensten",
+  "safetySheetCancel": "Annuleren",
   "activeRidePickupNotSet": "Ophaallocatie niet ingesteld",
   "activeRideDestinationNotSet": "Bestemming niet ingesteld",
   "activeRideShareDetails": "Deel ritdetails",
@@ -1246,7 +1380,37 @@
   "activeRidePlateNumber": "Kenteken",
   "activeRideUnknownPlate": "ONBEKEND",
   "activeRideFoundingMember": "Founding Member",
-  "activeRideVerifyPlate": "Controleer dit kenteken voordat je instapt.",
+  "activeRideVerifyPlate": "Controleer of het kenteken klopt voordat je instapt.",
+  "activeRideVerifyPlateButton": "Kenteken bevestigen",
+  "activeRidePlateVerifiedSaved": "Kentekencontrole opgeslagen",
+  "activeRidePlateVerifiedOffline": "Opgeslagen op je telefoon — synchroniseert zodra je weer online bent",
+  "ridePayDriverTitle": "Betaal je chauffeur",
+  "ridePayDriverBody": "Je chauffeur heeft de rit zojuist beëindigd. Betaal nu voordat je uitstapt.",
+  "ridePayDriverAmountCaption": "Te betalen",
+  "ridePayDriverPayVia": "Betaal via {method}",
+  "@ridePayDriverPayVia": {
+    "placeholders": {
+      "method": { "type": "String" }
+    }
+  },
+  "ridePayDriverAddTip": "+ Fooi",
+  "ridePayDriverTotalCaption": "Totaal te betalen",
+  "ridePayDriverFareLine": "Rit",
+  "ridePayDriverTipLine": "Fooi",
+  "ridePayDriverConfirmWithTotal": "Ik heb {amount} betaald",
+  "@ridePayDriverConfirmWithTotal": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "ridePayDriverAmount": "Te betalen: {amount}",
+  "@ridePayDriverAmount": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "ridePayDriverConfirm": "Ik heb betaald",
+  "ridePayDriverDismiss": "Nog even",
   "activeRideWaitingFeeWaived": "Wachttarief kwijtgescholden",
   "activeRideWaitingFreePickupTime": "Gratis ophaaltijd",
   "activeRideWaitingTime": "Wachttijd",
@@ -1277,6 +1441,33 @@
       }
     }
   },
+  "activeRideWaitingTripTotal": "Rit totaal",
+  "activeRideWaitingFeeLine": "+{amount} wachttijd",
+  "@activeRideWaitingFeeLine": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideWaitingBaseFare": "Basis {amount}",
+  "@activeRideWaitingBaseFare": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideWaitingFreeWindow": "{minutes} min gratis",
+  "@activeRideWaitingFreeWindow": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideTimelinePickup": "Ophaalpunt",
+  "activeRideTimelineDestination": "Bestemming",
   "openAction": "Openen",
   "openLinkAction": "Link openen",
   "rideReceiptTitle": "Ritbon",

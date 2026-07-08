@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../theme/driver_colors.dart';
@@ -29,6 +31,67 @@ abstract final class DriverRidePremiumStyle {
             offset: const Offset(0, 18),
           ),
         ],
+      );
+
+  /// Frosted "liquid glass" sheet/card. Blurs whatever sits behind it (map,
+  /// gradient, or a parent glass surface) and layers a translucent tint on top.
+  ///
+  /// This is the single blur layer for a stacking context. Inner cards that sit
+  /// on top of a [glassSurface] should use [frostedFill] (a translucent
+  /// decoration with no second blur) to avoid muddy nested backdrops.
+  static Widget glassSurface({
+    required DriverColors colors,
+    required Widget child,
+    EdgeInsetsGeometry padding = EdgeInsets.zero,
+    BorderRadius? borderRadius,
+    double blurSigma = 22,
+    double tintOpacity = 0.72,
+    Color? tint,
+    Color? borderColor,
+    List<BoxShadow>? boxShadow,
+  }) {
+    final radius = borderRadius ?? BorderRadius.circular(30);
+    return ClipRRect(
+      borderRadius: radius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: (tint ?? colors.card).withValues(alpha: tintOpacity),
+            borderRadius: radius,
+            border: Border.all(
+              color: (borderColor ?? colors.border).withValues(alpha: 0.55),
+            ),
+            boxShadow: boxShadow ??
+                [
+                  BoxShadow(
+                    color: colors.text.withValues(alpha: 0.10),
+                    blurRadius: 34,
+                    offset: const Offset(0, 18),
+                  ),
+                ],
+          ),
+          child: Padding(padding: padding, child: child),
+        ),
+      ),
+    );
+  }
+
+  /// Translucent fill for cards layered on top of a [glassSurface]. No blur of
+  /// its own so the parent's frosted backdrop shows through as depth.
+  static BoxDecoration frostedFill(
+    DriverColors colors, {
+    BorderRadius? borderRadius,
+    Color? tint,
+    Color? borderColor,
+    double tintOpacity = 0.55,
+  }) =>
+      BoxDecoration(
+        color: (tint ?? colors.surface).withValues(alpha: tintOpacity),
+        borderRadius: borderRadius ?? BorderRadius.circular(24),
+        border: Border.all(
+          color: (borderColor ?? colors.border).withValues(alpha: 0.5),
+        ),
       );
 
   static Widget sheetHandle(DriverColors colors) => Center(

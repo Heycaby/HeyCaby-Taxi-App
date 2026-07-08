@@ -97,32 +97,10 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
 
   Future<void> _loadCompletedRides() async {
     try {
-      final userId = HeyCabySupabase.client.auth.currentUser?.id;
-      if (userId == null) {
-        if (mounted) setState(() => _loadingRides = false);
-        return;
-      }
       final since = DateTime.now().subtract(const Duration(days: 14));
-      final res = await HeyCabySupabase.client
-          .from('rides')
-          .select('''
-            id,
-            status,
-            pickup_address,
-            destination_address,
-            fare,
-            created_at,
-            completed_at,
-            driver:driver_id ( name, photo_url )
-            ''')
-          .eq('rider_id', userId)
-          .eq('status', 'completed')
-          .order('created_at', ascending: false)
-          .limit(40);
-
-      var list = (res as List)
-          .map((j) => RideHistoryItem.fromJson(j as Map<String, dynamic>))
-          .toList();
+      var list = await ref
+          .read(rideHistoryProvider.notifier)
+          .loadWithFilter('completed', limit: 40);
       list = list.where((r) {
         final c = r.completedAt;
         if (c == null) return true;
@@ -148,19 +126,8 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     }
   }
 
-  /// `ride_reports.ride_id` stores the active booking id (`ride_requests.id`).
+  /// `ride_reports.ride_id` stores `ride_requests.id` (same id as history rows).
   Future<String> _resolveRideRequestIdForRidesRow(String ridesRowId) async {
-    try {
-      final row = await HeyCabySupabase.client
-          .from('rides')
-          .select('ride_request_id')
-          .eq('id', ridesRowId)
-          .maybeSingle();
-      final rr = row?['ride_request_id'] as String?;
-      if (rr != null && rr.isNotEmpty) return rr;
-    } catch (e) {
-      if (kDebugMode) debugPrint('resolve ride_request_id: $e');
-    }
     return ridesRowId;
   }
 

@@ -239,35 +239,15 @@ class _RiderNotificationsSheet extends ConsumerWidget {
                                       );
                                 }
                                 if (!context.mounted) return;
-                                await showDialog<void>(
-                                  context: context,
-                                  builder: (dialogContext) => AlertDialog(
-                                    backgroundColor: colors.card,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    title: Text(
-                                      item.title,
-                                      style: typo.titleMedium.copyWith(
-                                        color: colors.text,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                    content: Text(
-                                      item.body,
-                                      style: typo.bodyMedium.copyWith(
-                                        color: colors.textMid,
-                                        height: 1.45,
-                                      ),
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(dialogContext),
-                                        child: const Text('OK'),
-                                      ),
-                                    ],
-                                  ),
+                                await showHeyCabyAcknowledgeSheet(
+                                  context,
+                                  colors: colors,
+                                  typography: typo,
+                                  title: item.title,
+                                  message: item.body,
+                                  actionLabel: 'OK',
+                                  icon: Icons.notifications_rounded,
+                                  barrierDismissible: true,
                                 );
                               },
                             );
