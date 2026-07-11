@@ -13,7 +13,8 @@ class DriverBillingService {
   }
 
   /// Ledger rows from [fn_driver_billing_ledger_history].
-  Future<List<Map<String, dynamic>>> fetchLedgerHistory({int limit = 50}) async {
+  Future<List<Map<String, dynamic>>> fetchLedgerHistory(
+      {int limit = 50}) async {
     try {
       final raw = await HeyCabySupabase.client.rpc(
         'fn_driver_billing_ledger_history',

@@ -72,6 +72,7 @@ class _DriverRideCommunicationSheetState
     extends ConsumerState<_DriverRideCommunicationSheet> {
   Timer? _cooldownTicker;
   DriverPingType? _sending;
+  int _historyRefresh = 0;
 
   @override
   void initState() {
@@ -90,13 +91,20 @@ class _DriverRideCommunicationSheetState
   Future<void> _sendPing(DriverPingType type) async {
     if (_sending != null) return;
     setState(() => _sending = type);
-    await sendDriverRiderPing(
+    final result = await sendDriverRiderPing(
       context: context,
       ref: widget.ref,
       rideRequestId: widget.rideRequestId,
       type: type,
     );
-    if (mounted) setState(() => _sending = null);
+    if (mounted) {
+      setState(() {
+        _sending = null;
+        if (result == DriverPingSendResult.success) {
+          _historyRefresh += 1;
+        }
+      });
+    }
   }
 
   @override
@@ -213,7 +221,7 @@ class _DriverRideCommunicationSheetState
                   FilledButton.icon(
                     onPressed: widget.onOpenChat,
                     icon: const Icon(Icons.chat_bubble_outline_rounded),
-                    label: const Text(DriverStrings.communicationChat),
+                    label: Text(DriverStrings.communicationChat),
                   ),
                   const SizedBox(height: DriverSpacing.lg),
                   _SectionLabel(
@@ -262,6 +270,9 @@ class _DriverRideCommunicationSheetState
                     child: Padding(
                       padding: const EdgeInsets.all(DriverSpacing.md),
                       child: DriverPingHistorySection(
+                        key: ValueKey(
+                          '${widget.rideRequestId}-$_historyRefresh',
+                        ),
                         rideRequestId: widget.rideRequestId,
                         colors: widget.colors,
                         typography: widget.typography,

@@ -48,7 +48,8 @@ class HotspotsZoneTile extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: fill.withValues(alpha: 0.2),
-                  border: Border.all(color: fill.withValues(alpha: 0.55), width: 2),
+                  border:
+                      Border.all(color: fill.withValues(alpha: 0.55), width: 2),
                   boxShadow: tier == HotspotDemandTier.high
                       ? [
                           BoxShadow(
@@ -89,11 +90,14 @@ class HotspotsZoneTile extends StatelessWidget {
                         ),
                         if (isBest)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: colors.success.withValues(alpha: 0.16),
                               borderRadius: BorderRadius.circular(999),
-                              border: Border.all(color: colors.success.withValues(alpha: 0.35)),
+                              border: Border.all(
+                                  color:
+                                      colors.success.withValues(alpha: 0.35)),
                             ),
                             child: Text(
                               DriverStrings.hotspotsBestNow,
@@ -109,25 +113,32 @@ class HotspotsZoneTile extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       hotspotSublineForZone(zone),
-                      style: typo.bodySmall.copyWith(color: colors.textSoft, fontSize: 13),
+                      style: typo.bodySmall
+                          .copyWith(color: colors.textSoft, fontSize: 13),
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(LucideIcons.usersRound, size: 14, color: colors.textMid),
+                        Icon(LucideIcons.usersRound,
+                            size: 14, color: colors.textMid),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
-                            DriverStrings.hotspotsOnlineDrivers(zone.onlineDriversInZone),
-                            style: typo.labelSmall.copyWith(color: colors.textMid, fontWeight: FontWeight.w600),
+                            DriverStrings.hotspotsOnlineDrivers(
+                                zone.onlineDriversInZone),
+                            style: typo.labelSmall.copyWith(
+                                color: colors.textMid,
+                                fontWeight: FontWeight.w600),
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Icon(LucideIcons.history, size: 14, color: colors.textMid),
+                        Icon(LucideIcons.history,
+                            size: 14, color: colors.textMid),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
-                            DriverStrings.hotspotsRecentRides120m(zone.recentBookings120m),
+                            DriverStrings.hotspotsRecentRides120m(
+                                zone.recentBookings120m),
                             style: typo.labelSmall.copyWith(
                               color: colors.textMid,
                               fontWeight: FontWeight.w600,
@@ -138,9 +149,12 @@ class HotspotsZoneTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      DriverStrings.hotspotsDemandLabel(hotspotDemandLevelLine(zone)),
+                      DriverStrings.hotspotsDemandLabel(
+                          hotspotDemandLevelLine(zone)),
                       style: typo.labelSmall.copyWith(
-                        color: tier == HotspotDemandTier.high ? colors.error : colors.textSoft,
+                        color: tier == HotspotDemandTier.high
+                            ? colors.error
+                            : colors.textSoft,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -153,7 +167,8 @@ class HotspotsZoneTile extends StatelessWidget {
                 children: [
                   Text(
                     DriverStrings.hotspotsActivityCaption,
-                    style: typo.labelSmall.copyWith(color: colors.textSoft, fontSize: 10),
+                    style: typo.labelSmall
+                        .copyWith(color: colors.textSoft, fontSize: 10),
                   ),
                   Text(
                     '${zone.recentBookings120m}',

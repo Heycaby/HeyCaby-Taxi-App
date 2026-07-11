@@ -19,13 +19,12 @@ class DriverCityCommunityStats {
     return (totalMembers / memberGoal).clamp(0.0, 1.0);
   }
 
-  int get membersRemaining =>
-      (memberGoal - totalMembers).clamp(0, memberGoal);
+  int get membersRemaining => (memberGoal - totalMembers).clamp(0, memberGoal);
 
   factory DriverCityCommunityStats.fromJson(Map<String, dynamic> json) {
     return DriverCityCommunityStats(
-      cityName: (json['city_name'] ?? json['cityName'] ?? 'Rotterdam')
-          .toString(),
+      cityName:
+          (json['city_name'] ?? json['cityName'] ?? 'Rotterdam').toString(),
       driverCount: (json['driver_count'] as num?)?.toInt() ??
           (json['drivers'] as num?)?.toInt() ??
           0,

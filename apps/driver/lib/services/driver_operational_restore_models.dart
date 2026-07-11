@@ -24,6 +24,9 @@ DriverAppState driverAppStateFromRideStatus(String? status) {
       return DriverAppState.inProgress;
     case 'accepted':
     case 'assigned':
+    case 'driver_found':
+    case 'driver_en_route':
+      return DriverAppState.assigned;
     default:
       return DriverAppState.assigned;
   }
@@ -54,6 +57,7 @@ bool isRestorableRideStatus(String? status) {
   const restorable = {
     'accepted',
     'assigned',
+    'driver_en_route',
     'driver_arrived',
     'in_progress',
   };

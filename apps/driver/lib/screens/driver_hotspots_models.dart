@@ -44,11 +44,13 @@ int _argb(Color c, double opacity) {
 }
 
 int hotspotHeatOuterArgb(HeyCabyColorTokens colors, HotspotDemandTier t) {
-  return _argb(hotspotTierFill(colors, t), t == HotspotDemandTier.high ? 0.38 : 0.28);
+  return _argb(
+      hotspotTierFill(colors, t), t == HotspotDemandTier.high ? 0.38 : 0.28);
 }
 
 int hotspotHeatInnerArgb(HeyCabyColorTokens colors, HotspotDemandTier t) {
-  return _argb(hotspotTierFill(colors, t), t == HotspotDemandTier.high ? 0.92 : 0.82);
+  return _argb(
+      hotspotTierFill(colors, t), t == HotspotDemandTier.high ? 0.92 : 0.82);
 }
 
 bool zonePassesHotspotFilter(ZoneDemand z, HotspotDemandFilter f) {

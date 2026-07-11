@@ -11,6 +11,7 @@ import '../l10n/driver_strings.dart';
 import '../providers/driver_location_provider.dart';
 import '../providers/driver_ride_proximity_provider.dart';
 import '../providers/driver_state_provider.dart';
+import '../providers/driver_taxi_terug_queued_provider.dart';
 import '../services/sound_service.dart';
 import '../utils/driver_cancel_ride_flow.dart';
 import '../utils/driver_navigation_launch.dart';
@@ -19,7 +20,6 @@ import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_ride_communication_sheet.dart';
 import '../widgets/driver_ride_bolt_layout.dart';
-import '../widgets/driver_collect_fare_sheet.dart';
 import '../widgets/driver_navigation_focus_body.dart';
 
 /// **Navigation Focus** — driving-first; minimal distraction.
@@ -48,6 +48,7 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(hydrateDriverRideCoordsIfNeeded(ref, widget.rideId));
+      ref.invalidate(driverTaxiTerugQueuedProvider);
     });
   }
 
@@ -91,14 +92,6 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
           .setStatus(DriverAppState.completed);
       SoundService().playTripComplete();
       if (!mounted) return;
-
-      final continueClose = await _confirmCollectionCheckpoint();
-      if (!mounted) return;
-      if (continueClose != true) {
-        setState(() => _loading = false);
-        return;
-      }
-
       context.go('/driver/ride/complete/${widget.rideId}');
     } catch (_) {
       if (!mounted) return;
@@ -108,18 +101,6 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  Future<bool?> _confirmCollectionCheckpoint() {
-    final themeColors = ref.read(colorsProvider);
-    final typo = ref.read(typographyProvider);
-    return showDriverCollectFareSheet(
-      context,
-      colors: themeColors,
-      typography: typo,
-      amountLabel: _expectedAmountLabel,
-      barrierDismissible: false,
-    );
   }
 
   Future<void> _openNavigationApp() async {
@@ -195,8 +176,7 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
 
   void _openSafety() {
     final colors = DriverColors.fromTheme(ref.read(colorsProvider));
-    final typography =
-        DriverTypography.fromTheme(ref.read(typographyProvider));
+    final typography = DriverTypography.fromTheme(ref.read(typographyProvider));
     unawaited(showDriverRideSafetyToolkitSheet(
       context: context,
       ref: ref,
@@ -241,6 +221,7 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
       statusBusy: _statusBusy,
       showNearDestinationAssist:
           proximity == DriverRideProximityAssist.nearDestination,
+      currentRideId: widget.rideId,
     );
   }
 }

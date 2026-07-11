@@ -71,13 +71,16 @@ class HomeSmartOptionsSection extends ConsumerWidget {
           _SmartOptionTile(
             colors: colors,
             typo: typo,
-            icon: Icons.savings_outlined,
+            icon: Icons.keyboard_return_rounded,
             iconTint: colors.accent,
-            title: l10n.marketplace,
-            subtitle: l10n.marketplaceTagline,
-            onTap: () {
-              ref.read(bookingProvider.notifier).setMarketplace();
-              context.push('/marketplace');
+            title: l10n.homeTaxiTerugTitle,
+            subtitle: l10n.homeTaxiTerugSubtitle,
+            onTap: () async {
+              final ok =
+                  await ensureLocationForBooking(context: context, ref: ref);
+              if (!ok) return;
+              ref.read(bookingProvider.notifier).setTaxiTerug();
+              if (context.mounted) context.push('/taxi-terug');
             },
           ),
           const SizedBox(height: 8),

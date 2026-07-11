@@ -25,7 +25,7 @@ class BookingFlowScreenHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(8, 4, 16, 12),
+      padding: const EdgeInsetsDirectional.fromSTEB(8, 8, 16, 12),
       child: Row(
         children: [
           IconButton(

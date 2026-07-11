@@ -12,13 +12,13 @@ Future<T?> showDriverBottomSheet<T>({
   required DriverColors colors,
   required WidgetBuilder builder,
   bool isScrollControlled = true,
-  bool useSafeArea = true,
 }) {
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: isScrollControlled,
-    useSafeArea: useSafeArea,
+    useSafeArea: false,
     backgroundColor: Colors.transparent,
+    barrierColor: colors.text.withValues(alpha: 0.48),
     builder: (ctx) => DriverBottomSheet(
       colors: colors,
       child: builder(ctx),
@@ -32,19 +32,25 @@ class DriverBottomSheet extends StatelessWidget {
     required this.colors,
     required this.child,
     this.showHandle = true,
+    this.floating = true,
   });
 
   final DriverColors colors;
   final Widget child;
   final bool showHandle;
+  final bool floating;
 
   @override
   Widget build(BuildContext context) {
-    return DriverRidePremiumStyle.glassSurface(
+    final bottom = MediaQuery.paddingOf(context).bottom;
+    final radius =
+        floating ? DriverRadius.sheetFloating : DriverRadius.sheetTop;
+
+    final sheet = DriverRidePremiumStyle.glassSurface(
       colors: colors,
-      borderRadius: DriverRadius.sheetTop,
-      blurSigma: 26,
-      tintOpacity: 0.8,
+      borderRadius: radius,
+      blurSigma: 28,
+      tintOpacity: 0.88,
       boxShadow: DriverShadows.floating(colors),
       padding: EdgeInsets.zero,
       child: Column(
@@ -54,8 +60,8 @@ class DriverBottomSheet extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: DriverSpacing.md),
               child: Container(
-                width: 40,
-                height: 4,
+                width: 44,
+                height: 5,
                 decoration: BoxDecoration(
                   color: colors.border.withValues(alpha: 0.85),
                   borderRadius: BorderRadius.circular(DriverRadius.pill),
@@ -65,6 +71,18 @@ class DriverBottomSheet extends StatelessWidget {
           child,
         ],
       ),
+    );
+
+    if (!floating) return sheet;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        DriverSpacing.lg,
+        0,
+        DriverSpacing.lg,
+        bottom + DriverSpacing.lg,
+      ),
+      child: sheet,
     );
   }
 }

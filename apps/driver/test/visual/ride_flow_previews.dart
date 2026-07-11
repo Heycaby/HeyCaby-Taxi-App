@@ -157,23 +157,6 @@ class DriverRewardPreview extends StatefulWidget {
 }
 
 class _DriverRewardPreviewState extends State<DriverRewardPreview> {
-  late final TextEditingController _paidController;
-  late final TextEditingController _noteController;
-
-  @override
-  void initState() {
-    super.initState();
-    _paidController = TextEditingController(text: '42,50');
-    _noteController = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _paidController.dispose();
-    _noteController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return DriverRewardScreenBody(
@@ -181,16 +164,11 @@ class _DriverRewardPreviewState extends State<DriverRewardPreview> {
       typography: widget.typography,
       destinationAddress: _dropoff,
       expectedLabel: _fare,
-      paidController: _paidController,
-      noteController: _noteController,
-      paymentMethod: 'cash',
-      sendingReceipt: false,
+      paymentConfirmed: true,
       pickupLat: _pickupLat,
       pickupLng: _pickupLng,
       destLat: _destLat,
       destLng: _destLng,
-      onPaymentMethodChanged: (_) {},
-      onSendReceipt: () {},
       onRateRider: () {},
       onSkip: () {},
     );

@@ -97,8 +97,8 @@ class DriverSupportConversationBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.paddingOf(context).bottom;
-    final hint = composerHint ??
-        (isClosed ? reopenHint : DriverStrings.berichtTypen);
+    final hint =
+        composerHint ?? (isClosed ? reopenHint : DriverStrings.berichtTypen);
 
     return DriverTrustFlowScaffold(
       title: title,

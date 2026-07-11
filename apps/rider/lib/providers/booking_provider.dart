@@ -51,6 +51,9 @@ class BookingState {
   final double? routeDistanceKm;
   final int? routeDurationMin;
 
+  /// Taxi Terug: max minutes rider will wait for pickup (filters in-transit drivers).
+  final int taxiTerugMaxWaitMinutes;
+
   /// Best single € quote for persistence and summary UI.
   double? get quotedFareEuro {
     if (marketplaceBidEuro != null && marketplaceBidEuro! > 0) {
@@ -96,6 +99,7 @@ class BookingState {
     this.returnTripFareEstimatesEnabled = false,
     this.routeDistanceKm,
     this.routeDurationMin,
+    this.taxiTerugMaxWaitMinutes = 60,
   });
 
   BookingState copyWith({
@@ -120,6 +124,7 @@ class BookingState {
     Object? returnTripFareEstimatesEnabled = _sentinel,
     Object? routeDistanceKm = _sentinel,
     Object? routeDurationMin = _sentinel,
+    int? taxiTerugMaxWaitMinutes,
   }) =>
       BookingState(
         mode: mode ?? this.mode,
@@ -163,6 +168,8 @@ class BookingState {
         routeDurationMin: routeDurationMin == _sentinel
             ? this.routeDurationMin
             : routeDurationMin as int?,
+        taxiTerugMaxWaitMinutes:
+            taxiTerugMaxWaitMinutes ?? this.taxiTerugMaxWaitMinutes,
       );
 
   /// Used for `booking_mode` in Supabase and matching-route selection.
@@ -189,6 +196,10 @@ class BookingNotifier extends Notifier<BookingState> {
   void setMarketplace() =>
       state = state.copyWith(mode: BookingMode.marketplace);
   void setTaxiTerug() => state = state.copyWith(mode: BookingMode.terug);
+
+  void setTaxiTerugMaxWaitMinutes(int minutes) => state = state.copyWith(
+        taxiTerugMaxWaitMinutes: minutes.clamp(15, 120),
+      );
 
   void setMarketplaceBidEuro(int euros) =>
       state = state.copyWith(marketplaceBidEuro: euros);
@@ -252,9 +263,10 @@ class BookingNotifier extends Notifier<BookingState> {
   void applyVehicleSelection(List<String> categories,
       {required bool petFriendly}) {
     if (categories.isEmpty) return;
+    final trimmed = categories.take(3).toList();
     state = state.copyWith(
-      vehicleCategories: List<String>.from(categories),
-      vehicleCategory: categories.first,
+      vehicleCategories: List<String>.from(trimmed),
+      vehicleCategory: trimmed.first,
       petFriendly: petFriendly,
     );
   }

@@ -45,7 +45,8 @@ Future<void> showDriverSessionRevokedModal(
     context: context,
     barrierDismissible: false,
     builder: (ctx) => AlertDialog(
-      icon: Icon(Icons.phonelink_erase_rounded, color: themeColors.warning, size: 40),
+      icon: Icon(Icons.phonelink_erase_rounded,
+          color: themeColors.warning, size: 40),
       title: Text(
         DriverStrings.sessionRevokedTitle,
         style: typo.titleMedium.copyWith(
@@ -56,7 +57,8 @@ Future<void> showDriverSessionRevokedModal(
       ),
       content: Text(
         DriverStrings.sessionRevokedBody,
-        style: typo.bodyMedium.copyWith(color: themeColors.textMid, height: 1.35),
+        style:
+            typo.bodyMedium.copyWith(color: themeColors.textMid, height: 1.35),
         textAlign: TextAlign.center,
       ),
       actions: [
@@ -64,7 +66,7 @@ Future<void> showDriverSessionRevokedModal(
           width: double.infinity,
           child: FilledButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text(DriverStrings.sessionRevokedCta),
+            child: Text(DriverStrings.sessionRevokedCta),
           ),
         ),
       ],

@@ -7,6 +7,25 @@ import 'package:permission_handler/permission_handler.dart';
 
 import 'supabase_client.dart';
 
+class HeyCabyNotificationReadiness {
+  const HeyCabyNotificationReadiness({
+    required this.authorized,
+    required this.alertsEnabled,
+    required this.soundsEnabled,
+    required this.timeSensitiveEnabled,
+    required this.tokenRegistered,
+  });
+
+  final bool authorized;
+  final bool alertsEnabled;
+  final bool soundsEnabled;
+  final bool timeSensitiveEnabled;
+  final bool tokenRegistered;
+
+  bool get ready =>
+      authorized && alertsEnabled && soundsEnabled && tokenRegistered;
+}
+
 /// FCM token lifecycle: [push_devices] via RPC only (no Expo).
 ///
 /// Call [bindRiderIdentity] or [bindDriver] once, then [sync] when auth + identity are ready.
@@ -59,7 +78,8 @@ class HeyCabyFcmRegistration {
         token = await FirebaseMessaging.instance.getToken();
       } catch (e) {
         if (kDebugMode) {
-          debugPrint('HeyCabyFcm getToken attempt ${i + 1}/$attempts failed: $e');
+          debugPrint(
+              'HeyCabyFcm getToken attempt ${i + 1}/$attempts failed: $e');
         }
       }
       if (token != null && token.length >= 10) {
@@ -75,6 +95,31 @@ class HeyCabyFcmRegistration {
     return null;
   }
 
+  /// Reads native notification readiness without changing driver availability.
+  static Future<HeyCabyNotificationReadiness> readiness() async {
+    final settings = await FirebaseMessaging.instance.getNotificationSettings();
+    final authorized =
+        settings.authorizationStatus == AuthorizationStatus.authorized ||
+            settings.authorizationStatus == AuthorizationStatus.provisional;
+    final isApple = Platform.isIOS || Platform.isMacOS;
+    String? token;
+    try {
+      token = await FirebaseMessaging.instance.getToken();
+    } catch (_) {}
+    return HeyCabyNotificationReadiness(
+      authorized: authorized,
+      alertsEnabled:
+          !isApple || settings.alert == AppleNotificationSetting.enabled,
+      soundsEnabled:
+          !isApple || settings.sound == AppleNotificationSetting.enabled,
+      timeSensitiveEnabled: !isApple ||
+          settings.timeSensitive == AppleNotificationSetting.enabled,
+      tokenRegistered: token != null && token.length >= 10,
+    );
+  }
+
+  static Future<void> openNotificationSettings() => openAppSettings();
+
   /// Registers or updates the device FCM token for the signed-in user.
   static Future<void> sync({required String appRole}) async {
     try {
@@ -86,7 +131,8 @@ class HeyCabyFcmRegistration {
       final token = await _resolveFcmToken();
       if (token == null || token.length < 10) {
         if (kDebugMode) {
-          debugPrint('HeyCabyFcm: no FCM token (permission/APNs/Firebase config?)');
+          debugPrint(
+              'HeyCabyFcm: no FCM token (permission/APNs/Firebase config?)');
         }
         return;
       }

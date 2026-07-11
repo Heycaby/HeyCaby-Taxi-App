@@ -1,19 +1,16 @@
-import 'dart:async' show unawaited;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:heycaby_ui/heycaby_ui.dart';
 
-import '../providers/driver_state_provider.dart';
+import '../providers/driver_data_providers.dart';
+import '../utils/driver_runtime_refresh.dart';
 import '../utils/driver_rider_cancelled_flow.dart';
 import '../utils/driver_session_revoked_flow.dart';
 import '../models/driver_shift_handover_prompt_args.dart';
 import '../utils/driver_shift_handover_security_alert.dart';
 import '../utils/driver_taxi_session_revoked_flow.dart';
 import 'driver_fcm_payload.dart';
+import 'driver_incoming_ride_coordinator.dart';
 import 'driver_notification_router.dart';
-import 'sound_service.dart';
 import '../widgets/driver_shift_handover_prompt.dart';
 
 /// Routes + side effects for driver FCM categories (Program 3C).
@@ -78,6 +75,25 @@ class DriverFcmHandler {
             voluntaryEnd: payload.rawData?['status']?.toString() == 'approved',
           );
         }
+      case 'platform_balance_settled':
+        ref.invalidate(driverBillingStatusProvider);
+        ref.invalidate(driverPaymentLedgerProvider);
+        ref.invalidate(driverProfileProvider);
+        try {
+          await refreshDriverRuntime(ref);
+        } catch (_) {
+          // Push routing continues even if the immediate refresh is offline.
+        }
+        if (!context.mounted) return;
+        await dispatchDriverNotification(
+          context: context,
+          category: payload.effectiveCategory,
+          title: payload.title ?? '',
+          body: payload.body ?? '',
+          data: payload.rawData,
+          fromTap: fromTap,
+          foreground: foreground,
+        );
       case 'chat':
         await dispatchDriverNotification(
           context: context,
@@ -129,21 +145,13 @@ class DriverFcmHandler {
     final rideId = payload.rideRequestId;
     if (rideId == null || rideId.isEmpty) return;
 
-    final appState = ref.read(driverStateProvider).appState;
-    if (appState != DriverAppState.onlineAvailable) return;
-
-    if (!context.mounted) return;
-    final path = GoRouterState.of(context).uri.path;
-    if (path.startsWith('/driver/ride/new/')) return;
-    if (path.contains('/driver/ride/new/$rideId')) return;
-
-    HapticService.heavyTap();
-    if (foreground) {
-      unawaited(SoundService().playRideRequest());
-    }
-
-    if (!context.mounted) return;
-    context.push('/driver/ride/new/$rideId');
+    await DriverIncomingRideCoordinator.present(
+      context: context,
+      ref: ref,
+      rideRequestId: rideId,
+      rideInviteId: payload.rideInviteId,
+      foreground: foreground,
+    );
   }
 
   static Future<void> _handleRidePhase({

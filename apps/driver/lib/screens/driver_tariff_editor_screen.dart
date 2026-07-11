@@ -106,14 +106,15 @@ class _DriverTariffEditorScreenState
         allOk = false;
         break;
       }
-      final ok = await ref.read(driverDataServiceProvider).updateRateProfileValues(
-            driverId: id,
-            profileId: p.id,
-            baseFare: base,
-            perKmRate: km,
-            perMinRate: min,
-            waitingRate: wait,
-          );
+      final ok =
+          await ref.read(driverDataServiceProvider).updateRateProfileValues(
+                driverId: id,
+                profileId: p.id,
+                baseFare: base,
+                perKmRate: km,
+                perMinRate: min,
+                waitingRate: wait,
+              );
       if (!ok) allOk = false;
     }
     if (!mounted) return;
@@ -123,12 +124,12 @@ class _DriverTariffEditorScreenState
       ref.invalidate(activeRateProfileProvider);
       ref.invalidate(driverProfileProvider);
       messenger.showSnackBar(
-        const SnackBar(content: Text(DriverStrings.tariffsSaved)),
+        SnackBar(content: Text(DriverStrings.tariffsSaved)),
       );
       navigator.pop();
     } else {
       messenger.showSnackBar(
-        const SnackBar(content: Text(DriverStrings.tariffsSaveFailed)),
+        SnackBar(content: Text(DriverStrings.tariffsSaveFailed)),
       );
     }
   }
@@ -168,9 +169,10 @@ class _DriverTariffEditorScreenState
       ),
       data: (profiles) {
         _ensureControllers(profiles);
-        final hasMissingPresets = !_hasDayPartProfile(profiles, _DayPartSlot.morning) ||
-            !_hasDayPartProfile(profiles, _DayPartSlot.evening) ||
-            !_hasDayPartProfile(profiles, _DayPartSlot.lateNight);
+        final hasMissingPresets =
+            !_hasDayPartProfile(profiles, _DayPartSlot.morning) ||
+                !_hasDayPartProfile(profiles, _DayPartSlot.evening) ||
+                !_hasDayPartProfile(profiles, _DayPartSlot.lateNight);
 
         return DriverRateControlBody(
           colors: colors,

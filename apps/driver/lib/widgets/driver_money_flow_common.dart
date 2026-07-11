@@ -74,7 +74,8 @@ class DriverMoneyKeyValueRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: typography.bodyMedium.copyWith(color: colors.textSecondary),
+              style:
+                  typography.bodyMedium.copyWith(color: colors.textSecondary),
             ),
           ),
           const SizedBox(width: DriverSpacing.md),
@@ -147,7 +148,8 @@ class DriverFinanceExportOption extends StatelessWidget {
                     ),
                     Text(
                       subtitle,
-                      style: typography.bodySmall.copyWith(color: colors.textMuted),
+                      style: typography.bodySmall
+                          .copyWith(color: colors.textMuted),
                     ),
                   ],
                 ),

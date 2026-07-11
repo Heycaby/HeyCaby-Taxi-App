@@ -156,8 +156,7 @@ class _VehicleEditScreenState extends ConsumerState<VehicleEditScreen> {
     final compliance = ref.watch(driverComplianceProvider).valueOrNull;
     final plateProfile = (profile?.vehiclePlate ?? '').trim();
     final plateCompliance = (compliance?.vehiclePlate ?? '').trim();
-    final plateLocked =
-        plateProfile.isNotEmpty || plateCompliance.isNotEmpty;
+    final plateLocked = plateProfile.isNotEmpty || plateCompliance.isNotEmpty;
     final displayPlate =
         plateCompliance.isNotEmpty ? plateCompliance : plateProfile;
 

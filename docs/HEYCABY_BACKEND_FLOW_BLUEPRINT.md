@@ -4,7 +4,7 @@ Source of truth for the rider booking flow, driver readiness flow, dispatch cont
 
 Status: Backend contract blueprint  
 Owner: HeyCaby engineering / product  
-Last updated: 2026-07-05
+Last updated: 2026-07-11
 
 ## Purpose
 
@@ -23,6 +23,7 @@ This document defines how the backend should behave, why each step exists, and w
 - No location means no ride. Riders cannot book without location; drivers cannot go online without location.
 - No tariff means no online driver. HeyCaby cannot show riders a driver without a price.
 - No driver photo and vehicle photo means no rider trust. A driver cannot receive rides until the rider can identify who and what is arriving.
+- Driver presence and Platform ride eligibility are separate. An overdue driver may remain online while dispatch and acceptance block new HeyCaby rides.
 - One ride lifecycle. Every app, function, trigger, notification, and screen must use the same status contract.
 - Every critical state change must be atomic, auditable, and recoverable.
 
@@ -85,11 +86,12 @@ What breaks if this is ignored:
 
 ## Canonical Driver Statuses
 
-Driver status is about whether the driver can receive ride requests.
+Driver status records the driver's working presence. It does not by itself grant
+access to HeyCaby-dispatched rides.
 
 | Status | Meaning | Can receive ride requests? |
 | --- | --- | --- |
-| `available` | Driver is online and eligible | Yes |
+| `available` | Driver is online and maintaining location presence | Only when `platform_ride_eligible = true` |
 | `on_break` | Driver is paused/breaking | No |
 | `offline` | Driver is not working | No |
 | Future: `car_wash` | Driver is unavailable for car wash | No |
@@ -98,6 +100,49 @@ Driver status is about whether the driver can receive ride requests.
 | Future: `heading_home` | Driver is using Return Mode | Only return-qualified rides |
 
 Important: older text may say `online`. The database contract should use the actual enum/value used by this repo, currently expected to be `available`.
+
+### Presence vs Platform Ride Eligibility
+
+These states answer different questions and must never be collapsed into one
+boolean:
+
+```text
+Presence
+offline | available | on_break | busy
+        ↓
+Is the driver working in the app?
+
+Platform ride eligibility
+eligible | grace_period | settlement_required
+        ↓
+May HeyCaby send or assign a new platform ride?
+```
+
+The following combination is valid and intentional:
+
+```json
+{
+  "driver_status": "available",
+  "platform_ride_eligible": false,
+  "eligibility_reason": "platform_balance_overdue",
+  "balance_state": "paused"
+}
+```
+
+`fn_driver_set_status` owns presence. It must still enforce operational
+readiness such as location, tariff, identity, terms, and vehicle requirements,
+but it must not reject `available` solely because Platform Balance is overdue.
+
+`fn_driver_can_accept_rides` owns Platform Balance eligibility. Every dispatch
+path must call it before creating an invite, and every accept RPC must call it
+again while the ride row is locked. An invite created before grace expiry must
+therefore fail safely if the driver becomes ineligible before accepting.
+
+An overdue driver remains able to use the map, location presence, profile,
+tariffs, vehicle, Driver Hub, history, earnings, Community, support, and
+Platform Balance. Existing accepted or active rides continue through arrival,
+chat/ping, start, completion, receipt, and payment. Only new Instant,
+Scheduled, Marketplace, queued-next, and Taxi Terug platform rides pause.
 
 ## Canonical Ride Statuses
 
@@ -152,7 +197,7 @@ What breaks if missing:
 flowchart TD
     A["Driver opens app"] --> B["Supabase runtime check"]
     B --> C{"Ready to go online?"}
-    C -->|No| D["Return exact blocker: location, tariff, photo, vehicle, terms, billing"]
+    C -->|No| D["Return exact blocker: location, tariff, photo, vehicle, terms"]
     D --> E["Flutter opens the correct completion flow"]
     C -->|Yes| F["Driver sets status = available with fresh GPS"]
     F --> G["driver_locations upserted"]
@@ -203,8 +248,11 @@ Required before online:
 - Driver profile photo exists.
 - Vehicle photo exists.
 - Fresh valid GPS coordinates are provided. The status RPC must reject `available` if the latest location is missing or older than 5 minutes.
-- Platform Balance allows receiving rides.
 - At least one active initial tariff exists.
+
+After recording presence, the same response must expose Platform ride
+eligibility separately. An overdue balance does not reverse or reject the
+`available` transition.
 
 The backend should return exact blockers, not generic messages.
 
@@ -225,7 +273,7 @@ Why this exists:
 - Riders need to know what car is coming.
 - Dispatch needs driver location.
 - Pricing needs a driver tariff.
-- Billing must pause new rides when the driver's Platform Balance is overdue.
+- Billing must pause new dispatch and acceptance when Platform Balance is overdue, without forcing the driver offline.
 
 What breaks if missing:
 
@@ -235,7 +283,7 @@ What breaks if missing:
 | Tariff | Rider price estimate cannot be calculated |
 | Driver photo | Rider trust/safety is weakened |
 | Vehicle photo | Rider cannot identify the taxi |
-| Billing | Driver receives rides while platform balance is locked |
+| Billing dispatch/accept check | Overdue driver receives a new platform ride |
 | Terms/legal | Driver can operate before accepting required platform rules |
 
 Required go-online tests:
@@ -247,11 +295,13 @@ Fresh location + all checks    -> can go available
 Missing tariff                 -> blocked and opens first tariff setup
 Missing driver photo           -> blocked and opens driver photo upload
 Missing vehicle photo          -> blocked and opens taxi photo upload
+Overdue Platform Balance       -> available, but platform_ride_eligible=false
 ```
 
 Implementation rule:
 
 - `fn_driver_set_status` must own these checks.
+- `fn_driver_can_accept_rides`, dispatch, and accept RPCs must own Platform Balance enforcement.
 - Flutter may pre-check for UX, but it must not be the final authority.
 - A later migration must not accidentally remove the GPS guard when adding tariff/photo checks.
 
@@ -1351,6 +1401,132 @@ Realtime updates rider scheduled/active card + driver scheduled rides + swap fee
 
 Rider safety depends on this chain. Swap without rider notification is a launch blocker.
 
+## Platform Balance Settlement Contract
+
+Platform Balance is an operating balance for access to HeyCaby-dispatched taxi
+work. It is not presented as debt, a subscription, a membership, or an in-app
+purchase. Drivers keep 100% of the fare they collect from riders.
+
+The existing weekly contract remains authoritative:
+
+- Supabase creates each driver's weekly Platform Balance cycle.
+- The configured grace period remains server-controlled.
+- Only new ride requests pause after the grace period expires unpaid.
+- History, earnings, profile, community, support, and settlement remain usable.
+- Ride eligibility is recalculated from the append-only billing ledger; Flutter
+  never unlocks a driver locally.
+- The driver may remain `available` after grace expires. The backend exposes
+  `platform_ride_eligible = false`, dispatch excludes the driver, and atomic
+  acceptance rejects stale invites.
+
+The Driver Home warning for an overdue balance is informational, not an app
+lock:
+
+```text
+Platform rides paused
+
+Your Platform Balance is overdue. You can remain online and use HeyCaby, but
+you will not receive new Instant, Scheduled or Taxi Terug rides until the
+balance is settled.
+
+View settlement details
+```
+
+### Permanent Payment Reference
+
+Every billing account with a verified plate receives one permanent,
+server-generated payment reference:
+
+```text
+Vehicle plate: X933HH
+Payment reference: HC-X933HH
+Normalized match key: HCX933HH
+```
+
+Rules:
+
+- Uppercase and remove punctuation when matching.
+- Enforce a unique normalized index.
+- Use a deterministic driver suffix only for a genuine collision.
+- Never change or reassign an issued reference, including after a plate change.
+- Preserve reference aliases so historical transfers remain traceable.
+- Clients may read their reference through `fn_driver_billing_status()` but may
+  not create, update, or delete references.
+
+### Driver Settlement Experience
+
+`fn_driver_billing_status()` chooses the settlement method from server config:
+
+```text
+Valid enabled bank details + permanent reference
+        -> bank_transfer (primary)
+
+Missing or disabled bank configuration
+        -> mollie_checkout (safe fallback)
+```
+
+Flutter must never hardcode account details or show placeholder banking data.
+The settlement experience displays the exact outstanding amount, account
+holder, IBAN, bank, BIC, and permanent reference, with copy controls. Closing
+the details does not mark a payment as pending or paid.
+
+An online-payment fallback must never be embedded as an internal Flutter
+storefront or WebView. The app opens an HTTPS settlement page in the system
+browser. The preferred destination is a mobile-responsive HeyCaby-controlled
+domain; while that web surface is unavailable, the server-backed bank-transfer
+details remain the primary settlement path. Mollie may process a payment behind
+the external page, but its checkout must not be presented as an in-app store.
+
+### Bank Reconciliation
+
+Statement ingestion or a bank webhook calls the service-role-only
+`fn_driver_billing_reconcile_bank_transaction` contract:
+
+```text
+Incoming bank transaction
+        ↓
+Idempotency key: provider + external_transaction_id
+        ↓
+Normalize transfer reference
+        ↓
+Match permanent reference/alias to driver
+        ↓
+Append one settlement through existing billing ledger function
+        ↓
+Record bank import status and any unapplied surplus
+        ↓
+Append billing.bank_transfer_reconciled audit event
+        ↓
+Notify driver
+        ↓
+Recalculate fn_driver_can_accept_rides
+        ↓
+Ride eligibility restores automatically when outstanding reaches zero
+```
+
+Security rules:
+
+- `anon` and `authenticated` cannot reconcile a bank transaction.
+- Clients cannot append settlement ledger entries or billing audit events.
+- Duplicate bank transaction IDs return the original result without a second
+  ledger entry.
+- Unknown references remain `unmatched` for operations review.
+- Currency mismatches and overpayments retain an unapplied amount for manual
+  review; money is never silently discarded.
+- Import and alias tables have RLS enabled and no client policies.
+
+Production gate:
+
+1. Enter real bank details in server-side `platform_balance_bank_transfer`
+   configuration; never commit them into Flutter.
+2. Connect an authenticated statement importer or bank webhook to the
+   service-role reconciliation function.
+3. Run a real staging transfer using the exact permanent reference.
+4. Confirm one ledger settlement, one notification, one audit event, and
+   automatic ride restoration.
+5. Confirm a duplicate import creates no second settlement.
+6. Only then enable bank transfer and deploy the migration to production.
+
 ## Realtime Contract
 
 Realtime should be used for live UI updates, but not as the only source of truth.
@@ -1363,6 +1539,8 @@ Realtime tables:
 - `ride_swaps`
 - `messages` or chat table
 - `driver_locations` where scoped appropriately
+- `billing_ledger` scoped to the authenticated driver
+- `driver_platform_balance_cycles` scoped to the authenticated driver
 
 Cold start/reconnect rule:
 
@@ -1379,7 +1557,7 @@ Cold start/reconnect rule:
 | Driver missing tariff | Block `available` | Open first tariff setup |
 | Driver missing photo | Block `available` | Open driver photo upload |
 | Driver missing vehicle photo | Block `available` | Open taxi photo upload |
-| Billing locked | Block matching/accept | Open Platform Balance |
+| Platform Balance overdue | Keep presence online; block new matching/accept | Show non-blocking "Platform rides paused" card |
 | Invite expired | Reject accept | "This request has expired." |
 | Race lost | Reject accept | "Another driver accepted first." |
 | Chat context missing | Do not crash | Show retry/support state |

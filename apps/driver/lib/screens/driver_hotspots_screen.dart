@@ -462,7 +462,7 @@ class _DriverHotspotsScreenState extends ConsumerState<DriverHotspotsScreen> {
                     Navigator.pop(ctx);
                     _openNavigationChooser(zone);
                   },
-                  child: const Text(DriverStrings.hotspotsNavigateHere),
+                  child: Text(DriverStrings.hotspotsNavigateHere),
                 ),
               ),
             ],

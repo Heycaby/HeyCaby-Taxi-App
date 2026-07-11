@@ -99,15 +99,22 @@ class RideSwapListing {
 }
 
 /// Haversine distance in km.
-double distanceKmToPickup(double? driverLat, double? driverLng, double? pickupLat, double? pickupLng) {
-  if (driverLat == null || driverLng == null || pickupLat == null || pickupLng == null) {
+double distanceKmToPickup(double? driverLat, double? driverLng,
+    double? pickupLat, double? pickupLng) {
+  if (driverLat == null ||
+      driverLng == null ||
+      pickupLat == null ||
+      pickupLng == null) {
     return double.infinity;
   }
   const r = 6371.0;
   final dLat = _rad(pickupLat - driverLat);
   final dLng = _rad(pickupLng - driverLng);
   final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
-      math.cos(_rad(driverLat)) * math.cos(_rad(pickupLat)) * math.sin(dLng / 2) * math.sin(dLng / 2);
+      math.cos(_rad(driverLat)) *
+          math.cos(_rad(pickupLat)) *
+          math.sin(dLng / 2) *
+          math.sin(dLng / 2);
   final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
   return r * c;
 }
@@ -116,7 +123,8 @@ double _rad(double d) => d * math.pi / 180.0;
 
 /// RPC + queries for migration 042 `ride_swaps` API.
 class RideSwapService {
-  RideSwapService({SupabaseClient? client}) : _client = client ?? HeyCabySupabase.client;
+  RideSwapService({SupabaseClient? client})
+      : _client = client ?? HeyCabySupabase.client;
 
   final SupabaseClient _client;
 
@@ -191,8 +199,10 @@ class RideSwapService {
       if (ta != tb) return ta.compareTo(tb);
       final ua = a.urgency.toLowerCase();
       if (ua == 'urgent' || ua == 'emergency') {
-        final da = distanceKmToPickup(driverLat, driverLng, a.pickupLat, a.pickupLng);
-        final db = distanceKmToPickup(driverLat, driverLng, b.pickupLat, b.pickupLng);
+        final da =
+            distanceKmToPickup(driverLat, driverLng, a.pickupLat, a.pickupLng);
+        final db =
+            distanceKmToPickup(driverLat, driverLng, b.pickupLat, b.pickupLng);
         return da.compareTo(db);
       }
       return 0;

@@ -1,9 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:heycaby_api/heycaby_api.dart';
 
-import 'settings_provider.dart';
+import 'rider_profile_display_provider.dart';
 
-/// Rider profile is **100%** when both **name** (booking / settings) and **email** (identity) exist.
+/// Rider profile is **100%** when both **name** and **email** are available.
 class RiderProfileCompleteness {
   const RiderProfileCompleteness({
     required this.hasName,
@@ -20,12 +19,9 @@ class RiderProfileCompleteness {
 }
 
 final riderProfileCompletenessProvider = Provider<RiderProfileCompleteness>((ref) {
-  final settings = ref.watch(settingsProvider).valueOrNull;
-  final identity = ref.watch(riderIdentityProvider).valueOrNull;
-
-  final hasName = (settings?.userName ?? '').trim().isNotEmpty ||
-      (identity?.bookingName ?? '').trim().isNotEmpty;
-  final hasEmail = (identity?.email ?? '').trim().isNotEmpty;
-
-  return RiderProfileCompleteness(hasName: hasName, hasEmail: hasEmail);
+  final display = ref.watch(riderProfileDisplayProvider);
+  return RiderProfileCompleteness(
+    hasName: display.hasName,
+    hasEmail: display.hasEmail,
+  );
 });

@@ -140,7 +140,7 @@ class ScheduledPrerideActions extends ConsumerWidget {
                       );
                       if (ok) onInvalidate();
                     },
-                    child: const Text(DriverStrings.prerideSendRequest),
+                    child: Text(DriverStrings.prerideSendRequest),
                   ),
                 ],
               );
@@ -260,7 +260,7 @@ class ScheduledPrerideActions extends ConsumerWidget {
                 );
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
+                  SnackBar(
                     content: Text(DriverStrings.prerideTikkieLinkCopied),
                   ),
                 );
@@ -297,7 +297,7 @@ class ScheduledPrerideActions extends ConsumerWidget {
               );
               if (ok) onInvalidate();
             },
-            child: const Text(DriverStrings.prerideMarkTikkieReceived),
+            child: Text(DriverStrings.prerideMarkTikkieReceived),
           ),
         ],
         if (ride.canReleaseAfterPrerideDeadline) ...[

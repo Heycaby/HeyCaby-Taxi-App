@@ -5,8 +5,7 @@ import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../../providers/rider_profile_completeness_provider.dart';
-import '../../providers/settings_provider.dart';
-import 'package:heycaby_api/heycaby_api.dart';
+import '../../providers/rider_profile_display_provider.dart';
 
 /// Time-of-day greeting + rider name + optional profile completion chip.
 class HomeGreetingHeader extends ConsumerWidget {
@@ -17,25 +16,6 @@ class HomeGreetingHeader extends ConsumerWidget {
     if (hour < 12) return l10n.homeGreetingMorning;
     if (hour < 17) return l10n.homeGreetingAfternoon;
     return l10n.homeGreetingEvening;
-  }
-
-  String _displayName(WidgetRef ref, AppLocalizations l10n) {
-    final settings = ref.watch(settingsProvider).valueOrNull;
-    final identity = ref.watch(riderIdentityProvider).valueOrNull;
-    final fromSettings = (settings?.userName ?? '').trim();
-    if (fromSettings.isNotEmpty) return _formatDisplayName(fromSettings);
-    final fromIdentity = (identity?.bookingName ?? '').trim();
-    if (fromIdentity.isNotEmpty) return _formatDisplayName(fromIdentity);
-    return l10n.rider;
-  }
-
-  static String _formatDisplayName(String raw) {
-    final trimmed = raw.trim();
-    if (trimmed.isEmpty) return trimmed;
-    return trimmed.split(RegExp(r'\s+')).map((part) {
-      if (part.isEmpty) return part;
-      return part[0].toUpperCase() + part.substring(1).toLowerCase();
-    }).join(' ');
   }
 
   /// Light halo so greeting/name stay readable on the map (any tile brightness).
@@ -56,7 +36,9 @@ class HomeGreetingHeader extends ConsumerWidget {
     final typo = ref.watch(typographyProvider);
     final l10n = AppLocalizations.of(context);
     final completeness = ref.watch(riderProfileCompletenessProvider);
-    final name = _displayName(ref, l10n);
+    final profile = ref.watch(riderProfileDisplayProvider);
+    final name =
+        profile.displayName.isNotEmpty ? profile.displayName : l10n.rider;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -200,7 +200,8 @@ class DriverPerformanceCommentCard extends StatelessWidget {
             ),
           ),
           PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert_rounded, color: colors.textMuted, size: 20),
+            icon: Icon(Icons.more_vert_rounded,
+                color: colors.textMuted, size: 20),
             padding: EdgeInsets.zero,
             onSelected: (v) {
               if (v == 'report') onReport();
@@ -343,7 +344,8 @@ class DriverDemandRadarOverlay extends StatelessWidget {
                 ),
                 IconButton(
                   onPressed: onRefresh,
-                  icon: Icon(Icons.refresh_rounded, color: colors.textSecondary),
+                  icon:
+                      Icon(Icons.refresh_rounded, color: colors.textSecondary),
                 ),
               ],
             ),

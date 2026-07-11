@@ -21,8 +21,10 @@ Both functions use **OpenRouter Chat Completions**: `POST https://openrouter.ai/
 1. Validates JWT → Supabase Auth user id.
 2. Resolves **`tickets`** row: `ticket_id` in body if provided (must match `user_id` + `user_type`); else latest **`status = open`** ticket; else inserts a new row (`category: ai_support`).
 3. Rejects if ticket is **`closed`** or **`resolved`** (`409 ticket_closed`).
-4. Appends **`{ role, content, ts }`** user row, calls OpenRouter with system prompt + conversation derived from stored messages (legacy `sender_type` / `body` rows are mapped to user/assistant).
-5. Appends assistant row; returns **`{ reply, ticket_id }`**.
+4. Persists the **`{ role, content, ts }`** user row before calling OpenRouter, so an upstream outage cannot erase the support request.
+5. Calls the configured OpenRouter model and falls back to **`openrouter/free`** when that model is unavailable.
+6. Appends the assistant row. If every provider attempt fails or the provider secret is unavailable, the ticket remains usable and receives a clearly labelled support fallback response.
+7. Returns **`{ reply, ticket_id, degraded, model, used_fallback_model }`**.
 
 ## Flutter (this monorepo)
 

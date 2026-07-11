@@ -45,7 +45,8 @@ class DriverRateControlBody extends StatelessWidget {
       typography: typography,
       onBack: onBack,
       body: loading
-          ? Center(child: DriverSkeleton(colors: colors, width: 200, height: 24))
+          ? Center(
+              child: DriverSkeleton(colors: colors, width: 200, height: 24))
           : errorMessage != null
               ? Center(
                   child: Padding(

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js'
 
 import type { RiderNotificationRow } from './notify_types.ts'
+import { resolveRiderFcmTokens } from './resolve_fcm_tokens.ts'
 import { sendFcmNotification } from './notify_push.ts'
 
 export async function deliverNotification(
@@ -34,17 +35,10 @@ export async function deliverNotification(
 
   const notificationId = inserted.id as string
 
-  // Send FCM push to rider devices
-  const { data: pushRows } = await supabase
-    .from('push_devices')
-    .select('fcm_token')
-    .eq('rider_identity_id', notification.user_id)
-    .eq('app_role', 'rider')
+  const fcmTokens = await resolveRiderFcmTokens(supabase, notification)
 
   let pushed = 0
-  for (const row of pushRows ?? []) {
-    const token = row?.fcm_token as string | null
-    if (!token || token.length < 10) continue
+  for (const token of fcmTokens) {
     await sendFcmNotification(token, {
       title: notification.title,
       body: notification.body,

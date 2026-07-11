@@ -129,8 +129,7 @@ class DriverFeedbackLoopBody extends StatelessWidget {
                       controller: commentController,
                       maxLength: maxCommentLength,
                       maxLines: 3,
-                      style:
-                          typography.bodyMedium.copyWith(color: colors.text),
+                      style: typography.bodyMedium.copyWith(color: colors.text),
                       decoration: InputDecoration(
                         hintText: effectiveCommentHint,
                         hintStyle: typography.bodyMedium.copyWith(
@@ -139,21 +138,17 @@ class DriverFeedbackLoopBody extends StatelessWidget {
                         filled: true,
                         fillColor: colors.backgroundAlt.withValues(alpha: 0.7),
                         counterText: '',
-                        contentPadding:
-                            const EdgeInsets.all(DriverSpacing.lg),
+                        contentPadding: const EdgeInsets.all(DriverSpacing.lg),
                         border: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(DriverRadius.md),
+                          borderRadius: BorderRadius.circular(DriverRadius.md),
                           borderSide: BorderSide(color: colors.border),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(DriverRadius.md),
+                          borderRadius: BorderRadius.circular(DriverRadius.md),
                           borderSide: BorderSide(color: colors.border),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(DriverRadius.md),
+                          borderRadius: BorderRadius.circular(DriverRadius.md),
                           borderSide: BorderSide(
                             color: colors.primary,
                             width: 2,

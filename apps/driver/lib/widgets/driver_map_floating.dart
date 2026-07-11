@@ -277,7 +277,7 @@ class _EndShiftConfirmDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text(DriverStrings.endShiftConfirm),
+      title: Text(DriverStrings.endShiftConfirm),
       content: Text(
         'You have driven $hours hours and completed $rides rides today.',
         style: typo.bodyMedium.copyWith(color: colors.text),
@@ -293,7 +293,7 @@ class _EndShiftConfirmDialog extends StatelessWidget {
             backgroundColor: colors.error,
             foregroundColor: colors.card,
           ),
-          child: const Text(DriverStrings.endShift),
+          child: Text(DriverStrings.endShift),
         ),
       ],
     );

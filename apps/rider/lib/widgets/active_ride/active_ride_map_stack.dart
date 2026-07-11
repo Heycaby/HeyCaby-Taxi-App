@@ -4,7 +4,6 @@ import 'dart:math' show max, min, pi, sin, cos, sqrt, atan2;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_map/heycaby_map.dart';
-import 'package:heycaby_models/heycaby_models.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' hide Size;
@@ -19,6 +18,27 @@ const _kNlMinLat = 50.75;
 const _kNlMaxLat = 53.55;
 const _kNlMinLng = 3.31;
 const _kNlMaxLng = 7.23;
+
+enum _ActiveRideMapPhase {
+  enRoutePickup,
+  atPickup,
+  inTrip,
+  completed,
+}
+
+_ActiveRideMapPhase _mapPhaseForStatus(String status) {
+  switch (status) {
+    case 'in_progress':
+      return _ActiveRideMapPhase.inTrip;
+    case 'completed':
+      return _ActiveRideMapPhase.completed;
+    case 'driver_arrived':
+    case 'arrived':
+      return _ActiveRideMapPhase.atPickup;
+    default:
+      return _ActiveRideMapPhase.enRoutePickup;
+  }
+}
 
 bool activeRideCoordInNl(double lat, double lng) =>
     lat >= _kNlMinLat &&
@@ -55,8 +75,10 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
   PolylineAnnotationManager? _lineManager;
   bool _styleReady = false;
   int _cameraTick = 0;
-  double? _tripDistanceKm;
-  int? _tripDurationMin;
+  List<Position>? _liveLegGeometry;
+  double? _liveLegAnchorLat;
+  double? _liveLegAnchorLng;
+  String? _liveLegKey;
 
   late final AnimationController _driverPulseController;
 
@@ -67,28 +89,6 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
       vsync: this,
       duration: const Duration(milliseconds: 1800),
     )..repeat(reverse: true);
-    _seedMetricsFromBooking();
-  }
-
-  void _seedMetricsFromBooking() {
-    final booking = widget.booking;
-    if (booking.routeDistanceKm != null && booking.routeDistanceKm! > 0) {
-      _tripDistanceKm = booking.routeDistanceKm;
-    }
-    if (booking.routeDurationMin != null && booking.routeDurationMin! > 0) {
-      _tripDurationMin = booking.routeDurationMin;
-    }
-    if (_tripDistanceKm == null &&
-        booking.pickup != null &&
-        booking.destination != null) {
-      _tripDistanceKm = NearbySupplyService.distanceKm(
-        booking.pickup!.lat,
-        booking.pickup!.lng,
-        booking.destination!.lat,
-        booking.destination!.lng,
-      );
-      _tripDurationMin = ((_tripDistanceKm! / 30) * 60).ceil();
-    }
   }
 
   @override
@@ -107,12 +107,22 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
         oldWidget.booking.pickup?.lng != widget.booking.pickup?.lng ||
         oldWidget.booking.destination?.lat != widget.booking.destination?.lat ||
         oldWidget.booking.destination?.lng != widget.booking.destination?.lng;
-    if (driverMoved || statusChanged || bookingChanged) {
-      _seedMetricsFromBooking();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        unawaited(_refreshRouteAndCamera());
-      });
+    if (!driverMoved && !statusChanged && !bookingChanged) return;
+
+    if (statusChanged || bookingChanged) {
+      _liveLegGeometry = null;
+      _liveLegAnchorLat = null;
+      _liveLegAnchorLng = null;
+      _liveLegKey = null;
     }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (statusChanged || bookingChanged) {
+        unawaited(_refreshRouteAndCamera(fullCamera: true));
+      } else if (driverMoved) {
+        unawaited(_onDriverMoved());
+      }
+    });
   }
 
   Future<void> _onMapCreated(MapboxMap map) async {
@@ -122,15 +132,7 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
       map.compass.updateSettings(CompassSettings(enabled: false)),
       map.attribution.updateSettings(AttributionSettings(enabled: false)),
       map.logo.updateSettings(LogoSettings(enabled: false)),
-      map.location.updateSettings(
-        LocationComponentSettings(
-          enabled: true,
-          pulsingEnabled: true,
-          pulsingColor: 0xFF4285F4,
-          pulsingMaxRadius: 36,
-          showAccuracyRing: true,
-        ),
-      ),
+      map.location.updateSettings(LocationComponentSettings(enabled: false)),
     ]);
     await map.setBounds(
       CameraBoundsOptions(
@@ -162,15 +164,52 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
     _lineManager ??= await map.annotations.createPolylineAnnotationManager();
   }
 
-  Future<void> _refreshRouteAndCamera() async {
+  Future<void> _refreshRouteAndCamera({bool fullCamera = true}) async {
     if (!_styleReady || _mapboxMap == null) return;
     final pickup = widget.booking.pickup;
     if (pickup == null) return;
 
     await _ensureLineManager();
     await _drawRouteLines();
-    await _fitCamera();
+    if (fullCamera) {
+      await _fitCamera();
+    }
     if (mounted) setState(() => _cameraTick++);
+  }
+
+  Future<void> _onDriverMoved() async {
+    if (!_styleReady || _mapboxMap == null) return;
+    await _ensureLineManager();
+    await _drawRouteLines();
+    final driver = widget.driverLocation;
+    if (driver == null) return;
+    final phase = _mapPhaseForStatus(widget.status);
+    if (phase == _ActiveRideMapPhase.inTrip ||
+        phase == _ActiveRideMapPhase.enRoutePickup) {
+      await _followDriver(driver);
+    } else if (phase == _ActiveRideMapPhase.completed ||
+        phase == _ActiveRideMapPhase.atPickup) {
+      await _fitCamera();
+    }
+    if (mounted) setState(() => _cameraTick++);
+  }
+
+  Future<void> _followDriver(DriverLocation driver) async {
+    final map = _mapboxMap;
+    if (map == null || !activeRideCoordInNl(driver.lat, driver.lng)) return;
+    await map.easeTo(
+      CameraOptions(
+        center: Point(coordinates: Position(driver.lng, driver.lat)),
+        zoom: 14.2,
+        padding: MbxEdgeInsets(
+          top: 120,
+          left: 48,
+          bottom: widget.cameraBottomPadding,
+          right: 48,
+        ),
+      ),
+      MapAnimationOptions(duration: 650),
+    );
   }
 
   Future<void> _drawRouteLines() async {
@@ -184,100 +223,100 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
 
     await manager.deleteAll();
     final colors = ref.read(colorsProvider);
-    final inTrip = widget.status == 'in_progress';
+    final phase = _mapPhaseForStatus(widget.status);
 
-    if (destination != null &&
+    if (phase == _ActiveRideMapPhase.completed ||
+        phase == _ActiveRideMapPhase.atPickup) {
+      return;
+    }
+
+    if (phase == _ActiveRideMapPhase.inTrip &&
+        driver != null &&
+        destination != null &&
+        activeRideCoordInNl(driver.lat, driver.lng) &&
         activeRideCoordInNl(destination.lat, destination.lng)) {
-      final tripGeometry = await _fetchTripGeometry(pickup, destination);
-      if (tripGeometry.length >= 2) {
+      final geometry = await _liveLegGeometryFor(
+        fromLat: driver.lat,
+        fromLng: driver.lng,
+        toLat: destination.lat,
+        toLng: destination.lng,
+        legKey: 'trip:${destination.lat},${destination.lng}',
+      );
+      if (geometry.length >= 2) {
         await manager.create(
           PolylineAnnotationOptions(
-            geometry: LineString(coordinates: tripGeometry),
+            geometry: LineString(coordinates: geometry),
             lineColor: colors.success.toARGB32(),
             lineWidth: 5.5,
-            lineOpacity: 0.9,
+            lineOpacity: 0.92,
+          ),
+        );
+      }
+      return;
+    }
+
+    if (phase == _ActiveRideMapPhase.enRoutePickup &&
+        driver != null &&
+        activeRideCoordInNl(driver.lat, driver.lng)) {
+      final geometry = await _liveLegGeometryFor(
+        fromLat: driver.lat,
+        fromLng: driver.lng,
+        toLat: pickup.lat,
+        toLng: pickup.lng,
+        legKey: 'pickup:${pickup.lat},${pickup.lng}',
+      );
+      if (geometry.length >= 2) {
+        await manager.create(
+          PolylineAnnotationOptions(
+            geometry: LineString(coordinates: geometry),
+            lineColor: colors.warning.toARGB32(),
+            lineWidth: 4.5,
+            lineOpacity: 0.85,
           ),
         );
       }
     }
-
-    if (!inTrip &&
-        driver != null &&
-        activeRideCoordInNl(driver.lat, driver.lng)) {
-      await manager.create(
-        PolylineAnnotationOptions(
-          geometry: LineString(
-            coordinates: [
-              Position(driver.lng, driver.lat),
-              Position(pickup.lng, pickup.lat),
-            ],
-          ),
-          lineColor: colors.warning.toARGB32(),
-          lineWidth: 4,
-          lineOpacity: 0.75,
-        ),
-      );
-    } else if (inTrip &&
-        driver != null &&
-        destination != null &&
-        activeRideCoordInNl(driver.lat, driver.lng)) {
-      await manager.create(
-        PolylineAnnotationOptions(
-          geometry: LineString(
-            coordinates: [
-              Position(driver.lng, driver.lat),
-              Position(destination.lng, destination.lat),
-            ],
-          ),
-          lineColor: colors.accent.toARGB32(),
-          lineWidth: 4.5,
-          lineOpacity: 0.85,
-        ),
-      );
-    }
   }
 
-  Future<List<Position>> _fetchTripGeometry(
-    AddressResult pickup,
-    AddressResult destination,
-  ) async {
+  Future<List<Position>> _liveLegGeometryFor({
+    required double fromLat,
+    required double fromLng,
+    required double toLat,
+    required double toLng,
+    required String legKey,
+  }) async {
+    final movedKm = _liveLegAnchorLat == null
+        ? double.infinity
+        : _haversineKm(_liveLegAnchorLat!, _liveLegAnchorLng!, fromLat, fromLng);
+    if (_liveLegGeometry != null &&
+        _liveLegKey == legKey &&
+        movedKm < 0.2) {
+      return _liveLegGeometry!;
+    }
+
     final routingService = RoutingService(
       accessToken: const String.fromEnvironment('MAPBOX_ACCESS_TOKEN'),
     );
-
     final route = await routingService.fetchRoute(
-      fromLat: pickup.lat,
-      fromLng: pickup.lng,
-      toLat: destination.lat,
-      toLng: destination.lng,
+      fromLat: fromLat,
+      fromLng: fromLng,
+      toLat: toLat,
+      toLng: toLng,
     );
 
-    if (route != null) {
-      if (mounted) {
-        setState(() {
-          _tripDistanceKm = route.distanceKm;
-          _tripDurationMin = route.durationMinutes;
-        });
-      }
-      return route.coordinates.map((c) => Position(c[0], c[1])).toList();
-    }
+    final geometry = route != null && route.coordinates.length >= 2
+        ? route.coordinates.map((c) => Position(c[0], c[1])).toList()
+        : <Position>[
+            Position(fromLng, fromLat),
+            Position(toLng, toLat),
+          ];
 
-    final km = _haversineKm(
-      pickup.lat,
-      pickup.lng,
-      destination.lat,
-      destination.lng,
-    );
-    if (mounted) {
-      setState(() {
-        _tripDistanceKm = km;
-        _tripDurationMin = ((km / 30) * 60).ceil();
-      });
-    }
-    return [
-      Position(pickup.lng, pickup.lat),
-      Position(destination.lng, destination.lat),
-    ];
+    _liveLegGeometry = geometry;
+    _liveLegAnchorLat = fromLat;
+    _liveLegAnchorLng = fromLng;
+    _liveLegKey = legKey;
+
+    return geometry;
   }
 
   Future<void> _fitCamera() async {
@@ -287,14 +326,33 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
     if (map == null || pickup == null) return;
 
     final driver = widget.driverLocation;
-    final coords = <({double lat, double lng})>[
-      (lat: pickup.lat, lng: pickup.lng),
-    ];
-    if (destination != null && activeRideCoordInNl(destination.lat, destination.lng)) {
-      coords.add((lat: destination.lat, lng: destination.lng));
-    }
-    if (driver != null && activeRideCoordInNl(driver.lat, driver.lng)) {
-      coords.add((lat: driver.lat, lng: driver.lng));
+    final phase = _mapPhaseForStatus(widget.status);
+    final coords = <({double lat, double lng})>[];
+
+    if (phase == _ActiveRideMapPhase.completed ||
+        phase == _ActiveRideMapPhase.atPickup) {
+      if (driver != null && activeRideCoordInNl(driver.lat, driver.lng)) {
+        coords.add((lat: driver.lat, lng: driver.lng));
+      }
+      if (destination != null &&
+          activeRideCoordInNl(destination.lat, destination.lng)) {
+        coords.add((lat: destination.lat, lng: destination.lng));
+      } else if (phase == _ActiveRideMapPhase.atPickup) {
+        coords.add((lat: pickup.lat, lng: pickup.lng));
+      }
+    } else if (phase == _ActiveRideMapPhase.inTrip) {
+      if (driver != null && activeRideCoordInNl(driver.lat, driver.lng)) {
+        coords.add((lat: driver.lat, lng: driver.lng));
+      }
+      if (destination != null &&
+          activeRideCoordInNl(destination.lat, destination.lng)) {
+        coords.add((lat: destination.lat, lng: destination.lng));
+      }
+    } else {
+      if (driver != null && activeRideCoordInNl(driver.lat, driver.lng)) {
+        coords.add((lat: driver.lat, lng: driver.lng));
+      }
+      coords.add((lat: pickup.lat, lng: pickup.lng));
     }
 
     if (coords.length == 1) {
@@ -327,14 +385,20 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
 
     final latSpan = max(maxLat - minLat, 0.008);
     final lngSpan = max(maxLng - minLng, 0.008);
-    final tripKm = destination != null
-        ? _haversineKm(
-            pickup.lat,
-            pickup.lng,
-            destination.lat,
-            destination.lng,
-          )
-        : 5.0;
+    final phaseSpanKm = switch (phase) {
+      _ActiveRideMapPhase.completed || _ActiveRideMapPhase.atPickup => 2.0,
+      _ActiveRideMapPhase.inTrip => destination != null && driver != null
+          ? _haversineKm(
+              driver.lat,
+              driver.lng,
+              destination.lat,
+              destination.lng,
+            )
+          : 8.0,
+      _ActiveRideMapPhase.enRoutePickup => driver != null
+          ? _haversineKm(driver.lat, driver.lng, pickup.lat, pickup.lng)
+          : 5.0,
+    };
 
     final westPad = max(lngSpan * 0.18, 0.014);
     final eastPad = max(lngSpan * 0.18, 0.014);
@@ -363,8 +427,12 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
       null,
     );
 
-    final boundsZoom = camera.zoom ?? _minZoomForTripKm(tripKm);
-    final zoom = (boundsZoom - 0.35).clamp(7.5, 15.5);
+    final boundsZoom = camera.zoom ?? _minZoomForTripKm(phaseSpanKm);
+    final zoomCap = phase == _ActiveRideMapPhase.completed ||
+            phase == _ActiveRideMapPhase.atPickup
+        ? 16.0
+        : 15.5;
+    final zoom = (boundsZoom - 0.35).clamp(7.5, zoomCap);
 
     await map.flyTo(
       CameraOptions(
@@ -440,16 +508,22 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
     final pickup = widget.booking.pickup;
     final destination = widget.booking.destination;
     final driver = widget.driverLocation;
-    final inTrip = widget.status == 'in_progress';
-    final enRoute = widget.status == 'assigned' ||
-        widget.status == 'accepted' ||
-        widget.status == 'driver_found';
+    final phase = _mapPhaseForStatus(widget.status);
     final topPad = MediaQuery.paddingOf(context).top;
 
-    double? chipDistanceKm = _tripDistanceKm;
-    int? chipDurationMin = _tripDurationMin;
-    if (driver != null) {
-      if (inTrip && destination != null) {
+    final showPickupPin = phase == _ActiveRideMapPhase.enRoutePickup ||
+        phase == _ActiveRideMapPhase.atPickup;
+    final showDestinationPin = phase == _ActiveRideMapPhase.inTrip ||
+        phase == _ActiveRideMapPhase.completed;
+
+    double? chipDistanceKm;
+    int? chipDurationMin;
+    String? chipHeadline;
+    if (phase == _ActiveRideMapPhase.completed ||
+        phase == _ActiveRideMapPhase.atPickup) {
+      chipHeadline = l10n.tripComplete;
+    } else if (driver != null) {
+      if (phase == _ActiveRideMapPhase.inTrip && destination != null) {
         chipDistanceKm = NearbySupplyService.distanceKm(
           driver.lat,
           driver.lng,
@@ -458,7 +532,7 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
         );
         chipDurationMin = widget.etaMinutes ??
             ((chipDistanceKm / 28.0) * 60.0).ceil().clamp(1, 90);
-      } else if (enRoute && pickup != null) {
+      } else if (phase == _ActiveRideMapPhase.enRoutePickup && pickup != null) {
         chipDistanceKm = NearbySupplyService.distanceKm(
           driver.lat,
           driver.lng,
@@ -485,10 +559,10 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
           ),
           TripSummaryMapPinsOverlay(
             mapboxMap: _mapboxMap,
-            pickupLat: pickup?.lat,
-            pickupLng: pickup?.lng,
-            destinationLat: destination?.lat,
-            destinationLng: destination?.lng,
+            pickupLat: showPickupPin ? pickup?.lat : null,
+            pickupLng: showPickupPin ? pickup?.lng : null,
+            destinationLat: showDestinationPin ? destination?.lat : null,
+            destinationLng: showDestinationPin ? destination?.lng : null,
             pickupColor: colors.warning,
             dropoffColor: colors.success,
             cameraTick: _cameraTick,
@@ -503,7 +577,7 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
             pulse: _driverPulseController,
             cameraTick: _cameraTick,
           ),
-          if (chipDistanceKm != null && chipDurationMin != null)
+          if (chipHeadline != null || (chipDistanceKm != null && chipDurationMin != null))
             Positioned(
               top: topPad + 10,
               left: 16,
@@ -514,7 +588,13 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
                   typo: typo,
                   distanceKm: chipDistanceKm,
                   durationMin: chipDurationMin,
-                  etaLabel: _etaLabel(l10n, inTrip),
+                  headline: chipHeadline,
+                  etaLabel: chipHeadline == null
+                      ? _etaLabel(
+                          l10n,
+                          phase == _ActiveRideMapPhase.inTrip,
+                        )
+                      : null,
                 ),
               ),
             ),
@@ -536,21 +616,26 @@ class _ActiveRideMapMetricsChip extends StatelessWidget {
   const _ActiveRideMapMetricsChip({
     required this.colors,
     required this.typo,
-    required this.distanceKm,
-    required this.durationMin,
+    this.distanceKm,
+    this.durationMin,
+    this.headline,
     this.etaLabel,
   });
 
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
-  final double distanceKm;
-  final int durationMin;
+  final double? distanceKm;
+  final int? durationMin;
+  final String? headline;
   final String? etaLabel;
 
   @override
   Widget build(BuildContext context) {
-    final tripLabel =
-        '${distanceKm.toStringAsFixed(1)} km · $durationMin min';
+    final tripLabel = headline ??
+        (distanceKm != null && durationMin != null
+            ? '${distanceKm!.toStringAsFixed(1)} km · $durationMin min'
+            : null);
+    if (tripLabel == null) return const SizedBox.shrink();
 
     return Material(
       color: colors.card.withValues(alpha: 0.96),
@@ -652,43 +737,48 @@ class _ActiveRideDriverMapMarkerState extends State<ActiveRideDriverMapMarker> {
     if (pos == null) return const SizedBox.shrink();
 
     return IgnorePointer(
-      child: AnimatedBuilder(
-        animation: widget.pulse,
-        builder: (context, child) {
-          final scale = 1.0 + widget.pulse.value * 0.08;
-          return Positioned(
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
             left: pos.dx - 22,
             top: pos.dy - 22,
-            child: Transform.rotate(
-              angle: (widget.heading ?? 0) * pi / 180,
-              child: Transform.scale(
-                scale: scale,
-                child: child,
+            child: AnimatedBuilder(
+              animation: widget.pulse,
+              builder: (context, child) {
+                final scale = 1.0 + widget.pulse.value * 0.08;
+                return Transform.rotate(
+                  angle: (widget.heading ?? 0) * pi / 180,
+                  child: Transform.scale(
+                    scale: scale,
+                    child: child,
+                  ),
+                );
+              },
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: widget.color.withValues(alpha: 0.2)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: widget.color.withValues(alpha: 0.18),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.local_taxi_rounded,
+                  color: widget.color,
+                  size: 22,
+                ),
               ),
             ),
-          );
-        },
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            border: Border.all(color: widget.color.withValues(alpha: 0.2)),
-            boxShadow: [
-              BoxShadow(
-                color: widget.color.withValues(alpha: 0.18),
-                blurRadius: 14,
-                offset: const Offset(0, 6),
-              ),
-            ],
           ),
-          child: Icon(
-            Icons.local_taxi_rounded,
-            color: widget.color,
-            size: 22,
-          ),
-        ),
+        ],
       ),
     );
   }

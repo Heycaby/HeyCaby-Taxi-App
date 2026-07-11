@@ -9,11 +9,13 @@ class MarketplaceIntroStrip extends StatelessWidget {
     required this.colors,
     required this.typo,
     required this.l10n,
+    this.isTaxiTerug = false,
   });
 
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
   final AppLocalizations l10n;
+  final bool isTaxiTerug;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +31,9 @@ class MarketplaceIntroStrip extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            l10n.marketplaceOfferHeadline,
+            isTaxiTerug
+                ? l10n.taxiTerugOfferHeadline
+                : l10n.marketplaceOfferHeadline,
             style: typo.titleSmall.copyWith(
               color: colors.text,
               fontWeight: FontWeight.w800,
@@ -37,7 +41,7 @@ class MarketplaceIntroStrip extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            l10n.marketplaceIntroBody,
+            isTaxiTerug ? l10n.taxiTerugIntroBody : l10n.marketplaceIntroBody,
             style: typo.bodySmall.copyWith(
               color: colors.textMid,
               height: 1.4,

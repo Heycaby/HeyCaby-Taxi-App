@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +9,7 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 import 'l10n/driver_strings.dart';
 import 'providers/driver_data_providers.dart';
 import 'providers/driver_locale_provider.dart';
+import 'providers/driver_nav_app_pref_provider.dart';
 import 'providers/driver_state_provider.dart';
 import 'router.dart';
 import 'services/driver_fcm_scope.dart';
@@ -32,6 +35,7 @@ class _HeyCabyDriverAppState extends ConsumerState<HeyCabyDriverApp> {
       _didLoadPrefs = true;
       ref.read(themeProvider.notifier).loadSavedTheme();
       ref.read(localeProvider.notifier).loadSaved();
+      unawaited(ref.read(driverNavAppPrefProvider.future));
     });
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted || _scheduledSessionHydration) return;

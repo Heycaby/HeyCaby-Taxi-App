@@ -5,7 +5,6 @@ import {
   createClient,
   serviceRoleKey,
   supabaseUrl,
-  WEBHOOK_SECRET,
 } from "./config.ts";
 import type { AgentNotificationRow, WebhookPayload } from "./notify_types.ts";
 import {
@@ -14,7 +13,19 @@ import {
   sendFcmNotification,
 } from "./notify_push.ts";
 import { appendPingAudit } from "./ping_helpers.ts";
-import { json, ok, safeCompare } from "./util.ts";
+import { json, safeCompare } from "./util.ts";
+
+function deliveryJson(
+  notification: AgentNotificationRow,
+  result: Record<string, unknown>,
+): Response {
+  return json({
+    category: notification.category,
+    channel: notification.channel,
+    target: notification.target,
+    ...result,
+  });
+}
 
 export async function deliverNotification(
   supabase: SupabaseClient,
@@ -37,7 +48,11 @@ export async function deliverNotification(
           "deliverNotification: could not resolve rider for ride_request_id",
           rideRequestId,
         );
-        return ok();
+        return deliveryJson(n, {
+          ok: false,
+          skipped: true,
+          reason: "missing_rider",
+        });
       }
       n = { ...n, user_id: riderId };
     } else {
@@ -47,14 +62,22 @@ export async function deliverNotification(
           "deliverNotification: could not resolve driver for ride_request_id",
           rideRequestId,
         );
-        return ok();
+        return deliveryJson(n, {
+          ok: false,
+          skipped: true,
+          reason: "missing_driver",
+        });
       }
       n = { ...n, user_id: driverId };
     }
   }
   if (!n.user_id) {
     console.warn("deliverNotification: no user_id, skipping", n.category);
-    return ok();
+    return deliveryJson(n, {
+      ok: false,
+      skipped: true,
+      reason: "missing_recipient",
+    });
   }
 
   if (n.category === "preride_request" && n.data?.ride_request_id) {
@@ -67,7 +90,11 @@ export async function deliverNotification(
         "deliverNotification: skipping duplicate preride_request",
         n.data.ride_request_id,
       );
-      return ok();
+      return deliveryJson(n, {
+        ok: true,
+        skipped: true,
+        reason: "duplicate_preride_request",
+      });
     }
   }
 
@@ -92,49 +119,53 @@ export async function deliverNotification(
     return json({ error: insertError.message }, 500);
   }
 
+  let pushAttempted = false;
+  let pushDeviceCount = 0;
+  let pushAcceptedCount = 0;
+  let pushFailedCount = 0;
+  let invalidTokenCount = 0;
+  const pushErrorCodes = new Set<string>();
+  let deliveredAuditWritten = false;
+
   if (n.channel !== "in_app" && n.channel !== "silent") {
-    if (n.target === "driver") {
-      const { data: rows } = await supabase
-        .from("push_devices")
-        .select("fcm_token")
-        .eq("driver_id", n.user_id)
-        .eq("app_role", "driver");
+    pushAttempted = true;
+    let devices = supabase.from("push_devices").select("id, fcm_token");
+    devices = n.target === "driver"
+      ? devices.eq("driver_id", n.user_id).eq("app_role", "driver")
+      : devices.eq("rider_identity_id", n.user_id).eq("app_role", "rider");
+    const { data: rows, error: devicesError } = await devices;
+    if (devicesError) {
+      console.error("driver-agent: push device lookup failed", devicesError.code);
+      pushErrorCodes.add("device_lookup_failed");
+    }
 
-      for (const row of rows ?? []) {
-        const token = row?.fcm_token as string | null;
-        await sendFcmNotification(token, {
-          title: n.title,
-          body: n.body,
-          data: {
-            ...n.data,
-            notification_id: inserted?.id,
-            category: n.category,
-          },
-          priority: n.priority,
-        });
+    for (const row of rows ?? []) {
+      const token = row?.fcm_token as string | null;
+      if (!token || token.length < 10) continue;
+      pushDeviceCount += 1;
+      const result = await sendFcmNotification(token, {
+        title: n.title,
+        body: n.body,
+        data: {
+          ...n.data,
+          notification_id: inserted?.id,
+          category: n.category,
+        },
+        priority: n.priority,
+      });
+      if (result.ok) {
+        pushAcceptedCount += 1;
+        continue;
       }
-    } else {
-      const { data: rows } = await supabase
-        .from("push_devices")
-        .select("fcm_token")
-        .eq("rider_identity_id", n.user_id)
-        .eq("app_role", "rider");
-
-      for (const row of rows ?? []) {
-        const token = row?.fcm_token as string | null;
-        await sendFcmNotification(token, {
-          title: n.title,
-          body: n.body,
-          data: {
-            ...n.data,
-            notification_id: inserted?.id,
-            category: n.category,
-          },
-          priority: n.priority,
-        });
+      pushFailedCount += 1;
+      if (result.errorCode) pushErrorCodes.add(result.errorCode);
+      if (result.permanentFailure && row?.id) {
+        invalidTokenCount += 1;
+        await supabase.from("push_devices").delete().eq("id", row.id);
       }
     }
-    if (inserted?.id) {
+
+    if (inserted?.id && pushAcceptedCount > 0) {
       await supabase.from("notifications").update({
         push_sent_at: new Date().toISOString(),
       }).eq("id", inserted.id);
@@ -154,6 +185,7 @@ export async function deliverNotification(
             ping_kind: n.data.ping_kind ?? null,
           },
         );
+        deliveredAuditWritten = true;
       }
     }
   }
@@ -167,20 +199,40 @@ export async function deliverNotification(
       }`
       : "manual_preride_request",
     input: payloadForLog,
-    output: { notification_id: inserted?.id },
+    output: {
+      notification_id: inserted?.id,
+      push_attempted: pushAttempted,
+      push_device_count: pushDeviceCount,
+      push_accepted_count: pushAcceptedCount,
+      push_failed_count: pushFailedCount,
+      invalid_token_count: invalidTokenCount,
+      push_error_codes: [...pushErrorCodes],
+      delivered_audit_written: deliveredAuditWritten,
+    },
     notification_id: inserted?.id ?? null,
   });
 
-  return ok();
+  return deliveryJson(n, {
+    ok: true,
+    notification_id: inserted?.id ?? null,
+    push_attempted: pushAttempted,
+    push_device_count: pushDeviceCount,
+    push_accepted_count: pushAcceptedCount,
+    push_failed_count: pushFailedCount,
+    invalid_token_count: invalidTokenCount,
+    push_error_codes: [...pushErrorCodes],
+    delivered_audit_written: deliveredAuditWritten,
+  });
 }
 
 export async function authorizeManualPreride(
   req: Request,
   rideRequestId: string,
+  webhookSecret = "",
 ): Promise<boolean> {
-  if (WEBHOOK_SECRET) {
+  if (webhookSecret) {
     const incomingSecret = req.headers.get("x-webhook-secret") ?? "";
-    if (await safeCompare(incomingSecret, WEBHOOK_SECRET)) return true;
+    if (await safeCompare(incomingSecret, webhookSecret)) return true;
   }
   if (!anonKey) return false;
   const auth = req.headers.get("Authorization") ?? "";

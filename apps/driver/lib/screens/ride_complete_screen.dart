@@ -10,13 +10,16 @@ import 'package:heycaby_utils/heycaby_utils.dart';
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
 import '../providers/driver_state_provider.dart';
+import '../providers/driver_taxi_terug_stats_provider.dart';
 import '../services/driver_data_service.dart';
+import '../services/driver_operational_restore_service.dart';
 import '../utils/driver_runtime_refresh.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
+import '../widgets/driver_collect_payment_sheet.dart';
 import '../widgets/driver_reward_screen_body.dart';
 
-/// **Reward Screen** — celebrate completion; record payment; rate rider.
+/// **Reward Screen** — celebrate completion; collect payment; rate rider.
 class RideCompleteScreen extends ConsumerStatefulWidget {
   const RideCompleteScreen({super.key, required this.rideId});
 
@@ -27,31 +30,28 @@ class RideCompleteScreen extends ConsumerStatefulWidget {
 }
 
 class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
-  bool _sendingReceipt = false;
   bool _returnModePromptShown = false;
+  bool _paymentConfirmed = false;
   String? _expectedLabel;
   String? _baseFareLabel;
   String? _waitingFeeLabel;
   bool _waitingFeeWaived = false;
   num? _expectedAmount;
-  String _method = 'cash';
-  final TextEditingController _paidCtrl = TextEditingController();
-  final TextEditingController _noteCtrl = TextEditingController();
+  RidePaymentMethod _initialMethod = RidePaymentMethod.cash;
 
   @override
   void initState() {
     super.initState();
     _loadExpectedAmount();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(_maybeShowReturnModePrompt());
+      unawaited(_runPostCompleteFlow());
     });
   }
 
-  @override
-  void dispose() {
-    _paidCtrl.dispose();
-    _noteCtrl.dispose();
-    super.dispose();
+  Future<void> _runPostCompleteFlow() async {
+    await _showCollectPaymentSheet();
+    if (!mounted || !_paymentConfirmed) return;
+    await _maybeShowReturnModePrompt();
   }
 
   Future<void> _loadExpectedAmount() async {
@@ -59,7 +59,7 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
       final row = await HeyCabySupabase.client
           .from('ride_requests')
           .select(
-            'quoted_fare, offered_fare, estimated_fare, final_fare, marketplace_offered_fare, currency, waiting_fee_cents, waiting_fee_waived',
+            'quoted_fare, offered_fare, estimated_fare, final_fare, marketplace_offered_fare, currency, waiting_fee_cents, waiting_fee_waived, payment_methods, payment_method',
           )
           .eq('id', widget.rideId)
           .maybeSingle();
@@ -76,49 +76,48 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
       final currency = (row['currency'] as String?)?.trim().toUpperCase();
       final prefix =
           (currency == null || currency == 'EUR') ? 'EUR ' : '$currency ';
+      final methods = row['payment_methods'];
+      final methodRaw = row['payment_method']?.toString();
+      final bookingMethod = methods is List && methods.isNotEmpty
+          ? methods.first.toString()
+          : methodRaw;
       setState(() {
         _expectedAmount = totalAmount;
         _baseFareLabel = '$prefix${amountValue.toStringAsFixed(2)}';
         _waitingFeeLabel = '$prefix${waitingAmount.toStringAsFixed(2)}';
         _waitingFeeWaived = waitingFeeWaived;
         _expectedLabel = '$prefix${totalAmount.toStringAsFixed(2)}';
-        _paidCtrl.text = totalAmount.toStringAsFixed(2);
+        _initialMethod = RidePaymentMethod.fromId(bookingMethod);
       });
     } catch (_) {}
   }
 
-  Future<void> _sendReceipt() async {
-    final paid = num.tryParse(_paidCtrl.text.replaceAll(',', '.').trim());
-    if (paid == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.enterValidPaidAmount)),
-      );
+  Future<void> _showCollectPaymentSheet() async {
+    if (!mounted || _paymentConfirmed) return;
+    if (_expectedAmount == null) {
+      await _loadExpectedAmount();
+    }
+    if (!mounted || _paymentConfirmed) return;
+    final colors = DriverColors.fromTheme(ref.read(colorsProvider));
+    final typography = DriverTypography.fromTheme(ref.read(typographyProvider));
+    final fareEuro = _expectedAmount?.toDouble() ?? 0;
+    final result = await showDriverCollectPaymentSheet(
+      context,
+      colors: colors,
+      typography: typography,
+      rideId: widget.rideId,
+      fareEuro: fareEuro,
+      initialMethod: _initialMethod,
+    );
+    if (!mounted) return;
+    if (result?.confirmed == true) {
+      setState(() => _paymentConfirmed = true);
       return;
     }
-    setState(() => _sendingReceipt = true);
-    try {
-      await ref.read(driverApiProvider).createReceipt(payload: {
-        'ride_request_id': widget.rideId,
-        'payer': 'rider',
-        'payee': 'driver',
-        'expected_amount': _expectedAmount,
-        'paid_amount': paid,
-        'payment_method': _method,
-        'note': _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
-      });
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.receiptSent)),
-      );
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.receiptSendFailed)),
-      );
-    } finally {
-      if (mounted) setState(() => _sendingReceipt = false);
-    }
+    // Sheet must be confirmed before leaving — re-prompt if needed.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_showCollectPaymentSheet());
+    });
   }
 
   Future<void> _maybeShowReturnModePrompt() async {
@@ -142,6 +141,8 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
               await ref.read(driverDataServiceProvider).activateReturnMode(
                     destinationLabel: status.destinationLabel,
                     destinationZoneId: status.destinationZoneId,
+                    destinationLat: status.destinationLat,
+                    destinationLng: status.destinationLng,
                     pickupRadiusKm: status.pickupRadiusKm,
                     returnDiscountPct: status.returnDiscountPct > 0
                         ? status.returnDiscountPct
@@ -155,7 +156,7 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
           if (ctx.mounted) Navigator.of(ctx).pop();
           if (!mounted || result.ok) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(DriverStrings.returnModeActivationFailed)),
+            SnackBar(content: Text(result.activationErrorMessage)),
           );
         },
         onDismiss: () async {
@@ -174,6 +175,15 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
         DriverTypography.fromTheme(ref.watch(typographyProvider));
     final driver = ref.watch(driverStateProvider);
 
+    if (!_paymentConfirmed) {
+      return Scaffold(
+        backgroundColor: colors.background,
+        body: Center(
+          child: CircularProgressIndicator(color: colors.primary),
+        ),
+      );
+    }
+
     return DriverRewardScreenBody(
       colors: colors,
       typography: typography,
@@ -183,20 +193,14 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
       baseFareLabel: _baseFareLabel,
       waitingFeeLabel: _waitingFeeLabel,
       waitingFeeWaived: _waitingFeeWaived,
-      paidController: _paidCtrl,
-      noteController: _noteCtrl,
-      paymentMethod: _method,
-      sendingReceipt: _sendingReceipt,
+      paymentConfirmed: _paymentConfirmed,
       pickupLat: driver.pickupLat,
       pickupLng: driver.pickupLng,
       destLat: driver.destinationLat,
       destLng: driver.destinationLng,
-      onPaymentMethodChanged: (v) => setState(() => _method = v),
-      onSendReceipt: _sendReceipt,
       onRateRider: () => context.push('/driver/ride/rate/${widget.rideId}'),
-      onSkip: () {
-        final wasPendingBreak =
-            ref.read(driverStateProvider).pendingBreak;
+      onSkip: () async {
+        final wasPendingBreak = ref.read(driverStateProvider).pendingBreak;
         ref.read(driverStateProvider.notifier).clearActiveRide();
         if (wasPendingBreak) {
           unawaited(
@@ -204,6 +208,13 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
           );
         }
         unawaited(refreshDriverRuntime(ref));
+        ref.invalidate(driverTaxiTerugStatsProvider);
+        final resumed = await resumeActivatedTaxiTerugRideIfAny(
+          ref,
+          GoRouter.of(context),
+        );
+        if (!context.mounted) return;
+        if (resumed) return;
         context.go('/driver');
       },
     );
@@ -293,6 +304,16 @@ class _ReturnModePromptSheet extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+              if (status.kmFromHome != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  DriverStrings.returnModeKmFromHome(status.kmFromHome!),
+                  style: typo.labelMedium.copyWith(
+                    color: colors.success,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
               const SizedBox(height: 18),
               Container(
                 width: double.infinity,
@@ -318,9 +339,6 @@ class _ReturnModePromptSheet extends StatelessWidget {
                     Text(
                       DriverStrings.returnModeActiveBody(
                         pickupRadiusKm: status.pickupRadiusKm,
-                        discountPct: status.returnDiscountPct > 0
-                            ? status.returnDiscountPct
-                            : 15,
                       ),
                       style: typo.bodySmall.copyWith(
                         color: colors.textMid,

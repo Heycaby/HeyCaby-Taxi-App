@@ -59,6 +59,14 @@ export type FcmSendInput = {
   androidChannelId?: string;
 };
 
+export type FcmSendResult = {
+  ok: boolean;
+  permanentFailure: boolean;
+  statusCode?: number;
+  errorCode?: string;
+  providerMessageId?: string;
+};
+
 function stringifyData(
   data: Record<string, unknown> | undefined,
 ): Record<string, string> | undefined {
@@ -74,13 +82,25 @@ function stringifyData(
 export async function sendFcmV1ToToken(
   deviceToken: string,
   nudge: FcmSendInput,
-): Promise<boolean> {
+): Promise<FcmSendResult> {
   const access = await getFirebaseAccessToken();
   const projectId = getFirebaseProjectId();
-  if (!access || !projectId) return false;
+  if (!access || !projectId) {
+    return {
+      ok: false,
+      permanentFailure: false,
+      errorCode: "fcm_not_configured",
+    };
+  }
 
   const high = nudge.priority === "critical" || nudge.priority === "high";
   const dataPayload = stringifyData(nudge.data);
+  const incoming = dataPayload?.category === "incoming_ride";
+  const inviteId = dataPayload?.ride_invite_id;
+  const rideRequestId = dataPayload?.ride_request_id;
+  const expiresAt = dataPayload?.expires_at
+    ? Date.parse(dataPayload.expires_at)
+    : Number.NaN;
 
   const androidBlock: Record<string, unknown> = {
     priority: high ? "HIGH" : "NORMAL",
@@ -106,10 +126,20 @@ export async function sendFcmV1ToToken(
     apns: {
       headers: {
         "apns-priority": high ? "10" : "5",
+        "apns-push-type": "alert",
+        ...(inviteId ? { "apns-collapse-id": inviteId } : {}),
+        ...(Number.isFinite(expiresAt)
+          ? { "apns-expiration": Math.floor(expiresAt / 1000).toString() }
+          : {}),
       },
       payload: {
         aps: {
-          sound: "default",
+          sound: incoming ? "heycaby_ride_request.wav" : "default",
+          ...(incoming ? { category: "HEYCABY_INCOMING_RIDE" } : {}),
+          ...(rideRequestId ? { "thread-id": rideRequestId } : {}),
+          ...(incoming && high
+            ? { "interruption-level": "time-sensitive" }
+            : {}),
         },
       },
     },
@@ -132,8 +162,39 @@ export async function sendFcmV1ToToken(
 
   if (!res.ok) {
     const errText = await res.text();
-    console.error("FCM v1 send failed:", res.status, errText);
-    return false;
+    let errorCode = "provider_error";
+    try {
+      const parsed = JSON.parse(errText) as {
+        error?: {
+          status?: string;
+          details?: Array<{ errorCode?: string }>;
+        };
+      };
+      errorCode = parsed.error?.details?.find((d) => d.errorCode)?.errorCode ??
+        parsed.error?.status ?? errorCode;
+    } catch {
+      // Keep logs free of full tokens and provider response bodies.
+    }
+    console.error("FCM v1 send failed:", res.status, errorCode);
+    return {
+      ok: false,
+      permanentFailure: errorCode === "UNREGISTERED" ||
+        errorCode === "SENDER_ID_MISMATCH",
+      statusCode: res.status,
+      errorCode,
+    };
   }
-  return true;
+  let providerMessageId: string | undefined;
+  try {
+    const parsed = await res.json() as { name?: string };
+    providerMessageId = parsed.name;
+  } catch {
+    // A successful HTTP status is the provider acceptance contract.
+  }
+  return {
+    ok: true,
+    permanentFailure: false,
+    statusCode: res.status,
+    providerMessageId,
+  };
 }

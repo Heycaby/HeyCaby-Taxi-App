@@ -173,15 +173,14 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
           await _load();
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text(DriverStrings.supportChatOfflineSaved)),
+            SnackBar(content: Text(DriverStrings.supportChatOfflineSaved)),
           );
           setState(() => _sending = false);
           _scrollToBottom();
           return;
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(DriverStrings.supportChatSendFailed)),
+          SnackBar(content: Text(DriverStrings.supportChatSendFailed)),
         );
         setState(() => _sending = false);
         return;
@@ -356,7 +355,7 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
                       Navigator.of(ctx).pop(true);
                     }
                   : null,
-              child: const Text(DriverStrings.supportAiConsentContinue),
+              child: Text(DriverStrings.supportAiConsentContinue),
             ),
           ],
         ),
@@ -382,12 +381,12 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
       await _load();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.ticketStatusResolved)),
+        SnackBar(content: Text(DriverStrings.ticketStatusResolved)),
       );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.supportChatSendFailed)),
+        SnackBar(content: Text(DriverStrings.supportChatSendFailed)),
       );
     }
   }

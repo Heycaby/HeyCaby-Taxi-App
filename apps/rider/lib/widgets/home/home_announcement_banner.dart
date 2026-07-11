@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../../models/rider_home_banner.dart';

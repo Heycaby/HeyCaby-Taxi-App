@@ -115,10 +115,10 @@ void main() {
   });
 
   group('saved_addresses type constraint', () {
-    test('only home type is allowed', () {
-      const allowedType = 'home';
-      expect(allowedType, 'home');
-      expect('work' == allowedType, false);
+    test('named saved-place types match the backend contract', () {
+      const allowedTypes = ['home', 'work', 'gym', 'custom'];
+      expect(allowedTypes, containsAll(['home', 'work', 'gym', 'custom']));
+      expect(allowedTypes, isNot(contains('recent')));
     });
   });
 }

@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:heycaby_api/heycaby_api.dart';
+import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:heycaby_utils/heycaby_utils.dart';
 
 import 'app.dart';
 import 'firebase_options.dart';
 import 'screens/ios_update_required_app.dart';
 import 'services/heycaby_widget_sync.dart';
+import 'services/rider_ride_state_refresh.dart';
 import 'services/rider_notify_live_activity.dart';
 import 'services/rider_notification_channels.dart';
 import 'services/rider_notify_search_notifications.dart';
@@ -18,6 +20,11 @@ import 'services/rider_permission_bootstrap.dart';
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await RiderNotifyLiveActivity.init();
+  await RiderRideStateBackgroundRefresh.ensureBackendReady();
+  await RiderRideStateBackgroundRefresh.handlePushData(
+    Map<String, dynamic>.from(message.data),
+  );
 }
 
 void main() async {
@@ -59,8 +66,11 @@ void main() async {
   }
 
   runApp(
-    const ProviderScope(
-      child: RiderPermissionBootstrap(
+    ProviderScope(
+      overrides: [
+        themeProvider.overrideWith(RiderThemeNotifier.new),
+      ],
+      child: const RiderPermissionBootstrap(
         child: HeyCabyRiderApp(),
       ),
     ),

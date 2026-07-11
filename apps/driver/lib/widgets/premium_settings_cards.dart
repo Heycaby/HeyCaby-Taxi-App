@@ -162,7 +162,10 @@ class PremiumSettingsNavRow extends StatelessWidget {
         if (showDivider)
           Padding(
             padding: const EdgeInsetsDirectional.only(start: 72),
-            child: Divider(height: 1, thickness: 1, color: colors.border.withValues(alpha: 0.5)),
+            child: Divider(
+                height: 1,
+                thickness: 1,
+                color: colors.border.withValues(alpha: 0.5)),
           ),
       ],
     );
@@ -242,7 +245,10 @@ class PremiumSettingsToggleRow extends StatelessWidget {
         if (showDivider)
           Padding(
             padding: const EdgeInsetsDirectional.only(start: 72),
-            child: Divider(height: 1, thickness: 1, color: colors.border.withValues(alpha: 0.5)),
+            child: Divider(
+                height: 1,
+                thickness: 1,
+                color: colors.border.withValues(alpha: 0.5)),
           ),
       ],
     );

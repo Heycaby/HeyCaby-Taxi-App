@@ -35,7 +35,8 @@ class DriverShiftArcPainter extends CustomPainter {
 
     const start = -math.pi / 2;
     canvas.drawArc(rect, start, math.pi * 2, false, track);
-    canvas.drawArc(rect, start, math.pi * 2 * progress.clamp(0.0, 1.0), false, fg);
+    canvas.drawArc(
+        rect, start, math.pi * 2 * progress.clamp(0.0, 1.0), false, fg);
   }
 
   @override

@@ -49,6 +49,27 @@ class ThemeNotifier extends Notifier<HeyCabyThemeData> {
   }
 }
 
+/// Rider app: always [kRiderDefaultTheme] (HeyCaby Green). Theme registry stays
+/// in the codebase for maps/driver; rider UI does not expose theme switching.
+class RiderThemeNotifier extends ThemeNotifier {
+  @override
+  HeyCabyThemeData build() => kThemes[kRiderDefaultTheme]!;
+
+  @override
+  Future<void> loadSavedTheme() async {
+    const storage = FlutterSecureStorage();
+    state = kThemes[kRiderDefaultTheme]!;
+    await storage.write(key: _kThemeKey, value: kRiderDefaultTheme);
+  }
+
+  @override
+  Future<void> setTheme(String id) async {
+    const storage = FlutterSecureStorage();
+    state = kThemes[kRiderDefaultTheme]!;
+    await storage.write(key: _kThemeKey, value: kRiderDefaultTheme);
+  }
+}
+
 /// Driver app: [build] uses [kDriverDefaultTheme]. If nothing is stored yet,
 /// [loadSavedTheme] does not overwrite with the rider default (see [migrateThemeId]).
 class DriverThemeNotifier extends ThemeNotifier {

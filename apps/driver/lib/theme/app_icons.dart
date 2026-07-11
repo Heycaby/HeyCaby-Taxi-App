@@ -9,6 +9,7 @@ abstract final class AppIcons {
   static const IconData navWork = LucideIcons.briefcase;
   static const IconData navCommunity = LucideIcons.messagesSquare;
   static const IconData navMyRides = LucideIcons.receiptText;
+
   /// Distinct from [navProfile]; reads as “share / invite” in the bottom bar.
   static const IconData navTellFriend = LucideIcons.usersRound;
   static const IconData navProfile = LucideIcons.userRound;

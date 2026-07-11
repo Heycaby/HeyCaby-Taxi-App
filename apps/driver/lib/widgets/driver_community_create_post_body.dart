@@ -111,7 +111,8 @@ class DriverCommunityCreatePostBody extends StatelessWidget {
                   style: typography.bodyMedium.copyWith(color: colors.text),
                   decoration: InputDecoration(
                     hintText: DriverStrings.communityPostMessageHint,
-                    hintStyle: typography.bodyMedium.copyWith(color: colors.textMuted),
+                    hintStyle:
+                        typography.bodyMedium.copyWith(color: colors.textMuted),
                     filled: true,
                     fillColor: colors.backgroundAlt,
                     border: OutlineInputBorder(
@@ -150,7 +151,8 @@ class DriverCommunityCreatePostBody extends StatelessWidget {
                     controller: pollOptionControllers[i],
                     style: typography.bodyMedium.copyWith(color: colors.text),
                     decoration: InputDecoration(
-                      hintText: '${DriverStrings.communityPollOptionHint} ${i + 1}',
+                      hintText:
+                          '${DriverStrings.communityPollOptionHint} ${i + 1}',
                       filled: true,
                       fillColor: colors.backgroundAlt,
                       border: OutlineInputBorder(
@@ -169,7 +171,8 @@ class DriverCommunityCreatePostBody extends StatelessWidget {
                       icon: Icon(Icons.add_rounded, color: colors.primary),
                       label: Text(
                         DriverStrings.communityPollAddOption,
-                        style: typography.labelMedium.copyWith(color: colors.primary),
+                        style: typography.labelMedium
+                            .copyWith(color: colors.primary),
                       ),
                     ),
                   ),

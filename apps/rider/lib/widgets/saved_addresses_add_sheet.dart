@@ -11,24 +11,26 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 import '../providers/location_provider.dart';
 import '../providers/saved_addresses_provider.dart';
 
-/// Bottom sheet to add a saved place (home, work, etc.). Multiple rows with the
+/// Bottom sheet to add or edit a saved place (home, work, etc.). Multiple rows with the
 /// same [initialType] (e.g. several homes) are allowed once the DB unique on
 /// `(rider_identity_id, type)` is removed.
 class AddAddressSheet extends ConsumerStatefulWidget {
-  final String identityId;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
   final AppLocalizations l10n;
   final String initialType;
+  final SavedAddress? editAddress;
 
   const AddAddressSheet({
     super.key,
-    required this.identityId,
     required this.colors,
     required this.typo,
     required this.l10n,
     this.initialType = 'home',
+    this.editAddress,
   });
+
+  bool get isEditing => editAddress != null;
 
   @override
   ConsumerState<AddAddressSheet> createState() => _AddAddressSheetState();
@@ -44,12 +46,26 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
   Timer? _debounce;
   bool _isSearching = false;
   bool _isSaving = false;
+  int _searchRequestId = 0;
 
   static const _types = ['home', 'work', 'gym', 'custom'];
 
   @override
   void initState() {
     super.initState();
+    final editing = widget.editAddress;
+    if (editing != null) {
+      _selectedType = _types.contains(editing.type) ? editing.type : 'custom';
+      _labelController.text = editing.label;
+      _searchController.text = editing.fullAddress;
+      _selectedAddress = AddressResult(
+        displayName: editing.label,
+        fullAddress: editing.fullAddress,
+        lat: editing.latitude,
+        lng: editing.longitude,
+      );
+      return;
+    }
     _selectedType = widget.initialType;
     if (_types.contains(_selectedType)) {
       _labelController.text = _labelForType(_selectedType);
@@ -81,14 +97,21 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
     _debounce?.cancel();
     setState(() => _selectedAddress = null);
     if (query.trim().length < 3) {
-      setState(() => _suggestions = []);
+      setState(() {
+        _suggestions = [];
+        _isSearching = false;
+      });
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 300), () => _search(query));
+    final requestId = ++_searchRequestId;
+    _debounce = Timer(
+      const Duration(milliseconds: 300),
+      () => _search(query, requestId),
+    );
   }
 
-  Future<void> _search(String query) async {
-    if (!mounted) return;
+  Future<void> _search(String query, int requestId) async {
+    if (!mounted || requestId != _searchRequestId) return;
     setState(() => _isSearching = true);
     final geo = ref.read(geocodingServiceProvider);
     final loc = ref.read(locationProvider).valueOrNull;
@@ -97,7 +120,7 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
       proximityLat: loc?.latitude,
       proximityLng: loc?.longitude,
     );
-    if (!mounted) return;
+    if (!mounted || requestId != _searchRequestId) return;
     setState(() {
       _suggestions = results;
       _isSearching = false;
@@ -105,16 +128,29 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
   }
 
   Future<void> _onSuggestionTap(AddressResult suggestion) async {
+    _debounce?.cancel();
+    _searchRequestId++;
+    FocusScope.of(context).unfocus();
+
+    setState(() {
+      _suggestions = [];
+      _isSearching = true;
+    });
+
     AddressResult resolved = suggestion;
     if (suggestion.lat == 0.0 && suggestion.mapboxId != null) {
       final geo = ref.read(geocodingServiceProvider);
       final full = await geo.retrieve(suggestion.mapboxId!);
       if (full != null) resolved = full;
     }
+    if (!mounted) return;
     setState(() {
       _selectedAddress = resolved;
-      _searchController.text = resolved.displayName;
+      _searchController.text = resolved.fullAddress.isNotEmpty
+          ? resolved.fullAddress
+          : resolved.displayName;
       _suggestions = [];
+      _isSearching = false;
     });
   }
 
@@ -124,8 +160,38 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
     if (label.isEmpty || addr == null) return;
 
     setState(() => _isSaving = true);
-    final outcome = await ref.read(savedAddressesProvider.notifier).add(
-          riderIdentityId: widget.identityId,
+    final notifier = ref.read(savedAddressesProvider.notifier);
+    if (widget.isEditing) {
+      final outcome = await notifier.updateAddress(
+        addressId: widget.editAddress!.id,
+        type: _selectedType,
+        label: label,
+        fullAddress: addr.fullAddress,
+        latitude: addr.lat,
+        longitude: addr.lng,
+      );
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      switch (outcome) {
+        case SavedAddressUpdateOutcome.success:
+          Navigator.of(context).pop(true);
+        case SavedAddressUpdateOutcome.notFound:
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(widget.l10n.editSavedAddressNotFound)),
+          );
+        case SavedAddressUpdateOutcome.sessionRequired:
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(widget.l10n.savedAddressesSessionRequired)),
+          );
+        case SavedAddressUpdateOutcome.failed:
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(widget.l10n.connectionProblem)),
+          );
+      }
+      return;
+    }
+
+    final outcome = await notifier.add(
           type: _selectedType,
           label: label,
           fullAddress: addr.fullAddress,
@@ -136,10 +202,14 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
     setState(() => _isSaving = false);
     switch (outcome) {
       case SavedAddressAddOutcome.success:
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(true);
       case SavedAddressAddOutcome.limitReached:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(widget.l10n.savedAddressesLimitReached)),
+        );
+      case SavedAddressAddOutcome.sessionRequired:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(widget.l10n.savedAddressesSessionRequired)),
         );
       case SavedAddressAddOutcome.failed:
         ScaffoldMessenger.of(context).showSnackBar(
@@ -243,7 +313,9 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                l10n.addSavedAddressSheetTitle,
+                                widget.isEditing
+                                    ? l10n.editSavedAddressSheetTitle
+                                    : l10n.addSavedAddressSheetTitle,
                                 style: typo.headingMedium.copyWith(
                                   color: c.text,
                                   fontWeight: FontWeight.w800,
@@ -251,7 +323,9 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                l10n.noSavedAddressesEmptyBody,
+                                widget.isEditing
+                                    ? l10n.editSavedAddressSheetBody
+                                    : l10n.noSavedAddressesEmptyBody,
                                 style: typo.bodySmall.copyWith(
                                   color: c.textSoft,
                                   height: 1.35,
@@ -267,7 +341,6 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
                       ],
                     ),
                     const SizedBox(height: 22),
-
                     Text(
                       l10n.savedAddressCategoryLabel,
                       style: typo.labelMedium.copyWith(
@@ -314,7 +387,8 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
                                   boxShadow: selected
                                       ? [
                                           BoxShadow(
-                                            color: c.accent.withValues(alpha: 0.25),
+                                            color: c.accent
+                                                .withValues(alpha: 0.25),
                                             blurRadius: 12,
                                             offset: const Offset(0, 4),
                                           ),
@@ -346,7 +420,6 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
                       ),
                     ),
                     const SizedBox(height: 22),
-
                     Text(
                       l10n.savedAddressNameLabel,
                       style: typo.labelMedium.copyWith(
@@ -383,7 +456,6 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
                       ),
                     ),
                     const SizedBox(height: 18),
-
                     Text(
                       l10n.savedAddressSearchLabel,
                       style: typo.labelMedium.copyWith(
@@ -420,7 +492,6 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
                         ),
                       ),
                     ),
-
                     if (_isSearching)
                       const Padding(
                         padding: EdgeInsets.all(20),
@@ -447,10 +518,14 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
                               return Material(
                                 color: Colors.transparent,
                                 child: InkWell(
-                                  onTap: () => _onSuggestionTap(s),
+                                  onTap: () {
+                                    FocusScope.of(context).unfocus();
+                                    unawaited(_onSuggestionTap(s));
+                                  },
                                   borderRadius: BorderRadius.circular(16),
                                   child: Padding(
-                                    padding: const EdgeInsetsDirectional.all(16),
+                                    padding:
+                                        const EdgeInsetsDirectional.all(16),
                                     child: Row(
                                       children: [
                                         Container(
@@ -474,8 +549,7 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
                                             children: [
                                               Text(
                                                 s.displayName,
-                                                style: typo.bodyMedium
-                                                    .copyWith(
+                                                style: typo.bodyMedium.copyWith(
                                                   color: c.text,
                                                   fontWeight: FontWeight.w600,
                                                 ),
@@ -486,8 +560,8 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
                                                 const SizedBox(height: 2),
                                                 Text(
                                                   s.fullAddress,
-                                                  style: typo.bodySmall
-                                                      .copyWith(
+                                                  style:
+                                                      typo.bodySmall.copyWith(
                                                     color: c.textSoft,
                                                   ),
                                                   maxLines: 2,
@@ -507,7 +581,6 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
                           ),
                         ),
                       ),
-
                     if (_selectedAddress != null) ...[
                       const SizedBox(height: 12),
                       Container(
@@ -539,9 +612,7 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
                         ),
                       ),
                     ],
-
                     const SizedBox(height: 28),
-
                     SizedBox(
                       width: double.infinity,
                       height: 54,
@@ -566,7 +637,9 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
                                 ),
                               )
                             : Text(
-                                l10n.saveButton,
+                                widget.isEditing
+                                    ? l10n.saveChanges
+                                    : l10n.saveButton,
                                 style: typo.labelLarge.copyWith(
                                   color: c.onAccent,
                                   fontWeight: FontWeight.w800,
@@ -585,25 +658,44 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
   }
 }
 
-void showAddSavedAddressSheet(
+Future<bool?> showAddSavedAddressSheet(
   BuildContext context, {
-  required String identityId,
   required HeyCabyColorTokens colors,
   required HeyCabyTypography typo,
   required AppLocalizations l10n,
   String initialType = 'home',
 }) {
-  showModalBottomSheet(
+  return showModalBottomSheet<bool>(
     context: context,
     useRootNavigator: true,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (_) => AddAddressSheet(
-      identityId: identityId,
       colors: colors,
       typo: typo,
       l10n: l10n,
       initialType: initialType,
+    ),
+  );
+}
+
+Future<bool?> showEditSavedAddressSheet(
+  BuildContext context, {
+  required HeyCabyColorTokens colors,
+  required HeyCabyTypography typo,
+  required AppLocalizations l10n,
+  required SavedAddress address,
+}) {
+  return showModalBottomSheet<bool>(
+    context: context,
+    useRootNavigator: true,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => AddAddressSheet(
+      colors: colors,
+      typo: typo,
+      l10n: l10n,
+      editAddress: address,
     ),
   );
 }

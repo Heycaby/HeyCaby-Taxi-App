@@ -19,10 +19,31 @@
   "homeDestinationPrompt": "إلى أين تريد الذهاب؟",
   "homeContinue": "متابعة",
   "homeSmartOptionsTitle": "كيف تريد أن تركب؟",
-  "homeBestPriceTitle": "السوق",
-  "homeBestPriceSubtitle": "السائقون يتنافسون على رحلتك.",
+  "homeBestPriceTitle": "TAXI TERUG",
+  "homeBestPriceSubtitle": "ابحث عن سائقين متجهين نحوك بالفعل.",
   "homeTaxiTerugTitle": "TAXI TERUG",
   "homeTaxiTerugSubtitle": "ابحث عن سائقين متجهين نحوك بالفعل.",
+  "taxiTerugOfferHeadline": "اركب مع سيارات أجرة متجهة بالفعل في اتجاهك.",
+  "taxiTerugIntroBody": "حدد سعرك. السائقون المتجهون في اتجاهك يمكنهم قبول عرضك.",
+  "taxiTerugFareExplanation": "Taxi Terug يعني أن السيارة متجهة بالفعل في اتجاهك. يعتمد السعر على تعريفة السائق — وليس خصمًا تلقائيًا من المنصة.",
+  "taxiTerugDriversAcceptHint": "السائقون المستقلون يقررون ما إذا كانوا يقبلون عرضك.",
+  "taxiTerugCandidatesTitle": "سيارات أجرة متجهة إلى وجهتك",
+  "taxiTerugCandidatesEmpty": "لا توجد سيارات متجهة إلى وجهتك بعد. حدّد سعرك أدناه — سنُبلغ السائقين المناسبين.",
+  "taxiTerugCandidatesSubtitle": "{count, plural, =1{سيارة واحدة تطابق مسارك} other{{count} سيارات تطابق مسارك}}",
+  "taxiTerugCandidateHeading": "متجه إلى {destination}",
+  "taxiTerugCandidateEta": "{minutes} دقيقة حتى نقطة الالتقاط",
+  "taxiTerugCandidateMatch": "تطابق {score}٪",
+  "taxiTerugCandidateFareRange": "{minFare} – {maxFare}",
+  "taxiTerugWaitToleranceTitle": "كم من الوقت يمكنك الانتظار؟",
+  "taxiTerugWaitToleranceBody": "قد ينهي سائقو Taxi Terug رحلة قريبة أولاً. نعرض فقط السيارات التي يمكنها الوصول إليك ضمن وقت انتظارك.",
+  "taxiTerugWaitMinutes": "{minutes} دقيقة",
+  "taxiTerugDelayedPickupAck": "أفهم أن الالتقاط قد يتأخر بينما ينهي السائق رحلته الحالية.",
+  "taxiTerugConfirmDelayedPickup": "يرجى تأكيد أنك تفهم وقت الالتقاط المتأخر.",
+  "taxiTerugCandidatePickupWindow": "الالتقاط متاح خلال {minMinutes}–{maxMinutes} دقيقة",
+  "taxiTerugCandidateFinishingRide": "السائق ينهي رحلة قريبة أولاً.",
+  "taxiTerugCandidateDepartsAt": "ينطلق الساعة {time}",
+  "taxiTerugQueuedConfirmed": "تم تأكيد Taxi Terug",
+  "taxiTerugQueuedWaitingForDriver": "السائق ينهي رحلته الحالية أولاً.",
   "homeScheduleLaterTitle": "جدولة لاحقاً",
   "homeScheduleLaterSubtitle": "اختر وقت الالتقاط المناسب لك.",
   "homePopularAirportsTitle": "شائع",
@@ -33,7 +54,7 @@
   "homeEnterDestination": "أدخل وجهتك",
   "homeNoTaxisNearbySubtitle": "يمكنك طلب رحلة. سنُعلمك عندما يقبل سائق.",
   "homeSupplyNoneTitle": "لا سائقين قريبين منك",
-  "homeSupplyNoneSubtitle": "جرّب السوق أو جدول رحلة لاحقًا.",
+  "homeSupplyNoneSubtitle": "جرّب TAXI TERUG أو جدول رحلة لاحقًا.",
   "homeSupplyNearbyTitle": "{count, plural, one{سائق واحد قريب} other{{count} سائقين قريبين}}",
   "@homeSupplyNearbyTitle": {
     "placeholders": {
@@ -96,6 +117,8 @@
   "savedTripsTitle": "الرحلات المحفوظة",
   "homeCompleteProfile": "أكمل الملف",
   "vehicleCategoryTitle": "هل تحتاج إلى مركبة محددة؟",
+  "vehicleSelectUpToThree": "اختر حتى 3 أنواع مع سائقين قريبين",
+  "vehicleMaxCategoriesSelected": "يمكنك اختيار 3 أنواع مركبات كحد أقصى",
   "homeAirportChipSchiphol": "سخيبول",
   "homeAirportChipRotterdam": "مطار روتردام",
   "homeAirportChipEindhoven": "آيندهوفن",
@@ -621,6 +644,7 @@
   "keepGoing": "متابعة",
   "nameSavedSuccess": "تم حفظ الاسم بنجاح",
   "ridesFilterActive": "نشطة",
+  "ridesFilterAll": "الكل",
   "ridesFilterBidding": "مزايدة",
   "ridesFilterCompleted": "مكتملة",
   "ridesFilterCancelled": "ملغاة",
@@ -731,7 +755,7 @@
   "whenRowLabel": "متى",
   "accountProfileHeading": "الملف الشخصي",
   "accountProfileCardSubtitle": "اسم الحجز والبريد ومظهر التطبيق.",
-  "accountProfilePreferencesLabel": "اللغة والمظهر",
+  "accountProfilePreferencesLabel": "اللغة",
   "riderPassportTitle": "جواز الراكب",
   "riderPassportSubtitle": "هويتك في HeyCaby لحجوزات أسرع وأسلس.",
   "riderPassportReady": "جاهز لحجوزات أسرع",
@@ -748,6 +772,26 @@
   "accountChecklistDone": "مكتمل",
   "accountChecklistMissing": "ناقص",
   "accountTripReadyBody": "يساعد ملفك السائقين على التعرف عليك ويجعل الحجز المتكرر أسرع.",
+  "riderRatingDetailsTitle": "سمعتك كراكب",
+  "riderRatingBreakdownTitle": "تفصيل التقييمات",
+  "riderRatingDriverNotesTitle": "ملاحظات السائقين",
+  "riderRatingDriverNotesBody": "تظهر الملاحظات الخاصة بعد أن يقيّم الطرفان الرحلة.",
+  "riderRatingNoComments": "لا توجد ملاحظات مكتوبة بعد.",
+  "riderRatingAnonymousDriver": "ملاحظات السائق",
+  "riderRatingLoadFailed": "تعذر تحميل تقييمك.",
+  "riderRatingBasedOn": "استنادًا إلى {count} رحلات مكتملة قيّمها السائقون.",
+  "@riderRatingBasedOn": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "riderRatingAccessibility": "تقييم الراكب {rating} من 5، استنادًا إلى {count} تقييمات",
+  "@riderRatingAccessibility": {
+    "placeholders": {
+      "rating": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
   "accountBookingNameLabel": "اسم الحجز",
   "accountBookingNameHint": "ما الذي يجب أن يناديك به السائق؟",
   "accountBookingNameDescription": "سيظهر هذا الاسم للسائقين عند حجزك لرحلة.",
@@ -1172,10 +1216,25 @@
   "saveButton": "حفظ",
   "savedAddressesSubtitle": "وجهاتك المحفوظة",
   "savedPlacesSheetSubtitle": "اضغط للحجز إلى هناك، أو احفظ مكانًا آخر أدناه.",
+  "savedPlacesEmptyStartWith": "ابدأ بـ",
+  "savedPlacesSectionCount": "{count, plural, one{مكان واحد محفوظ} other{{count} أماكن محفوظة}}",
+  "@savedPlacesSectionCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "savedPlacesTapToBook": "اضغط للحجز",
+  "savedPlacesGhostHome": "المنزل",
+  "savedPlacesGhostMom": "منزل الأم",
   "noSavedAddressesYet": "اختصاراتك",
   "noSavedAddressesEmptyBody": "احفظ المنزل أو العمل أو النادي — أو عدة منازل (أم، أب، بيت العطلة). نفس الأيقونة وأسماء مختلفة.",
   "addSavedAddress": "حفظ مكان",
   "addSavedAddressSheetTitle": "حفظ مكان جديد",
+  "editSavedAddress": "تعديل المكان",
+  "editSavedAddressSheetTitle": "تعديل مكان محفوظ",
+  "editSavedAddressSheetBody": "حدّث الاسم أو الفئة أو العنوان عند الانتقال أو تغيّر التفاصيل.",
+  "editSavedAddressNotFound": "تم حذف هذا المكان. حدّث القائمة وحاول مرة أخرى.",
+  "saveChanges": "حفظ التغييرات",
   "savedAddressCategoryLabel": "الفئة",
   "savedAddressNameLabel": "اسم المكان",
   "savedAddressNameHint": "مثلًا: بيت أمي، المكتب، النادي",
@@ -1189,11 +1248,12 @@
   "savedAddressLabelGym": "الصالة الرياضية",
   "savedAddressLabelCustom": "مخصص",
   "savedAddressesLimitReached": "يمكنك حفظ ما يصل إلى 10 أماكن. احذف مكانًا لإضافة مكان آخر.",
+  "savedAddressesSessionRequired": "تعذّر التحقق من حسابك. افتح الحساب وأكّد بريدك الإلكتروني ثم حاول مجددًا.",
   "deleteSavedAddress": "حذف",
   "searchFactDriversKeep100": "السائقون يحتفظون بـ 100٪ من أرباحهم. HeyCaby لا تأخذ أي عمولة.",
   "searchFactNoSurgePricing": "لا توجد أسعار متضاعفة. أبدًا. السعر الذي تراه هو السعر الذي تدفعه.",
   "searchFactAllVerified": "HeyCaby مخصصة للتاكسي المرخص — نقل مهني حقيقي، وليس سيارات خاصة كتطبيقات التوصيل.",
-  "searchFactMarketplace": "السائقون العائدون إلى مدنهم يقدمون أحيانًا أسعارًا أقل. تحقق من السوق للحصول على أفضل سعر.",
+  "searchFactMarketplace": "السائقون العائدون إلى مدنهم يقدمون أحيانًا أسعارًا أقل. جرّب TAXI TERUG للحصول على سعر أفضل.",
   "searchFactZZP": "كل سائق Caby محترف مستقل. أنت تسافر مع شخص فخور بعمله.",
   "searchFactSaveAddresses": "هل تسكن في روتردام؟ انقر على أيقونة المنزل مرة واحدة وسيتم ملء وجهتك تلقائيًا.",
   "searchFactPayHowYouWant": "نقدًا أو Tikkie أو بطاقة — سيخبرك سائقك بالخيارات المتاحة.",
@@ -1246,7 +1306,7 @@
       }
     }
   },
-  "activeBookingInstantBody": "وقت الانتظار المتوقع: 1–2 دقيقة. سنخبرك عندما يقبل سائق.",
+  "activeBookingInstantBody": "HeyCaby جديدة — قد يستغرق العثور على سائق عدة دقائق. سنواصل البحث ونخبرك فور قبول سائق.",
   "activeBookingMarketplaceBody": "يمكن للسائقين المستقلين القبول أو تقديم عرض مقابل أو تجاهل الطلب. أنت تختار من تركب معه.",
   "activeBookingOffersBody": "{count, plural, one{راجع العرض واختر سائقك.} other{قارن العروض واختر سائقك.}}",
   "@activeBookingOffersBody": {
@@ -1306,7 +1366,8 @@
   "ridesScheduledMatchingSection": "طلبات مجدولة قادمة",
   "noDriverFoundCard": "لم يُعثر على Caby بعد. ماذا تريد أن تفعل؟",
   "searchNoSupplyInlineTitle": "لا سائقين قريبين",
-  "searchNoSupplyInlineBody": "لم نعثر على سائقين قرب نقطة الالتقاط. جدول لاحقًا أو جرّب السوق. سنستمر في البحث.",
+  "searchNoSupplyInlineBody": "لا يوجد سائقون عند نقطة الالتقاط الآن. جدول لاحقًا — سنستمر في البحث.",
+  "searchNoSupplyTaxiTerugCardSubtitle": "سائقون في طريقهم إليك بسعر أقل",
   "searchNoSupplySheetTitle": "لا سائقين قريبين",
   "searchExpiredSheetTitle": "لم يقبل أي سائق بعد",
   "searchExpiredSheetBody": "انتهى بحثك الذي استمر {minutes} دقيقة دون مطابقة. اختر خطوتك التالية.",
@@ -1318,7 +1379,8 @@
     }
   },
   "searchKeepSearching": "متابعة البحث",
-  "searchSeeOptions": "جدولة أو السوق",
+  "searchExpiredGoHome": "العودة للرئيسية دون حجز",
+  "searchSeeOptions": "المزيد من الخيارات",
   "searchExpiredShareSecondary": "تعرف سائقًا؟ شارك HeyCaby",
   "notifyMeWhenFound": "أعلمني",
   "scheduleRideInstead": "جدولة",
@@ -1390,6 +1452,54 @@
   },
   "ridePayDriverConfirm": "لقد دفعت",
   "ridePayDriverDismiss": "لحظة",
+  "paymentRiderHeadline": "ادفع لسائقك",
+  "paymentRiderCashInstruction": "ادفع {amount} نقداً قبل مغادرة السيارة",
+  "@paymentRiderCashInstruction": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "paymentRiderPinInstruction": "المس أو أدخل بطاقتك في جهاز الدفع الخاص بالسائق",
+  "paymentRiderTikkieInstruction": "امسح رمز Tikkie QR للسائق",
+  "paymentCashPayBeforeExit": "ادفع قبل المغادرة",
+  "paymentPinTapReader": "الدفع بالبطاقة في السيارة",
+  "paymentTikkieScanQrHint": "افتح الكاميرا وامسح الرمز على هاتف السائق.",
+  "paymentWaitingForDriver": "في انتظار السائق",
+  "paymentWaitingForDriverHint": "يؤكد السائق عند استلام الدفع. يمكنك التأكيد هنا بعد 10 دقائق إذا لزم الأمر.",
+  "paymentDriverConfirmedProceed": "أكد السائق — فتح التقييم…",
+  "paymentThankYou": "شكراً على الدفع!",
+  "paymentAddTipQuestion": "إضافة إكرامية؟",
+  "paymentNoTip": "بدون إكرامية",
+  "paymentRiderPaidConfirm": "لقد دفعت ✓",
+  "paymentConfirmFailed": "تعذر تأكيد الدفع. حاول مرة أخرى.",
+  "activeRideDriverNearPickup": "السائق على بعد كيلومتر تقريباً. انزل قريباً — قد تُفرض رسوم انتظار بعد الوصول.",
+  "activeRideDriverAroundCorner": "استعد — سائقك على بعد خطوات!",
+  "activeRideTripProgress": "تقدم الرحلة",
+  "activeRideDistanceRemaining": "متبقى {km} كم",
+  "@activeRideDistanceRemaining": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideTimeRemaining": "متبقى {minutes} دقيقة",
+  "@activeRideTimeRemaining": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideArrivingAround": "الوصول حوالي {time}",
+  "@activeRideArrivingAround": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideTripInProgressHeadline": "في الطريق",
   "activeRideWaitingFeeWaived": "تم التنازل عن رسوم الانتظار",
   "activeRideWaitingFreePickupTime": "وقت استلام مجاني",
   "activeRideWaitingTime": "وقت الانتظار",
@@ -1455,6 +1565,9 @@
   "rideReceiptPaidTitle": "تم الدفع",
   "rideReceiptBusinessReady": "إيصال مناسب للأعمال",
   "rideReceiptBusinessReadyBody": "احتفظ بهذا الإيصال في سجل رحلاتك ومصاريفك.",
+  "rideReceiptShareWhatsapp": "مشاركة عبر واتساب",
+  "rideReceiptShareEmail": "إرسال عبر البريد",
+  "rideReceiptShareFailed": "تعذر مشاركة الإيصال",
   "rideReceiptFareBreakdown": "تفصيل الأجرة",
   "rideReceiptBaseFare": "أجرة الرحلة",
   "rideReceiptWaitingFee": "وقت الانتظار",
@@ -1579,5 +1692,39 @@
   "supportEmailSupport": "دعم البريد الإلكتروني",
   "supportYazAssistantTitle": "Yaz — مساعد الدعم بالذكاء الاصطناعي",
   "supportYazAssistantSubtitle": "اسأل عن رحلتك أو حسابك أو الدفع.",
-  "supportYazMessageHint": "راسل Yaz..."
+  "supportYazMessageHint": "راسل Yaz...",
+  "taxiTerugScreenTitle": "تاكسي ترخ",
+  "taxiTerugScreenSubtitle": "اركب مع سيارات الأجرة المتجهة نحو وجهتك.",
+  "taxiTerugScreenTabAvailable": "سيارات متاحة",
+  "taxiTerugScreenTabPostRequest": "انشر طلبًا",
+  "taxiTerugScreenPickupPlaceholder": "موقع الالتقاط",
+  "taxiTerugScreenDestinationPlaceholder": "إلى أين تذهب؟",
+  "taxiTerugScreenSetRoute": "حدد موقع الالتقاط والوجهة لعرض سيارات الأجرة المطابقة.",
+  "taxiTerugScreenLoadError": "تعذر تحميل السيارات. حاول مرة أخرى.",
+  "taxiTerugScreenDisabled": "تاكسي ترخ غير متاح حاليًا.",
+  "taxiTerugScreenNoRides": "لا توجد رحلات تاكسي ترخ.",
+  "taxiTerugScreenNoRidesBody": "انشر رحلتك ليتمكن السائقون المتجهون نحو وجهتك من قبولها.",
+  "taxiTerugScreenPostCta": "انشر طلب تاكسي ترخ",
+  "taxiTerugScreenBook": "احجز",
+  "taxiTerugScreenPostTitle": "انشر طلب تاكسي ترخ",
+  "taxiTerugScreenPostBody": "السائقون المتجهون نحو وجهتك يمكنهم قبول الطلب أو إرسال عرض.",
+  "taxiTerugScreenOfferLabel": "عرضك",
+  "taxiTerugScreenPostButton": "انشر الطلب",
+  "taxiTerugScreenPosting": "جارٍ النشر…",
+  "taxiTerugScreenPostConfirmation": "سيظهر طلبك للسائقين المتجهين نحو وجهتك.",
+  "taxiTerugHotDestinationsTitle": "سائقون متجهون إلى",
+  "taxiTerugHotDestinationsSubtitle": "اضغط على مدينة لرؤية سيارات الأجرة على مسارك.",
+  "taxiTerugPickCityHint": "اختر مدينة أعلاه",
+  "taxiTerugTrackerSearching": "البحث عن تطابق تاكسي ترخ",
+  "taxiTerugTrackerSearchingBody": "نبحث عن سيارات أجرة متجهة نحو وجهتك. يمكنك الانتظار هنا أو متابعة يومك.",
+  "taxiTerugTrackerNoMatch": "لم يتم العثور على تطابق",
+  "taxiTerugTrackerNoMatchBody": "لم يتم العثور على سائقي تاكسي ترخ خلال ساعة واحدة. يرجى المحاولة مرة أخرى لاحقًا.",
+  "taxiTerugTrackerCancelTitle": "إلغاء الطلب",
+  "taxiTerugTrackerCancelConfirm": "هل أنت متأكد أنك تريد إلغاء طلب تاكسي ترخ الخاص بك؟",
+  "taxiTerugTrackerBoost": "زيادة العرض",
+  "taxiTerugTrackerBoostTitle": "زيادة عرضك",
+  "taxiTerugTrackerBoostSubtitle": "زيادة عرضك بحيث يراه المزيد من السائقين ويقبلونه بشكل أسرع.",
+  "taxiTerugTrackerBoostSuccess": "تم زيادة العرض إلى €{amount}! يمكن للسائقين رؤيته فورًا.",
+  "taxiTerugTrackerBoostFailed": "تعذر زيادة العرض. يرجى المحاولة مرة أخرى.",
+  "taxiTerugTrackerCurrentOffer": "العرض الحالي: €{amount}"
 }

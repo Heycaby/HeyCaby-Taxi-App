@@ -5,7 +5,15 @@ import '../theme/driver_radius.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
 
-enum DriverStatusTone { online, offline, busy, success, warning, error, neutral }
+enum DriverStatusTone {
+  online,
+  offline,
+  busy,
+  success,
+  warning,
+  error,
+  neutral
+}
 
 class DriverStatusBadge extends StatelessWidget {
   const DriverStatusBadge({

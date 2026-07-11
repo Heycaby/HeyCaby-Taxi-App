@@ -89,7 +89,7 @@ class _DriverCommunityChannelFeedScreenState
             );
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
             DriverStrings.reactionFailedMigration,
           ),
@@ -107,11 +107,11 @@ class _DriverCommunityChannelFeedScreenState
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text(DriverStrings.communityEditPostTitle),
+        title: Text(DriverStrings.communityEditPostTitle),
         content: TextField(
           controller: controller,
           maxLines: 4,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: DriverStrings.communityEditPostHint,
           ),
         ),
@@ -122,7 +122,7 @@ class _DriverCommunityChannelFeedScreenState
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(DriverStrings.save),
+            child: Text(DriverStrings.save),
           ),
         ],
       ),
@@ -140,8 +140,8 @@ class _DriverCommunityChannelFeedScreenState
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text(DriverStrings.communityDeletePostTitle),
-        content: const Text(DriverStrings.communityDeletePostBody),
+        title: Text(DriverStrings.communityDeletePostTitle),
+        content: Text(DriverStrings.communityDeletePostBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -149,7 +149,7 @@ class _DriverCommunityChannelFeedScreenState
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(DriverStrings.communityDeleteAction),
+            child: Text(DriverStrings.communityDeleteAction),
           ),
         ],
       ),
@@ -171,7 +171,7 @@ class _DriverCommunityChannelFeedScreenState
             );
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.communityPollVoteFailed)),
+        SnackBar(content: Text(DriverStrings.communityPollVoteFailed)),
       );
       return;
     }

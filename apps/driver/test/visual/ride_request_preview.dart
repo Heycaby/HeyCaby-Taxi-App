@@ -49,6 +49,7 @@ class DriverOpportunityPreview extends StatelessWidget {
       onAccept: () {},
       onDecline: () {},
       rideData: _mockRide,
+      renderMap: false,
     );
   }
 }

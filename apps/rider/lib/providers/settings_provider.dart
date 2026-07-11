@@ -70,7 +70,7 @@ class SettingsNotifier extends AsyncNotifier<SettingsState> {
             ? normalizedSaved
             : deviceLanguage;
     final language = followsDevice ? deviceLanguage : overrideLanguage;
-    final theme = resolveRiderThemeId(await _storage.read(key: 'theme'));
+    const theme = kRiderDefaultTheme;
     await _storage.write(key: 'theme', value: theme);
     final locationEnabled =
         await _storage.read(key: 'location_enabled') != 'false';
@@ -113,9 +113,8 @@ class SettingsNotifier extends AsyncNotifier<SettingsState> {
   }
 
   Future<void> setTheme(String theme) async {
-    final id = resolveRiderThemeId(theme);
-    await _storage.write(key: 'theme', value: id);
-    state = AsyncData(state.value!.copyWith(theme: id));
+    await _storage.write(key: 'theme', value: kRiderDefaultTheme);
+    state = AsyncData(state.value!.copyWith(theme: kRiderDefaultTheme));
   }
 
   Future<void> setLocationEnabled(bool enabled) async {

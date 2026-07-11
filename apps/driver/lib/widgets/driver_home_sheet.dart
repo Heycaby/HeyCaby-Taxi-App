@@ -13,11 +13,14 @@ import '../theme/driver_motion_presets.dart';
 import '../ui/driver_accent_rail_card.dart';
 import '../providers/driver_data_providers.dart';
 import '../providers/driver_state_provider.dart';
+import '../providers/driver_taxi_terug_stats_provider.dart';
 import '../services/driver_data_service.dart';
 import 'driver_home_live_rides_section.dart';
 import 'driver_home_premium_style.dart';
 import 'driver_hub_saved_by_riders_section.dart';
 import 'driver_progressive_verification_banner.dart';
+import 'driver_ride_alert_readiness_card.dart';
+import 'driver_taxi_terug_stats_card.dart';
 import 'three_state_toggle.dart';
 
 /// Bottom sheet on driver home. Offline state: scheduled rides, stats, community.
@@ -46,15 +49,18 @@ class DriverHomeSheet extends ConsumerWidget {
     final statsAsync = ref.watch(driverShiftStatsProvider);
     final returnTripsAsync = ref.watch(filteredReturnTripsProvider);
     final returnModeAsync = ref.watch(driverReturnModeProvider);
-    final swapFeedAsync = ref.watch(rideSwapFeedProvider);
+    final taxiTerugStatsAsync = ref.watch(driverTaxiTerugStatsProvider);
+    final upcomingAsync = ref.watch(upcomingRidesProvider);
+    final billingStatusAsync = ref.watch(driverBillingStatusProvider);
     final showLiveRidesSection =
         driver.appState == DriverAppState.onlineAvailable ||
             driver.activeRideId != null;
     final rides = scheduledAsync.valueOrNull ?? [];
-    final openSwapsCount = swapFeedAsync.valueOrNull?.length;
     final earnings = earningsAsync.valueOrNull;
     final todayRides =
         statsAsync.valueOrNull?.shiftRidesToday ?? earnings?.todayRides ?? 0;
+    final upcomingRides = upcomingAsync.valueOrNull ?? [];
+    final upcomingCount = upcomingRides.length;
     final returnTripsCount = returnTripsAsync.valueOrNull?.length;
     final returnMode = returnModeAsync.valueOrNull;
 
@@ -89,6 +95,22 @@ class DriverHomeSheet extends ConsumerWidget {
                       _ => DriverAvailabilityStatus.offline,
                     },
                   ).driverFadeSlideIn(staggerIndex: 0),
+                  const SizedBox(height: DriverSpacing.md),
+                  if (billingStatusAsync.valueOrNull?['ride_requests_paused'] ==
+                      true) ...[
+                    _PlatformRidesPausedCard(
+                      colors: colors,
+                      driverColors: driverColors,
+                      typo: typo,
+                      onViewSettlementDetails: () {
+                        HapticService.selectionClick();
+                        context.push('/driver/billing');
+                      },
+                    ).driverFadeSlideIn(staggerIndex: 1),
+                    const SizedBox(height: DriverSpacing.md),
+                  ],
+                  const DriverRideAlertReadinessCard()
+                      .driverFadeSlideIn(staggerIndex: 1),
                   const SizedBox(height: DriverSpacing.lg),
                   if (driver.activeRideId == null) ...[
                     _ReturnModeCard(
@@ -109,6 +131,8 @@ class DriverHomeSheet extends ConsumerWidget {
                             .activateReturnMode(
                               destinationLabel: returnMode?.destinationLabel,
                               destinationZoneId: returnMode?.destinationZoneId,
+                              destinationLat: returnMode?.destinationLat,
+                              destinationLng: returnMode?.destinationLng,
                               pickupRadiusKm: returnMode?.pickupRadiusKm,
                               returnDiscountPct:
                                   (returnMode?.returnDiscountPct ?? 0) > 0
@@ -123,9 +147,7 @@ class DriverHomeSheet extends ConsumerWidget {
                         if (!context.mounted || result.ok) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(
-                              DriverStrings.returnModeActivationFailed,
-                            ),
+                            content: Text(result.activationErrorMessage),
                           ),
                         );
                       },
@@ -136,7 +158,19 @@ class DriverHomeSheet extends ConsumerWidget {
                             .disableReturnMode();
                         ref.invalidate(driverReturnModeProvider);
                       },
+                      onPlanTrip: () {
+                        HapticService.selectionClick();
+                        context.push('/driver/journey-intent');
+                      },
                     ).driverFadeSlideIn(staggerIndex: 1),
+                    const SizedBox(height: DriverSpacing.md),
+                    DriverTaxiTerugStatsCard(
+                      colors: colors,
+                      driverColors: driverColors,
+                      typo: driverTypo,
+                      stats: taxiTerugStatsAsync.valueOrNull,
+                      loading: taxiTerugStatsAsync.isLoading,
+                    ).driverFadeSlideIn(staggerIndex: 2),
                     const SizedBox(height: DriverSpacing.lg),
                   ],
                   _DriverHubEntryCard(
@@ -170,7 +204,7 @@ class DriverHomeSheet extends ConsumerWidget {
                     typo: typo,
                     scheduledCount: rides.length,
                     todayRides: todayRides,
-                    openSwapsCount: openSwapsCount,
+                    upcomingCount: upcomingCount,
                     returnTripsCount: returnTripsCount,
                     onScheduledTap: () {
                       HapticService.selectionClick();
@@ -178,15 +212,15 @@ class DriverHomeSheet extends ConsumerWidget {
                     },
                     onTodayTap: () {
                       HapticService.selectionClick();
-                      context.push('/driver/rides/today');
-                    },
-                    onRideSwapTap: () {
-                      HapticService.selectionClick();
-                      context.push('/driver/ride-swap');
+                      context.push('/driver/rides/today?filter=upcoming');
                     },
                     onReturnTripsTap: () {
                       HapticService.selectionClick();
                       context.push('/driver/return-trips');
+                    },
+                    onTaxiThruTap: () {
+                      HapticService.selectionClick();
+                      context.push('/driver/taxi-thru');
                     },
                   ).driverFadeSlideIn(staggerIndex: 5),
                 ],
@@ -194,6 +228,102 @@ class DriverHomeSheet extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PlatformRidesPausedCard extends StatelessWidget {
+  const _PlatformRidesPausedCard({
+    required this.colors,
+    required this.driverColors,
+    required this.typo,
+    required this.onViewSettlementDetails,
+  });
+
+  final HeyCabyColorTokens colors;
+  final DriverColors driverColors;
+  final HeyCabyTypography typo;
+  final VoidCallback onViewSettlementDetails;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(DriverSpacing.lg),
+      decoration: BoxDecoration(
+        color: colors.warning.withValues(alpha: 0.08),
+        borderRadius: DriverRadius.lgAll,
+        border: Border.all(
+          color: colors.warning.withValues(alpha: 0.28),
+        ),
+        boxShadow: DriverHomePremiumStyle.tileShadow(driverColors),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: colors.warning.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(DriverRadius.md),
+                ),
+                child: Icon(
+                  Icons.pause_circle_outline_rounded,
+                  color: colors.warning,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: DriverSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      DriverStrings.platformRidesPausedTitle,
+                      style: typo.titleSmall.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: DriverSpacing.xs),
+                    Text(
+                      DriverStrings.platformRidesPausedBody,
+                      style: typo.bodySmall.copyWith(
+                        color: colors.textMid,
+                        height: 1.4,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: DriverSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onViewSettlementDetails,
+              icon: const Icon(Icons.account_balance_outlined, size: 19),
+              label: Text(DriverStrings.platformRidesPausedCta),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: colors.text,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                side: BorderSide(
+                  color: colors.warning.withValues(alpha: 0.42),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(DriverRadius.md),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -210,6 +340,7 @@ class _ReturnModeCard extends StatelessWidget {
     required this.onActivate,
     required this.onManage,
     required this.onDisable,
+    required this.onPlanTrip,
   });
 
   final HeyCabyColorTokens colors;
@@ -221,6 +352,7 @@ class _ReturnModeCard extends StatelessWidget {
   final Future<void> Function() onActivate;
   final VoidCallback onManage;
   final Future<void> Function() onDisable;
+  final VoidCallback onPlanTrip;
 
   @override
   Widget build(BuildContext context) {
@@ -239,14 +371,24 @@ class _ReturnModeCard extends StatelessWidget {
             ? hasMatches
                 ? DriverStrings.returnModeAvailableCount(returnTripsCount!)
                 : DriverStrings.returnModeNoMatchesYet
-            : hasDestination
-                ? DriverStrings.returnModeHeadingHomeBody(destination!)
-                : DriverStrings.returnModeOffBody;
+            : status?.suggestTaxiTerug == true &&
+                    status?.kmFromHome != null &&
+                    hasDestination
+                ? DriverStrings.returnModeSuggestBody(
+                    status!.kmFromHome!,
+                    destination!,
+                  )
+                : hasDestination
+                    ? DriverStrings.returnModeHeadingHomeBody(destination!)
+                    : DriverStrings.returnModeOffBody;
     final detail = isActive
-        ? DriverStrings.returnModeActiveBody(
-            pickupRadiusKm: status?.pickupRadiusKm ?? 10,
-            discountPct: status?.returnDiscountPct ?? 0,
-          )
+        ? [
+            DriverStrings.returnModeActiveBody(
+              pickupRadiusKm: status?.pickupRadiusKm ?? 10,
+            ),
+            if (status?.kmFromHome != null)
+              DriverStrings.returnModeKmFromHome(status!.kmFromHome!),
+          ].join(' · ')
         : null;
 
     return InkWell(
@@ -363,23 +505,51 @@ class _ReturnModeCard extends StatelessWidget {
                       ],
                     )
                   else
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed: loading ? null : onActivate,
-                        icon: const Icon(Icons.route_rounded, size: 20),
-                        label: Text(DriverStrings.returnModeActivateFull),
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: DriverSpacing.md,
-                            vertical: 14,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(DriverRadius.md),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: loading ? null : onActivate,
+                            icon: const Icon(Icons.route_rounded, size: 20),
+                            label: Text(DriverStrings.returnModeActivateFull),
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: DriverSpacing.md,
+                                vertical: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(DriverRadius.md),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        const SizedBox(height: DriverSpacing.sm),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: onPlanTrip,
+                            icon: const Icon(Icons.edit_location_alt_rounded,
+                                size: 18),
+                            label: Text(DriverStrings.journeyIntentPlanTrip),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: DriverSpacing.md,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(DriverRadius.md),
+                              ),
+                              side: BorderSide(
+                                color: colors.accent.withValues(alpha: 0.4),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                 ],
               ),
@@ -637,12 +807,12 @@ class _RidesActionGrid extends StatelessWidget {
     required this.typo,
     required this.scheduledCount,
     required this.todayRides,
-    required this.openSwapsCount,
+    required this.upcomingCount,
     required this.returnTripsCount,
     required this.onScheduledTap,
     required this.onTodayTap,
-    required this.onRideSwapTap,
     required this.onReturnTripsTap,
+    required this.onTaxiThruTap,
   });
 
   final DriverColors driverColors;
@@ -650,12 +820,12 @@ class _RidesActionGrid extends StatelessWidget {
   final HeyCabyTypography typo;
   final int scheduledCount;
   final int todayRides;
-  final int? openSwapsCount;
+  final int upcomingCount;
   final int? returnTripsCount;
   final VoidCallback onScheduledTap;
   final VoidCallback onTodayTap;
-  final VoidCallback onRideSwapTap;
   final VoidCallback onReturnTripsTap;
+  final VoidCallback onTaxiThruTap;
 
   @override
   Widget build(BuildContext context) {
@@ -684,7 +854,10 @@ class _RidesActionGrid extends StatelessWidget {
                 typo: typo,
                 icon: AppIcons.carFront,
                 title: DriverStrings.today,
-                subtitle: DriverStrings.homeTodayRidesCount(todayRides),
+                subtitle: upcomingCount > 0
+                    ? DriverStrings.homeUpcomingCount(upcomingCount)
+                    : DriverStrings.homeTodayRidesCount(todayRides),
+                badgeCount: upcomingCount > 0 ? upcomingCount : null,
                 onTap: onTodayTap,
               ),
             ),
@@ -698,20 +871,6 @@ class _RidesActionGrid extends StatelessWidget {
                 colors: colors,
                 driverColors: driverColors,
                 typo: typo,
-                icon: AppIcons.swapHorizontal,
-                title: DriverStrings.rideSwap,
-                subtitle: openSwapsCount == null
-                    ? DriverStrings.loading
-                    : DriverStrings.rideSwapOpenCount(openSwapsCount!),
-                onTap: onRideSwapTap,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _RideActionCard(
-                colors: colors,
-                driverColors: driverColors,
-                typo: typo,
                 icon: AppIcons.arrowBack,
                 title: DriverStrings.returnTrips,
                 subtitle: returnTripsCount == null
@@ -720,6 +879,18 @@ class _RidesActionGrid extends StatelessWidget {
                         ? DriverStrings.off
                         : DriverStrings.homeAvailableCount(returnTripsCount!),
                 onTap: onReturnTripsTap,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _RideActionCard(
+                colors: colors,
+                driverColors: driverColors,
+                typo: typo,
+                icon: Icons.travel_explore_rounded,
+                title: DriverStrings.taxiThruTitle,
+                subtitle: DriverStrings.taxiThruTitle,
+                onTap: onTaxiThruTap,
               ),
             ),
           ],
@@ -738,6 +909,7 @@ class _RideActionCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.badgeCount,
   });
 
   final HeyCabyColorTokens colors;
@@ -747,6 +919,7 @@ class _RideActionCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final int? badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -759,10 +932,31 @@ class _RideActionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              icon,
-              color: colors.textMid,
-              size: 25,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(
+                  icon,
+                  color: colors.textMid,
+                  size: 25,
+                ),
+                if (badgeCount != null && badgeCount! > 0)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: colors.accent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '$badgeCount',
+                      style: typo.labelSmall.copyWith(
+                        color: colors.onAccent,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: DriverSpacing.xl),
             Text(

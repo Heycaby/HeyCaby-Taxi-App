@@ -77,7 +77,7 @@ BEGIN
     SET status = 'pending',
         expires_at = EXCLUDED.expires_at,
         invited_at = now()
-  WHERE public.ride_request_invites.status <> 'accepted';
+  WHERE public.ride_request_invites.status NOT IN ('accepted', 'superseded');
 
   RETURN true;
 END;

@@ -142,7 +142,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text(DriverStrings.docSavePermanentTitle),
+        title: Text(DriverStrings.docSavePermanentTitle),
         content: Text(
           insurance
               ? DriverStrings.docSaveInsuranceBody
@@ -155,7 +155,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(DriverStrings.docSaveConfirm),
+            child: Text(DriverStrings.docSaveConfirm),
           ),
         ],
       ),
@@ -338,7 +338,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
           }
 
           return AlertDialog(
-            title: const Text(DriverStrings.indemnificationQuizTitle),
+            title: Text(DriverStrings.indemnificationQuizTitle),
             content: SizedBox(
               width: 560,
               child: SingleChildScrollView(
@@ -394,7 +394,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
                       q1 == 1 && q2 == 1 && q3 == 1 && q4 == 1 && q5 == 1;
                   Navigator.of(ctx).pop(passed);
                 },
-                child: const Text(DriverStrings.submit),
+                child: Text(DriverStrings.submit),
               ),
             ],
           );
@@ -437,12 +437,12 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
       final retry = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text(DriverStrings.indemnificationQuizTitle),
-          content: const Text(DriverStrings.indemnificationQuizFail),
+          title: Text(DriverStrings.indemnificationQuizTitle),
+          content: Text(DriverStrings.indemnificationQuizFail),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text(DriverStrings.stop),
+              child: Text(DriverStrings.stop),
             ),
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(true),
@@ -489,12 +489,12 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text(DriverStrings.indemnificationQuizPassTitle),
-        content: const Text(DriverStrings.indemnificationQuizPassBody),
+        title: Text(DriverStrings.indemnificationQuizPassTitle),
+        content: Text(DriverStrings.indemnificationQuizPassBody),
         actions: [
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text(DriverStrings.indemnificationQuizPassCta),
+            child: Text(DriverStrings.indemnificationQuizPassCta),
           ),
         ],
       ),
@@ -630,12 +630,12 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text(DriverStrings.insuranceUseCamera),
+              title: Text(DriverStrings.insuranceUseCamera),
               onTap: () => Navigator.of(ctx).pop(ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text(DriverStrings.insuranceUseGallery),
+              title: Text(DriverStrings.insuranceUseGallery),
               onTap: () => Navigator.of(ctx).pop(ImageSource.gallery),
             ),
           ],
@@ -721,7 +721,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(DriverStrings.invalidExpiryDateFormat),
           ),
         );
@@ -1126,7 +1126,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
               OutlinedButton.icon(
                 onPressed: () => context.push('/driver/terms'),
                 icon: const Icon(Icons.menu_book_rounded),
-                label: const Text(DriverStrings.legalChecklistOpenTerms),
+                label: Text(DriverStrings.legalChecklistOpenTerms),
               ),
               CheckboxListTile(
                 value: (snap?.termsAcceptedAt != null) || _termsReadChecked,
@@ -1146,7 +1146,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
               OutlinedButton.icon(
                 onPressed: _openIndemnificationDoc,
                 icon: const Icon(Icons.open_in_new_rounded),
-                label: const Text(
+                label: Text(
                   DriverStrings.legalChecklistOpenIndemnification,
                 ),
               ),
@@ -1192,7 +1192,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
                           color: colors.onAccent,
                         ),
                       )
-                    : const Text(DriverStrings.indemnificationStartQuiz),
+                    : Text(DriverStrings.indemnificationStartQuiz),
               ),
             ],
           ),
@@ -1346,7 +1346,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
                   const SizedBox(height: 12),
                   FilledButton(
                     onPressed: () => context.push('/driver/veriff'),
-                    child: const Text(DriverStrings.veriffStart),
+                    child: Text(DriverStrings.veriffStart),
                   ),
                 ],
               ],
@@ -1451,7 +1451,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
                               if (!context.mounted) return;
                               if (resolved == null || resolved.trim().isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
+                                  SnackBar(
                                     content: Text(
                                       DriverStrings.insurancePreviewFailed,
                                     ),
@@ -1494,7 +1494,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
                       ? null
                       : _pickInsurancePhoto,
                   icon: const Icon(Icons.photo_camera_outlined),
-                  label: const Text(
+                  label: Text(
                     DriverStrings.insurancePickPhotoGreenCard,
                   ),
                 ),
@@ -1547,7 +1547,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
                               color: colors.onAccent,
                             ),
                           )
-                        : const Text(DriverStrings.insuranceSave),
+                        : Text(DriverStrings.insuranceSave),
                   ),
                 ],
               ],
@@ -1643,7 +1643,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
                               color: colors.onAccent,
                             ),
                           )
-                        : const Text(DriverStrings.kvkSave),
+                        : Text(DriverStrings.kvkSave),
                   ),
                 ],
               ],

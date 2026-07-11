@@ -43,6 +43,7 @@ class DriverPlatformBalanceBody extends StatelessWidget {
     required this.onBack,
     required this.onViewHistory,
     required this.onSettleBalance,
+    this.onRefresh,
   });
 
   final DriverColors colors;
@@ -53,6 +54,7 @@ class DriverPlatformBalanceBody extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onViewHistory;
   final VoidCallback? onSettleBalance;
+  final Future<void> Function()? onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -76,34 +78,39 @@ class DriverPlatformBalanceBody extends StatelessWidget {
                     ),
                   ),
                 )
-              : ListView(
-                  padding: const EdgeInsets.fromLTRB(
-                    DriverSpacing.screenEdge,
-                    DriverSpacing.md,
-                    DriverSpacing.screenEdge,
-                    DriverSpacing.xxl,
+              : RefreshIndicator(
+                  onRefresh: onRefresh ?? () async {},
+                  color: colors.primary,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(
+                      DriverSpacing.screenEdge,
+                      DriverSpacing.md,
+                      DriverSpacing.screenEdge,
+                      DriverSpacing.xxl,
+                    ),
+                    children: [
+                      _BalanceCard(
+                        colors: colors,
+                        typography: typography,
+                        summary: summary!,
+                      ).driverFadeSlideIn(staggerIndex: 0),
+                      const SizedBox(height: DriverSpacing.xl),
+                      _InfoCard(
+                        colors: colors,
+                        typography: typography,
+                        summary: summary!,
+                      ).driverFadeSlideIn(staggerIndex: 1),
+                      const SizedBox(height: DriverSpacing.xl),
+                      _ActionsSection(
+                        colors: colors,
+                        typography: typography,
+                        canSettle: summary!.canSettle,
+                        onViewHistory: onViewHistory,
+                        onSettleBalance: onSettleBalance,
+                      ).driverFadeSlideIn(staggerIndex: 2),
+                    ],
                   ),
-                  children: [
-                    _BalanceCard(
-                      colors: colors,
-                      typography: typography,
-                      summary: summary!,
-                    ).driverFadeSlideIn(staggerIndex: 0),
-                    const SizedBox(height: DriverSpacing.xl),
-                    _InfoCard(
-                      colors: colors,
-                      typography: typography,
-                      summary: summary!,
-                    ).driverFadeSlideIn(staggerIndex: 1),
-                    const SizedBox(height: DriverSpacing.xl),
-                    _ActionsSection(
-                      colors: colors,
-                      typography: typography,
-                      canSettle: summary!.canSettle,
-                      onViewHistory: onViewHistory,
-                      onSettleBalance: onSettleBalance,
-                    ).driverFadeSlideIn(staggerIndex: 2),
-                  ],
                 ),
     );
   }
@@ -256,8 +263,8 @@ class _ActionsSection extends StatelessWidget {
       children: [
         if (canSettle && onSettleBalance != null) ...[
           DriverButton(
-            label: DriverStrings.platformBalanceSettleBalance,
-            icon: Icons.payment_rounded,
+            label: DriverStrings.platformBalanceViewSettlementDetails,
+            icon: Icons.account_balance_outlined,
             onPressed: onSettleBalance!,
             size: DriverButtonSize.lg,
             colors: colors,

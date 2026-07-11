@@ -4,14 +4,14 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../utils/driver_address_clipboard.dart';
 import '../l10n/driver_strings.dart';
-import '../providers/driver_nav_app_pref_provider.dart';
-import '../services/driver_nav_app_pref.dart';
+import '../utils/driver_nav_app_helpers.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../ui/driver_button.dart';
 import '../ui/driver_status_badge.dart';
 import 'driver_ride_bolt_layout.dart';
 import 'driver_ride_flow_common.dart';
+import 'driver_taxi_terug_queued_banner_slot.dart';
 
 /// **Navigation Focus** — Bolt-style trip in progress.
 class DriverNavigationFocusBody extends ConsumerWidget {
@@ -40,6 +40,7 @@ class DriverNavigationFocusBody extends ConsumerWidget {
     this.driverLng,
     this.etaLabel,
     this.onSafety,
+    this.currentRideId,
   });
 
   final DriverColors colors;
@@ -65,14 +66,7 @@ class DriverNavigationFocusBody extends ConsumerWidget {
   final double? driverLng;
   final String? etaLabel;
   final VoidCallback? onSafety;
-
-  String _navLabel(WidgetRef ref) {
-    final app = ref.watch(driverNavAppPrefProvider).valueOrNull ?? DriverNavApp.waze;
-    return switch (app) {
-      DriverNavApp.waze => 'Waze',
-      DriverNavApp.google => 'Google Maps',
-    };
-  }
+  final String? currentRideId;
 
   void _openRouteDetails(BuildContext context, WidgetRef ref) {
     showDriverRideRouteDetailsSheet(
@@ -82,9 +76,13 @@ class DriverNavigationFocusBody extends ConsumerWidget {
       destinationAddress: destinationAddress,
       farePill: driverRideBoltFarePill(expectedAmountLabel),
       riderName: riderName,
-      navAppLabel: _navLabel(ref),
+      navAppLabel: watchDriverNavAppLabel(ref),
       onContact: onOpenCommunication,
       onNavigate: onNavigate,
+      onChangeNavigation: () => promptDriverNavAppChange(
+        context: context,
+        ref: ref,
+      ),
       onCancelRide: onCancelRide,
       onToggleRequests: onToggleRequests,
       requestsPaused: requestsPaused,
@@ -134,6 +132,13 @@ class DriverNavigationFocusBody extends ConsumerWidget {
       onNavigate: onNavigate,
       requestsPaused: requestsPaused,
       statusBusy: statusBusy,
+      headerBanner: currentRideId == null
+          ? null
+          : DriverTaxiTerugQueuedBannerSlot(
+              currentRideId: currentRideId!,
+              colors: colors,
+              typography: typography,
+            ),
       infoCard: DriverRideBoltInfoCard(
         colors: colors,
         typography: typography,

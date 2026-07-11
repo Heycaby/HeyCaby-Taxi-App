@@ -77,7 +77,7 @@ Future<void> handleDriverTaxiSessionRevoked({
             width: double.infinity,
             child: FilledButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text(DriverStrings.taxiSessionRevokedCta),
+              child: Text(DriverStrings.taxiSessionRevokedCta),
             ),
           ),
         ],

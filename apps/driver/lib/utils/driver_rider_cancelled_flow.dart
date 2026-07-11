@@ -26,11 +26,18 @@ bool shouldHandleRiderCancel({
 }
 
 /// L1-3 — full-screen modal, clear ride, return home.
+/// Stops incoming-ride ringtone immediately (safe to call repeatedly).
+void stopDriverIncomingRideRinging() {
+  SoundService().stopRideRequest();
+}
+
 Future<void> handleDriverRiderCancelled({
   required WidgetRef ref,
   required BuildContext context,
   required String rideId,
 }) async {
+  stopDriverIncomingRideRinging();
+
   if (!context.mounted) return;
 
   final state = ref.read(driverStateProvider);
@@ -39,8 +46,6 @@ Future<void> handleDriverRiderCancelled({
     return;
   }
   if (!markRiderCancelHandled(rideId)) return;
-
-  SoundService().stopRideRequest();
   unawaited(SoundService().playRiderCancelled());
   HapticService.heavyTap();
 

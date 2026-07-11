@@ -18,7 +18,8 @@ class SecureStorage {
       _storage.write(key: 'rider_token', value: token),
       _storage.write(key: 'rider_identity_id', value: identityId),
       if (email != null) _storage.write(key: 'rider_email', value: email),
-      if (bookingName != null) _storage.write(key: 'rider_booking_name', value: bookingName),
+      if (bookingName != null)
+        _storage.write(key: 'rider_booking_name', value: bookingName),
     ]);
   }
 
@@ -53,6 +54,10 @@ class SecureStorage {
 
   static Future<void> updateRiderToken(String token) async {
     await _storage.write(key: 'rider_token', value: token);
+  }
+
+  static Future<void> updateRiderIdentityId(String identityId) async {
+    await _storage.write(key: 'rider_identity_id', value: identityId);
   }
 
   /// Persists default payment / vehicle choices for the booking flow (device cache).

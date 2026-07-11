@@ -146,13 +146,9 @@ class DriverNavigationLauncher {
     );
   }
 
-  /// Hotspots — let the driver pick Waze or Google for this destination.
-  static Future<void> showChooser(
-    BuildContext context, {
-    required double lat,
-    required double lng,
-  }) async {
-    final choice = await showModalBottomSheet<DriverNavApp>(
+  /// Profile / route-details picker — does not launch navigation.
+  static Future<DriverNavApp?> pickNavApp(BuildContext context) {
+    return showModalBottomSheet<DriverNavApp>(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
@@ -164,18 +160,27 @@ class DriverNavigationLauncher {
           children: [
             ListTile(
               leading: const Icon(Icons.map_outlined),
-              title: const Text(DriverStrings.hotspotsGoogleMaps),
+              title: Text(DriverStrings.hotspotsGoogleMaps),
               onTap: () => Navigator.pop(ctx, DriverNavApp.google),
             ),
             ListTile(
               leading: const Icon(Icons.navigation_outlined),
-              title: const Text(DriverStrings.hotspotsWaze),
+              title: Text(DriverStrings.hotspotsWaze),
               onTap: () => Navigator.pop(ctx, DriverNavApp.waze),
             ),
           ],
         ),
       ),
     );
+  }
+
+  /// Hotspots — one-off choice then launch (does not change profile default).
+  static Future<void> showChooser(
+    BuildContext context, {
+    required double lat,
+    required double lng,
+  }) async {
+    final choice = await pickNavApp(context);
     if (choice == null) return;
     await launchPreferred(lat: lat, lng: lng, app: choice);
   }

@@ -11,9 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../constants/rider_matching_ui.dart';
 import '../constants/rider_search_window.dart';
 import '../models/ride_matching_variant.dart';
-import '../providers/active_search_provider.dart';
 import '../providers/booking_provider.dart';
-import '../providers/near_term_ride_request_provider.dart';
 import '../providers/recent_destinations_provider.dart';
 import '../providers/ride_request_provider.dart';
 import '../services/booking_flow_navigation.dart';
@@ -21,8 +19,6 @@ import '../services/heycaby_widget_sync.dart';
 import '../services/nearby_supply_service.dart';
 import '../services/rider_dispatch_status_service.dart';
 import '../services/rider_matching_recovery_actions.dart';
-import '../services/sound_service.dart';
-import '../services/stale_ride_cleanup.dart';
 import '../widgets/booking/matching_search_map_view.dart';
 import '../widgets/booking/matching_search_sheet.dart';
 import '../widgets/booking/trip_summary_map_view.dart';
@@ -43,10 +39,11 @@ class SearchingScreen extends ConsumerStatefulWidget {
 
 class _SearchingScreenState extends ConsumerState<SearchingScreen>
     with TickerProviderStateMixin {
-  // Radar — staggered ripples + rotating sweep (60% slower than prior tuning)
-  static const int _rippleCount = 5;
-  static const Duration _rippleDuration = Duration(milliseconds: 14000);
-  static const Duration _sweepDuration = Duration(milliseconds: 16000);
+  // A quiet location beacon. The animation remains ambient so the map stays
+  // useful while matching continues in the background.
+  static const int _rippleCount = 3;
+  static const Duration _rippleDuration = Duration(milliseconds: 6800);
+  static const Duration _sweepDuration = Duration(milliseconds: 9000);
 
   late final List<AnimationController> _radarControllers;
   late final AnimationController _radarSweepController;
@@ -136,6 +133,8 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
     final st = ref.read(rideRequestProvider).status;
     if (st == 'assigned' ||
         st == 'accepted' ||
+        st == 'driver_found' ||
+        st == 'driver_en_route' ||
         st == 'driver_arrived' ||
         st == 'in_progress') {
       if (mounted) context.go('/active');
@@ -409,7 +408,10 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
             final newStatus = payload.newRecord['status'] as String?;
             if (newStatus == null) return;
             ref.read(rideRequestProvider.notifier).updateStatus(newStatus);
-            if (newStatus == 'assigned' || newStatus == 'accepted') {
+            if (newStatus == 'assigned' ||
+                newStatus == 'accepted' ||
+                newStatus == 'driver_found' ||
+                newStatus == 'driver_en_route') {
               final id = ref.read(rideRequestProvider).rideRequestId;
               final pickup =
                   ref.read(bookingProvider).pickup?.displayName ?? '';
@@ -431,7 +433,8 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
               'expired',
             };
             if (terminalNoMatch.contains(newStatus) && mounted) {
-              ref.read(rideRequestProvider.notifier).reset();
+              await RiderMatchingRecoveryActions.clearLocalMatchingState(ref);
+              if (!mounted) return;
               ScaffoldMessenger.maybeOf(context)?.showSnackBar(
                 SnackBar(
                     content: Text(
@@ -645,8 +648,8 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
     RiderMatchingRecoveryActions.schedule(ref, context);
   }
 
-  void _onTryMarketplace(BuildContext context) {
-    RiderMatchingRecoveryActions.marketplace(ref, context);
+  void _onTryTaxiTerug(BuildContext context) {
+    RiderMatchingRecoveryActions.taxiTerug(ref, context);
   }
 
   void _onTryAgainFromExpired() {
@@ -673,7 +676,7 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
         initiallyExpanded: false,
         onNotifyMe: () => _onNotifyMe(context),
         onScheduleRide: () => _onScheduleRide(context),
-        onTryMarketplace: () => _onTryMarketplace(context),
+        onTryMarketplace: () => _onTryTaxiTerug(context),
       ),
     );
   }
@@ -696,37 +699,25 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
       confirmDestructive: true,
     );
     if (!confirmed || !mounted) return;
-    if (!context.mounted) return;
+    await _cancelRideGloballyFromSearching();
+    if (!mounted || !context.mounted) return;
     context.go('/home');
-    unawaited(_cancelRideGloballyFromSearching());
   }
 
   Future<void> _cancelRideGloballyFromSearching() async {
-    final rideId = ref.read(rideRequestProvider).rideRequestId;
-    if (rideId != null) {
-      try {
-        final identity = await ref.read(riderIdentityProvider.future);
-        final token = identity.riderToken;
-        if (token != null && token.isNotEmpty) {
-          await cancelExpiredRiderOpenRide(
-            rideId: rideId,
-            riderToken: token,
-            cancellationReason: 'rider_cancelled_from_searching_screen',
-          );
-        }
-      } catch (_) {
-        // Still clear local state so UI is never stuck on an active search banner.
-      }
+    final ride = ref.read(rideRequestProvider);
+    final rideId = ride.rideRequestId;
+    if (rideId == null) {
+      await RiderMatchingRecoveryActions.clearLocalMatchingState(ref);
+      return;
     }
 
-    await SoundService().playRideCancelled();
-    ref.read(rideRequestProvider.notifier).reset();
-    await ref.read(activeSearchProvider.notifier).clear();
-    ref.invalidate(nearTermRideRequestProvider);
-    try {
-      await ref.read(nearTermRideRequestProvider.future);
-    } catch (_) {}
-    ref.invalidate(ridesTabUpcomingRequestsProvider);
+    await RiderMatchingRecoveryActions.cancelOpenRideAndClearLocalState(
+      ref,
+      rideId: rideId,
+      riderToken: ride.riderToken,
+      cancellationReason: 'rider_cancelled_from_searching_screen',
+    );
   }
 
   @override
@@ -736,8 +727,8 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
     final l10n = AppLocalizations.of(context);
     final booking = ref.watch(bookingProvider);
     final screenH = MediaQuery.sizeOf(context).height;
-    final sheetInitialSize = _searchExpired ? 0.34 : 0.30;
-    final mapActionBottom = screenH * sheetInitialSize + 16;
+    final sheetInitialSize = _searchExpired ? 0.34 : 0.31;
+    final topInset = MediaQuery.paddingOf(context).top;
 
     void onEditRoute(bool isPickup) => context.push(
           '/search',
@@ -750,173 +741,157 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
         );
 
     if (widget.variant == RideMatchingVariant.scheduled) {
-      return ScheduledMatchingFullscreen(
-        booking: booking,
-        colors: colors,
-        typo: typo,
-        l10n: l10n,
-        onBackToHome: () => context.go('/home'),
-        onTripOptions: () => _openMatchingAlternativesSheet(
-          context,
-          colors,
-          typo,
-          l10n,
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop) return;
+          _showCancelDialog(context, colors, typo, l10n);
+        },
+        child: ScheduledMatchingFullscreen(
+          booking: booking,
+          colors: colors,
+          typo: typo,
+          l10n: l10n,
+          onBackToHome: () => _showCancelDialog(context, colors, typo, l10n),
+          onTripOptions: () => _openMatchingAlternativesSheet(
+            context,
+            colors,
+            typo,
+            l10n,
+          ),
+          onCancelRide: () => _showCancelDialog(context, colors, typo, l10n),
+          onEditRoute: onEditRoute,
         ),
-        onCancelRide: () => _showCancelDialog(context, colors, typo, l10n),
-        onEditRoute: onEditRoute,
       );
     }
 
-    return Scaffold(
-      backgroundColor: colors.bg,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Positioned.fill(
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                TripSummaryMapView(
-                  height: screenH,
-                  cameraBottomPadding: screenH * 0.30 + 28,
-                  pickupFocused: true,
-                  onRouteMetricsChanged: (_, __) {},
-                ),
-                MatchingSearchPulseOverlay(
-                  rippleControllers: _radarControllers,
-                  sweepController: _radarSweepController,
-                  color: colors.accent,
-                ),
-              ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _showCancelDialog(context, colors, typo, l10n);
+      },
+      child: Scaffold(
+        backgroundColor: colors.bg,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            Positioned.fill(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  TripSummaryMapView(
+                    height: screenH,
+                    cameraBottomPadding: screenH * 0.30 + 28,
+                    pickupFocused: true,
+                    onRouteMetricsChanged: (_, __) {},
+                  ),
+                  MatchingSearchPulseOverlay(
+                    rippleControllers: _radarControllers,
+                    sweepController: _radarSweepController,
+                    color: colors.accent,
+                  ),
+                ],
+              ),
             ),
-          ),
-          Positioned(
-            left: 14,
-            right: 14,
-            bottom: mapActionBottom,
-            child: Row(
-              children: [
-                _LabeledMapAction(
-                  colors: colors,
-                  typo: typo,
-                  icon: Icons.arrow_back_rounded,
-                  label: l10n.back,
-                  tone: _MapActionTone.primary,
-                  onTap: () => context.go('/home'),
-                ),
-                const Spacer(),
-                _LabeledMapAction(
-                  colors: colors,
-                  typo: typo,
-                  icon: Icons.close_rounded,
-                  label: l10n.cancelRide,
-                  tone: _MapActionTone.outlined,
-                  onTap: () => _showCancelDialog(context, colors, typo, l10n),
-                ),
-              ],
+            PositionedDirectional(
+              top: topInset + 12,
+              end: 16,
+              child: _MapFloatingButton(
+                colors: colors,
+                icon: Icons.close_rounded,
+                tooltip: l10n.cancelRide,
+                onTap: () => _showCancelDialog(context, colors, typo, l10n),
+              ),
             ),
-          ),
-          DraggableScrollableSheet(
-            initialChildSize: _searchExpired ? 0.34 : 0.30,
-            minChildSize: _searchExpired ? 0.28 : 0.24,
-            maxChildSize: _searchExpired ? 0.48 : 0.42,
-            snap: true,
-            snapSizes: _searchExpired ? const [0.34, 0.48] : const [0.30, 0.42],
-            builder: (context, scrollController) => MatchingSearchSheet(
-              scrollController: scrollController,
-              colors: colors,
-              typo: typo,
-              l10n: l10n,
-              title: _sheetTitle(l10n),
-              subtitle: _sheetSubtitle(l10n),
-              progress: _sheetProgress(),
-              pickup: booking.pickup?.displayName ?? '',
-              destination: booking.destination?.displayName ?? '',
-              variant: widget.variant,
-              marketplaceBidCount: _marketplaceBidCount,
-              showOptionsHint: _showNoDriverCard && !_searchExpired,
-              waveCountdown: _searchExpired ? null : _waveCountdownLabel(),
-              expired: _searchExpired,
-              onTryAgain: _searchExpired ? _onTryAgainFromExpired : null,
-              onNotifyMe: _searchExpired ? () => _onNotifyMe(context) : null,
-              onSchedule:
-                  _searchExpired ? () => _onScheduleRide(context) : null,
-              onMarketplace:
-                  _searchExpired ? () => _onTryMarketplace(context) : null,
-              onSeeOptions: _showNoDriverCard && !_searchExpired
-                  ? () => _openMatchingAlternativesSheet(
-                        context,
-                        colors,
-                        typo,
-                        l10n,
-                        titleOverride: l10n.searchNoSupplySheetTitle,
-                      )
-                  : null,
+            DraggableScrollableSheet(
+              initialChildSize: sheetInitialSize,
+              minChildSize: _searchExpired ? 0.28 : 0.25,
+              maxChildSize: _searchExpired ? 0.48 : 0.50,
+              snap: true,
+              snapSizes:
+                  _searchExpired ? const [0.34, 0.48] : const [0.31, 0.50],
+              builder: (context, scrollController) => MatchingSearchSheet(
+                scrollController: scrollController,
+                colors: colors,
+                typo: typo,
+                l10n: l10n,
+                title: _sheetTitle(l10n),
+                subtitle: _sheetSubtitle(l10n),
+                progress: _sheetProgress(),
+                pickup: booking.pickup?.displayName ?? '',
+                destination: booking.destination?.displayName ?? '',
+                variant: widget.variant,
+                marketplaceBidCount: _marketplaceBidCount,
+                showOptionsHint: _showNoDriverCard && !_searchExpired,
+                onTryTaxiTerug: _showNoDriverCard && !_searchExpired
+                    ? () => _onTryTaxiTerug(context)
+                    : null,
+                waveCountdown: _searchExpired ? null : _waveCountdownLabel(),
+                expired: _searchExpired,
+                onTryAgain: _searchExpired ? _onTryAgainFromExpired : null,
+                onNotifyMe: _searchExpired ? () => _onNotifyMe(context) : null,
+                onSchedule:
+                    _searchExpired ? () => _onScheduleRide(context) : null,
+                onMarketplace:
+                    _searchExpired ? () => _onTryTaxiTerug(context) : null,
+                onDismiss: _searchExpired
+                    ? () => unawaited(
+                          RiderMatchingRecoveryActions.goHomeWithoutBooking(
+                            ref,
+                            context,
+                          ),
+                        )
+                    : null,
+                onSeeOptions: _showNoDriverCard && !_searchExpired
+                    ? () => _openMatchingAlternativesSheet(
+                          context,
+                          colors,
+                          typo,
+                          l10n,
+                          titleOverride: l10n.searchNoSupplySheetTitle,
+                        )
+                    : null,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-enum _MapActionTone { primary, outlined }
-
-class _LabeledMapAction extends StatelessWidget {
-  const _LabeledMapAction({
+class _MapFloatingButton extends StatelessWidget {
+  const _MapFloatingButton({
     required this.colors,
-    required this.typo,
     required this.icon,
-    required this.label,
+    required this.tooltip,
     required this.onTap,
-    this.tone = _MapActionTone.outlined,
   });
 
   final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
   final IconData icon;
-  final String label;
+  final String tooltip;
   final VoidCallback onTap;
-  final _MapActionTone tone;
 
   @override
   Widget build(BuildContext context) {
-    final isPrimary = tone == _MapActionTone.primary;
-    final bg = isPrimary ? colors.accent : colors.card.withValues(alpha: 0.94);
-    final border = isPrimary
-        ? colors.accent.withValues(alpha: 0.85)
-        : colors.accent.withValues(alpha: 0.45);
-    final fg = isPrimary ? colors.onAccent : colors.accent;
-    final shadow = isPrimary
-        ? colors.accent.withValues(alpha: 0.28)
-        : colors.text.withValues(alpha: 0.08);
-
     return Material(
-      color: bg,
-      elevation: isPrimary ? 6 : 8,
-      shadowColor: shadow,
-      shape: StadiumBorder(side: BorderSide(color: border, width: 1.5)),
+      color: colors.card.withValues(alpha: 0.94),
+      elevation: 3,
+      shadowColor: colors.text.withValues(alpha: 0.12),
+      shape: CircleBorder(
+        side: BorderSide(color: colors.border.withValues(alpha: 0.4)),
+      ),
       child: InkWell(
         onTap: onTap,
-        customBorder: const StadiumBorder(),
-        splashColor: isPrimary
-            ? colors.onAccent.withValues(alpha: 0.12)
-            : colors.accent.withValues(alpha: 0.12),
-        child: Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(12, 10, 14, 10),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: fg, size: 20),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: typo.labelMedium.copyWith(
-                  color: fg,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
+        customBorder: const CircleBorder(),
+        child: Tooltip(
+          message: tooltip,
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Icon(icon, color: colors.text, size: 22),
           ),
         ),
       ),

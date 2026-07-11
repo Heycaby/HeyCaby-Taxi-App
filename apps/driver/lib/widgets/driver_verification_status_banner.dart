@@ -34,7 +34,8 @@ class DriverVerificationStatusBanner extends ConsumerWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.hourglass_top_rounded, color: colors.accent, size: 22),
+                  Icon(Icons.hourglass_top_rounded,
+                      color: colors.accent, size: 22),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(

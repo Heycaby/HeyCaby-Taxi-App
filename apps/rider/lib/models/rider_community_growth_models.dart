@@ -85,4 +85,75 @@ extension RiderCommunityBadgeTierX on RiderCommunityBadgeTier {
     if (joined >= 50) tiers.add(RiderCommunityBadgeTier.topPromoter);
     return tiers;
   }
+
+  int threshold() => switch (this) {
+        RiderCommunityBadgeTier.supporter => 1,
+        RiderCommunityBadgeTier.builder => 5,
+        RiderCommunityBadgeTier.ambassador => 15,
+        RiderCommunityBadgeTier.topPromoter => 50,
+      };
+
+  static RiderCommunityBadgeTier? nextUnearned(int joined) {
+    for (final tier in RiderCommunityBadgeTier.values) {
+      if (joined < tier.threshold()) return tier;
+    }
+    return null;
+  }
+}
+
+enum RiderRideBadgeTier {
+  firstRide,
+  regular,
+  dedicated,
+  legend,
+}
+
+extension RiderRideBadgeTierX on RiderRideBadgeTier {
+  int threshold() => switch (this) {
+        RiderRideBadgeTier.firstRide => 1,
+        RiderRideBadgeTier.regular => 10,
+        RiderRideBadgeTier.dedicated => 50,
+        RiderRideBadgeTier.legend => 100,
+      };
+
+  static List<RiderRideBadgeTier> earnedForRides(int rides) {
+    final tiers = <RiderRideBadgeTier>[];
+    if (rides >= 1) tiers.add(RiderRideBadgeTier.firstRide);
+    if (rides >= 10) tiers.add(RiderRideBadgeTier.regular);
+    if (rides >= 50) tiers.add(RiderRideBadgeTier.dedicated);
+    if (rides >= 100) tiers.add(RiderRideBadgeTier.legend);
+    return tiers;
+  }
+
+  static RiderRideBadgeTier? nextUnearned(int rides) {
+    for (final tier in RiderRideBadgeTier.values) {
+      if (rides < tier.threshold()) return tier;
+    }
+    return null;
+  }
+}
+
+class RiderRideMilestones {
+  const RiderRideMilestones({required this.totalCompletedRides});
+
+  final int totalCompletedRides;
+
+  factory RiderRideMilestones.fromJson(Map<String, dynamic> json) {
+    return RiderRideMilestones(
+      totalCompletedRides: (json['total_completed_rides'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  static const empty = RiderRideMilestones(totalCompletedRides: 0);
+}
+
+class RiderStreak {
+  const RiderStreak({required this.weekCount, required this.lastRideWeek});
+
+  final int weekCount;
+  final String lastRideWeek;
+
+  bool get isActive => weekCount > 0;
+
+  static const empty = RiderStreak(weekCount: 0, lastRideWeek: '');
 }

@@ -5,12 +5,13 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../utils/driver_address_clipboard.dart';
 import '../l10n/driver_strings.dart';
-import '../providers/driver_nav_app_pref_provider.dart';
-import '../services/driver_nav_app_pref.dart';
+import '../utils/driver_nav_app_helpers.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
+import '../ui/driver_button.dart';
 import 'driver_ride_bolt_layout.dart';
 import 'driver_ride_flow_common.dart';
+import 'driver_taxi_terug_queued_banner_slot.dart';
 
 /// **Pickup Arrival** — Bolt-style waiting at pickup; start trip friction-free.
 class DriverPickupArrivalBody extends ConsumerWidget {
@@ -77,15 +78,6 @@ class DriverPickupArrivalBody extends ConsumerWidget {
   final bool requestsPaused;
   final bool statusBusy;
 
-  String _navLabel(WidgetRef ref) {
-    final app =
-        ref.watch(driverNavAppPrefProvider).valueOrNull ?? DriverNavApp.waze;
-    return switch (app) {
-      DriverNavApp.waze => 'Waze',
-      DriverNavApp.google => 'Google Maps',
-    };
-  }
-
   void _openRouteDetails(BuildContext context, WidgetRef ref) {
     showDriverRideRouteDetailsSheet(
       context: context,
@@ -94,11 +86,15 @@ class DriverPickupArrivalBody extends ConsumerWidget {
       destinationAddress: destinationAddress,
       farePill: farePill,
       riderName: riderName,
-      navAppLabel: _navLabel(ref),
+      navAppLabel: watchDriverNavAppLabel(ref),
       rideRequestId: rideId,
       smartPingPhase: DriverRideCommunicationPhase.atPickup,
       onContact: onOpenCommunication,
       onNavigate: onNavigate,
+      onChangeNavigation: () => promptDriverNavAppChange(
+        context: context,
+        ref: ref,
+      ),
       onCancelRide: onCancelRide,
       onToggleRequests: onToggleRequests,
       requestsPaused: requestsPaused,
@@ -146,6 +142,11 @@ class DriverPickupArrivalBody extends ConsumerWidget {
       onChat: onOpenCommunication,
       requestsPaused: requestsPaused,
       statusBusy: statusBusy,
+      headerBanner: DriverTaxiTerugQueuedBannerSlot(
+        currentRideId: rideId,
+        colors: colors,
+        typography: typography,
+      ),
       infoCard: DriverRideBoltInfoCard(
         colors: colors,
         typography: typography,
@@ -177,8 +178,11 @@ class DriverPickupArrivalBody extends ConsumerWidget {
       bottomBar: DriverRideFlowBottomBar(
         colors: colors,
         typography: typography,
-        primaryLabel: DriverStrings.startRideAndNavigate(_navLabel(ref)),
+        primaryLabel: DriverStrings.headToDropoffAndNavigate(
+          watchDriverNavAppLabel(ref),
+        ),
         primaryIcon: Icons.navigation_rounded,
+        primaryVariant: DriverButtonVariant.warning,
         onPrimary: loading ? null : onStartRide,
         primaryLoading: loading,
         tertiaryLabel: canReportNoShow ? DriverStrings.riderDidNotShow : null,

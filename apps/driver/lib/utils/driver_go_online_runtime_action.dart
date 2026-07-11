@@ -87,27 +87,6 @@ Future<DriverGoOnlineAttemptResult> attemptDriverGoOnline({
 
   if (!context.mounted) return const DriverGoOnlineAttemptResult.stopped();
 
-  var skipBillingGate = readiness.gatesSkipped;
-  if (!skipBillingGate) {
-    try {
-      final runtime = await runtimeService.fetchRuntime();
-      skipBillingGate = runtime.config.skipGoOnlineGates;
-      if (!skipBillingGate && !runtime.billingAllowed) {
-        return DriverGoOnlineAttemptResult.blocked(
-          DriverRuntimeGateArgs(
-            title: DriverStrings.runtimePaymentBlockedTitle,
-            body: DriverStrings.runtimePaymentBlockedBody,
-            ctaLabel: DriverStrings.runtimeOpenBilling,
-            ctaRoute: '/driver/billing',
-          ),
-        );
-      }
-    } catch (_) {
-      skipBillingGate =
-          (readiness.statusMessage ?? '').toLowerCase().contains('test mode');
-    }
-  }
-
   final v1Decision = await runtimeService.setStatusV1(
     status: 'available',
     lat: latitude,
@@ -232,13 +211,14 @@ class _InitialTariffSetupSheetState
       return;
     }
 
-    final profile = await ref.read(driverDataServiceProvider).createInitialRateProfile(
-          driverId: driverId,
-          baseFare: startFee,
-          perKmRate: perKm,
-          perMinRate: perMin,
-          waitingRate: waitingRate,
-        );
+    final profile =
+        await ref.read(driverDataServiceProvider).createInitialRateProfile(
+              driverId: driverId,
+              baseFare: startFee,
+              perKmRate: perKm,
+              perMinRate: perMin,
+              waitingRate: waitingRate,
+            );
     if (!mounted) return;
     if (profile == null) {
       setState(() => _saving = false);

@@ -139,103 +139,107 @@ class _RiderSupportThreadsScreenState
             ),
             Expanded(
               child: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _loadError != null
-              ? ListView(
-                  padding: const EdgeInsets.all(24),
-                  children: [
-                    const SizedBox(height: 120),
-                    Center(
-                      child: Text(
-                        _loadError == 'timeout'
-                            ? 'Support messages are taking too long to load. Please try again.'
-                            : 'Could not load support messages. Please try again.',
-                        textAlign: TextAlign.center,
-                        style: typo.bodyMedium.copyWith(color: colors.textSoft),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Center(
-                      child: FilledButton(
-                        onPressed: _load,
-                        child: Text(l10n.tryAgain),
-                      ),
-                    ),
-                  ],
-                )
-          : RefreshIndicator(
-              onRefresh: _load,
-              child: _tickets.isEmpty
-                  ? ListView(
-                      children: [
-                        const SizedBox(height: 180),
-                        Center(
-                          child: Text(
-                            l10n.supportNoThreads,
-                            style: typo.bodyMedium.copyWith(
-                              color: colors.textSoft,
+                  ? const Center(child: CircularProgressIndicator())
+                  : _loadError != null
+                      ? ListView(
+                          padding: const EdgeInsets.all(24),
+                          children: [
+                            const SizedBox(height: 120),
+                            Center(
+                              child: Text(
+                                _loadError == 'timeout'
+                                    ? 'Support messages are taking too long to load. Please try again.'
+                                    : 'Could not load support messages. Please try again.',
+                                textAlign: TextAlign.center,
+                                style: typo.bodyMedium
+                                    .copyWith(color: colors.textSoft),
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 16),
+                            Center(
+                              child: FilledButton(
+                                onPressed: _load,
+                                child: Text(l10n.tryAgain),
+                              ),
+                            ),
+                          ],
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _load,
+                          child: _tickets.isEmpty
+                              ? ListView(
+                                  children: [
+                                    const SizedBox(height: 180),
+                                    Center(
+                                      child: Text(
+                                        l10n.supportNoThreads,
+                                        style: typo.bodyMedium.copyWith(
+                                          color: colors.textSoft,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : ListView(
+                                  padding: const EdgeInsets.all(16),
+                                  children: [
+                                    if (ongoing.isNotEmpty) ...[
+                                      Text(
+                                        l10n.supportSectionOngoing,
+                                        style: typo.titleSmall.copyWith(
+                                          color: colors.textSoft,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      ...ongoing.map(
+                                        (t) => Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 8),
+                                          child: _ThreadRow(
+                                            ticket: t,
+                                            colors: colors,
+                                            typo: typo,
+                                            l10n: l10n,
+                                            onTap: () {
+                                              final id = t['id'] as String;
+                                              context.push('/support/chat/$id');
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      if (closed.isNotEmpty)
+                                        const SizedBox(height: 16),
+                                    ],
+                                    if (closed.isNotEmpty) ...[
+                                      Text(
+                                        l10n.supportSectionClosed,
+                                        style: typo.titleSmall.copyWith(
+                                          color: colors.textSoft,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      ...closed.map(
+                                        (t) => Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 8),
+                                          child: _ThreadRow(
+                                            ticket: t,
+                                            colors: colors,
+                                            typo: typo,
+                                            l10n: l10n,
+                                            onTap: () {
+                                              final id = t['id'] as String;
+                                              context.push('/support/chat/$id');
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
                         ),
-                      ],
-                    )
-                  : ListView(
-                      padding: const EdgeInsets.all(16),
-                      children: [
-                    if (ongoing.isNotEmpty) ...[
-                      Text(
-                        l10n.supportSectionOngoing,
-                        style: typo.titleSmall.copyWith(
-                          color: colors.textSoft,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ...ongoing.map(
-                        (t) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: _ThreadRow(
-                            ticket: t,
-                            colors: colors,
-                            typo: typo,
-                            l10n: l10n,
-                            onTap: () {
-                              final id = t['id'] as String;
-                              context.push('/support/chat/$id');
-                            },
-                          ),
-                        ),
-                      ),
-                      if (closed.isNotEmpty) const SizedBox(height: 16),
-                    ],
-                    if (closed.isNotEmpty) ...[
-                      Text(
-                        l10n.supportSectionClosed,
-                        style: typo.titleSmall.copyWith(
-                          color: colors.textSoft,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ...closed.map(
-                        (t) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: _ThreadRow(
-                            ticket: t,
-                            colors: colors,
-                            typo: typo,
-                            l10n: l10n,
-                            onTap: () {
-                              final id = t['id'] as String;
-                              context.push('/support/chat/$id');
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
-                      ],
-                    ),
-            ),
             ),
           ],
         ),
@@ -263,14 +267,19 @@ class _ThreadRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final messages = (ticket['messages'] as List?) ?? [];
     final category = ticket['category'] as String? ?? '';
-    final updated = ticket['updated_at'] as String? ??
-        ticket['created_at'] as String?;
-    final preview = messages.isEmpty
-        ? ''
-        : _supportMessagePreview(messages.last);
+    final categoryLabels = <String, String>{
+      'ride_issue': l10n.supportCategoryRideIssue,
+      'payment': l10n.supportCategoryPayment,
+      'account': l10n.supportCategoryAccount,
+      'other': l10n.supportOtherCategory,
+      'ai_support': l10n.supportChatWithYaz,
+    };
+    final updated =
+        ticket['updated_at'] as String? ?? ticket['created_at'] as String?;
+    final preview =
+        messages.isEmpty ? '' : _supportMessagePreview(messages.last);
     final closed = _ticketClosed(ticket['status'] as String?);
-    final summary =
-        (ticket['resolution_summary'] as String?)?.trim() ?? '';
+    final summary = (ticket['resolution_summary'] as String?)?.trim() ?? '';
     final outcome = (ticket['resolution_outcome'] as String?)?.trim() ?? '';
 
     String timeStr = '';
@@ -295,9 +304,7 @@ class _ThreadRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      category.isNotEmpty
-                          ? category
-                          : l10n.supportOtherCategory,
+                      categoryLabels[category] ?? l10n.supportOtherCategory,
                       style: typo.titleMedium.copyWith(
                         color: colors.text,
                         fontWeight: FontWeight.w600,

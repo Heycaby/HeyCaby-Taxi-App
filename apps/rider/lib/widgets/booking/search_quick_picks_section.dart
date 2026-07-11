@@ -82,7 +82,7 @@ class SearchQuickPicksSection extends ConsumerWidget {
         typo: typo,
         savedLabel: l10n.searchBrowseSavedPlaces,
         recentLabel: l10n.searchBrowseRecentPlaces,
-        onBrowseSaved: () => context.push('/saved-addresses'),
+        onBrowseSaved: () => context.push('/saved-addresses?from=search'),
         onBrowseRecent: openRecentSheet,
       );
     }
@@ -119,16 +119,16 @@ class SearchQuickPicksSection extends ConsumerWidget {
                 fontWeight: FontWeight.w800,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             SizedBox(
-              height: 88,
+              height: 36,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: pinned.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
                 itemBuilder: (_, i) {
                   final s = pinned[i];
-                  return _QuickPickPlaceCard(
+                  return _QuickPickPlacePill(
                     colors: colors,
                     typo: typo,
                     icon: s.type == 'home'
@@ -307,8 +307,8 @@ class _BrowseLink extends StatelessWidget {
   }
 }
 
-class _QuickPickPlaceCard extends StatelessWidget {
-  const _QuickPickPlaceCard({
+class _QuickPickPlacePill extends StatelessWidget {
+  const _QuickPickPlacePill({
     required this.colors,
     required this.typo,
     required this.icon,
@@ -326,29 +326,28 @@ class _QuickPickPlaceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: colors.card,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(999),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(999),
         child: Ink(
-          width: 120,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: colors.border),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: colors.border.withValues(alpha: 0.85)),
           ),
-          padding: const EdgeInsetsDirectional.fromSTEB(12, 10, 12, 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsetsDirectional.fromSTEB(12, 8, 14, 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: colors.accent, size: 18),
-              const Spacer(),
+              Icon(icon, color: colors.accent, size: 16),
+              const SizedBox(width: 6),
               Text(
                 title,
-                style: typo.labelLarge.copyWith(
+                style: typo.labelMedium.copyWith(
                   color: colors.text,
                   fontWeight: FontWeight.w700,
                 ),
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ],

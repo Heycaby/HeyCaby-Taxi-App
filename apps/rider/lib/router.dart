@@ -24,10 +24,12 @@ import 'screens/vehicle_category_screen.dart';
 import 'screens/payment_screen.dart';
 import 'screens/trip_summary_screen.dart';
 import 'screens/searching_screen.dart';
+import 'models/rating_route_args.dart';
 import 'models/ride_matching_variant.dart';
 import 'screens/active_ride_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/rating_screen.dart';
+import 'widgets/rider_driver_info_card.dart';
 import 'screens/report_screen.dart';
 import 'providers/near_term_ride_request_provider.dart';
 import 'screens/ride_detail_screen.dart';
@@ -44,6 +46,7 @@ import 'screens/rider_support_new_ticket_screen.dart';
 import 'screens/rider_support_chat_screen.dart';
 import 'screens/rider_support_yaz_screen.dart';
 import 'screens/rider_receipt_screen.dart';
+import 'screens/taxi_terug_screen.dart';
 import 'screens/saved_addresses_screen.dart';
 import 'widgets/rider_shell.dart';
 import 'providers/ride_history_provider.dart';
@@ -110,6 +113,8 @@ bool _isRideChatAllowed(String? status) {
   const activeStatuses = {
     'assigned',
     'accepted',
+    'driver_found',
+    'driver_en_route',
     'driver_arrived',
     'arrived',
     'in_progress',
@@ -122,6 +127,7 @@ bool _isActiveRideStatus(String? status) {
     'assigned',
     'accepted',
     'driver_found',
+    'driver_en_route',
     'driver_arrived',
     'arrived',
     'in_progress',
@@ -151,6 +157,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final args = extra is BookingSearchRouteArgs ? extra : null;
           return _page(state, SearchScreen(args: args));
         },
+      ),
+      GoRoute(
+        path: '/taxi-terug',
+        pageBuilder: (_, state) => _page(state, const TaxiTerugScreen()),
       ),
       GoRoute(
         path: '/marketplace',
@@ -261,7 +271,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/rating',
-        pageBuilder: (_, state) => _page(state, const RatingScreen()),
+        pageBuilder: (_, state) {
+          final extra = state.extra;
+          RatingRouteArgs? routeArgs;
+          if (extra is RatingRouteArgs) {
+            routeArgs = extra;
+          } else if (extra is RiderDriverSheetInfo) {
+            routeArgs = RatingRouteArgs(driverInfo: extra);
+          }
+          return _page(
+            state,
+            RatingScreen(routeArgs: routeArgs),
+          );
+        },
       ),
       GoRoute(
         path: '/report',

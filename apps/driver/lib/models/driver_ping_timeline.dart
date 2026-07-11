@@ -31,9 +31,8 @@ List<DriverPingTimelineItem> groupPingTimelineRows(
     if (!event.startsWith('driver.ping_')) continue;
 
     final occurredRaw = row['occurred_at'] as String?;
-    final occurredAt = occurredRaw == null
-        ? null
-        : DateTime.tryParse(occurredRaw)?.toUtc();
+    final occurredAt =
+        occurredRaw == null ? null : DateTime.tryParse(occurredRaw)?.toUtc();
     if (occurredAt == null) continue;
 
     final metadata = row['metadata'];
@@ -62,8 +61,7 @@ List<DriverPingTimelineItem> groupPingTimelineRows(
     switch (suffix) {
       case 'sent':
         acc.sentAt ??= occurredAt;
-        acc.automatic =
-            acc.automatic || (meta['automatic'] as bool? ?? false);
+        acc.automatic = acc.automatic || (meta['automatic'] as bool? ?? false);
       case 'delivered':
         acc.deliveredAt ??= occurredAt;
       case 'opened':

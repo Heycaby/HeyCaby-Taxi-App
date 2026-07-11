@@ -20,7 +20,7 @@ class RidesScreen extends ConsumerStatefulWidget {
 }
 
 class _RidesScreenState extends ConsumerState<RidesScreen> {
-  int _selectedTab = 2;
+  int _selectedTab = 0;
 
   /// 0 = upcoming open requests, 1 = history from `ride_requests`.
   int _segment = 0;
@@ -108,12 +108,10 @@ class _RidesScreenState extends ConsumerState<RidesScreen> {
   String _getFilter(int index) {
     switch (index) {
       case 0:
-        return 'active';
+        return 'all';
       case 1:
-        return 'bidding';
-      case 2:
         return 'completed';
-      case 3:
+      case 2:
         return 'cancelled';
       default:
         return 'all';
@@ -574,10 +572,16 @@ class _HistoryRidesTab extends ConsumerWidget {
                         colors: colors,
                         typo: typo,
                         l10n: l10n,
-                        onTap: () => context.push(
-                          '/ride-detail',
-                          extra: rides[index],
-                        ),
+                        onTap: () {
+                          if (rides[index].status == 'completed') {
+                            context.push('/receipt/${rides[index].id}');
+                          } else {
+                            context.push(
+                              '/ride-detail',
+                              extra: rides[index],
+                            );
+                          }
+                        },
                       ),
                     ),
                   );
@@ -620,33 +624,26 @@ class _FilterTabs extends StatelessWidget {
       child: Row(
         children: [
           _Tab(
-              label: l10n.ridesFilterActive,
+              label: l10n.ridesFilterAll,
               isSelected: selected == 0,
               colors: colors,
               typo: typo,
               onTap: () => onChanged(0)),
           const SizedBox(width: 8),
           _Tab(
-              label: l10n.ridesFilterBidding,
+              label: l10n.ridesFilterCompleted,
+              icon: Icons.check_circle_outline,
               isSelected: selected == 1,
               colors: colors,
               typo: typo,
               onTap: () => onChanged(1)),
           const SizedBox(width: 8),
           _Tab(
-              label: l10n.ridesFilterCompleted,
-              icon: Icons.check_circle_outline,
+              label: l10n.ridesFilterCancelled,
               isSelected: selected == 2,
               colors: colors,
               typo: typo,
               onTap: () => onChanged(2)),
-          const SizedBox(width: 8),
-          _Tab(
-              label: l10n.ridesFilterCancelled,
-              isSelected: selected == 3,
-              colors: colors,
-              typo: typo,
-              onTap: () => onChanged(3)),
         ],
       ),
     );
@@ -778,6 +775,7 @@ class _RideCard extends StatelessWidget {
       case 'cancelled':
       case 'expired':
       case 'no_driver':
+      case 'declined':
         return colors.error;
       case 'pending':
       case 'bidding':
@@ -785,6 +783,7 @@ class _RideCard extends StatelessWidget {
       case 'assigned':
       case 'accepted':
       case 'driver_found':
+      case 'driver_en_route':
       case 'arrived':
       case 'driver_arrived':
       case 'in_progress':
@@ -801,6 +800,7 @@ class _RideCard extends StatelessWidget {
       case 'cancelled':
       case 'expired':
       case 'no_driver':
+      case 'declined':
         return l10n.rideStatusCancelled;
       case 'pending':
         return l10n.rideStatusSearching;
@@ -809,6 +809,7 @@ class _RideCard extends StatelessWidget {
       case 'assigned':
       case 'accepted':
       case 'driver_found':
+      case 'driver_en_route':
         return l10n.rideStatusDriverAssigned;
       case 'arrived':
       case 'driver_arrived':

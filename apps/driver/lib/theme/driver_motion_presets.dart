@@ -66,13 +66,12 @@ extension DriverWidgetMotion on Widget {
   /// Urgent incoming ride — subtle repeating emphasis.
   Widget driverRideIncomingPulse({bool enabled = true}) {
     if (!enabled || !kDriverMotionEnabled) return this;
-    return animate(onPlay: (c) => c.repeat(reverse: true))
-        .scale(
-          begin: const Offset(1, 1),
-          end: const Offset(1.012, 1.012),
-          duration: DriverMotion.emphasis,
-          curve: Curves.easeInOut,
-        );
+    return animate(onPlay: (c) => c.repeat(reverse: true)).scale(
+      begin: const Offset(1, 1),
+      end: const Offset(1.012, 1.012),
+      duration: DriverMotion.emphasis,
+      curve: Curves.easeInOut,
+    );
   }
 }
 

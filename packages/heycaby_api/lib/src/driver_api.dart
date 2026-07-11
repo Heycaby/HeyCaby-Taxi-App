@@ -333,6 +333,14 @@ class DriverApi {
     );
   }
 
+  /// Driver started navigation to pickup (`driver_en_route`).
+  Future<void> markEnRoute({required String rideRequestId}) async {
+    await _invokeDriverRideRpc(
+      'fn_driver_ride_en_route',
+      {'p_ride_request_id': rideRequestId},
+    );
+  }
+
   /// Supabase RPC `fn_driver_ride_start` — no Go fallback (Phase B).
   Future<void> startRide({required String rideRequestId}) async {
     await _invokeDriverRideRpc(

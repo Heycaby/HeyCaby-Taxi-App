@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
-import '../providers/driver_nav_app_pref_provider.dart';
 import '../services/driver_navigation_launcher.dart';
+import 'driver_nav_app_helpers.dart';
 
 /// Opens external navigation using the driver's preferred app (Program 3D).
 Future<void> launchDriverNavigation({
@@ -15,8 +15,7 @@ Future<void> launchDriverNavigation({
   required String coordinatesUnavailableMessage,
   String? addressFallback,
 }) async {
-  final pref =
-      ref.read(driverNavAppPrefProvider).valueOrNull ?? DriverNavApp.waze;
+  final pref = readDriverNavApp(ref);
 
   HapticService.selectionClick();
   final opened = await DriverNavigationLauncher.launchToDestination(

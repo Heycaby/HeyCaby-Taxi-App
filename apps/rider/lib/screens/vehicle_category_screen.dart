@@ -38,7 +38,9 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
     RiderVehicleCategory.wheelchair,
   ];
 
-  RiderVehicleCategory? _selectedCategory;
+  static const _maxSelectedCategories = 3;
+
+  final List<RiderVehicleCategory> _selectedCategories = [];
 
   bool _seededFromBookingVehicle = false;
   bool _categoryManuallyTouched = false;
@@ -68,15 +70,44 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
   Future<void> _seedVehicleFromProfile() async {
     if (!mounted) return;
     final booking = ref.read(bookingProvider);
+
+    if (booking.vehicleCategories.isNotEmpty) {
+      final fromBooking = booking.vehicleCategories
+          .map(RiderVehicleCategory.tryParse)
+          .whereType<RiderVehicleCategory>()
+          .where(_visibleCategories.contains)
+          .take(_maxSelectedCategories)
+          .toList();
+      if (fromBooking.isNotEmpty) {
+        setState(() {
+          _seededFromBookingVehicle = true;
+          _selectedCategories
+            ..clear()
+            ..addAll(fromBooking);
+          _showInvalidPreferredBanner = booking.vehicleCategories.any(
+            (key) =>
+                RiderVehicleCategory.tryParse(key) == null ||
+                !_visibleCategories
+                    .contains(RiderVehicleCategory.tryParse(key)),
+          );
+        });
+        return;
+      }
+    }
+
     if (booking.vehicleCategory != null &&
         booking.vehicleCategory!.trim().isNotEmpty) {
       final c = RiderVehicleCategory.tryParse(booking.vehicleCategory);
       if (c != null) {
         setState(() {
           _seededFromBookingVehicle = true;
-          _selectedCategory = _visibleCategories.contains(c)
-              ? c
-              : RiderVehicleCategory.standard;
+          _selectedCategories
+            ..clear()
+            ..add(
+              _visibleCategories.contains(c)
+                  ? c
+                  : RiderVehicleCategory.standard,
+            );
           _showInvalidPreferredBanner = !_visibleCategories.contains(c);
         });
       }
@@ -85,7 +116,12 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
     final identity = await ref.read(riderIdentityProvider.future);
     if (!mounted) return;
     final raw = identity.preferredVehicleCategory?.trim();
-    if (raw == null || raw.isEmpty) return;
+    if (raw == null || raw.isEmpty) {
+      if (_selectedCategories.isEmpty) {
+        setState(() => _selectedCategories.add(RiderVehicleCategory.standard));
+      }
+      return;
+    }
 
     final c = RiderVehicleCategory.tryParse(raw);
     if (c == null) {
@@ -95,7 +131,9 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
             .setPetFriendly(identity.preferredPetFriendly!);
       }
       setState(() {
-        _selectedCategory = RiderVehicleCategory.standard;
+        _selectedCategories
+          ..clear()
+          ..add(RiderVehicleCategory.standard);
         _showInvalidPreferredBanner = true;
       });
       return;
@@ -108,8 +146,11 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
     }
     setState(() {
       _selectedFromIdentityPreferred = true;
-      _selectedCategory =
-          _visibleCategories.contains(c) ? c : RiderVehicleCategory.standard;
+      _selectedCategories
+        ..clear()
+        ..add(
+          _visibleCategories.contains(c) ? c : RiderVehicleCategory.standard,
+        );
       _showInvalidPreferredBanner = !_visibleCategories.contains(c);
     });
   }
@@ -122,15 +163,10 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
     return data[c] ?? CategorySupplySnapshot.empty(c);
   }
 
-  void _selectCategory(RiderVehicleCategory c) {
-    _categoryManuallyTouched = true;
-    setState(() {
-      _selectedCategory = c;
-    });
-  }
-
-  String _nextLabel(AppLocalizations l10n) {
-    return l10n.next;
+  String _selectedCategoriesLabel(AppLocalizations l10n) {
+    return _selectedCategories
+        .map((c) => _vehicleLine(c, l10n))
+        .join(' · ');
   }
 
   String _vehicleLine(RiderVehicleCategory c, AppLocalizations l10n) {
@@ -153,13 +189,13 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
         _seededFromBookingVehicle ||
         _categoryManuallyTouched ||
         _supplyFallbackScheduled ||
-        _selectedCategory == null) {
+        _selectedCategories.isEmpty) {
       return;
     }
     final id = ref.read(riderIdentityProvider).valueOrNull;
     final preferred =
         RiderVehicleCategory.tryParse(id?.preferredVehicleCategory);
-    if (preferred == null || _selectedCategory != preferred) return;
+    if (preferred == null || !_selectedCategories.contains(preferred)) return;
 
     final snap =
         supplyMap[preferred] ?? CategorySupplySnapshot.empty(preferred);
@@ -180,18 +216,70 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() {
-        _selectedCategory = picked;
+        _selectedCategories
+          ..clear()
+          ..add(picked);
         _showSupplyFallbackBanner = true;
       });
     });
   }
 
-  List<NearbyDriverOffer> _offersForSelectedCategory(
+  bool _isCategorySelectable(
+    RiderVehicleCategory category,
+    Map<RiderVehicleCategory, CategorySupplySnapshot>? supplyMap,
+    bool supplyLoading,
+  ) {
+    if (supplyLoading || supplyMap == null) return true;
+    final count = _snapFor(supplyMap, category).driverCount;
+    if (count > 0) return true;
+    final anyNearby = _visibleCategories.any(
+      (c) => _snapFor(supplyMap, c).driverCount > 0,
+    );
+    return !anyNearby;
+  }
+
+  void _toggleCategory(
+    RiderVehicleCategory category, {
+    required bool selectable,
+    required AppLocalizations l10n,
+  }) {
+    if (!selectable && !_selectedCategories.contains(category)) return;
+
+    _categoryManuallyTouched = true;
+    if (_selectedCategories.contains(category)) {
+      if (_selectedCategories.length <= 1) return;
+      setState(() => _selectedCategories.remove(category));
+      return;
+    }
+    if (_selectedCategories.length >= _maxSelectedCategories) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(
+          content: Text(l10n.vehicleMaxCategoriesSelected),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    setState(() => _selectedCategories.add(category));
+  }
+
+  List<NearbyDriverOffer> _offersForSelectedCategories(
     Map<RiderVehicleCategory, CategorySupplySnapshot>? supplyMap,
   ) {
-    final selected = _selectedCategory ?? RiderVehicleCategory.standard;
-    return _snapFor(supplyMap, selected).drivers;
+    if (_selectedCategories.isEmpty) return const [];
+    final offers = <NearbyDriverOffer>[];
+    final seen = <String>{};
+    for (final category in _selectedCategories) {
+      for (final offer in _snapFor(supplyMap, category).drivers) {
+        if (seen.add(offer.driverId)) {
+          offers.add(offer);
+        }
+      }
+    }
+    return offers;
   }
+
+  String _nextLabel(AppLocalizations l10n) => l10n.next;
 
   String _fmtEuro(double value) {
     final whole = value == value.roundToDouble();
@@ -225,7 +313,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
     final l10n = AppLocalizations.of(context);
     final booking = ref.watch(bookingProvider);
     final hasRoute = booking.pickup != null && booking.destination != null;
-    final canProceed = _selectedCategory != null;
+    final canProceed = _selectedCategories.isNotEmpty;
 
     final mq = MediaQuery.of(context);
     // PrimaryCancelRow is 52px tall inside padded footer; reserve space so the
@@ -238,7 +326,8 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
     final supplyAsync = ref.watch(nearbyCategorySupplyProvider);
     final supplyMap = supplyAsync.valueOrNull;
     _maybeApplySupplyFallback(supplyMap);
-    final selectedOffers = _offersForSelectedCategory(supplyMap);
+    final selectedOffers = _offersForSelectedCategories(supplyMap);
+    final supplyLoading = supplyAsync.isLoading;
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -339,6 +428,19 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                   HeyCabySpacing.sectionMedium + footerReserve,
                 ),
                 children: [
+                  Padding(
+                    padding: const EdgeInsetsDirectional.only(
+                      start: 2,
+                      bottom: HeyCabySpacing.componentSmall,
+                    ),
+                    child: Text(
+                      l10n.vehicleSelectUpToThree,
+                      style: typo.bodyLarge.copyWith(
+                        color: colors.textMid,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
                   _MarketSupplySummaryCard(
                     driverCount: selectedOffers.length,
                     priceRange: _priceRangeText(selectedOffers),
@@ -348,66 +450,54 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                     isLoading: supplyAsync.isLoading,
                   ),
                   const SizedBox(height: HeyCabySpacing.component),
-                  _VehicleNeedCard(
-                    selected:
-                        _selectedCategory == RiderVehicleCategory.standard,
-                    icon: Icons.local_taxi_outlined,
-                    title: l10n.vehicleStandard,
-                    subtitle: l10n.vehicleStandardDesc,
-                    supplyLabel: l10n.vehicleSupplyNearbyCount(_snapFor(
+                  ..._visibleCategories.map((category) {
+                    final snap = _snapFor(supplyMap, category);
+                    final selected = _selectedCategories.contains(category);
+                    final selectable = _isCategorySelectable(
+                      category,
                       supplyMap,
-                      RiderVehicleCategory.standard,
-                    ).driverCount),
-                    colors: colors,
-                    typography: typo,
-                    onTap: () => _selectCategory(RiderVehicleCategory.standard),
-                  ),
-                  const SizedBox(height: HeyCabySpacing.componentSmall),
-                  _VehicleNeedCard(
-                    selected:
-                        _selectedCategory == RiderVehicleCategory.comfort,
-                    icon: Icons.drive_eta_rounded,
-                    title: l10n.vehicleComfort,
-                    subtitle: l10n.vehicleComfortDesc,
-                    supplyLabel: l10n.vehicleSupplyNearbyCount(_snapFor(
-                      supplyMap,
-                      RiderVehicleCategory.comfort,
-                    ).driverCount),
-                    colors: colors,
-                    typography: typo,
-                    onTap: () => _selectCategory(RiderVehicleCategory.comfort),
-                  ),
-                  const SizedBox(height: HeyCabySpacing.componentSmall),
-                  _VehicleNeedCard(
-                    selected: _selectedCategory == RiderVehicleCategory.taxibus,
-                    icon: Icons.airport_shuttle_outlined,
-                    title: l10n.vehicleTaxibus,
-                    subtitle: l10n.vehicleTaxibusDesc,
-                    supplyLabel: l10n.vehicleSupplyNearbyCount(_snapFor(
-                      supplyMap,
-                      RiderVehicleCategory.taxibus,
-                    ).driverCount),
-                    colors: colors,
-                    typography: typo,
-                    onTap: () => _selectCategory(RiderVehicleCategory.taxibus),
-                  ),
-                  const SizedBox(height: HeyCabySpacing.componentSmall),
-                  _VehicleNeedCard(
-                    selected:
-                        _selectedCategory == RiderVehicleCategory.wheelchair,
-                    icon: Icons.accessible_forward_rounded,
-                    title: l10n.vehicleWheelchair,
-                    subtitle: l10n.vehicleWheelchairDesc,
-                    supplyLabel: l10n.vehicleSupplyNearbyCount(_snapFor(
-                      supplyMap,
-                      RiderVehicleCategory.wheelchair,
-                    ).driverCount),
-                    colors: colors,
-                    typography: typo,
-                    onTap: () =>
-                        _selectCategory(RiderVehicleCategory.wheelchair),
-                  ),
-                  const SizedBox(height: HeyCabySpacing.sectionMedium),
+                      supplyLoading,
+                    );
+                    return Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: HeyCabySpacing.componentSmall,
+                      ),
+                      child: _VehicleNeedCard(
+                        selected: selected,
+                        enabled: selectable || selected,
+                        icon: switch (category) {
+                          RiderVehicleCategory.standard =>
+                            Icons.local_taxi_outlined,
+                          RiderVehicleCategory.comfort =>
+                            Icons.drive_eta_rounded,
+                          RiderVehicleCategory.taxibus =>
+                            Icons.airport_shuttle_outlined,
+                          RiderVehicleCategory.wheelchair =>
+                            Icons.accessible_forward_rounded,
+                        },
+                        title: _vehicleLine(category, l10n),
+                        subtitle: switch (category) {
+                          RiderVehicleCategory.standard =>
+                            l10n.vehicleStandardDesc,
+                          RiderVehicleCategory.comfort =>
+                            l10n.vehicleComfortDesc,
+                          RiderVehicleCategory.taxibus =>
+                            l10n.vehicleTaxibusDesc,
+                          RiderVehicleCategory.wheelchair =>
+                            l10n.vehicleWheelchairDesc,
+                        },
+                        supplyLabel: l10n.vehicleSupplyNearbyCount(snap.driverCount),
+                        colors: colors,
+                        typography: typo,
+                        onTap: () => _toggleCategory(
+                          category,
+                          selectable: selectable,
+                          l10n: l10n,
+                        ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: HeyCabySpacing.sectionMedium - HeyCabySpacing.componentSmall),
                   Theme(
                     data: Theme.of(context).copyWith(
                       dividerColor: Colors.transparent,
@@ -570,7 +660,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                     ),
                   ),
                   if (_selectedFromIdentityPreferred &&
-                      _selectedCategory != null &&
+                      _selectedCategories.isNotEmpty &&
                       !_showInvalidPreferredBanner &&
                       !_showSupplyFallbackBanner)
                     Padding(
@@ -592,7 +682,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                           ),
                           child: Text(
                             l10n.bookingUsualVehicleChip(
-                              _vehicleLine(_selectedCategory!, l10n),
+                              _selectedCategoriesLabel(l10n),
                             ),
                             style: typo.labelMedium.copyWith(
                               color: colors.accent,
@@ -642,7 +732,7 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                     : () async {
                         final notifier = ref.read(bookingProvider.notifier);
                         final pet = ref.read(bookingProvider).petFriendly;
-                        final offers = _offersForSelectedCategory(supplyMap);
+                        final offers = _offersForSelectedCategories(supplyMap);
                         final prices = offers
                             .map((e) => e.estimatedFareEuro)
                             .toList()
@@ -656,15 +746,18 @@ class _VehicleCategoryScreenState extends ConsumerState<VehicleCategoryScreen> {
                             maxEuro: prices.last,
                           );
                         }
-                        notifier.setVehicleCategory(
-                          _selectedCategory!.storageKey,
+                        final keys = _selectedCategories
+                            .map((c) => c.storageKey)
+                            .toList();
+                        notifier.applyVehicleSelection(
+                          keys,
                           petFriendly: pet,
                         );
                         notifier.clearSelectedDriver();
                         await ref
                             .read(riderIdentityProvider.notifier)
                             .savePreferredVehicle(
-                              _selectedCategory!.storageKey,
+                              keys.first,
                               petFriendly: pet,
                             );
                         if (!context.mounted) return;
@@ -871,6 +964,7 @@ class _MarketMetric extends StatelessWidget {
 class _VehicleNeedCard extends StatelessWidget {
   const _VehicleNeedCard({
     required this.selected,
+    required this.enabled,
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -881,6 +975,7 @@ class _VehicleNeedCard extends StatelessWidget {
   });
 
   final bool selected;
+  final bool enabled;
   final IconData icon;
   final String title;
   final String subtitle;
@@ -891,103 +986,108 @@ class _VehicleNeedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
+    final opacity = enabled ? 1.0 : 0.48;
+    return AnimatedOpacity(
       duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOutCubic,
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color:
-              selected ? colors.accent : colors.border.withValues(alpha: 0.8),
-          width: selected ? 2 : 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: selected
-                ? colors.accent.withValues(alpha: 0.16)
-                : colors.text.withValues(alpha: 0.035),
-            blurRadius: selected ? 22 : 16,
-            offset: const Offset(0, 8),
-            spreadRadius: -6,
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
+      opacity: opacity,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
+          color: colors.card,
           borderRadius: BorderRadius.circular(24),
-          child: Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(16, 15, 16, 15),
-            child: Row(
-              children: [
-                Container(
-                  width: 54,
-                  height: 54,
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? colors.accentL.withValues(alpha: 0.95)
-                        : colors.bgAlt.withValues(alpha: 0.75),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: selected ? colors.accent : colors.textMid,
-                    size: 27,
-                  ),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: typography.titleMedium.copyWith(
-                          color: colors.text,
-                          fontWeight: FontWeight.w900,
-                          height: 1.15,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: typography.bodySmall.copyWith(
-                          color: colors.textSoft,
-                          height: 1.28,
-                        ),
-                      ),
-                      const SizedBox(height: 9),
-                      Text(
-                        supplyLabel,
-                        style: typography.labelMedium.copyWith(
-                          color: selected ? colors.accent : colors.textMid,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: selected ? colors.accent : Colors.transparent,
-                    border: Border.all(
-                      color: selected ? colors.accent : colors.border,
-                      width: 2,
+          border: Border.all(
+            color:
+                selected ? colors.accent : colors.border.withValues(alpha: 0.8),
+            width: selected ? 2 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: selected
+                  ? colors.accent.withValues(alpha: 0.16)
+                  : colors.text.withValues(alpha: 0.035),
+              blurRadius: selected ? 22 : 16,
+              offset: const Offset(0, 8),
+              spreadRadius: -6,
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: enabled ? onTap : null,
+            borderRadius: BorderRadius.circular(24),
+            child: Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(16, 15, 16, 15),
+              child: Row(
+                children: [
+                  Container(
+                    width: 54,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? colors.accentL.withValues(alpha: 0.95)
+                          : colors.bgAlt.withValues(alpha: 0.75),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Icon(
+                      icon,
+                      color: selected ? colors.accent : colors.textMid,
+                      size: 27,
                     ),
                   ),
-                  child: selected
-                      ? Icon(Icons.check_rounded,
-                          color: colors.onAccent, size: 18)
-                      : null,
-                ),
-              ],
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: typography.titleMedium.copyWith(
+                            color: colors.text,
+                            fontWeight: FontWeight.w900,
+                            height: 1.15,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          style: typography.bodySmall.copyWith(
+                            color: colors.textSoft,
+                            height: 1.28,
+                          ),
+                        ),
+                        const SizedBox(height: 9),
+                        Text(
+                          supplyLabel,
+                          style: typography.labelMedium.copyWith(
+                            color: selected ? colors.accent : colors.textMid,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: selected ? colors.accent : Colors.transparent,
+                      border: Border.all(
+                        color: selected ? colors.accent : colors.border,
+                        width: 2,
+                      ),
+                    ),
+                    child: selected
+                        ? Icon(Icons.check_rounded,
+                            color: colors.onAccent, size: 18)
+                        : null,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

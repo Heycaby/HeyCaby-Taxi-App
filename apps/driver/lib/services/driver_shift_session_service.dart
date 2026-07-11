@@ -46,7 +46,8 @@ class DriverShiftSessionService {
     try {
       final row = await _client
           .from('drivers')
-          .select('current_shift_id, shift_total_online_minutes, shift_break_minutes, shift_rides_today, shift_earnings_today')
+          .select(
+              'current_shift_id, shift_total_online_minutes, shift_break_minutes, shift_rides_today, shift_earnings_today')
           .eq('id', driverId)
           .maybeSingle();
       final sid = row?['current_shift_id'];

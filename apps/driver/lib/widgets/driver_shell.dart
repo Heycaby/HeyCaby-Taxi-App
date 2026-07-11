@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +7,7 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
+import '../providers/driver_runtime_providers.dart';
 import '../theme/app_icons.dart';
 import 'driver_profile_realtime_listener.dart';
 import 'ride_invite_realtime_listener.dart';
@@ -17,6 +20,7 @@ import 'driver_resilience_listener.dart';
 import 'driver_ride_proximity_listener.dart';
 import 'driver_automatic_ping_listener.dart';
 import '../utils/driver_immersive_shell.dart';
+import '../utils/driver_runtime_refresh.dart';
 
 class DriverShell extends ConsumerStatefulWidget {
   const DriverShell({super.key, required this.child});
@@ -50,6 +54,21 @@ class _DriverShellState extends ConsumerState<DriverShell>
     if (state == AppLifecycleState.resumed) {
       ref.invalidate(driverComplianceProvider);
       ref.invalidate(driverProfileProvider);
+      ref.invalidate(driverBillingStatusProvider);
+      ref.invalidate(driverPaymentLedgerProvider);
+      ref.invalidate(driverRuntimeSnapshotProvider);
+      unawaited(_refreshBalanceState());
+    }
+  }
+
+  Future<void> _refreshBalanceState() async {
+    try {
+      await Future.wait([
+        ref.read(driverBillingStatusProvider.future),
+        refreshDriverRuntime(ref),
+      ]);
+    } catch (_) {
+      // Resume refresh is best-effort; cached state remains visible offline.
     }
   }
 

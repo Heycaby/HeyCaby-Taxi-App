@@ -32,7 +32,9 @@ RiderNotificationBehavior behaviorForCategory(String? category) {
   if (c.contains('incoming_ride') || c.contains('ride_offer')) {
     return RiderNotificationBehavior.rideOffer;
   }
-  if (c.contains('driver_found') || c.contains('driver_assigned')) {
+  if (c.contains('driver_found') ||
+      c.contains('driver_assigned') ||
+      c.contains('driver_en_route')) {
     return RiderNotificationBehavior.driverAccepted;
   }
   if (DriverPingType.isPingCategory(c)) {
@@ -42,7 +44,7 @@ RiderNotificationBehavior behaviorForCategory(String? category) {
     if (c.contains('arrived')) {
       return RiderNotificationBehavior.driverPingArrived;
     }
-    if (c.contains('on_my_way') || c.contains('nearby')) {
+    if (c.contains('on_my_way') || c.contains('nearby') || c.contains('near_pickup')) {
       return RiderNotificationBehavior.driverPingOnMyWay;
     }
     return RiderNotificationBehavior.driverPingOther;
@@ -53,8 +55,16 @@ RiderNotificationBehavior behaviorForCategory(String? category) {
     return RiderNotificationBehavior.tripCompleted;
   }
   if (c.contains('payment')) return RiderNotificationBehavior.payment;
-  if (c.contains('trip_start') || c.contains('in_progress')) {
+  if (c.contains('trip_start') ||
+      c.contains('ride_start') ||
+      c.contains('in_progress')) {
     return RiderNotificationBehavior.tripStarted;
+  }
+  if (c.contains('ride_arrived') || c.contains('driver_arrived')) {
+    return RiderNotificationBehavior.driverPingArrived;
+  }
+  if (c.contains('near_pickup')) {
+    return RiderNotificationBehavior.driverPingOnMyWay;
   }
   return RiderNotificationBehavior.generic;
 }
@@ -105,7 +115,7 @@ String riderDeepLinkForBehavior(RiderNotificationBehavior behavior) {
     case RiderNotificationBehavior.chat:
       return '/chat';
     case RiderNotificationBehavior.payment:
-      return '/account';
+      return '/active';
     case RiderNotificationBehavior.rideOffer:
       return '/home';
     default:

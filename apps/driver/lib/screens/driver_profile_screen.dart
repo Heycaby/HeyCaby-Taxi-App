@@ -26,11 +26,19 @@ import '../theme/driver_typography.dart';
 import '../models/driver_runtime_models.dart';
 import '../utils/driver_readiness_routes.dart';
 import '../widgets/driver_identity_body.dart';
+import '../widgets/driver_rating_sheet.dart';
 import '../utils/validation_utils.dart';
 
 /// Full profile screen — name, photo (one-time), rating.
 class DriverProfileScreen extends ConsumerStatefulWidget {
-  const DriverProfileScreen({super.key});
+  const DriverProfileScreen({
+    super.key,
+    this.initialAction,
+    this.returnAfterAction = false,
+  });
+
+  final String? initialAction;
+  final bool returnAfterAction;
 
   @override
   ConsumerState<DriverProfileScreen> createState() =>
@@ -39,10 +47,51 @@ class DriverProfileScreen extends ConsumerStatefulWidget {
 
 class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
   bool _busy = false;
+  bool _initialActionStarted = false;
 
   /// Bumps when a new photo is saved so [CachedNetworkImage] fetches a new file (URL path is unchanged).
   /// Notifier so the profile sheet avatar updates without stale closure values.
   final ValueNotifier<int> _profilePhotoCacheBust = ValueNotifier<int>(0);
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_runInitialAction());
+    });
+  }
+
+  Future<void> _runInitialAction() async {
+    if (_initialActionStarted || !mounted) return;
+    final action = widget.initialAction?.trim();
+    if (action == null || action.isEmpty) return;
+    _initialActionStarted = true;
+
+    final profile = await ref.read(driverProfileProvider.future);
+    if (!mounted) return;
+    if (action == 'profile_photo') {
+      await _pickAndConfirmProfilePhoto(profile);
+      return;
+    }
+    if (action == 'vehicle_photo') {
+      final compliance = await ref.read(driverComplianceProvider.future);
+      if (!mounted) return;
+      await _pickAndConfirmVehiclePhoto(profile, compliance);
+    }
+  }
+
+  void _finishInitialAction(String action) {
+    if (!widget.returnAfterAction ||
+        widget.initialAction != action ||
+        !mounted) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop(true);
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -190,15 +239,28 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
   void _openRequirement(String key) {
     switch (key) {
       case 'profile_photo':
-        _openProfileFromRequirement();
+        unawaited(
+          _pickAndConfirmProfilePhoto(
+            ref.read(driverProfileProvider).valueOrNull,
+          ),
+        );
         return;
       case 'vehicle_photos':
+        unawaited(
+          _pickAndConfirmVehiclePhoto(
+            ref.read(driverProfileProvider).valueOrNull,
+            ref.read(driverComplianceProvider).valueOrNull,
+          ),
+        );
+        return;
       case 'vehicle_plate':
         context.push('/driver/vehicle');
         return;
       case 'terms_of_service':
+        context.push('/driver/terms');
+        return;
       case 'indemnification_quiz':
-        context.push('/driver/documents');
+        context.push('/driver/indemnification');
         return;
       default:
         final route = flutterRouteForReadinessItem(
@@ -206,20 +268,6 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
         );
         if (route != null) context.push(route);
     }
-  }
-
-  void _openProfileFromRequirement() {
-    final profile = ref.read(driverProfileProvider).valueOrNull;
-    final email = HeyCabySupabase.client.auth.currentUser?.email;
-    final name = profile?.fullName?.trim();
-    unawaited(
-      _openProfileEditSheet(
-        profile,
-        name == null || name.isEmpty ? null : name,
-        email,
-        _profilePhotoCacheBust,
-      ),
-    );
   }
 
   Future<void> _pickAndConfirmProfilePhoto(DriverProfile? profile) async {
@@ -320,6 +368,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(DriverStrings.profilePhotoSaved)),
       );
+      _finishInitialAction('profile_photo');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(DriverStrings.profilePhotoUploadFailed)),
@@ -578,6 +627,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(DriverStrings.vehiclePhotoSaved)),
       );
+      _finishInitialAction('vehicle_photo');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(DriverStrings.vehiclePhotoUploadFailed)),
@@ -769,7 +819,7 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14)),
                           ),
-                          child: const Text(DriverStrings.saveAction),
+                          child: Text(DriverStrings.saveAction),
                         ),
                         const SizedBox(height: 12),
                         TextButton(
@@ -883,6 +933,11 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                   HapticService.lightTap();
                   await _pickAndConfirmVehiclePhoto(profile, compliance);
                 },
+                onOpenRatings: () => showDriverRatingSheet(
+                  context: context,
+                  colors: colors,
+                  typography: typography,
+                ),
                 onOpenSettings: () => context.push('/driver/settings'),
                 onOpenRequirement: _openRequirement,
               );

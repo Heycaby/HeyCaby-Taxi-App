@@ -117,21 +117,49 @@ class _TripSummaryMapViewState extends ConsumerState<TripSummaryMapView> {
     if (map == null) return;
 
     await _lineManager?.deleteAll();
+    await _flyToPickupSearchCamera(map, pickup);
+
+    if (mounted) setState(() => _cameraTick++);
+  }
+
+  /// Wider neighborhood frame during driver search — street labels, not field/water fill.
+  Future<void> _flyToPickupSearchCamera(MapboxMap map, AddressResult pickup) async {
+    const latPad = 0.014;
+    const lngPad = 0.020;
+    final camera = await map.cameraForCoordinateBounds(
+      CoordinateBounds(
+        southwest: Point(
+          coordinates: Position(pickup.lng - lngPad, pickup.lat - latPad),
+        ),
+        northeast: Point(
+          coordinates: Position(pickup.lng + lngPad, pickup.lat + latPad),
+        ),
+        infiniteBounds: false,
+      ),
+      MbxEdgeInsets(
+        top: 72,
+        left: 56,
+        bottom: widget.cameraBottomPadding,
+        right: 56,
+      ),
+      null,
+      null,
+      null,
+      null,
+    );
+
+    final zoom = ((camera.zoom ?? 13.4) - 0.35).clamp(12.2, 13.8);
+
     await map.flyTo(
       CameraOptions(
-        center: Point(coordinates: Position(pickup.lng, pickup.lat)),
-        zoom: 15.6,
-        padding: MbxEdgeInsets(
-          top: 72,
-          left: 48,
-          bottom: widget.cameraBottomPadding,
-          right: 48,
-        ),
+        center: camera.center ??
+            Point(coordinates: Position(pickup.lng, pickup.lat)),
+        zoom: zoom,
+        bearing: camera.bearing,
+        pitch: camera.pitch,
       ),
       MapAnimationOptions(duration: 350, startDelay: 0),
     );
-
-    if (mounted) setState(() => _cameraTick++);
   }
 
   Future<void> _drawRouteAndPins({
@@ -331,7 +359,7 @@ class _TripSummaryMapViewState extends ConsumerState<TripSummaryMapView> {
     if (pickup != null) {
       return CameraOptions(
         center: Point(coordinates: Position(pickup.lng, pickup.lat)),
-        zoom: widget.pickupFocused ? 15.6 : 14.3,
+        zoom: widget.pickupFocused ? 13.4 : 14.3,
       );
     }
     return CameraOptions(

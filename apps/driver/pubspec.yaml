@@ -1,6 +1,6 @@
 name: heycaby_driver
 description: HeyCaby Driver app
-version: 1.0.0+34
+version: 1.0.0+35
 
 environment:
   sdk: '>=3.3.0 <4.0.0'

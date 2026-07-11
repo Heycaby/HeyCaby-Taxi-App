@@ -23,7 +23,7 @@ class ReportRouteArgs {
 }
 
 /// [prefilledRidesRowId] is a row id from [rides] (e.g. from Rides tab / ride detail).
-/// It is resolved to `ride_requests.id` for `ride_reports.ride_id` when possible.
+/// It is resolved to `ride_requests.id` for `ride_reports.ride_request_id` when possible.
 class ReportScreen extends ConsumerStatefulWidget {
   const ReportScreen({
     super.key,
@@ -126,7 +126,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     }
   }
 
-  /// `ride_reports.ride_id` stores `ride_requests.id` (same id as history rows).
+  /// `ride_reports.ride_request_id` stores `ride_requests.id` (same id as history rows).
   Future<String> _resolveRideRequestIdForRidesRow(String ridesRowId) async {
     return ridesRowId;
   }
@@ -148,12 +148,28 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      await HeyCabySupabase.client.from('ride_reports').insert({
-        'ride_id': rideKey,
-        'reason': _selectedReason,
-        'details': _detailsController.text.trim(),
-        'status': 'pending',
-      });
+      final identity = await ref.read(riderIdentityProvider.future);
+      final riderToken = identity.riderToken?.trim();
+
+      final params = <String, dynamic>{
+        'p_ride_request_id': rideKey,
+        'p_reason': _selectedReason,
+        'p_details': _detailsController.text.trim(),
+      };
+      if (riderToken != null && riderToken.isNotEmpty) {
+        params['p_rider_token'] = riderToken;
+      }
+
+      final result = await HeyCabySupabase.client.rpc(
+        'fn_rider_submit_ride_report',
+        params: params,
+      );
+
+      final ok = result is Map && result['ok'] == true;
+      if (!ok) {
+        final error = result is Map ? result['error']?.toString() : 'rpc_failed';
+        throw Exception(error);
+      }
 
       if (mounted) {
         final l10n = AppLocalizations.of(context);

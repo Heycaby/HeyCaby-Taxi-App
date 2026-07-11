@@ -152,10 +152,9 @@ class _DriverVeriffScreenState extends ConsumerState<DriverVeriffScreen>
   Future<void> _recordVeriffStarted(String driverId) async {
     final uid = HeyCabySupabase.client.auth.currentUser?.id;
     try {
-      await HeyCabySupabase.client
-          .from('drivers')
-          .update({'veriff_started_at': DateTime.now().toUtc().toIso8601String()})
-          .eq('id', driverId);
+      await HeyCabySupabase.client.from('drivers').update({
+        'veriff_started_at': DateTime.now().toUtc().toIso8601String()
+      }).eq('id', driverId);
     } catch (_) {}
 
     if (uid == null) return;

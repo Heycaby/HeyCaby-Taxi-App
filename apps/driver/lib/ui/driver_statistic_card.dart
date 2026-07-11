@@ -39,7 +39,8 @@ class DriverStatisticCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: typography.labelMedium.copyWith(color: colors.textSecondary),
+                  style: typography.labelMedium
+                      .copyWith(color: colors.textSecondary),
                 ),
               ),
               if (icon != null) Icon(icon, size: 20, color: colors.primary),

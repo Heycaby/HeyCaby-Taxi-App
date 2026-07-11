@@ -171,6 +171,13 @@ class _TicketRow extends StatelessWidget {
     final messages = ticket['messages'] as List? ?? [];
     final status = ticket['status'] as String? ?? 'open';
     final category = ticket['category'] as String? ?? '';
+    final categoryLabels = <String, String>{
+      'ride_issue': l10n.supportCategoryRideIssue,
+      'payment': l10n.supportCategoryPayment,
+      'account': l10n.supportCategoryAccount,
+      'other': l10n.supportOtherCategory,
+      'ai_support': l10n.supportChatWithYaz,
+    };
     final updatedAtRaw =
         ticket['updated_at'] as String? ?? ticket['created_at'] as String?;
     final hasUserMsg = messages.any((m) {
@@ -227,7 +234,7 @@ class _TicketRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    category.isNotEmpty ? category : l10n.supportOtherCategory,
+                    categoryLabels[category] ?? l10n.supportOtherCategory,
                     style: typo.bodyMedium.copyWith(
                       color: colors.text,
                       fontWeight: FontWeight.w600,

@@ -109,6 +109,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             'assigned',
             'accepted',
             'driver_found',
+            'driver_en_route',
             'driver_arrived',
             'in_progress',
           ])
@@ -147,6 +148,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         case 'accepted':
         case 'assigned':
         case 'driver_found':
+        case 'driver_en_route':
         case 'driver_arrived':
         case 'in_progress':
           return '/active';

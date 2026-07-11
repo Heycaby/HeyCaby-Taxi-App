@@ -21,7 +21,6 @@ class MatchingRecoverySheet extends StatefulWidget {
     this.showTryAgain = false,
     this.onTryAgain,
     this.initiallyExpanded = false,
-    this.showDismiss = false,
     this.onDismiss,
   });
 
@@ -38,7 +37,6 @@ class MatchingRecoverySheet extends StatefulWidget {
   final bool showTryAgain;
   final VoidCallback? onTryAgain;
   final bool initiallyExpanded;
-  final bool showDismiss;
   final VoidCallback? onDismiss;
 
   @override
@@ -59,24 +57,26 @@ class _MatchingRecoverySheetState extends State<MatchingRecoverySheet> {
     final colors = widget.colors;
     final typo = widget.typo;
     final l10n = widget.l10n;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return GlassPanel(
       colors: colors,
       typography: typo,
       padding: EdgeInsets.zero,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       tintColor: colors.card,
+      borderColor: colors.border.withValues(alpha: 0.35),
       child: ListView(
         controller: widget.scrollController,
-        padding: const EdgeInsetsDirectional.fromSTEB(20, 10, 20, 24),
+        padding: EdgeInsetsDirectional.fromSTEB(20, 8, 20, 16 + bottomInset),
         shrinkWrap: widget.scrollController == null,
         children: [
           Center(
             child: Container(
-              width: 44,
-              height: 5,
+              width: 36,
+              height: 4,
               decoration: BoxDecoration(
-                color: colors.border.withValues(alpha: 0.9),
+                color: colors.border.withValues(alpha: 0.75),
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
@@ -86,8 +86,8 @@ class _MatchingRecoverySheetState extends State<MatchingRecoverySheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: colors.warning.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
@@ -95,10 +95,10 @@ class _MatchingRecoverySheetState extends State<MatchingRecoverySheet> {
                 child: Icon(
                   Icons.schedule_rounded,
                   color: colors.warning,
-                  size: 24,
+                  size: 22,
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,17 +107,18 @@ class _MatchingRecoverySheetState extends State<MatchingRecoverySheet> {
                       widget.title,
                       style: typo.titleLarge.copyWith(
                         color: colors.text,
-                        fontWeight: FontWeight.w900,
-                        height: 1.15,
+                        fontWeight: FontWeight.w800,
+                        height: 1.2,
+                        letterSpacing: -0.2,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Text(
                       widget.body,
-                      style: typo.bodyMedium.copyWith(
+                      style: typo.bodyLarge.copyWith(
                         color: colors.textMid,
                         fontWeight: FontWeight.w500,
-                        height: 1.4,
+                        height: 1.45,
                       ),
                     ),
                   ],
@@ -125,7 +126,7 @@ class _MatchingRecoverySheetState extends State<MatchingRecoverySheet> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
           if (widget.showTryAgain && widget.onTryAgain != null)
             FilledButton(
               onPressed: () {
@@ -135,7 +136,7 @@ class _MatchingRecoverySheetState extends State<MatchingRecoverySheet> {
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(52),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
               child: Text(
@@ -143,8 +144,29 @@ class _MatchingRecoverySheetState extends State<MatchingRecoverySheet> {
                 style: typo.labelLarge.copyWith(fontWeight: FontWeight.w800),
               ),
             ),
-          if (!_expanded && !widget.initiallyExpanded) ...[
+          if (widget.onDismiss != null) ...[
             if (widget.showTryAgain) const SizedBox(height: 10),
+            OutlinedButton(
+              onPressed: () {
+                HapticService.lightTap();
+                widget.onDismiss!();
+              },
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+                foregroundColor: colors.text,
+                side: BorderSide(color: colors.border.withValues(alpha: 0.85)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: Text(
+                l10n.searchExpiredGoHome,
+                style: typo.labelLarge.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+          if (!_expanded && !widget.initiallyExpanded) ...[
+            const SizedBox(height: 8),
             Center(
               child: TextButton(
                 onPressed: () => setState(() => _expanded = true),
@@ -152,13 +174,14 @@ class _MatchingRecoverySheetState extends State<MatchingRecoverySheet> {
                   l10n.searchSeeOptions,
                   style: typo.labelLarge.copyWith(
                     color: colors.accent,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
             ),
           ],
-          if (_expanded || widget.initiallyExpanded)
+          if (_expanded || widget.initiallyExpanded) ...[
+            const SizedBox(height: 4),
             MatchingRecoverySecondaryLinks(
               colors: colors,
               typo: typo,
@@ -168,20 +191,6 @@ class _MatchingRecoverySheetState extends State<MatchingRecoverySheet> {
               onSchedule: widget.onSchedule,
               onMarketplace: widget.onMarketplace,
               emphasizeNotify: widget.showTryAgain,
-            ),
-          if (widget.showDismiss && widget.onDismiss != null) ...[
-            const SizedBox(height: 4),
-            Center(
-              child: TextButton(
-                onPressed: widget.onDismiss,
-                child: Text(
-                  l10n.cancel,
-                  style: typo.labelLarge.copyWith(
-                    color: colors.textSoft,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
             ),
           ],
         ],
@@ -223,14 +232,14 @@ class MatchingRecoverySecondaryLinks extends StatelessWidget {
           links.add((label: l10n.notifyMeWhenFound, onTap: onNotifyMe));
         }
         links.add((label: l10n.scheduleRideInstead, onTap: onSchedule));
-        links.add((label: l10n.matchingTryMarketplace, onTap: onMarketplace));
+        links.add((label: l10n.homeTaxiTerugTitle, onTap: onMarketplace));
       case RideMatchingVariant.marketplace:
       case RideMatchingVariant.terug:
         links.add((label: l10n.scheduleRideInstead, onTap: onSchedule));
         links.add((label: l10n.notifyMeWhenFound, onTap: onNotifyMe));
       case RideMatchingVariant.scheduled:
         links.add((label: l10n.notifyMeWhenFound, onTap: onNotifyMe));
-        links.add((label: l10n.matchingTryMarketplace, onTap: onMarketplace));
+        links.add((label: l10n.homeTaxiTerugTitle, onTap: onMarketplace));
     }
 
     return Wrap(
@@ -286,7 +295,7 @@ class _LinkChip extends StatelessWidget {
           label,
           style: typo.labelLarge.copyWith(
             color: colors.accent,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),

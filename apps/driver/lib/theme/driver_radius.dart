@@ -17,4 +17,6 @@ abstract final class DriverRadius {
   static BorderRadius get xlAll => BorderRadius.circular(xl);
   static BorderRadius get sheetTop =>
       const BorderRadius.vertical(top: Radius.circular(sheet));
+  static BorderRadius get sheetFloating => BorderRadius.circular(sheet);
+  static BorderRadius get pillAll => BorderRadius.circular(pill);
 }

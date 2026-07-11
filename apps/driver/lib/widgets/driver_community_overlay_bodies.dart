@@ -50,7 +50,7 @@ class DriverCommunitySearchCategory {
   final String label;
 }
 
-const kDriverCommunitySearchCategories = <DriverCommunitySearchCategory>[
+final kDriverCommunitySearchCategories = <DriverCommunitySearchCategory>[
   DriverCommunitySearchCategory(
     key: 'all',
     label: DriverStrings.communityCategoryAll,
@@ -114,18 +114,19 @@ class DriverCommunityNotificationsSheetBody extends StatelessWidget {
               DriverSpacing.screenEdge,
               DriverSpacing.md,
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: Text(
-                    DriverStrings.communityNotificationsTitle,
-                    style: typography.titleLarge.copyWith(
-                      color: colors.text,
-                      fontWeight: FontWeight.w800,
-                    ),
+                Text(
+                  DriverStrings.communityNotificationsTitle,
+                  style: typography.titleLarge.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
+                const SizedBox(height: DriverSpacing.xs),
                 Wrap(
+                  alignment: WrapAlignment.end,
                   spacing: DriverSpacing.xs,
                   children: [
                     TextButton(
@@ -755,7 +756,7 @@ class DriverCommunityDisclaimerBody extends StatelessWidget {
                   DriverCommunityDisclaimerRuleSection(
                     icon: Icons.campaign_rounded,
                     title: DriverStrings.communityDisclaimerChannelsTitle,
-                    items: const [
+                    items: [
                       DriverStrings.communityDisclaimerChannelsItem1,
                       DriverStrings.communityDisclaimerChannelsItem2,
                     ],
@@ -766,7 +767,7 @@ class DriverCommunityDisclaimerBody extends StatelessWidget {
                   DriverCommunityDisclaimerRuleSection(
                     icon: Icons.visibility_rounded,
                     title: DriverStrings.communityDisclaimerVisibilityTitle,
-                    items: const [
+                    items: [
                       DriverStrings.communityDisclaimerVisibilityItem1,
                       DriverStrings.communityDisclaimerVisibilityItem2,
                       DriverStrings.communityDisclaimerVisibilityItem3,
@@ -778,7 +779,7 @@ class DriverCommunityDisclaimerBody extends StatelessWidget {
                   DriverCommunityDisclaimerRuleSection(
                     icon: Icons.lock_rounded,
                     title: DriverStrings.communityDisclaimerDataTitle,
-                    items: const [
+                    items: [
                       DriverStrings.communityDisclaimerDataItem1,
                       DriverStrings.communityDisclaimerDataItem2,
                       DriverStrings.communityDisclaimerDataItem3,
@@ -790,7 +791,7 @@ class DriverCommunityDisclaimerBody extends StatelessWidget {
                   DriverCommunityDisclaimerRuleSection(
                     icon: Icons.shield_rounded,
                     title: DriverStrings.communityDisclaimerConductTitle,
-                    items: const [
+                    items: [
                       DriverStrings.communityDisclaimerConductItem1,
                       DriverStrings.communityDisclaimerConductItem2,
                       DriverStrings.communityDisclaimerConductItem3,
@@ -1090,7 +1091,7 @@ Future<void> showDriverCommunityDisclaimerDialog(
               onContactSupport: () async {
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
+                  SnackBar(
                     content: Text(DriverStrings.communityOpeningEmailClient),
                   ),
                 );

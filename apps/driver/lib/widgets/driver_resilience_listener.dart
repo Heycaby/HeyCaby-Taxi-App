@@ -23,9 +23,9 @@ class DriverResilienceListener extends ConsumerStatefulWidget {
       _DriverResilienceListenerState();
 }
 
-class _DriverResilienceListenerState extends ConsumerState<DriverResilienceListener>
+class _DriverResilienceListenerState
+    extends ConsumerState<DriverResilienceListener>
     with WidgetsBindingObserver {
-
   @override
   void initState() {
     super.initState();

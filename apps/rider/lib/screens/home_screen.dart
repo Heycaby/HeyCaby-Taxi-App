@@ -17,6 +17,7 @@ import '../services/heycaby_widget_sync.dart';
 import '../services/rider_notify_search_notifications.dart';
 import '../services/location_service.dart';
 import '../providers/favorites_provider.dart';
+import '../providers/pending_save_driver_provider.dart';
 import '../services/nearby_supply_service.dart';
 import '../services/rider_runtime_config_service.dart';
 import '../services/sound_service.dart';
@@ -27,6 +28,8 @@ import '../widgets/driver_search_expired_dialog.dart';
 import '../widgets/home/home_bottom_sheet.dart';
 import '../widgets/home/home_map_overlay.dart';
 import '../widgets/rider_preride_home_banner.dart';
+import '../widgets/taxi_terug_matching_tracker.dart';
+import '../widgets/save_driver_favorite_prompt.dart';
 import '../widgets/welcome_profile_modals.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -362,11 +365,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
+  Future<void> _maybeShowPendingSaveDriverPrompt(
+    PendingSaveDriverPrompt prompt,
+  ) async {
+    final outcome = await maybeShowSaveDriverFavoritePrompt(
+      context,
+      container: ProviderScope.containerOf(context, listen: false),
+      rideRequestId: prompt.rideRequestId,
+      driverId: prompt.driverId,
+      riderToken: prompt.riderToken,
+    );
+    if (!mounted) return;
+    queueFavoriteSaveFeedback(
+      ProviderScope.containerOf(context, listen: false),
+      outcome,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = ref.watch(colorsProvider);
     final typo = ref.watch(typographyProvider);
     final l10n = AppLocalizations.of(context);
+
+    ref.listen<PendingSaveDriverPrompt?>(pendingSaveDriverPromptProvider,
+        (prev, next) {
+      if (next == null) return;
+      ref.read(pendingSaveDriverPromptProvider.notifier).state = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(_maybeShowPendingSaveDriverPrompt(next));
+      });
+    });
+
+    ref.listen<FavoriteSaveFeedback?>(favoriteSaveFeedbackProvider, (prev, next) {
+      if (next == null) return;
+      ref.read(favoriteSaveFeedbackProvider.notifier).state = null;
+      final messenger = ScaffoldMessenger.of(context);
+      switch (next) {
+        case FavoriteSaveFeedback.saved:
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(l10n.driverSaved),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        case FavoriteSaveFeedback.limitReached:
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(l10n.favoritesLimitReached),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+      }
+    });
 
     ref.listen<AsyncValue<ActiveNotifySearch?>>(activeSearchProvider,
         (prev, next) {
@@ -456,6 +508,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             left: 12,
             right: 12,
             child: const RiderPrerideHomeBanner(),
+          ),
+          Positioned(
+            top: MediaQuery.paddingOf(context).top + 8,
+            left: 12,
+            right: 12,
+            child: const TaxiTerugMatchingTracker(),
           ),
         ],
       ),

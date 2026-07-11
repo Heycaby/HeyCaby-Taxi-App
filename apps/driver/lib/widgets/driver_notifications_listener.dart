@@ -4,16 +4,17 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
-import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../providers/driver_data_providers.dart';
+import '../services/driver_incoming_ride_coordinator.dart';
 import '../services/driver_notification_router.dart';
 import '../utils/driver_rider_cancelled_flow.dart';
 import '../models/driver_shift_handover_prompt_args.dart';
 import '../utils/driver_shift_handover_security_alert.dart';
 import '../utils/driver_taxi_session_revoked_flow.dart';
+import '../utils/driver_runtime_refresh.dart';
 import '../widgets/driver_shift_handover_prompt.dart';
-import '../services/sound_service.dart';
 
 /// Supabase-first in-app notifications with Realtime refetch + light backup poll.
 class DriverNotificationsListener extends ConsumerStatefulWidget {
@@ -124,11 +125,13 @@ class _DriverNotificationsListenerState
         if (category == 'incoming_ride') {
           final rideId = n.data?['ride_request_id']?.toString();
           if (rideId != null && rideId.isNotEmpty && mounted) {
-            final path = GoRouterState.of(context).uri.path;
-            if (!path.startsWith('/driver/ride/new/')) {
-              unawaited(SoundService().playRideRequest());
-              context.push('/driver/ride/new/$rideId');
-            }
+            await DriverIncomingRideCoordinator.present(
+              context: context,
+              ref: ref,
+              rideRequestId: rideId,
+              rideInviteId: n.data?['ride_invite_id']?.toString(),
+              foreground: true,
+            );
           }
           await api.markNotificationRead(n.id);
           continue;
@@ -173,6 +176,29 @@ class _DriverNotificationsListenerState
                   n.data?['plate_normalized']?.toString(),
               reason: n.data?['reason']?.toString(),
               voluntaryEnd: n.data?['status']?.toString() == 'approved',
+            );
+          }
+          await api.markNotificationRead(n.id);
+          continue;
+        }
+        if (category == 'platform_balance_settled') {
+          ref.invalidate(driverBillingStatusProvider);
+          ref.invalidate(driverPaymentLedgerProvider);
+          ref.invalidate(driverProfileProvider);
+          try {
+            await refreshDriverRuntime(ref);
+          } catch (_) {
+            // The notification remains useful even if refresh is transient.
+          }
+          if (mounted) {
+            await dispatchDriverNotification(
+              context: context,
+              category: n.category,
+              title: n.title,
+              body: n.body,
+              data: n.data,
+              fromTap: false,
+              foreground: true,
             );
           }
           await api.markNotificationRead(n.id);

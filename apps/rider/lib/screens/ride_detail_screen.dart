@@ -1,19 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../widgets/booking/booking_flow_screen_header.dart';
 import '../providers/ride_history_provider.dart';
+import '../providers/rider_receipt_provider.dart';
 import 'report_screen.dart';
-
-final riderReceiptProvider =
-    FutureProvider.family<Map<String, dynamic>?, String>((ref, rideId) async {
-  final api = ref.read(riderApiProvider);
-  return api.fetchRideReceipt(rideRequestId: rideId);
-});
 
 class RideDetailScreen extends ConsumerWidget {
   const RideDetailScreen({super.key, required this.ride});

@@ -52,7 +52,7 @@ Future<void> showCreatePostSheet(
               final text = message.text.trim();
               if (text.isEmpty) {
                 ScaffoldMessenger.of(ctx).showSnackBar(
-                  const SnackBar(
+                  SnackBar(
                     content: Text(DriverStrings.communityPostMessageRequired),
                   ),
                 );
@@ -70,7 +70,7 @@ Future<void> showCreatePostSheet(
                 ref.invalidate(communityChannelFeedProvider('general'));
               } else if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
+                  SnackBar(
                     content: Text(DriverStrings.communityPostNotSentSnack),
                   ),
                 );
@@ -85,7 +85,7 @@ Future<void> showCreatePostSheet(
                 .toList();
             if (q.length < 3) {
               ScaffoldMessenger.of(ctx).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text(DriverStrings.communityPostMessageRequired),
                 ),
               );
@@ -93,7 +93,7 @@ Future<void> showCreatePostSheet(
             }
             if (opts.length < 2) {
               ScaffoldMessenger.of(ctx).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text(DriverStrings.communityPollNeedTwoOptions),
                 ),
               );
@@ -108,7 +108,7 @@ Future<void> showCreatePostSheet(
               ref.invalidate(communityChannelFeedProvider('general'));
             } else if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text(DriverStrings.communityPostNotSentSnack),
                 ),
               );

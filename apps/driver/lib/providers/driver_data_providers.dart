@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 
 import '../models/driver_payment_ledger_item.dart';
+import '../models/driver_taxi_thru_rider_post.dart';
 import '../services/driver_billing_service.dart';
 import '../services/driver_data_service.dart';
 import '../services/driver_shift_session_service.dart';
@@ -151,11 +152,14 @@ final driverRecentTicketsProvider =
 });
 
 /// Scheduled rides count/cards. For home sheet and scheduled screen.
+/// Filters by driver's current zone so drivers only see rides in their area.
 final scheduledRidesProvider = FutureProvider<List<ScheduledRide>>((ref) async {
   final id = await ref.watch(driverIdProvider.future);
   if (id == null) return [];
+  final zoneId = await ref.watch(currentZoneIdProvider.future);
   final service = ref.read(driverDataServiceProvider);
-  return service.getScheduledRidesAvailable(driverId: id, tab: 'requests');
+  return service.getScheduledRidesAvailable(
+      driverId: id, tab: 'requests', zoneId: zoneId);
 });
 
 /// Feasible scheduled count (no overlap). Cached 60s in service.
@@ -166,11 +170,14 @@ final feasibleScheduledCountProvider = FutureProvider<int>((ref) async {
 });
 
 /// Scheduled rides by tab: 'requests' or 'confirmed'.
+/// Filters by driver's current zone for requests tab.
 final scheduledRidesByTabProvider =
     FutureProvider.family<List<ScheduledRide>, String>((ref, tab) async {
   final id = await ref.watch(driverIdProvider.future);
+  final zoneId = await ref.watch(currentZoneIdProvider.future);
   final service = ref.read(driverDataServiceProvider);
-  return service.getScheduledRidesAvailable(driverId: id, tab: tab);
+  return service.getScheduledRidesAvailable(
+      driverId: id, tab: tab, zoneId: zoneId);
 });
 
 /// Rides assigned to current driver (for swap post creation).
@@ -245,6 +252,28 @@ final myRidesProvider = FutureProvider<List<MyRideSummary>>((ref) async {
   final id = await ref.watch(driverIdProvider.future);
   if (id == null) return [];
   return ref.read(driverDataServiceProvider).getMyRides(id);
+});
+
+/// Today's rides for the current driver — all statuses (completed, upcoming, cancelled).
+final todayMyRidesProvider = FutureProvider<List<MyRideSummary>>((ref) async {
+  final id = await ref.watch(driverIdProvider.future);
+  if (id == null) return [];
+  return ref.read(driverDataServiceProvider).getTodayMyRides(id);
+});
+
+/// Upcoming (active/in-progress) rides for the current driver — for home card count.
+final upcomingRidesProvider = FutureProvider<List<MyRideSummary>>((ref) async {
+  final rides = await ref.watch(todayMyRidesProvider.future);
+  const upcomingStatuses = {
+    'accepted',
+    'assigned',
+    'driver_en_route',
+    'driver_arrived',
+    'in_progress',
+    'pending',
+    'dispatched',
+  };
+  return rides.where((r) => upcomingStatuses.contains(r.status)).toList();
 });
 
 /// Detail payload for one ride entry in My Rides.
@@ -438,3 +467,13 @@ class DriverFavoriteRecent {
     );
   }
 }
+
+/// Taxi Thru — rider posts visible to drivers (booking_mode = 'terug', pending).
+final driverTaxiThruRiderPostsProvider =
+    FutureProvider<DriverTaxiThruRiderPostsSnapshot>((ref) async {
+  final pos = ref.watch(driverLocationProvider).valueOrNull;
+  return ref.read(driverDataServiceProvider).fetchTaxiThruRiderPosts(
+        driverLat: pos?.latitude,
+        driverLng: pos?.longitude,
+      );
+});

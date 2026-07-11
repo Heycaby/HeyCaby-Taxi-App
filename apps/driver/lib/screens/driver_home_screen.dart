@@ -13,6 +13,7 @@ import '../providers/driver_location_provider.dart';
 import '../providers/driver_data_providers.dart';
 import '../providers/driver_map_providers.dart';
 import '../services/driver_data_service.dart' show ZoneDemand;
+import 'driver_hotspots_models.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_spacing.dart';
 import '../ui/driver_map_fab.dart';
@@ -113,7 +114,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                     .dismissCongratulationsModal();
                 ref.invalidate(driverProfileProvider);
               },
-              child: const Text(DriverStrings.congratsStart),
+              child: Text(DriverStrings.congratsStart),
             ),
           ],
         );
@@ -199,9 +200,9 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     }
     final hasHighDemand = zones.any((z) => z.waitingPassengers >= 20);
     if (hasHighDemand && _pulseTimer == null) {
-      _pulseTimer = Timer.periodic(const Duration(milliseconds: 400), (_) {
+      _pulseTimer = Timer.periodic(const Duration(milliseconds: 350), (_) {
         if (!mounted) return;
-        setState(() => _pulsePhase = (_pulsePhase + 1) % 2);
+        setState(() => _pulsePhase = (_pulsePhase + 1) % 3);
         _updateZoneCircles(_lastZones, _lastShowZones,
             currentZoneId: _lastCurrentZoneId);
       });
@@ -209,29 +210,41 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       _pulseTimer?.cancel();
       _pulseTimer = null;
     }
-    final zoneAccent = _mapboxColor(ref.read(colorsProvider));
+    final themeColors = ref.read(colorsProvider);
+    final zoneAccent = _mapboxColor(themeColors);
+    final cardArgb = themeColors.card.toARGB32();
     final options = <CircleAnnotationOptions>[];
     for (final z in zones) {
       if (z.centerLat == null || z.centerLng == null) continue;
       final n = z.waitingPassengers;
-      final opacity = n >= 20
-          ? 0.7
-          : n >= 10
-              ? 0.55
-              : n >= 4
-                  ? 0.3
-                  : 0.12;
-      var radiusPx = ((z.radiusM ?? 500) / 8).clamp(15.0, 80.0);
+      final tier = hotspotTierForDemand(n);
+      final outerColor = hotspotHeatOuterArgb(themeColors, tier);
+      final innerColor = hotspotHeatInnerArgb(themeColors, tier);
+      var outerR = ((z.radiusM ?? 500) / 7).clamp(20.0, 82.0);
+      var innerR = (outerR * 0.42).clamp(12.0, 34.0);
       if (n >= 20) {
-        radiusPx *= _pulsePhase == 0 ? 1.0 : 1.08;
+        final pulseScale = _pulsePhase == 0
+            ? 0.96
+            : _pulsePhase == 1
+                ? 1.0
+                : 1.06;
+        outerR *= pulseScale;
+        innerR *= pulseScale;
       }
       final isCurrentZone = currentZoneId != null && z.zoneId == currentZoneId;
+      // Outer halo circle
       options.add(CircleAnnotationOptions(
         geometry: Point(coordinates: Position(z.centerLng!, z.centerLat!)),
-        circleColor: (zoneAccent & 0xFFFFFF) | ((opacity * 255).round() << 24),
-        circleRadius: radiusPx,
-        circleStrokeColor: isCurrentZone ? zoneAccent : 0,
-        circleStrokeWidth: isCurrentZone ? 3.0 : 0,
+        circleColor: outerColor,
+        circleRadius: outerR,
+      ));
+      // Inner core circle
+      options.add(CircleAnnotationOptions(
+        geometry: Point(coordinates: Position(z.centerLng!, z.centerLat!)),
+        circleColor: innerColor,
+        circleRadius: innerR,
+        circleStrokeColor: isCurrentZone ? zoneAccent : cardArgb,
+        circleStrokeWidth: isCurrentZone ? 3.0 : 1.5,
       ));
     }
     if (options.isNotEmpty) await _circleManager!.createMulti(options);
@@ -247,10 +260,10 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
             z.waitingPassengers < 4) {
           continue;
         }
-        final label = z.waitingPassengers >= 10
-            ? '${z.zoneName ?? z.zoneId}\n'
-                '${DriverStrings.mapDemandWaiting(z.waitingPassengers)}'
-            : (z.zoneName ?? z.zoneId);
+        final zoneLabel = z.zoneName ?? z.zoneId;
+        final label = z.waitingPassengers >= 4
+            ? '$zoneLabel\n${DriverStrings.mapDemandWaiting(z.waitingPassengers)}'
+            : zoneLabel;
         features.add({
           'type': 'Feature',
           'geometry': {
@@ -271,14 +284,19 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       } else if (features.isNotEmpty) {
         await map.style
             .addSource(GeoJsonSource(id: _zoneLabelsSourceId, data: geoJson));
+        final tc = ref.read(colorsProvider);
+        final haloColor =
+            ThemeData.estimateBrightnessForColor(tc.card) == Brightness.dark
+                ? tc.bg
+                : tc.card;
         await map.style.addLayer(SymbolLayer(
           id: _zoneLabelsLayerId,
           sourceId: _zoneLabelsSourceId,
           textFieldExpression: ['get', 'label'],
-          textSize: 11.0,
-          textColor: 0xFF1A1A1A,
-          textHaloColor: 0xFFFFFFFF,
-          textHaloWidth: 1.5,
+          textSize: 13.0,
+          textColor: tc.text.toARGB32(),
+          textHaloColor: haloColor.withValues(alpha: 0.94).toARGB32(),
+          textHaloWidth: 2.0,
         ));
       }
     } catch (_) {}

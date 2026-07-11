@@ -52,6 +52,7 @@ class DriverRideBoltScaffold extends StatelessWidget {
     this.showWaitHereHint = false,
     this.onClose,
     this.scrollableInfoCard = false,
+    this.headerBanner,
   });
 
   final DriverColors colors;
@@ -74,6 +75,7 @@ class DriverRideBoltScaffold extends StatelessWidget {
   final bool showWaitHereHint;
   final VoidCallback? onClose;
   final bool scrollableInfoCard;
+  final Widget? headerBanner;
 
   @override
   Widget build(BuildContext context) {
@@ -173,13 +175,24 @@ class DriverRideBoltScaffold extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (headerBanner != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        DriverSpacing.screenEdge,
+                        0,
+                        DriverSpacing.screenEdge,
+                        0,
+                      ),
+                      child: headerBanner!,
+                    ),
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: DriverSpacing.screenEdge,
                     ),
                     child: scrollableInfoCard
                         ? ConstrainedBox(
-                            constraints: BoxConstraints(maxHeight: maxInfoHeight),
+                            constraints:
+                                BoxConstraints(maxHeight: maxInfoHeight),
                             child: SingleChildScrollView(
                               child: infoCard,
                             ),
@@ -264,7 +277,7 @@ class DriverRideBoltInfoCard extends StatelessWidget {
                   text: TextSpan(
                     style: typography.displaySmall.copyWith(
                       fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
+                      letterSpacing: 0,
                       height: 1.05,
                       color: colors.text,
                     ),
@@ -548,7 +561,7 @@ Future<void> showDriverRideRouteDetailsSheet({
                 contentPadding: EdgeInsets.zero,
                 leading: Icon(Icons.navigation_rounded, color: colors.primary),
                 title: Text(
-                  navAppLabel ?? 'Waze',
+                  navAppLabel ?? DriverStrings.hotspotsWaze,
                   style: typography.titleSmall.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -652,7 +665,9 @@ Future<void> showDriverRideSafetyToolkitSheet({
                   final driverId = ref.read(driverIdProvider).valueOrNull;
                   if (driverId != null && driverId.isNotEmpty) {
                     try {
-                      await ref.read(driverDataServiceProvider).insertSafetyEvent(
+                      await ref
+                          .read(driverDataServiceProvider)
+                          .insertSafetyEvent(
                             driverId,
                             'emergency_call',
                             rideRequestId: rideRequestId,
@@ -824,7 +839,8 @@ class _DriverRideBoltMapState extends State<_DriverRideBoltMap> {
     await _mapboxMap!.attribution
         .updateSettings(AttributionSettings(enabled: false));
     await _mapboxMap!.logo.updateSettings(LogoSettings(enabled: false));
-    _lineManager = await _mapboxMap!.annotations.createPolylineAnnotationManager();
+    _lineManager =
+        await _mapboxMap!.annotations.createPolylineAnnotationManager();
     _initialized = true;
     _fitAndDraw();
   }
@@ -864,8 +880,10 @@ class _DriverRideBoltMapState extends State<_DriverRideBoltMap> {
 
     var camera = await _mapboxMap!.cameraForCoordinateBounds(
       CoordinateBounds(
-        southwest: Point(coordinates: Position(minLng - lngPad, minLat - latPad)),
-        northeast: Point(coordinates: Position(maxLng + lngPad, maxLat + latPad)),
+        southwest:
+            Point(coordinates: Position(minLng - lngPad, minLat - latPad)),
+        northeast:
+            Point(coordinates: Position(maxLng + lngPad, maxLat + latPad)),
         infiniteBounds: false,
       ),
       MbxEdgeInsets(top: 72, left: 24, bottom: 300, right: 24),
@@ -901,26 +919,25 @@ class _DriverRideBoltMapState extends State<_DriverRideBoltMap> {
 
     if (_lineManager != null) {
       await _lineManager!.deleteAll();
-      if (showDriverLeg &&
-          widget.phase != DriverRideBoltPhase.inProgress) {
+      if (showDriverLeg && widget.phase != DriverRideBoltPhase.inProgress) {
         await _lineManager!.create(PolylineAnnotationOptions(
           geometry: LineString(coordinates: [
-            Position(drvLng!, drvLat!),
-            Position(pLng!, pLat!),
+            Position(drvLng, drvLat),
+            Position(pLng, pLat),
           ]),
           lineColor: widget.colors.textMuted.withValues(alpha: 0.45).toARGB32(),
           lineWidth: 2.5,
         ));
       }
       if (hasDest) {
-        final fromLng = widget.phase == DriverRideBoltPhase.inProgress &&
-                showDriverLeg
-            ? drvLng!
-            : (hasPickup ? pLng! : dLng!);
-        final fromLat = widget.phase == DriverRideBoltPhase.inProgress &&
-                showDriverLeg
-            ? drvLat!
-            : (hasPickup ? pLat! : dLat!);
+        final fromLng =
+            widget.phase == DriverRideBoltPhase.inProgress && showDriverLeg
+                ? drvLng
+                : (hasPickup ? pLng! : dLng!);
+        final fromLat =
+            widget.phase == DriverRideBoltPhase.inProgress && showDriverLeg
+                ? drvLat
+                : (hasPickup ? pLat! : dLat!);
         await _lineManager!.create(PolylineAnnotationOptions(
           geometry: LineString(coordinates: [
             Position(fromLng, fromLat),
@@ -940,8 +957,7 @@ class _DriverRideBoltMapState extends State<_DriverRideBoltMap> {
   @override
   Widget build(BuildContext context) {
     final themeId = HeyCabyAppChrome.themeIdOf(context);
-    final hasPickup =
-        driverMapCoordIsValid(widget.pickupLat, widget.pickupLng);
+    final hasPickup = driverMapCoordIsValid(widget.pickupLat, widget.pickupLng);
     final hasDest = driverMapCoordIsValid(widget.destLat, widget.destLng);
     final hasMapData = hasPickup || hasDest;
     final fallbackCenter = hasDest

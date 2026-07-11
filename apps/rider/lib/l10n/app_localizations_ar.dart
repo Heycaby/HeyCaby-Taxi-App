@@ -69,16 +69,110 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeSmartOptionsTitle => 'كيف تريد أن تركب؟';
 
   @override
-  String get homeBestPriceTitle => 'السوق';
+  String get homeBestPriceTitle => 'TAXI TERUG';
 
   @override
-  String get homeBestPriceSubtitle => 'السائقون يتنافسون على رحلتك.';
+  String get homeBestPriceSubtitle => 'ابحث عن سائقين متجهين نحوك بالفعل.';
 
   @override
   String get homeTaxiTerugTitle => 'TAXI TERUG';
 
   @override
   String get homeTaxiTerugSubtitle => 'ابحث عن سائقين متجهين نحوك بالفعل.';
+
+  @override
+  String get taxiTerugOfferHeadline =>
+      'اركب مع سيارات أجرة متجهة بالفعل في اتجاهك.';
+
+  @override
+  String get taxiTerugIntroBody =>
+      'حدد سعرك. السائقون المتجهون في اتجاهك يمكنهم قبول عرضك.';
+
+  @override
+  String get taxiTerugFareExplanation =>
+      'Taxi Terug يعني أن السيارة متجهة بالفعل في اتجاهك. يعتمد السعر على تعريفة السائق — وليس خصمًا تلقائيًا من المنصة.';
+
+  @override
+  String get taxiTerugDriversAcceptHint =>
+      'السائقون المستقلون يقررون ما إذا كانوا يقبلون عرضك.';
+
+  @override
+  String get taxiTerugCandidatesTitle => 'سيارات أجرة متجهة إلى وجهتك';
+
+  @override
+  String get taxiTerugCandidatesEmpty =>
+      'لا توجد سيارات متجهة إلى وجهتك بعد. حدّد سعرك أدناه — سنُبلغ السائقين المناسبين.';
+
+  @override
+  String taxiTerugCandidatesSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count سيارات تطابق مسارك',
+      one: 'سيارة واحدة تطابق مسارك',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String taxiTerugCandidateHeading(String destination) {
+    return 'متجه إلى $destination';
+  }
+
+  @override
+  String taxiTerugCandidateEta(int minutes) {
+    return '$minutes دقيقة حتى نقطة الالتقاط';
+  }
+
+  @override
+  String taxiTerugCandidateMatch(int score) {
+    return 'تطابق $score٪';
+  }
+
+  @override
+  String taxiTerugCandidateFareRange(String minFare, String maxFare) {
+    return '$minFare – $maxFare';
+  }
+
+  @override
+  String get taxiTerugWaitToleranceTitle => 'كم من الوقت يمكنك الانتظار؟';
+
+  @override
+  String get taxiTerugWaitToleranceBody =>
+      'قد ينهي سائقو Taxi Terug رحلة قريبة أولاً. نعرض فقط السيارات التي يمكنها الوصول إليك ضمن وقت انتظارك.';
+
+  @override
+  String taxiTerugWaitMinutes(int minutes) {
+    return '$minutes دقيقة';
+  }
+
+  @override
+  String get taxiTerugDelayedPickupAck =>
+      'أفهم أن الالتقاط قد يتأخر بينما ينهي السائق رحلته الحالية.';
+
+  @override
+  String get taxiTerugConfirmDelayedPickup =>
+      'يرجى تأكيد أنك تفهم وقت الالتقاط المتأخر.';
+
+  @override
+  String taxiTerugCandidatePickupWindow(int minMinutes, int maxMinutes) {
+    return 'الالتقاط متاح خلال $minMinutes–$maxMinutes دقيقة';
+  }
+
+  @override
+  String get taxiTerugCandidateFinishingRide => 'السائق ينهي رحلة قريبة أولاً.';
+
+  @override
+  String taxiTerugCandidateDepartsAt(String time) {
+    return 'ينطلق الساعة $time';
+  }
+
+  @override
+  String get taxiTerugQueuedConfirmed => 'تم تأكيد Taxi Terug';
+
+  @override
+  String get taxiTerugQueuedWaitingForDriver =>
+      'السائق ينهي رحلته الحالية أولاً.';
 
   @override
   String get homeScheduleLaterTitle => 'جدولة لاحقاً';
@@ -112,7 +206,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeSupplyNoneTitle => 'لا سائقين قريبين منك';
 
   @override
-  String get homeSupplyNoneSubtitle => 'جرّب السوق أو جدول رحلة لاحقًا.';
+  String get homeSupplyNoneSubtitle => 'جرّب TAXI TERUG أو جدول رحلة لاحقًا.';
 
   @override
   String homeSupplyNearbyTitle(int count) {
@@ -214,6 +308,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get vehicleCategoryTitle => 'هل تحتاج إلى مركبة محددة؟';
+
+  @override
+  String get vehicleSelectUpToThree => 'اختر حتى 3 أنواع مع سائقين قريبين';
+
+  @override
+  String get vehicleMaxCategoriesSelected =>
+      'يمكنك اختيار 3 أنواع مركبات كحد أقصى';
 
   @override
   String get homeAirportChipSchiphol => 'سخيبول';
@@ -607,6 +708,36 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get growCityBadgeTopPromoter => 'أفضل مروّج';
+
+  @override
+  String get growCityRideBadgesTitle => 'Ride milestones';
+
+  @override
+  String get growCityRideBadgeFirstRide => 'First Ride';
+
+  @override
+  String get growCityRideBadgeRegular => 'Regular';
+
+  @override
+  String get growCityRideBadgeDedicated => 'Dedicated';
+
+  @override
+  String get growCityRideBadgeLegend => 'HeyCaby Legend';
+
+  @override
+  String growCityStreakWeeks(int count) {
+    return '$count week streak';
+  }
+
+  @override
+  String growCityProgressToRideBadge(String badge) {
+    return 'Progress to $badge';
+  }
+
+  @override
+  String growCityProgressToInviteBadge(String badge) {
+    return 'Progress to $badge';
+  }
 
   @override
   String get growCityWhyHelpTitle => 'لماذا المساعدة؟';
@@ -1297,6 +1428,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get ridesFilterActive => 'نشطة';
 
   @override
+  String get ridesFilterAll => 'الكل';
+
+  @override
   String get ridesFilterBidding => 'مزايدة';
 
   @override
@@ -1564,7 +1698,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get accountProfileCardSubtitle => 'اسم الحجز والبريد ومظهر التطبيق.';
 
   @override
-  String get accountProfilePreferencesLabel => 'اللغة والمظهر';
+  String get accountProfilePreferencesLabel => 'اللغة';
 
   @override
   String get riderPassportTitle => 'جواز الراكب';
@@ -1632,6 +1766,38 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String riderRatingTrips(int count) {
     return '$count trips rated';
+  }
+
+  @override
+  String get riderRatingDetailsTitle => 'سمعتك كراكب';
+
+  @override
+  String get riderRatingBreakdownTitle => 'تفصيل التقييمات';
+
+  @override
+  String get riderRatingDriverNotesTitle => 'ملاحظات السائقين';
+
+  @override
+  String get riderRatingDriverNotesBody =>
+      'تظهر الملاحظات الخاصة بعد أن يقيّم الطرفان الرحلة.';
+
+  @override
+  String get riderRatingNoComments => 'لا توجد ملاحظات مكتوبة بعد.';
+
+  @override
+  String get riderRatingAnonymousDriver => 'ملاحظات السائق';
+
+  @override
+  String get riderRatingLoadFailed => 'تعذر تحميل تقييمك.';
+
+  @override
+  String riderRatingBasedOn(int count) {
+    return 'استنادًا إلى $count رحلات مكتملة قيّمها السائقون.';
+  }
+
+  @override
+  String riderRatingAccessibility(String rating, int count) {
+    return 'تقييم الراكب $rating من 5، استنادًا إلى $count تقييمات';
   }
 
   @override
@@ -2686,6 +2852,29 @@ class AppLocalizationsAr extends AppLocalizations {
       'اضغط للحجز إلى هناك، أو احفظ مكانًا آخر أدناه.';
 
   @override
+  String get savedPlacesEmptyStartWith => 'ابدأ بـ';
+
+  @override
+  String savedPlacesSectionCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count أماكن محفوظة',
+      one: 'مكان واحد محفوظ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get savedPlacesTapToBook => 'اضغط للحجز';
+
+  @override
+  String get savedPlacesGhostHome => 'المنزل';
+
+  @override
+  String get savedPlacesGhostMom => 'منزل الأم';
+
+  @override
   String get noSavedAddressesYet => 'اختصاراتك';
 
   @override
@@ -2697,6 +2886,23 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get addSavedAddressSheetTitle => 'حفظ مكان جديد';
+
+  @override
+  String get editSavedAddress => 'تعديل المكان';
+
+  @override
+  String get editSavedAddressSheetTitle => 'تعديل مكان محفوظ';
+
+  @override
+  String get editSavedAddressSheetBody =>
+      'حدّث الاسم أو الفئة أو العنوان عند الانتقال أو تغيّر التفاصيل.';
+
+  @override
+  String get editSavedAddressNotFound =>
+      'تم حذف هذا المكان. حدّث القائمة وحاول مرة أخرى.';
+
+  @override
+  String get saveChanges => 'حفظ التغييرات';
 
   @override
   String get savedAddressCategoryLabel => 'الفئة';
@@ -2740,6 +2946,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'يمكنك حفظ ما يصل إلى 10 أماكن. احذف مكانًا لإضافة مكان آخر.';
 
   @override
+  String get savedAddressesSessionRequired =>
+      'تعذّر التحقق من حسابك. افتح الحساب وأكّد بريدك الإلكتروني ثم حاول مجددًا.';
+
+  @override
   String get deleteSavedAddress => 'حذف';
 
   @override
@@ -2756,7 +2966,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get searchFactMarketplace =>
-      'السائقون العائدون إلى مدنهم يقدمون أحيانًا أسعارًا أقل. تحقق من السوق للحصول على أفضل سعر.';
+      'السائقون العائدون إلى مدنهم يقدمون أحيانًا أسعارًا أقل. جرّب TAXI TERUG للحصول على سعر أفضل.';
 
   @override
   String get searchFactZZP =>
@@ -2917,7 +3127,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get activeBookingInstantBody =>
-      'وقت الانتظار المتوقع: 1–2 دقيقة. سنخبرك عندما يقبل سائق.';
+      'HeyCaby جديدة — قد يستغرق العثور على سائق عدة دقائق. سنواصل البحث ونخبرك فور قبول سائق.';
 
   @override
   String get activeBookingMarketplaceBody =>
@@ -3002,7 +3212,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get searchNoSupplyInlineBody =>
-      'لم نعثر على سائقين قرب نقطة الالتقاط. جدول لاحقًا أو جرّب السوق. سنستمر في البحث.';
+      'لا يوجد سائقون عند نقطة الالتقاط الآن. جدول لاحقًا — سنستمر في البحث.';
+
+  @override
+  String get searchNoSupplyTaxiTerugCardSubtitle =>
+      'سائقون في طريقهم إليك بسعر أقل';
 
   @override
   String get searchNoSupplySheetTitle => 'لا سائقين قريبين';
@@ -3019,7 +3233,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get searchKeepSearching => 'متابعة البحث';
 
   @override
-  String get searchSeeOptions => 'جدولة أو السوق';
+  String get searchExpiredGoHome => 'العودة للرئيسية دون حجز';
+
+  @override
+  String get searchSeeOptions => 'المزيد من الخيارات';
 
   @override
   String get searchExpiredShareSecondary => 'تعرف سائقًا؟ شارك HeyCaby';
@@ -3305,6 +3522,84 @@ class AppLocalizationsAr extends AppLocalizations {
   String get ridePayDriverDismiss => 'لحظة';
 
   @override
+  String get paymentRiderHeadline => 'ادفع لسائقك';
+
+  @override
+  String paymentRiderCashInstruction(String amount) {
+    return 'ادفع $amount نقداً قبل مغادرة السيارة';
+  }
+
+  @override
+  String get paymentRiderPinInstruction =>
+      'المس أو أدخل بطاقتك في جهاز الدفع الخاص بالسائق';
+
+  @override
+  String get paymentRiderTikkieInstruction => 'امسح رمز Tikkie QR للسائق';
+
+  @override
+  String get paymentCashPayBeforeExit => 'ادفع قبل المغادرة';
+
+  @override
+  String get paymentPinTapReader => 'الدفع بالبطاقة في السيارة';
+
+  @override
+  String get paymentTikkieScanQrHint =>
+      'افتح الكاميرا وامسح الرمز على هاتف السائق.';
+
+  @override
+  String get paymentWaitingForDriver => 'في انتظار السائق';
+
+  @override
+  String get paymentWaitingForDriverHint =>
+      'يؤكد السائق عند استلام الدفع. يمكنك التأكيد هنا بعد 10 دقائق إذا لزم الأمر.';
+
+  @override
+  String get paymentDriverConfirmedProceed => 'أكد السائق — فتح التقييم…';
+
+  @override
+  String get paymentThankYou => 'شكراً على الدفع!';
+
+  @override
+  String get paymentAddTipQuestion => 'إضافة إكرامية؟';
+
+  @override
+  String get paymentNoTip => 'بدون إكرامية';
+
+  @override
+  String get paymentRiderPaidConfirm => 'لقد دفعت ✓';
+
+  @override
+  String get paymentConfirmFailed => 'تعذر تأكيد الدفع. حاول مرة أخرى.';
+
+  @override
+  String get activeRideDriverNearPickup =>
+      'السائق على بعد كيلومتر تقريباً. انزل قريباً — قد تُفرض رسوم انتظار بعد الوصول.';
+
+  @override
+  String get activeRideDriverAroundCorner => 'استعد — سائقك على بعد خطوات!';
+
+  @override
+  String get activeRideTripProgress => 'تقدم الرحلة';
+
+  @override
+  String activeRideDistanceRemaining(String km) {
+    return 'متبقى $km كم';
+  }
+
+  @override
+  String activeRideTimeRemaining(String minutes) {
+    return 'متبقى $minutes دقيقة';
+  }
+
+  @override
+  String activeRideArrivingAround(String time) {
+    return 'الوصول حوالي $time';
+  }
+
+  @override
+  String get activeRideTripInProgressHeadline => 'في الطريق';
+
+  @override
   String get activeRideWaitingFeeWaived => 'تم التنازل عن رسوم الانتظار';
 
   @override
@@ -3387,6 +3682,15 @@ class AppLocalizationsAr extends AppLocalizations {
       'احتفظ بهذا الإيصال في سجل رحلاتك ومصاريفك.';
 
   @override
+  String get rideReceiptShareWhatsapp => 'مشاركة عبر واتساب';
+
+  @override
+  String get rideReceiptShareEmail => 'إرسال عبر البريد';
+
+  @override
+  String get rideReceiptShareFailed => 'تعذر مشاركة الإيصال';
+
+  @override
   String get rideReceiptFareBreakdown => 'تفصيل الأجرة';
 
   @override
@@ -3450,4 +3754,121 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get smartBundleTapToHide => 'اضغط لإخفاء فئات الرحلات';
+
+  @override
+  String get taxiTerugScreenTitle => 'تاكسي ترخ';
+
+  @override
+  String get taxiTerugScreenSubtitle =>
+      'اركب مع سيارات الأجرة المتجهة نحو وجهتك.';
+
+  @override
+  String get taxiTerugScreenTabAvailable => 'سيارات متاحة';
+
+  @override
+  String get taxiTerugScreenTabPostRequest => 'انشر طلبًا';
+
+  @override
+  String get taxiTerugScreenPickupPlaceholder => 'موقع الالتقاط';
+
+  @override
+  String get taxiTerugScreenDestinationPlaceholder => 'إلى أين تذهب؟';
+
+  @override
+  String get taxiTerugScreenSetRoute =>
+      'حدد موقع الالتقاط والوجهة لعرض سيارات الأجرة المطابقة.';
+
+  @override
+  String get taxiTerugScreenLoadError => 'تعذر تحميل السيارات. حاول مرة أخرى.';
+
+  @override
+  String get taxiTerugScreenDisabled => 'تاكسي ترخ غير متاح حاليًا.';
+
+  @override
+  String get taxiTerugScreenNoRides => 'لا توجد رحلات تاكسي ترخ.';
+
+  @override
+  String get taxiTerugScreenNoRidesBody =>
+      'انشر رحلتك ليتمكن السائقون المتجهون نحو وجهتك من قبولها.';
+
+  @override
+  String get taxiTerugScreenPostCta => 'انشر طلب تاكسي ترخ';
+
+  @override
+  String get taxiTerugScreenBook => 'احجز';
+
+  @override
+  String get taxiTerugScreenPostTitle => 'انشر طلب تاكسي ترخ';
+
+  @override
+  String get taxiTerugScreenPostBody =>
+      'السائقون المتجهون نحو وجهتك يمكنهم قبول الطلب أو إرسال عرض.';
+
+  @override
+  String get taxiTerugScreenOfferLabel => 'عرضك';
+
+  @override
+  String get taxiTerugScreenPostButton => 'انشر الطلب';
+
+  @override
+  String get taxiTerugScreenPosting => 'جارٍ النشر…';
+
+  @override
+  String get taxiTerugScreenPostConfirmation =>
+      'سيظهر طلبك للسائقين المتجهين نحو وجهتك.';
+
+  @override
+  String get taxiTerugHotDestinationsTitle => 'سائقون متجهون إلى';
+
+  @override
+  String get taxiTerugHotDestinationsSubtitle =>
+      'اضغط على مدينة لرؤية سيارات الأجرة على مسارك.';
+
+  @override
+  String get taxiTerugPickCityHint => 'اختر مدينة أعلاه';
+
+  @override
+  String get taxiTerugTrackerSearching => 'البحث عن تطابق تاكسي ترخ';
+
+  @override
+  String get taxiTerugTrackerSearchingBody =>
+      'نبحث عن سيارات أجرة متجهة نحو وجهتك. يمكنك الانتظار هنا أو متابعة يومك.';
+
+  @override
+  String get taxiTerugTrackerNoMatch => 'لم يتم العثور على تطابق';
+
+  @override
+  String get taxiTerugTrackerNoMatchBody =>
+      'لم يتم العثور على سائقي تاكسي ترخ خلال ساعة واحدة. يرجى المحاولة مرة أخرى لاحقًا.';
+
+  @override
+  String get taxiTerugTrackerCancelTitle => 'إلغاء الطلب';
+
+  @override
+  String get taxiTerugTrackerCancelConfirm =>
+      'هل أنت متأكد أنك تريد إلغاء طلب تاكسي ترخ الخاص بك؟';
+
+  @override
+  String get taxiTerugTrackerBoost => 'زيادة العرض';
+
+  @override
+  String get taxiTerugTrackerBoostTitle => 'زيادة عرضك';
+
+  @override
+  String get taxiTerugTrackerBoostSubtitle =>
+      'زيادة عرضك بحيث يراه المزيد من السائقين ويقبلونه بشكل أسرع.';
+
+  @override
+  String taxiTerugTrackerBoostSuccess(Object amount) {
+    return 'تم زيادة العرض إلى €$amount! يمكن للسائقين رؤيته فورًا.';
+  }
+
+  @override
+  String get taxiTerugTrackerBoostFailed =>
+      'تعذر زيادة العرض. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String taxiTerugTrackerCurrentOffer(Object amount) {
+    return 'العرض الحالي: €$amount';
+  }
 }

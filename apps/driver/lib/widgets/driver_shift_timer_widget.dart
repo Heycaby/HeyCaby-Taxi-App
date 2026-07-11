@@ -89,7 +89,7 @@ class _DriverShiftTimerWidgetState
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(DriverStrings.endShiftDetail)),
+          SnackBar(content: Text(DriverStrings.endShiftDetail)),
         );
       }
     } finally {
@@ -178,8 +178,7 @@ class _DriverShiftTimerWidgetState
       typography: typo,
       title: DriverStrings.endShiftConfirm,
       message: DriverStrings.endShiftDetail
-          .replaceFirst(
-              'X hours', '${onlineMins ~/ 60}h ${onlineMins % 60}m')
+          .replaceFirst('X hours', '${onlineMins ~/ 60}h ${onlineMins % 60}m')
           .replaceFirst('Y rides', '$rides rides'),
       dismissLabel: DriverStrings.cancel,
       confirmLabel: DriverStrings.endShift,

@@ -53,6 +53,8 @@ class DriverIdentityPreview extends StatelessWidget {
         ),
         onEditProfile: () {},
         onOpenVehicle: () {},
+        onAddVehiclePhoto: () {},
+        onOpenRatings: () {},
         onOpenSettings: () {},
         onOpenRequirement: (_) {},
       ),

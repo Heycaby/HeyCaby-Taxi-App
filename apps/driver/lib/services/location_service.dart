@@ -5,7 +5,7 @@ import 'package:heycaby_api/heycaby_api.dart';
 
 import '../providers/driver_state_provider.dart';
 
-const Duration kDriverLocationUploadInterval = Duration(seconds: 10);
+const Duration kDriverLocationUploadInterval = Duration(seconds: 25);
 
 /// Request location permission and get current position.
 /// Returns null if permission denied or location unavailable.

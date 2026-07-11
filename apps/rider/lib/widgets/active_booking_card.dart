@@ -9,12 +9,10 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../constants/rider_search_window.dart';
 import '../models/ride_matching_variant.dart';
-import '../providers/active_search_provider.dart';
 import '../providers/marketplace_offers_provider.dart';
 import '../providers/near_term_ride_request_provider.dart';
 import '../providers/ride_request_provider.dart';
-import '../services/sound_service.dart';
-import '../services/stale_ride_cleanup.dart';
+import '../services/rider_matching_recovery_actions.dart';
 import '../utils/ride_matching_labels.dart';
 import 'active_search_stop_dialog.dart';
 
@@ -30,6 +28,9 @@ final activeBookingInviteCountProvider =
     return 0;
   }
 });
+
+/// Home sheet hides booking chrome while the active trip panel is expanded.
+final activeBookingHomeExpandedProvider = StateProvider<bool>((ref) => false);
 
 enum ActiveBookingCardPlacement {
   /// Compact chip inside the home bottom sheet; expand on tap.
@@ -56,6 +57,7 @@ class _ActiveBookingCardState extends ConsumerState<ActiveBookingCard> {
   Timer? _ticker;
   String? _marketplaceRideId;
   bool _expandedOnHome = false;
+  String? _dismissedRideId;
 
   @override
   void initState() {
@@ -79,6 +81,11 @@ class _ActiveBookingCardState extends ConsumerState<ActiveBookingCard> {
     super.dispose();
   }
 
+  void _setHomeExpanded(bool value) {
+    setState(() => _expandedOnHome = value);
+    ref.read(activeBookingHomeExpandedProvider.notifier).state = value;
+  }
+
   Future<void> _cancelOpenRide({
     required NearTermRideSnapshot snap,
     required HeyCabyColorTokens colors,
@@ -93,27 +100,20 @@ class _ActiveBookingCardState extends ConsumerState<ActiveBookingCard> {
     );
     if (!mounted || !stop) return;
 
-    try {
-      final identity = await ref.read(riderIdentityProvider.future);
-      final token = identity.riderToken;
-      if (token != null && token.isNotEmpty) {
-        await cancelExpiredRiderOpenRide(
-          rideId: snap.id,
-          riderToken: token,
-          cancellationReason: 'rider_cancelled_from_active_booking_card',
-        );
-      }
-    } catch (_) {
-      // Keep the rider unstuck if network cancellation cannot complete.
-    }
+    setState(() => _dismissedRideId = snap.id);
+    _setHomeExpanded(false);
 
-    ref.invalidate(nearTermRideRequestProvider);
-    ref.invalidate(ridesTabUpcomingRequestsProvider);
-    final active = ref.read(activeSearchProvider).valueOrNull;
-    if (active?.rideRequestId == snap.id) {
-      await ref.read(activeSearchProvider.notifier).clear();
+    await RiderMatchingRecoveryActions.cancelOpenRideAndClearLocalState(
+      ref,
+      rideId: snap.id,
+      cancellationReason: 'rider_cancelled_from_active_booking_card',
+    );
+
+    if (!mounted) return;
+    final stillOpen = ref.read(nearTermRideRequestProvider).valueOrNull;
+    if (stillOpen?.id != snap.id) {
+      setState(() => _dismissedRideId = null);
     }
-    unawaited(SoundService().playRideCancelled());
   }
 
   Future<void> _openRideFlow(NearTermRideSnapshot snap) async {
@@ -202,7 +202,24 @@ class _ActiveBookingCardState extends ConsumerState<ActiveBookingCard> {
 
     return asyncSnap.when(
       data: (snap) {
-        if (snap == null) return const SizedBox.shrink();
+        if (snap == null) {
+          if (_dismissedRideId != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              setState(() => _dismissedRideId = null);
+            });
+          }
+          if (_expandedOnHome) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              _setHomeExpanded(false);
+            });
+          }
+          return const SizedBox.shrink();
+        }
+        if (_dismissedRideId == snap.id) {
+          return const SizedBox.shrink();
+        }
         _syncMarketplace(snap);
 
         final mode = rideMatchingVariantForBookingModeString(snap.bookingMode);
@@ -261,13 +278,48 @@ class _ActiveBookingCardState extends ConsumerState<ActiveBookingCard> {
               colors: colors,
               typo: typo,
               l10n: l10n,
-              icon: icon,
               title: _titleForMode(l10n, snap.bookingMode),
               trailingStatus: trailingStatus,
-              statusLine: statusLine,
               destination: snap.destinationAddress,
-              onExpand: () => setState(() => _expandedOnHome = true),
+              onExpand: () => _setHomeExpanded(true),
               onOpenFlow: () => unawaited(_openRideFlow(snap)),
+            ),
+          );
+        }
+
+        if (onHomeSheet && _expandedOnHome) {
+          return Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 8),
+            child: _HomeExpandedSearchPanel(
+              colors: colors,
+              typo: typo,
+              l10n: l10n,
+              title: _titleForMode(l10n, snap.bookingMode),
+              timerLabel: trailingStatus,
+              pickup: snap.pickupAddress,
+              destination: snap.destinationAddress,
+              statusLine: statusLine,
+              statusDetail: scheduledBeforeSearch
+                  ? l10n.activeBookingScheduledQueuedBody
+                  : _bodyForSnap(
+                      context: context,
+                      l10n: l10n,
+                      snap: snap,
+                      notified: notified,
+                      offers: offerCount,
+                    ),
+              showBoost: namedPriceMode,
+              onCollapse: () => _setHomeExpanded(false),
+              onOpenFlow: () => unawaited(_openRideFlow(snap)),
+              onBoost: () => context.go(RideMatchingVariant.marketplace.routePath),
+              onCancel: () => unawaited(
+                _cancelOpenRide(
+                  snap: snap,
+                  colors: colors,
+                  typo: typo,
+                  l10n: l10n,
+                ),
+              ),
             ),
           );
         }
@@ -318,8 +370,7 @@ class _ActiveBookingCardState extends ConsumerState<ActiveBookingCard> {
                         ),
                         IconButton(
                           tooltip: l10n.activeBookingCollapseHome,
-                          onPressed: () =>
-                              setState(() => _expandedOnHome = false),
+                          onPressed: () => _setHomeExpanded(false),
                           icon: Icon(
                             Icons.close_rounded,
                             color: colors.textSoft,
@@ -525,10 +576,8 @@ class _HomeCompactBookingChip extends StatelessWidget {
     required this.colors,
     required this.typo,
     required this.l10n,
-    required this.icon,
     required this.title,
     required this.trailingStatus,
-    required this.statusLine,
     required this.destination,
     required this.onExpand,
     required this.onOpenFlow,
@@ -537,10 +586,8 @@ class _HomeCompactBookingChip extends StatelessWidget {
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
   final AppLocalizations l10n;
-  final IconData icon;
   final String title;
   final String trailingStatus;
-  final String statusLine;
   final String destination;
   final VoidCallback onExpand;
   final VoidCallback onOpenFlow;
@@ -548,108 +595,361 @@ class _HomeCompactBookingChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
+      color: colors.card,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: colors.border.withValues(alpha: 0.55)),
+      ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         onTap: onExpand,
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            gradient: LinearGradient(
-              begin: AlignmentDirectional.topStart,
-              end: AlignmentDirectional.bottomEnd,
-              colors: [
-                colors.accent.withValues(alpha: 0.18),
-                colors.accent.withValues(alpha: 0.05),
-              ],
-            ),
-            border: Border.all(color: colors.accent.withValues(alpha: 0.35)),
-          ),
-          child: Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(12, 10, 8, 10),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: colors.accent.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: colors.accent, size: 21),
+        child: Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 10, 12),
+          child: Row(
+            children: [
+              Container(
+                width: 3,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: colors.accent,
+                  borderRadius: BorderRadius.circular(999),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: typo.labelLarge.copyWith(
-                                color: colors.text,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            trailingStatus,
-                            style: typo.labelSmall.copyWith(
-                              color: colors.accent,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: typo.labelLarge.copyWith(
+                              color: colors.text,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        statusLine,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: typo.bodySmall.copyWith(
-                          color: colors.textMid,
-                          fontWeight: FontWeight.w600,
                         ),
-                      ),
-                      if (destination.isNotEmpty) ...[
-                        const SizedBox(height: 2),
+                        const SizedBox(width: 8),
                         Text(
-                          destination,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: typo.labelSmall.copyWith(
-                            color: colors.textSoft,
-                            fontWeight: FontWeight.w600,
+                          trailingStatus,
+                          style: typo.labelMedium.copyWith(
+                            color: colors.accent,
+                            fontWeight: FontWeight.w800,
+                            fontFeatures: const [FontFeature.tabularFigures()],
                           ),
                         ),
                       ],
+                    ),
+                    if (destination.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        destination,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: typo.bodySmall.copyWith(
+                          color: colors.textSoft,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
+                  ],
+                ),
+              ),
+              IconButton(
+                tooltip: l10n.openAction,
+                onPressed: onOpenFlow,
+                icon: Icon(
+                  Icons.arrow_forward_rounded,
+                  color: colors.accent,
+                  size: 22,
+                ),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 36,
+                  minHeight: 36,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeExpandedSearchPanel extends StatelessWidget {
+  const _HomeExpandedSearchPanel({
+    required this.colors,
+    required this.typo,
+    required this.l10n,
+    required this.title,
+    required this.timerLabel,
+    required this.pickup,
+    required this.destination,
+    required this.statusLine,
+    required this.statusDetail,
+    required this.showBoost,
+    required this.onCollapse,
+    required this.onOpenFlow,
+    required this.onBoost,
+    required this.onCancel,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final AppLocalizations l10n;
+  final String title;
+  final String timerLabel;
+  final String pickup;
+  final String destination;
+  final String statusLine;
+  final String statusDetail;
+  final bool showBoost;
+  final VoidCallback onCollapse;
+  final VoidCallback onOpenFlow;
+  final VoidCallback onBoost;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: colors.card,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: BorderSide(color: colors.border.withValues(alpha: 0.45)),
+      ),
+      child: Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(18, 6, 6, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: IconButton(
+                tooltip: l10n.activeBookingCollapseHome,
+                onPressed: onCollapse,
+                icon: Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: colors.textSoft,
+                  size: 28,
+                ),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 40,
+                  minHeight: 40,
+                ),
+              ),
+            ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _PulsingSearchDot(color: colors.accent),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: typo.titleMedium.copyWith(
+                      color: colors.text,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
-                IconButton(
-                  tooltip: l10n.openAction,
-                  onPressed: onOpenFlow,
-                  icon: Icon(
-                    Icons.arrow_forward_rounded,
+                const SizedBox(width: 10),
+                Text(
+                  timerLabel,
+                  style: typo.titleSmall.copyWith(
                     color: colors.accent,
-                    size: 22,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 34,
-                    minHeight: 34,
+                    fontWeight: FontWeight.w800,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
               ],
             ),
-          ),
+            const SizedBox(height: 18),
+            if (destination.isNotEmpty)
+              Text(
+                destination,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: typo.headingSmall.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w800,
+                  height: 1.15,
+                ),
+              ),
+            if (pickup.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                '${l10n.pickup} · $pickup',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: typo.bodySmall.copyWith(
+                  color: colors.textSoft,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+            const SizedBox(height: 14),
+            Text(
+              statusLine,
+              style: typo.labelLarge.copyWith(
+                color: colors.text,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              statusDetail,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: typo.bodySmall.copyWith(
+                color: colors.textMid,
+                fontWeight: FontWeight.w500,
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: onOpenFlow,
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsetsDirectional.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: Text(
+                  l10n.searchingTitle,
+                  style: typo.labelLarge.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (showBoost) ...[
+                  TextButton(
+                    onPressed: onBoost,
+                    child: Text(
+                      l10n.marketplaceBoostOffer,
+                      style: typo.labelLarge.copyWith(
+                        color: colors.accent,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '·',
+                    style: typo.labelLarge.copyWith(color: colors.textSoft),
+                  ),
+                ],
+                TextButton(
+                  onPressed: onCancel,
+                  child: Text(
+                    l10n.marketplaceCancelRequest,
+                    style: typo.labelLarge.copyWith(
+                      color: colors.error,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Center(
+              child: Text(
+                l10n.activeBookingKeepAliveBody,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: typo.labelSmall.copyWith(
+                  color: colors.textSoft,
+                  fontWeight: FontWeight.w500,
+                  height: 1.3,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _PulsingSearchDot extends StatefulWidget {
+  const _PulsingSearchDot({required this.color});
+
+  final Color color;
+
+  @override
+  State<_PulsingSearchDot> createState() => _PulsingSearchDotState();
+}
+
+class _PulsingSearchDotState extends State<_PulsingSearchDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final scale = 0.85 + (_controller.value * 0.3);
+        final opacity = 0.35 + ((1 - _controller.value) * 0.45);
+        return SizedBox(
+          width: 14,
+          height: 14,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Transform.scale(
+                scale: scale,
+                child: Container(
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: widget.color.withValues(alpha: opacity),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              Container(
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: widget.color,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

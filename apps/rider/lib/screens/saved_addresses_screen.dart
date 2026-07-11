@@ -4,9 +4,11 @@ import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 
+import '../services/booking_saved_place_shortcut.dart';
 import '../widgets/booking/booking_flow_screen_header.dart';
 import '../providers/saved_addresses_provider.dart';
 import '../widgets/saved_addresses_add_sheet.dart';
+import '../widgets/saved_places_premium_widgets.dart';
 
 class SavedAddressesScreen extends ConsumerWidget {
   const SavedAddressesScreen({super.key});
@@ -19,9 +21,13 @@ class SavedAddressesScreen extends ConsumerWidget {
     final identityAsync = ref.watch(riderIdentityProvider);
     final addressesAsync = ref.watch(savedAddressesProvider);
 
+    final topInset = MediaQuery.paddingOf(context).top;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+
     return Scaffold(
       backgroundColor: colors.bg,
-      body: SafeArea(
+      body: Padding(
+        padding: EdgeInsets.only(top: topInset + 12, bottom: bottomInset),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -33,10 +39,9 @@ class SavedAddressesScreen extends ConsumerWidget {
               icon: Icons.bookmark_rounded,
               onBack: () => Navigator.of(context).pop(),
               trailing: identityAsync.whenData((identity) {
-                if (identity.identityId == null) return const SizedBox.shrink();
+                if (!identity.hasSession) return const SizedBox.shrink();
                 return IconButton(
-                  onPressed: () =>
-                      _showAdd(context, identity.identityId!, colors, typo, l10n),
+                  onPressed: () => _showAdd(context, colors, typo, l10n),
                   style: IconButton.styleFrom(
                     backgroundColor: colors.accentL,
                     foregroundColor: colors.accent,
@@ -47,106 +52,73 @@ class SavedAddressesScreen extends ConsumerWidget {
             ),
             Expanded(
               child: addressesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => Center(
-          child: Text(l10n.error, style: typo.bodyMedium),
-        ),
-        data: (addresses) {
-          if (addresses.isEmpty) {
-            return Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsetsDirectional.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 88,
-                      height: 88,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            colors.accent.withValues(alpha: 0.2),
-                            colors.accent.withValues(alpha: 0.06),
-                          ],
-                        ),
-                      ),
-                      child: Icon(
-                        Icons.add_location_alt_rounded,
-                        color: colors.accent,
-                        size: 40,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      l10n.noSavedAddressesYet,
-                      textAlign: TextAlign.center,
-                      style: typo.titleLarge.copyWith(
-                        color: colors.text,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      l10n.noSavedAddressesEmptyBody,
-                      textAlign: TextAlign.center,
-                      style: typo.bodyMedium.copyWith(
-                        color: colors.textSoft,
-                        height: 1.45,
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 54,
-                      child: FilledButton.icon(
-                        onPressed: () {
-                          final identityId = ref
-                              .read(riderIdentityProvider)
-                              .valueOrNull
-                              ?.identityId;
-                          if (identityId == null) return;
-                          _showAdd(context, identityId, colors, typo, l10n);
-                        },
-                        icon: Icon(Icons.add_rounded, color: colors.onAccent),
-                        label: Text(
-                          l10n.addSavedAddress,
-                          style: typo.labelLarge.copyWith(
-                            color: colors.onAccent,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        style: FilledButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (_, __) => Center(
+                  child: Text(l10n.error, style: typo.bodyMedium),
                 ),
-              ),
-            );
-          }
+                data: (addresses) {
+                  if (addresses.isEmpty) {
+                    final hasSession = ref
+                            .read(riderIdentityProvider)
+                            .valueOrNull
+                            ?.hasSession ??
+                        false;
+                    if (!hasSession) {
+                      return const SizedBox.shrink();
+                    }
+                    return SavedPlacesEmptyState(
+                      colors: colors,
+                      typo: typo,
+                      l10n: l10n,
+                      onAdd: () => _showAdd(
+                        context,
+                        colors,
+                        typo,
+                        l10n,
+                      ),
+                      onShortcut: (type) => _showAdd(
+                        context,
+                        colors,
+                        typo,
+                        l10n,
+                        initialType: type,
+                      ),
+                    );
+                  }
 
-          return ListView.separated(
-            padding: const EdgeInsetsDirectional.all(16),
-            itemCount: addresses.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final addr = addresses[index];
-              return _AddressTile(
-                address: addr,
-                colors: colors,
-                typo: typo,
-                onDelete: () =>
-                    ref.read(savedAddressesProvider.notifier).remove(addr.id),
-              );
-            },
-          );
-        },
+                  return ListView.separated(
+                    padding: const EdgeInsetsDirectional.all(16),
+                    itemCount: addresses.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (context, index) {
+                      final addr = addresses[index];
+                      return SavedPlacesAddressTile(
+                        address: addr,
+                        colors: colors,
+                        typo: typo,
+                        editLabel: l10n.editSavedAddress,
+                        deleteLabel: l10n.deleteSavedAddress,
+                        onBook: () {
+                          bookInstantRideToDestination(
+                            context,
+                            ref,
+                            addressResultFromSaved(addr),
+                          );
+                        },
+                        onEdit: () => _showEdit(
+                          context,
+                          colors,
+                          typo,
+                          l10n,
+                          addr,
+                        ),
+                        onDelete: () => ref
+                            .read(savedAddressesProvider.notifier)
+                            .remove(addr.id),
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ],
@@ -155,101 +127,35 @@ class SavedAddressesScreen extends ConsumerWidget {
     );
   }
 
-  void _showAdd(
+  Future<void> _showAdd(
     BuildContext context,
-    String identityId,
     HeyCabyColorTokens colors,
     HeyCabyTypography typo,
-    AppLocalizations l10n,
-  ) {
-    showAddSavedAddressSheet(
+    AppLocalizations l10n, {
+    String initialType = 'home',
+  }) async {
+    await showAddSavedAddressSheet(
       context,
-      identityId: identityId,
       colors: colors,
       typo: typo,
       l10n: l10n,
+      initialType: initialType,
     );
   }
-}
 
-class _AddressTile extends StatelessWidget {
-  final SavedAddress address;
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final VoidCallback onDelete;
-
-  const _AddressTile({
-    required this.address,
-    required this.colors,
-    required this.typo,
-    required this.onDelete,
-  });
-
-  IconData _iconForType(String type) {
-    switch (type) {
-      case 'work': return Icons.work_outline_rounded;
-      case 'gym': return Icons.fitness_center_rounded;
-      case 'home': return Icons.home_rounded;
-      default: return Icons.star_outline_rounded;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsetsDirectional.all(14),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colors.border),
-        boxShadow: [
-          BoxShadow(
-            color: colors.text.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: colors.accentL,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(_iconForType(address.type), color: colors.accent, size: 22),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  address.label,
-                  style: typo.bodyMedium.copyWith(
-                    color: colors.text,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  address.fullAddress,
-                  style: typo.bodySmall.copyWith(color: colors.textSoft),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: Icon(Icons.delete_outline_rounded,
-                color: colors.textSoft, size: 20),
-            onPressed: onDelete,
-          ),
-        ],
-      ),
+  Future<void> _showEdit(
+    BuildContext context,
+    HeyCabyColorTokens colors,
+    HeyCabyTypography typo,
+    AppLocalizations l10n,
+    SavedAddress address,
+  ) async {
+    await showEditSavedAddressSheet(
+      context,
+      colors: colors,
+      typo: typo,
+      l10n: l10n,
+      address: address,
     );
   }
 }

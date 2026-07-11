@@ -20,7 +20,8 @@ Future<void> maybePromptDriverBatteryOptimization(
   await showDialog<void>(
     context: context,
     builder: (ctx) => AlertDialog(
-      icon: Icon(Icons.battery_charging_full_rounded, color: colors.accent, size: 40),
+      icon: Icon(Icons.battery_charging_full_rounded,
+          color: colors.accent, size: 40),
       title: Text(
         DriverStrings.batteryOptimizationTitle,
         style: typo.titleMedium.copyWith(
@@ -40,7 +41,7 @@ Future<void> maybePromptDriverBatteryOptimization(
             await service.markPromptDismissed();
             if (ctx.mounted) Navigator.of(ctx).pop();
           },
-          child: const Text(DriverStrings.batteryOptimizationLater),
+          child: Text(DriverStrings.batteryOptimizationLater),
         ),
         FilledButton(
           onPressed: () async {
@@ -48,7 +49,7 @@ Future<void> maybePromptDriverBatteryOptimization(
             await service.markPromptDismissed();
             if (ctx.mounted) Navigator.of(ctx).pop();
           },
-          child: const Text(DriverStrings.batteryOptimizationAllow),
+          child: Text(DriverStrings.batteryOptimizationAllow),
         ),
       ],
     ),

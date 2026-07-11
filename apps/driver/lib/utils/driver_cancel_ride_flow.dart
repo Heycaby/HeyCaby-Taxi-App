@@ -124,140 +124,140 @@ class _CancelRideReasonSheetState extends State<_CancelRideReasonSheet> {
             ),
             child: SingleChildScrollView(
               child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 52,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: colors.border,
-                      borderRadius: BorderRadius.circular(999),
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 52,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: colors.border,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: DriverSpacing.lg),
-                Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: colors.error.withValues(alpha: 0.1),
+                  const SizedBox(height: DriverSpacing.lg),
+                  Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: colors.error.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Icon(
+                          Icons.close_rounded,
+                          color: colors.error,
+                        ),
+                      ),
+                      const SizedBox(width: DriverSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              DriverStrings.cancelRideSheetTitle,
+                              style: typography.titleLarge.copyWith(
+                                color: colors.text,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: DriverSpacing.xs),
+                            Text(
+                              DriverStrings.cancelRideSheetBody,
+                              style: typography.bodySmall.copyWith(
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: DriverSpacing.lg),
+                  Wrap(
+                    spacing: DriverSpacing.sm,
+                    runSpacing: DriverSpacing.sm,
+                    children: [
+                      for (final reason in _reasons)
+                        _ReasonPill(
+                          label: reason,
+                          selected: _selectedReason == reason,
+                          colors: colors,
+                          typography: typography,
+                          onTap: () {
+                            setState(() {
+                              _selectedReason =
+                                  _selectedReason == reason ? null : reason;
+                            });
+                          },
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: DriverSpacing.md),
+                  TextField(
+                    controller: _detailsCtrl,
+                    minLines: 2,
+                    maxLines: 4,
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      hintText: DriverStrings.cancelRideReasonDetailsHint,
+                      filled: true,
+                      fillColor: colors.surface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: BorderSide(color: colors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: BorderSide(color: colors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: BorderSide(color: colors.primary),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: DriverSpacing.lg),
+                  FilledButton.icon(
+                    onPressed: _canCancel
+                        ? () => Navigator.of(context).pop(_reasonPayload)
+                        : null,
+                    icon: const Icon(Icons.close_rounded),
+                    label: Text(DriverStrings.cancelRide),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: colors.error,
+                      foregroundColor: colors.onPrimary,
+                      disabledBackgroundColor:
+                          colors.border.withValues(alpha: 0.45),
+                      disabledForegroundColor: colors.textSecondary,
+                      minimumSize: const Size.fromHeight(56),
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18),
                       ),
-                      child: Icon(
-                        Icons.close_rounded,
-                        color: colors.error,
-                      ),
                     ),
-                    const SizedBox(width: DriverSpacing.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            DriverStrings.cancelRideSheetTitle,
-                            style: typography.titleLarge.copyWith(
-                              color: colors.text,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: DriverSpacing.xs),
-                          Text(
-                            DriverStrings.cancelRideSheetBody,
-                            style: typography.bodySmall.copyWith(
-                              color: colors.textSecondary,
-                            ),
-                          ),
-                        ],
+                  ),
+                  const SizedBox(height: DriverSpacing.sm),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(DriverStrings.back),
+                  ),
+                  if (!_canCancel) ...[
+                    const SizedBox(height: DriverSpacing.xs),
+                    Text(
+                      DriverStrings.cancelRideReasonRequired,
+                      textAlign: TextAlign.center,
+                      style: typography.labelSmall.copyWith(
+                        color: colors.textSecondary,
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: DriverSpacing.lg),
-                Wrap(
-                  spacing: DriverSpacing.sm,
-                  runSpacing: DriverSpacing.sm,
-                  children: [
-                    for (final reason in _reasons)
-                      _ReasonPill(
-                        label: reason,
-                        selected: _selectedReason == reason,
-                        colors: colors,
-                        typography: typography,
-                        onTap: () {
-                          setState(() {
-                            _selectedReason =
-                                _selectedReason == reason ? null : reason;
-                          });
-                        },
-                      ),
-                  ],
-                ),
-                const SizedBox(height: DriverSpacing.md),
-                TextField(
-                  controller: _detailsCtrl,
-                  minLines: 2,
-                  maxLines: 4,
-                  onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    hintText: DriverStrings.cancelRideReasonDetailsHint,
-                    filled: true,
-                    fillColor: colors.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(18),
-                      borderSide: BorderSide(color: colors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(18),
-                      borderSide: BorderSide(color: colors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(18),
-                      borderSide: BorderSide(color: colors.primary),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: DriverSpacing.lg),
-                FilledButton.icon(
-                  onPressed: _canCancel
-                      ? () => Navigator.of(context).pop(_reasonPayload)
-                      : null,
-                  icon: const Icon(Icons.close_rounded),
-                  label: Text(DriverStrings.cancelRide),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: colors.error,
-                    foregroundColor: colors.onPrimary,
-                    disabledBackgroundColor:
-                        colors.border.withValues(alpha: 0.45),
-                    disabledForegroundColor: colors.textSecondary,
-                    minimumSize: const Size.fromHeight(56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: DriverSpacing.sm),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(DriverStrings.back),
-                ),
-                if (!_canCancel) ...[
-                  const SizedBox(height: DriverSpacing.xs),
-                  Text(
-                    DriverStrings.cancelRideReasonRequired,
-                    textAlign: TextAlign.center,
-                    style: typography.labelSmall.copyWith(
-                      color: colors.textSecondary,
-                    ),
-                  ),
                 ],
-              ],
+              ),
             ),
           ),
-        ),
         ),
       ),
     );

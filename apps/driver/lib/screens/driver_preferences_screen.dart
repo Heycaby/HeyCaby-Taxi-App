@@ -97,7 +97,7 @@ class DriverPreferencesScreen extends ConsumerWidget {
     if (current.isEmpty) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(DriverStrings.paymentMethodRequired)),
+          SnackBar(content: Text(DriverStrings.paymentMethodRequired)),
         );
       }
       return;

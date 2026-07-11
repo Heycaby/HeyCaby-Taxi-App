@@ -76,7 +76,8 @@ class DriverPickupWaitService {
 /// Parses audit row metadata for pickup-arrival timestamp (unit-tested).
 DateTime? driverPickupWaitFromAuditRow(Map<String, dynamic> row) {
   final metadata = row['metadata'];
-  if (metadata is! Map || metadata['to_status']?.toString() != 'driver_arrived') {
+  if (metadata is! Map ||
+      metadata['to_status']?.toString() != 'driver_arrived') {
     return null;
   }
   final at = row['occurred_at']?.toString();

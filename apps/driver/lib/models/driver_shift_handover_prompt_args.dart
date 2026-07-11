@@ -60,15 +60,18 @@ class DriverShiftHandoverPromptArgs {
       memberSinceYear: memberSince,
       verified: d['verified'] == true || d['verified']?.toString() == 'true',
       plateDisplay: d['plate_display']?.toString() ?? d['plate']?.toString(),
-      expiresAt: expiresRaw != null ? DateTime.tryParse(expiresRaw)?.toUtc() : null,
-      graceSeconds: graceRaw is num ? graceRaw.toInt() : int.tryParse('$graceRaw'),
+      expiresAt:
+          expiresRaw != null ? DateTime.tryParse(expiresRaw)?.toUtc() : null,
+      graceSeconds:
+          graceRaw is num ? graceRaw.toInt() : int.tryParse('$graceRaw'),
       title: title,
       body: body,
     );
   }
 
-  String get displayName =>
-      (requesterName ?? '').trim().isNotEmpty ? requesterName!.trim() : 'Chauffeur';
+  String get displayName => (requesterName ?? '').trim().isNotEmpty
+      ? requesterName!.trim()
+      : 'Chauffeur';
 
   String get starsLabel {
     final r = ratingStars;

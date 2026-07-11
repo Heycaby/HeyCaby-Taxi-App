@@ -34,6 +34,9 @@ class RideRequestState {
   /// Server `booking_mode`: instant | marketplace | scheduled (for matching route + UI).
   final String? bookingMode;
 
+  /// Token stored on the ride row at booking time (may differ from current identity token).
+  final String? riderToken;
+
   const RideRequestState({
     this.isLoading = false,
     this.rideRequestId,
@@ -41,6 +44,7 @@ class RideRequestState {
     this.error,
     this.rideCreatedAt,
     this.bookingMode,
+    this.riderToken,
   });
 
   RideRequestState copyWith({
@@ -50,6 +54,7 @@ class RideRequestState {
     String? error,
     DateTime? rideCreatedAt,
     String? bookingMode,
+    String? riderToken,
   }) =>
       RideRequestState(
         isLoading: isLoading ?? this.isLoading,
@@ -58,6 +63,7 @@ class RideRequestState {
         error: error ?? this.error,
         rideCreatedAt: rideCreatedAt ?? this.rideCreatedAt,
         bookingMode: bookingMode ?? this.bookingMode,
+        riderToken: riderToken ?? this.riderToken,
       );
 
   /// Pending / bidding rides older than [kRiderDriverSearchWindow] should not block the app.
@@ -122,7 +128,7 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
       final activeRide = await HeyCabySupabase.client
           .from('ride_requests')
           .select(
-            'id, status, created_at, booking_mode, pickup_address, destination_address, '
+            'id, status, created_at, booking_mode, rider_token, pickup_address, destination_address, '
             'offered_fare, quoted_fare, estimated_fare, marketplace_offered_fare, '
             'pickup_coords, destination_coords',
           )
@@ -133,6 +139,7 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
             'assigned',
             'accepted',
             'driver_found',
+            'driver_en_route',
             'driver_arrived',
             'in_progress',
           ])
@@ -209,6 +216,8 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
                 ? DateTime.now()
                 : null),
         bookingMode: resolvedBookingMode,
+        riderToken: (activeRide['rider_token'] as String?)?.trim() ??
+            identity.riderToken,
       );
       _hydrateBookingFromRideRequestRow(Map<String, dynamic>.from(activeRide));
       return true;
@@ -296,6 +305,7 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
             .read(riderIdentityProvider.notifier)
             .saveGuestToken(riderToken);
       }
+      await const RiderSessionService().bindToken(riderToken);
       if (verifiedIdentityId != null && verifiedIdentityId.isNotEmpty) {
         try {
           // Look up by id only — the identity may have user_id = null
@@ -436,6 +446,7 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
         ),
         if (booking.vehicleCategories.isNotEmpty)
           'vehicle_categories': booking.vehicleCategories
+              .take(3)
               .map(_rideRequestVehicleCategory)
               .toList(),
         'pet_friendly': booking.petFriendly,
@@ -491,6 +502,7 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
             _parseCreatedAt(response['created_at']) ?? DateTime.now(),
         bookingMode: response['booking_mode'] as String? ??
             bookingModeStorageString(booking.effectiveRideMode),
+        riderToken: riderToken,
       );
 
       // Confirm booking with sound + haptic
@@ -574,6 +586,7 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
             ((status == 'pending' || status == 'bidding')
                 ? DateTime.now()
                 : null),
+        riderToken: identity.riderToken,
       );
       _hydrateBookingFromRideRequestRow(m);
       return true;
@@ -668,6 +681,8 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
       if (status == 'assigned' ||
           status == 'accepted' ||
           status == 'driver_found') {
+        soundService.playDriverFound();
+      } else if (status == 'driver_en_route') {
         soundService.playDriverFound();
       } else if (status == 'arrived' || status == 'driver_arrived') {
         soundService.playDriverArrived();

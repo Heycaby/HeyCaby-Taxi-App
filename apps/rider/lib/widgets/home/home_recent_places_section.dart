@@ -94,7 +94,7 @@ class HomeRecentPlacesSection extends ConsumerWidget {
                       ),
                     ),
                     TextButton(
-                      onPressed: () => context.push('/saved-addresses'),
+                      onPressed: () => context.push('/saved-addresses?from=search'),
                       style: TextButton.styleFrom(
                         foregroundColor: colors.accent,
                         padding: const EdgeInsets.symmetric(horizontal: 8),

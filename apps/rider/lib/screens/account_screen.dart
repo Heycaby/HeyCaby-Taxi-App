@@ -9,6 +9,8 @@ import 'package:heycaby_api/heycaby_api.dart';
 
 import '../providers/booking_provider.dart';
 import '../providers/rider_profile_completeness_provider.dart';
+import '../providers/rider_profile_display_provider.dart';
+import '../providers/rider_rating_summary_provider.dart';
 import '../providers/rider_home_banners_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/rider_device_permission_snapshot.dart';
@@ -16,6 +18,7 @@ import '../services/rider_permission_backend_sync.dart';
 import '../services/sound_service.dart';
 import '../utils/rider_account_deletion.dart';
 import '../widgets/email_modal.dart';
+import '../widgets/rider_rating_sheet.dart';
 
 enum AccountScreenMode { profile, settings }
 
@@ -42,16 +45,16 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       final fromOnboarding =
           GoRouterState.of(context).uri.queryParameters['fromOnboarding'] ==
               'true';
 
-      final settings = ref.read(settingsProvider).valueOrNull;
-      if (settings?.userName != null) {
-        _nameController.text = settings!.userName!;
-      }
+      await ref.read(riderIdentityProvider.notifier).refreshFromServer();
+      if (!mounted) return;
+      _syncNameControllerFromProfile();
+
       _syncPermissionsFromDevice();
 
       if (fromOnboarding) {
@@ -76,6 +79,14 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _syncPermissionsFromDevice();
+    }
+  }
+
+  void _syncNameControllerFromProfile() {
+    if (_nameFocus.hasFocus) return;
+    final editableName = ref.read(riderProfileDisplayProvider).editableName;
+    if (editableName != _nameController.text) {
+      _nameController.text = editableName;
     }
   }
 
@@ -394,52 +405,6 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
     );
   }
 
-  void _showThemePicker(HeyCabyColorTokens colors, HeyCabyTypography typo) {
-    final settings = ref.watch(settingsProvider).valueOrNull;
-    final themes = kRiderSelectableThemeIds
-        .map((id) => MapEntry(id, kThemes[id]))
-        .where((entry) => entry.value != null)
-        .toList();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: colors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) {
-        final maxHeight = MediaQuery.sizeOf(ctx).height * 0.85;
-        return SafeArea(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: maxHeight),
-            child: ListView(
-              padding: const EdgeInsets.only(bottom: 20),
-              children: [
-                _DragHandle(colors: colors),
-                for (final entry in themes)
-                  ListTile(
-                    title: Text(entry.value!.name,
-                        style: typo.bodyLarge.copyWith(color: colors.text)),
-                    trailing: settings?.theme == entry.key
-                        ? Icon(Icons.check, color: colors.accent)
-                        : null,
-                    onTap: () async {
-                      await ref
-                          .read(settingsProvider.notifier)
-                          .setTheme(entry.key);
-                      await ref
-                          .read(themeProvider.notifier)
-                          .setTheme(entry.key);
-                      if (ctx.mounted) Navigator.pop(ctx);
-                    },
-                  ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   String _currentLanguageLabel() {
     final settings = ref.watch(settingsProvider).valueOrNull;
     final l10n = AppLocalizations.of(context);
@@ -456,17 +421,12 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
     }
   }
 
-  String _currentThemeLabel() {
-    final themeId = ref.watch(settingsProvider).valueOrNull?.theme;
-    if (themeId != null) {
-      final theme = kThemes[resolveRiderThemeId(themeId)];
-      if (theme != null) return theme.name;
-    }
-    return kThemes[kRiderDefaultTheme]?.name ?? '';
-  }
-
   @override
   Widget build(BuildContext context) {
+    ref.listen(riderProfileDisplayProvider, (_, __) {
+      _syncNameControllerFromProfile();
+    });
+
     final colors = ref.watch(colorsProvider);
     final typo = ref.watch(typographyProvider);
     final l10n = AppLocalizations.of(context);
@@ -602,19 +562,28 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
     HeyCabyTypography typo,
     AppLocalizations l10n,
   ) {
-    return FutureBuilder<Map<String, dynamic>?>(
-      future: _fetchRiderRating(),
-      builder: (context, snap) {
-        final data = snap.data;
-        final avgRating = data?['avg_rating'] as num?;
-        final tripCount = data?['trip_count'] as int? ?? 0;
-        final hasRating = avgRating != null && avgRating > 0;
+    final summaryAsync = ref.watch(riderRatingSummaryProvider);
+    final summary = summaryAsync.valueOrNull;
+    final hasRating = summary?.hasRatings == true;
+    final avgRating = summary?.averageRating ?? 0;
 
-        return Container(
-          padding: const EdgeInsetsDirectional.all(20),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: summary == null
+            ? null
+            : () => showRiderRatingSheet(
+                  context: context,
+                  summary: summary,
+                  colors: colors,
+                  typography: typo,
+                ),
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
+          padding: const EdgeInsetsDirectional.all(18),
           decoration: BoxDecoration(
             color: colors.card,
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(color: colors.border.withValues(alpha: 0.7)),
             boxShadow: [
               BoxShadow(
@@ -664,10 +633,23 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
                       ],
                     ),
                   ),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: colors.textMid,
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
-              if (hasRating) ...[
+              if (summaryAsync.isLoading) ...[
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(99),
+                  child: LinearProgressIndicator(
+                    minHeight: 5,
+                    backgroundColor: colors.border.withValues(alpha: 0.45),
+                    valueColor: AlwaysStoppedAnimation(colors.accent),
+                  ),
+                ),
+              ] else if (hasRating) ...[
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -684,7 +666,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
                       padding: const EdgeInsets.only(bottom: 6),
                       child: Row(
                         children: List.generate(5, (i) {
-                          final filled = i < (avgRating).round();
+                          final filled = i < avgRating.round();
                           return Icon(
                             filled
                                 ? Icons.star_rounded
@@ -697,11 +679,31 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
                     ),
                     const Spacer(),
                     Text(
-                      l10n.riderRatingTrips(tripCount),
+                      l10n.riderRatingTrips(summary!.totalRatings),
                       style: typo.bodySmall.copyWith(
                         color: colors.textMid,
                         fontWeight: FontWeight.w600,
                       ),
+                    ),
+                  ],
+                ),
+              ] else if (summaryAsync.hasError) ...[
+                Row(
+                  children: [
+                    Icon(Icons.refresh_rounded,
+                        color: colors.textMid, size: 24),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        l10n.riderRatingLoadFailed,
+                        style: typo.bodySmall.copyWith(color: colors.textMid),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => ref.invalidate(
+                        riderRatingSummaryProvider,
+                      ),
+                      child: Text(l10n.retry),
                     ),
                   ],
                 ),
@@ -737,34 +739,9 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
               ],
             ],
           ),
-        );
-      },
+        ),
+      ),
     );
-  }
-
-  Future<Map<String, dynamic>?> _fetchRiderRating() async {
-    try {
-      final client = HeyCabySupabase.client;
-      final userId = client.auth.currentUser?.id;
-      if (userId == null) return null;
-      final result = await client
-          .from('ride_ratings')
-          .select('driver_rating_of_rider')
-          .not('driver_rating_of_rider', 'is', null)
-          .order('created_at', ascending: false);
-      final ratings = result
-          .map((r) => r['driver_rating_of_rider'])
-          .whereType<num>()
-          .toList();
-      if (ratings.isEmpty) return {'avg_rating': 0.0, 'trip_count': 0};
-      final avg = ratings.fold<num>(0, (a, b) => a + b) / ratings.length;
-      return {
-        'avg_rating': avg.toDouble(),
-        'trip_count': ratings.length,
-      };
-    } catch (_) {
-      return null;
-    }
   }
 
   Widget _buildPassportCard(
@@ -773,10 +750,10 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
     AppLocalizations l10n,
   ) {
     final completeness = ref.watch(riderProfileCompletenessProvider);
-    final identity = ref.watch(riderIdentityProvider).valueOrNull;
-    final name = _passportName(l10n);
-    final initial = name.trim().isEmpty ? '?' : name.trim()[0].toUpperCase();
-    final email = identity?.email?.trim();
+    final profile = ref.watch(riderProfileDisplayProvider);
+    final name =
+        profile.displayName.isNotEmpty ? profile.displayName : l10n.account;
+    final email = profile.email;
     final percent = completeness.percent / 100;
 
     return Container(
@@ -811,7 +788,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
                   ),
                 ),
                 child: Text(
-                  initial,
+                  profile.nameInitial,
                   style: typo.headingMedium.copyWith(
                     color: colors.accent,
                     fontWeight: FontWeight.w900,
@@ -908,7 +885,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        l10n.accountTripReadyBody,
+                        _passportStatusBody(l10n, completeness),
                         style: typo.bodySmall.copyWith(
                           color: colors.textMid,
                           height: 1.35,
@@ -965,14 +942,16 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
     );
   }
 
-  String _passportName(AppLocalizations l10n) {
-    final settings = ref.watch(settingsProvider).valueOrNull;
-    final identity = ref.watch(riderIdentityProvider).valueOrNull;
-    final localName = (settings?.userName ?? '').trim();
-    if (localName.isNotEmpty) return localName;
-    final bookingName = (identity?.bookingName ?? '').trim();
-    if (bookingName.isNotEmpty) return bookingName;
-    return l10n.account;
+  String _passportStatusBody(
+    AppLocalizations l10n,
+    RiderProfileCompleteness completeness,
+  ) {
+    if (completeness.isComplete) return l10n.accountTripReadyBody;
+    if (!completeness.hasName && !completeness.hasEmail) {
+      return l10n.riderProfileHomeNudgeBoth;
+    }
+    if (!completeness.hasName) return l10n.riderProfileHomeNudgeNameOnly;
+    return l10n.riderProfileHomeNudgeEmailOnly;
   }
 
   Widget _buildProfileSection(
@@ -981,7 +960,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
     AppLocalizations l10n, {
     required bool fromOnboarding,
   }) {
-    final identity = ref.watch(riderIdentityProvider).valueOrNull;
+    final profile = ref.watch(riderProfileDisplayProvider);
     return Container(
       key: fromOnboarding ? _profileSectionKey : null,
       clipBehavior: Clip.antiAlias,
@@ -1089,7 +1068,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
                     height: 1.45,
                   ),
                 ),
-                if (fromOnboarding && identity?.email == null) ...[
+                if (fromOnboarding && profile.email == null) ...[
                   const SizedBox(height: 10),
                   Text(
                     l10n.onboardingNextAddEmail,
@@ -1114,8 +1093,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
                   ),
                 ),
                 const SizedBox(height: 10),
-                if (identity?.email != null)
-                  _buildVerifiedEmailCard(colors, typo, l10n, identity!.email!)
+                if (profile.email != null)
+                  _buildVerifiedEmailCard(colors, typo, l10n, profile.email!)
                 else
                   _buildAddEmailRow(colors, typo, l10n),
                 const SizedBox(height: 24),
@@ -1341,15 +1320,6 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
           colors,
           typo,
           onTap: () => _showLanguagePicker(colors, typo),
-        ),
-        const SizedBox(height: 10),
-        _buildSettingRow(
-          Icons.palette_outlined,
-          l10n.theme,
-          _currentThemeLabel(),
-          colors,
-          typo,
-          onTap: () => _showThemePicker(colors, typo),
         ),
         const SizedBox(height: 18),
         _buildToggleRow(l10n.accountLocationNeededBody, locationEnabled, colors,

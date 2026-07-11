@@ -62,10 +62,12 @@ class DriverRuntimeGateScreen extends ConsumerWidget {
               },
             ),
       primaryLabel: args.ctaLabel,
-      onPrimary: args.ctaRoute != null ? () => context.go(args.ctaRoute!) : null,
+      onPrimary:
+          args.ctaRoute != null ? () => context.go(args.ctaRoute!) : null,
       secondaryLabel: args.secondaryLabel,
-      onSecondary:
-          args.secondaryRoute != null ? () => context.go(args.secondaryRoute!) : null,
+      onSecondary: args.secondaryRoute != null
+          ? () => context.go(args.secondaryRoute!)
+          : null,
       onBackHome: () => context.go('/driver'),
       onBack: () => context.pop(),
     );

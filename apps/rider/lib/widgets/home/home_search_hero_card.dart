@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:heycaby_models/heycaby_models.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../../providers/booking_provider.dart';
 import '../../providers/saved_addresses_provider.dart';
 import '../../screens/location_required_screen.dart';
-import '../../services/booking_flow_navigation.dart';
+import '../../services/booking_saved_place_shortcut.dart';
 import '../../services/booking_pickup_from_location.dart';
-import '../saved_addresses_sheet.dart';
+import '../saved_addresses_add_sheet.dart';
 
-/// Hero search card — destination is the primary action (no Continue button).
+SavedAddress? _savedHome(List<SavedAddress> saved) {
+  for (final address in saved) {
+    if (address.type == 'home') return address;
+  }
+  return null;
+}
+
+/// Hero search card
 class HomeSearchHeroCard extends ConsumerWidget {
   const HomeSearchHeroCard({
     super.key,
@@ -34,46 +40,34 @@ class HomeSearchHeroCard extends ConsumerWidget {
   }
 
   Future<void> _openHomeShortcut(BuildContext context, WidgetRef ref) async {
-    final ok = await ensureLocationForBooking(context: context, ref: ref);
-    if (!ok || !context.mounted) return;
+    await ref.read(savedAddressesProvider.notifier).refresh();
+    if (!context.mounted) return;
 
-    final saved = ref.read(savedAddressesProvider).valueOrNull ?? [];
-    SavedAddress? home;
-    for (final a in saved) {
-      if (a.type == 'home') {
-        home = a;
-        break;
-      }
-    }
+    var home = _savedHome(ref.read(savedAddressesProvider).valueOrNull ?? []);
 
-    if (home != null) {
-      ref.read(bookingProvider.notifier).setDestination(
-            AddressResult(
-              displayName: home.label,
-              fullAddress: home.fullAddress,
-              lat: home.latitude,
-              lng: home.longitude,
-            ),
-          );
-      await BookingFlowNavigation.prefillBookingFromIdentity(ref);
-      if (!context.mounted) return;
-      final next = BookingFlowNavigation.routeAfterAddressesComplete(
-        ref.read(bookingProvider),
+    if (home == null) {
+      final colors = ref.read(colorsProvider);
+      final typo = ref.read(typographyProvider);
+      final sheetL10n = AppLocalizations.of(context);
+      final added = await showAddSavedAddressSheet(
+        context,
+        colors: colors,
+        typo: typo,
+        l10n: sheetL10n,
+        initialType: 'home',
       );
-      context.push(next);
-      return;
+      if (!context.mounted || added != true) return;
+      await ref.read(savedAddressesProvider.notifier).refresh();
+      home = _savedHome(ref.read(savedAddressesProvider).valueOrNull ?? []);
+      if (home == null) return;
     }
 
-    final picked = await showSavedAddressesSheet(context, ref);
-    if (picked != null && context.mounted) {
-      ref.read(bookingProvider.notifier).setDestination(picked);
-      await BookingFlowNavigation.prefillBookingFromIdentity(ref);
-      if (!context.mounted) return;
-      final next = BookingFlowNavigation.routeAfterAddressesComplete(
-        ref.read(bookingProvider),
-      );
-      context.push(next);
-    }
+    if (!context.mounted) return;
+    await bookInstantRideToDestination(
+      context,
+      ref,
+      addressResultFromSaved(home),
+    );
   }
 
   @override

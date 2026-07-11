@@ -1,11 +1,18 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../providers/rider_receipt_provider.dart';
 import '../widgets/booking/booking_flow_screen_header.dart';
 
 class RiderReceiptScreen extends ConsumerWidget {
@@ -18,7 +25,7 @@ class RiderReceiptScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final colors = ref.watch(colorsProvider);
     final typo = ref.watch(typographyProvider);
-    final receiptAsync = ref.watch(_receiptProvider(rideRequestId));
+    final receiptAsync = ref.watch(riderReceiptProvider(rideRequestId));
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -79,12 +86,6 @@ class RiderReceiptScreen extends ConsumerWidget {
     );
   }
 }
-
-final _receiptProvider =
-    FutureProvider.family<Map<String, dynamic>?, String>((ref, rideId) async {
-  final api = ref.read(riderApiProvider);
-  return api.fetchRideReceipt(rideRequestId: rideId);
-});
 
 class _ReceiptContent extends StatelessWidget {
   const _ReceiptContent({
@@ -228,6 +229,14 @@ class _ReceiptContent extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         _ReceiptTrustCard(colors: colors, typo: typo, l10n: l10n),
+        const SizedBox(height: 14),
+        _ReceiptShareBar(
+          receipt: receipt,
+          rideRequestId: rideRequestId,
+          colors: colors,
+          typo: typo,
+          l10n: l10n,
+        ),
       ],
     );
   }
@@ -721,4 +730,249 @@ DateTime? _parseDateTime(dynamic raw) {
   if (raw == null) return null;
   if (raw is DateTime) return raw;
   return DateTime.tryParse(raw.toString());
+}
+
+String _buildReceiptText(Map<String, dynamic> receipt, String rideRequestId) {
+  final expected = _tryParseAmount(receipt['expected_amount']);
+  final paid = _tryParseAmount(receipt['paid_amount']);
+  final method = receipt['payment_method']?.toString() ?? 'cash';
+  final receiptId = receipt['receipt_id']?.toString() ?? '—';
+  final pickup = receipt['pickup_address']?.toString().trim() ?? '—';
+  final dest = receipt['destination_address']?.toString().trim() ?? '—';
+  final completedAt = _parseDateTime(receipt['completed_at'] ?? receipt['issued_at']);
+  final currency = receipt['currency']?.toString() ?? 'EUR';
+
+  final lines = <String>[
+    'HeyCaby — Ride Receipt',
+    'Receipt ID: $receiptId',
+    'Ride ID: $rideRequestId',
+    if (completedAt != null)
+      'Date: ${DateFormat.yMMMd().add_Hm().format(completedAt.toLocal())}',
+    '',
+    'From: $pickup',
+    'To: $dest',
+    '',
+    if (expected != null) 'Expected: ${_formatMoney(expected, currency)}',
+    if (paid != null) 'Paid: ${_formatMoney(paid, currency)}',
+    'Payment method: $method',
+    '',
+    'HeyCaby — Independent taxi platform',
+  ];
+  return lines.join('\n');
+}
+
+Future<List<int>> _buildReceiptPdfBytes(
+  Map<String, dynamic> receipt,
+  String rideRequestId,
+) async {
+  final expected = _tryParseAmount(receipt['expected_amount']);
+  final paid = _tryParseAmount(receipt['paid_amount']);
+  final baseFare = _tryParseAmount(receipt['base_expected_amount']);
+  final waitingFee = _tryParseAmount(receipt['waiting_fee_amount']);
+  final waitingWaived = receipt['waiting_fee_waived'] == true;
+  final method = receipt['payment_method']?.toString() ?? 'cash';
+  final receiptId = receipt['receipt_id']?.toString() ?? '—';
+  final pickup = receipt['pickup_address']?.toString().trim() ?? '';
+  final dest = receipt['destination_address']?.toString().trim() ?? '';
+  final completedAt = _parseDateTime(receipt['completed_at'] ?? receipt['issued_at']);
+  final currency = receipt['currency']?.toString() ?? 'EUR';
+  final note = receipt['note']?.toString();
+
+  final doc = pw.Document();
+
+  doc.addPage(
+    pw.MultiPage(
+      pageFormat: PdfPageFormat.a4,
+      margin: const pw.EdgeInsets.all(40),
+      build: (context) => [
+        pw.Container(
+          padding: const pw.EdgeInsets.only(bottom: 16),
+          decoration: const pw.BoxDecoration(
+            border: pw.Border(bottom: pw.BorderSide(width: 2)),
+          ),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('HeyCaby',
+                  style: pw.TextStyle(
+                      fontSize: 24, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 4),
+              pw.Text('Ride Receipt',
+                  style: const pw.TextStyle(fontSize: 14, color: PdfColors.grey600)),
+            ],
+          ),
+        ),
+        pw.SizedBox(height: 24),
+        _pdfRow('Receipt ID', receiptId),
+        _pdfRow('Ride ID', rideRequestId),
+        if (completedAt != null)
+          _pdfRow('Date',
+              DateFormat.yMMMd().add_Hm().format(completedAt.toLocal())),
+        pw.SizedBox(height: 16),
+        pw.Text('Route',
+            style: pw.TextStyle(
+                fontSize: 14, fontWeight: pw.FontWeight.bold)),
+        pw.SizedBox(height: 8),
+        _pdfRow('From', pickup),
+        _pdfRow('To', dest),
+        pw.SizedBox(height: 16),
+        pw.Text('Fare Breakdown',
+            style: pw.TextStyle(
+                fontSize: 14, fontWeight: pw.FontWeight.bold)),
+        pw.SizedBox(height: 8),
+        if (baseFare != null) _pdfRow('Base fare', _formatMoney(baseFare, currency)),
+        if (waitingFee != null && (waitingFee > 0 || waitingWaived))
+          _pdfRow(
+              waitingWaived ? 'Waiting fee (waived)' : 'Waiting fee',
+              _formatMoney(waitingFee, currency)),
+        if (expected != null)
+          _pdfRow('Expected total', _formatMoney(expected, currency)),
+        if (paid != null) _pdfRow('Paid', _formatMoney(paid, currency)),
+        _pdfRow('Payment method', method),
+        if (note != null && note.isNotEmpty) _pdfRow('Note', note),
+        pw.SizedBox(height: 24),
+        pw.Container(
+          padding: const pw.EdgeInsets.all(12),
+          decoration: pw.BoxDecoration(
+            color: PdfColors.grey100,
+            borderRadius: pw.BorderRadius.circular(8),
+          ),
+          child: pw.Text(
+            'HeyCaby — Independent taxi platform. This receipt is generated for your records.',
+            style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  return doc.save();
+}
+
+pw.Widget _pdfRow(String label, String value) {
+  return pw.Padding(
+    padding: const pw.EdgeInsets.only(bottom: 6),
+    child: pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.SizedBox(
+          width: 140,
+          child: pw.Text(label,
+              style: const pw.TextStyle(color: PdfColors.grey600, fontSize: 11)),
+        ),
+        pw.Expanded(
+          child: pw.Text(value,
+              style: pw.TextStyle(
+                  fontSize: 11, fontWeight: pw.FontWeight.bold)),
+        ),
+      ],
+    ),
+  );
+}
+
+class _ReceiptShareBar extends StatelessWidget {
+  const _ReceiptShareBar({
+    required this.receipt,
+    required this.rideRequestId,
+    required this.colors,
+    required this.typo,
+    required this.l10n,
+  });
+
+  final Map<String, dynamic> receipt;
+  final String rideRequestId;
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: SizedBox(
+            height: 48,
+            child: FilledButton.icon(
+              onPressed: () => _shareViaWhatsApp(context),
+              icon: const Icon(Icons.share_outlined, size: 20),
+              label: Text(l10n.rideReceiptShareWhatsapp),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: SizedBox(
+            height: 48,
+            child: OutlinedButton.icon(
+              onPressed: () => _shareViaEmail(context),
+              icon: const Icon(Icons.mail_outline, size: 20),
+              label: Text(l10n.rideReceiptShareEmail),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: colors.text,
+                side: BorderSide(color: colors.border),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _shareViaWhatsApp(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final pdfBytes = await _buildReceiptPdfBytes(receipt, rideRequestId);
+      final tmp = await getTemporaryDirectory();
+      final file = File(
+        '${tmp.path}/heycaby_receipt_${rideRequestId.substring(0, 8)}.pdf',
+      );
+      await file.writeAsBytes(pdfBytes, flush: true);
+      final text = _buildReceiptText(receipt, rideRequestId);
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'application/pdf')],
+        text: text,
+        subject: 'HeyCaby Ride Receipt',
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.rideReceiptShareFailed)),
+      );
+    }
+  }
+
+  Future<void> _shareViaEmail(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final pdfBytes = await _buildReceiptPdfBytes(receipt, rideRequestId);
+      final tmp = await getTemporaryDirectory();
+      final file = File(
+        '${tmp.path}/heycaby_receipt_${rideRequestId.substring(0, 8)}.pdf',
+      );
+      await file.writeAsBytes(pdfBytes, flush: true);
+      final text = _buildReceiptText(receipt, rideRequestId);
+      final uri = Uri(
+        scheme: 'mailto',
+        queryParameters: {
+          'subject': 'HeyCaby Ride Receipt',
+          'body': text,
+        },
+      );
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      } else {
+        await Share.shareXFiles(
+          [XFile(file.path, mimeType: 'application/pdf')],
+          subject: 'HeyCaby Ride Receipt',
+          text: text,
+        );
+      }
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.rideReceiptShareFailed)),
+      );
+    }
+  }
 }

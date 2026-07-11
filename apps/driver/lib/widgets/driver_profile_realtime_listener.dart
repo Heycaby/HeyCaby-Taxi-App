@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
@@ -5,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../providers/driver_data_providers.dart';
 import '../providers/driver_resync_generation_provider.dart';
+import '../utils/driver_runtime_refresh.dart';
 
 /// Listens for `drivers` row updates for the signed-in driver and refreshes profile/compliance.
 /// Used when admin approves documents in Supabase (no app restart).
@@ -16,10 +19,21 @@ class DriverProfileRealtimeListener extends ConsumerStatefulWidget {
       _DriverProfileRealtimeListenerState();
 }
 
-class _DriverProfileRealtimeListenerState extends ConsumerState<DriverProfileRealtimeListener> {
+class _DriverProfileRealtimeListenerState
+    extends ConsumerState<DriverProfileRealtimeListener> {
   RealtimeChannel? _channel;
   String? _boundDriverId;
   int? _resyncGen;
+
+  Future<void> _refreshBalanceState() async {
+    ref.invalidate(driverBillingStatusProvider);
+    ref.invalidate(driverPaymentLedgerProvider);
+    try {
+      await refreshDriverRuntime(ref);
+    } catch (_) {
+      // Realtime will emit again; a transient refresh failure is non-fatal.
+    }
+  }
 
   void _applyResync(int gen) {
     if (_resyncGen == gen) return;
@@ -58,6 +72,28 @@ class _DriverProfileRealtimeListenerState extends ConsumerState<DriverProfileRea
             ref.invalidate(driverRateProfilesProvider);
             ref.invalidate(activeRateProfileProvider);
           },
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'billing_ledger',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'driver_id',
+            value: id,
+          ),
+          callback: (_) => unawaited(_refreshBalanceState()),
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'driver_platform_balance_cycles',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'driver_id',
+            value: id,
+          ),
+          callback: (_) => unawaited(_refreshBalanceState()),
         )
         .subscribe();
   }

@@ -32,7 +32,8 @@ class DriverMapFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPrimary = variant == DriverMapFabVariant.primary;
-    final fill = isPrimary ? colors.primary : colors.card.withValues(alpha: 0.96);
+    final fill =
+        isPrimary ? colors.primary : colors.card.withValues(alpha: 0.96);
     final iconColor = isPrimary ? colors.onPrimary : colors.primary;
     final borderColor = isPrimary
         ? colors.primary.withValues(alpha: 0.85)

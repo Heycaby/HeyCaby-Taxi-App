@@ -8,11 +8,14 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import '../l10n/driver_strings.dart';
 import '../theme/driver_colors.dart';
+import '../utils/driver_ride_coord_utils.dart';
 import '../theme/driver_radius.dart';
 import '../theme/driver_shadows.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
+import '../ui/driver_button.dart';
 import 'driver_ride_flow_common.dart';
+import 'driver_ride_map_pins_overlay.dart';
 import 'driver_ride_premium_style.dart';
 
 /// Bolt-style incoming ride decision: map-first, fare hero, one Accept CTA.
@@ -29,6 +32,7 @@ class DriverOpportunityBoltLayout extends StatelessWidget {
     required this.isDeclining,
     required this.onAccept,
     required this.onDecline,
+    this.renderMap = true,
   });
 
   final DriverColors colors;
@@ -41,11 +45,10 @@ class DriverOpportunityBoltLayout extends StatelessWidget {
   final bool isDeclining;
   final VoidCallback onAccept;
   final VoidCallback onDecline;
+  final bool renderMap;
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
-
     return Scaffold(
       backgroundColor: colors.background,
       body: Stack(
@@ -54,66 +57,105 @@ class DriverOpportunityBoltLayout extends StatelessWidget {
           _OpportunityMapLayer(
             colors: colors,
             offer: offer,
+            renderMap: renderMap,
           ),
-          SafeArea(
-            child: Align(
-              alignment: AlignmentDirectional.topEnd,
-              child: Padding(
-                padding: const EdgeInsetsDirectional.only(
-                  top: DriverSpacing.sm,
-                  end: DriverSpacing.screenEdge,
-                ),
-                child: _DeclineMapButton(
-                  colors: colors,
-                  typography: typography,
-                  loading: isDeclining,
-                  onTap: isAccepting ? null : onDecline,
-                ),
-              ),
+          Positioned(
+            left: DriverSpacing.screenEdge,
+            right: DriverSpacing.screenEdge,
+            bottom: 0,
+            child: _OpportunityDecisionSheet(
+              colors: colors,
+              typography: typography,
+              offer: offer,
+              countdownSeconds: countdownSeconds,
+              totalCountdownSeconds: totalCountdownSeconds,
+              showCountdown: showCountdown,
+              isAccepting: isAccepting,
+              isDeclining: isDeclining,
+              onAccept: onAccept,
+              onSkip: onDecline,
             ),
           ),
-          if (offer.tripMeta != null)
-            Positioned(
-              top: MediaQuery.paddingOf(context).top + 56,
-              left: DriverSpacing.screenEdge,
-              child: _MapTripChip(
+        ],
+      ),
+    );
+  }
+}
+
+/// One map-anchored decision surface: information scrolls, actions stay fixed.
+class _OpportunityDecisionSheet extends StatelessWidget {
+  const _OpportunityDecisionSheet({
+    required this.colors,
+    required this.typography,
+    required this.offer,
+    required this.countdownSeconds,
+    required this.totalCountdownSeconds,
+    required this.showCountdown,
+    required this.isAccepting,
+    required this.isDeclining,
+    required this.onAccept,
+    required this.onSkip,
+  });
+
+  final DriverColors colors;
+  final DriverTypography typography;
+  final DriverOpportunityOfferData offer;
+  final int countdownSeconds;
+  final int totalCountdownSeconds;
+  final bool showCountdown;
+  final bool isAccepting;
+  final bool isDeclining;
+  final VoidCallback onAccept;
+  final VoidCallback onSkip;
+
+  @override
+  Widget build(BuildContext context) {
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
+    final maxContentHeight = MediaQuery.sizeOf(context).height * 0.48;
+    return DriverRidePremiumStyle.glassSurface(
+      colors: colors,
+      borderRadius: DriverRadius.sheetTop,
+      blurSigma: 28,
+      tintOpacity: 0.9,
+      borderColor: colors.primary.withValues(alpha: 0.28),
+      boxShadow: DriverShadows.floating(colors),
+      padding: EdgeInsets.fromLTRB(
+        DriverSpacing.lg,
+        DriverSpacing.sm,
+        DriverSpacing.lg,
+        DriverSpacing.md + safeBottom,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          DriverRidePremiumStyle.sheetHandle(colors),
+          const SizedBox(height: DriverSpacing.md),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxContentHeight),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: _OpportunityDecisionCard(
                 colors: colors,
                 typography: typography,
-                label: offer.tripMeta!,
+                offer: offer,
+                countdownSeconds: countdownSeconds,
+                totalCountdownSeconds: totalCountdownSeconds,
+                showCountdown: showCountdown,
+                embedded: true,
               ),
             ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: DriverSpacing.screenEdge,
-                  ),
-                  child: _OpportunityDecisionCard(
-                    colors: colors,
-                    typography: typography,
-                    offer: offer,
-                    countdownSeconds: countdownSeconds,
-                    totalCountdownSeconds: totalCountdownSeconds,
-                    showCountdown: showCountdown,
-                  ),
-                ),
-                const SizedBox(height: DriverSpacing.sm),
-                DriverRideFlowBottomBar(
-                  colors: colors,
-                  typography: typography,
-                  primaryLabel: DriverStrings.accept,
-                  primaryIcon: Icons.check_rounded,
-                  onPrimary: isAccepting ? null : onAccept,
-                  primaryLoading: isAccepting,
-                ),
-                SizedBox(height: bottomInset > 0 ? 0 : DriverSpacing.xs),
-              ],
-            ),
+          ),
+          const SizedBox(height: DriverSpacing.md),
+          Divider(height: 1, color: colors.border.withValues(alpha: 0.65)),
+          const SizedBox(height: DriverSpacing.md),
+          _OpportunityAcceptSkipDock(
+            colors: colors,
+            typography: typography,
+            isAccepting: isAccepting,
+            isDeclining: isDeclining,
+            onAccept: onAccept,
+            onSkip: onSkip,
+            embedded: true,
           ),
         ],
       ),
@@ -132,6 +174,8 @@ class DriverOpportunityOfferData {
     this.paymentLabel,
     this.pickupMeta,
     this.tripMeta,
+    this.pickupDistanceLabel,
+    this.pickupEtaLabel,
     this.pickupLat,
     this.pickupLng,
     this.destLat,
@@ -151,6 +195,8 @@ class DriverOpportunityOfferData {
   final String? paymentLabel;
   final String? pickupMeta;
   final String? tripMeta;
+  final String? pickupDistanceLabel;
+  final String? pickupEtaLabel;
   final double? pickupLat;
   final double? pickupLng;
   final double? destLat;
@@ -161,6 +207,8 @@ class DriverOpportunityOfferData {
   final List<({String label, bool warning, bool highlight})> contextBadges;
 
   factory DriverOpportunityOfferData.from(Map<String, dynamic> data) {
+    enrichDriverRideRequestCoords(data);
+
     final riderName = _firstText(data, const [
           'pickup_contact_name',
           'rider_name',
@@ -235,7 +283,9 @@ class DriverOpportunityOfferData {
 
     final productBadges = <String>[];
     final bookingMode = (data['booking_mode'] as String?)?.toLowerCase();
-    if (bookingMode == 'terug' || data['return_mode_active'] == true) {
+    final taxiTerugQualified = data['taxi_terug_qualified'] == true;
+    final taxiTerugNextRide = data['taxi_terug_next_ride'] == true;
+    if (bookingMode == 'terug' && taxiTerugQualified) {
       productBadges.add(DriverStrings.incomingRideTerugTaxiBadge);
     } else if (bookingMode == 'marketplace') {
       productBadges.add(DriverStrings.incomingRideMarketplaceBadge);
@@ -257,12 +307,17 @@ class DriverOpportunityOfferData {
         highlight: false,
       ));
     }
-    final returnLabel = data['return_destination_label'] as String?;
-    if (data['return_mode_active'] == true &&
-        returnLabel != null &&
-        returnLabel.isNotEmpty) {
+    final returnLabel = data['taxi_terug_destination_label'] as String?;
+    if (taxiTerugQualified && returnLabel != null && returnLabel.isNotEmpty) {
       contextBadges.add((
         label: DriverStrings.incomingRideReturnFit(returnLabel),
+        warning: false,
+        highlight: true,
+      ));
+    }
+    if (taxiTerugNextRide) {
+      contextBadges.add((
+        label: DriverStrings.incomingRideTerugNextRide,
         warning: false,
         highlight: true,
       ));
@@ -284,6 +339,8 @@ class DriverOpportunityOfferData {
         _minutesLabel(tripMinutes),
         _distanceLabel(tripDistance),
       ]),
+      pickupDistanceLabel: _distanceLabel(pickupDistance),
+      pickupEtaLabel: _minutesLabel(pickupMinutes),
       pickupLat: pickupLat,
       pickupLng: pickupLng,
       destLat: destLat,
@@ -438,10 +495,12 @@ class _OpportunityMapLayer extends StatefulWidget {
   const _OpportunityMapLayer({
     required this.colors,
     required this.offer,
+    required this.renderMap,
   });
 
   final DriverColors colors;
   final DriverOpportunityOfferData offer;
+  final bool renderMap;
 
   @override
   State<_OpportunityMapLayer> createState() => _OpportunityMapLayerState();
@@ -452,12 +511,19 @@ class _OpportunityMapLayerState extends State<_OpportunityMapLayer> {
   PolylineAnnotationManager? _lineManager;
   PointAnnotationManager? _pointManager;
   bool _initialized = false;
+  int _cameraTick = 0;
 
   DriverOpportunityOfferData get offer => widget.offer;
   DriverColors get colors => widget.colors;
 
+  void _onCameraChange(CameraChangedEventData _) {
+    if (!mounted) return;
+    setState(() => _cameraTick++);
+  }
+
   void _onMapCreated(MapboxMap map) async {
     _mapboxMap = map;
+    if (mounted) setState(() {});
     await _mapboxMap!.scaleBar.updateSettings(ScaleBarSettings(enabled: false));
     await _mapboxMap!.compass.updateSettings(CompassSettings(enabled: false));
     await _mapboxMap!.attribution
@@ -468,13 +534,20 @@ class _OpportunityMapLayerState extends State<_OpportunityMapLayer> {
     _pointManager =
         await _mapboxMap!.annotations.createPointAnnotationManager();
     _initialized = true;
-    _fitAndDraw();
+    await _fitAndDraw();
+    if (mounted) setState(() => _cameraTick++);
   }
 
   @override
   void didUpdateWidget(_OpportunityMapLayer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (_initialized) _fitAndDraw();
+    if (!_initialized) return;
+    if (oldWidget.offer.pickupLat != widget.offer.pickupLat ||
+        oldWidget.offer.pickupLng != widget.offer.pickupLng ||
+        oldWidget.offer.destLat != widget.offer.destLat ||
+        oldWidget.offer.destLng != widget.offer.destLng) {
+      _fitAndDraw();
+    }
   }
 
   Future<void> _fitAndDraw() async {
@@ -483,13 +556,27 @@ class _OpportunityMapLayerState extends State<_OpportunityMapLayer> {
     final pLng = offer.pickupLng;
     final dLat = offer.destLat;
     final dLng = offer.destLng;
-    if (!driverMapCoordIsValid(pLat, pLng)) return;
+    final hasPickup = driverMapCoordIsValid(pLat, pLng);
+    final hasDest = driverMapCoordIsValid(dLat, dLng);
+    if (!hasPickup && !hasDest) return;
 
-    final boundsPoints = <List<double>>[
-      [pLng!, pLat!],
-    ];
-    if (driverMapCoordIsValid(dLat, dLng)) {
-      boundsPoints.add([dLng!, dLat!]);
+    final boundsPoints = <List<double>>[];
+    if (hasPickup) boundsPoints.add([pLng!, pLat!]);
+    if (hasDest) boundsPoints.add([dLng!, dLat!]);
+
+    final drvLat = offer.driverLat;
+    final drvLng = offer.driverLng;
+    final showDriverLeg = hasPickup &&
+        drvLat != null &&
+        drvLng != null &&
+        driverMapIncludeDriverLeg(
+          driverLat: drvLat,
+          driverLng: drvLng,
+          pickupLat: pLat!,
+          pickupLng: pLng!,
+        );
+    if (showDriverLeg) {
+      boundsPoints.insert(0, [drvLng, drvLat]);
     }
 
     var minLat = boundsPoints.first[1];
@@ -502,8 +589,8 @@ class _OpportunityMapLayerState extends State<_OpportunityMapLayer> {
       minLng = math.min(minLng, p[0]);
       maxLng = math.max(maxLng, p[0]);
     }
-    final latPad = (maxLat - minLat) * 0.3 + 0.012;
-    final lngPad = (maxLng - minLng) * 0.3 + 0.012;
+    final latPad = (maxLat - minLat) * 0.22 + 0.018;
+    final lngPad = (maxLng - minLng) * 0.22 + 0.018;
 
     var camera = await _mapboxMap!.cameraForCoordinateBounds(
       CoordinateBounds(
@@ -520,26 +607,15 @@ class _OpportunityMapLayerState extends State<_OpportunityMapLayer> {
       null,
     );
     final zoom = camera.zoom;
-    if (zoom != null && zoom < 9.5) {
+    if (zoom != null && zoom < 8.5) {
       camera = CameraOptions(
         center: camera.center,
-        zoom: 9.5,
+        zoom: 8.5,
         pitch: camera.pitch ?? 22,
         bearing: camera.bearing,
       );
     }
     await _mapboxMap!.setCamera(camera);
-
-    final drvLat = offer.driverLat;
-    final drvLng = offer.driverLng;
-    final showDriverLeg = drvLat != null &&
-        drvLng != null &&
-        driverMapIncludeDriverLeg(
-          driverLat: drvLat,
-          driverLng: drvLng,
-          pickupLat: pLat,
-          pickupLng: pLng,
-        );
 
     if (_lineManager != null) {
       await _lineManager!.deleteAll();
@@ -553,10 +629,10 @@ class _OpportunityMapLayerState extends State<_OpportunityMapLayer> {
           lineWidth: 2.5,
         ));
       }
-      if (driverMapCoordIsValid(dLat, dLng)) {
+      if (hasPickup && hasDest) {
         await _lineManager!.create(PolylineAnnotationOptions(
           geometry: LineString(coordinates: [
-            Position(pLng, pLat),
+            Position(pLng!, pLat!),
             Position(dLng!, dLat!),
           ]),
           lineColor: colors.primary.toARGB32(),
@@ -567,53 +643,66 @@ class _OpportunityMapLayerState extends State<_OpportunityMapLayer> {
 
     if (_pointManager != null) {
       await _pointManager!.deleteAll();
-      if (showDriverLeg) {
+      if (hasPickup) {
         await _pointManager!.create(PointAnnotationOptions(
-          geometry: Point(coordinates: Position(drvLng, drvLat)),
-          iconColor: colors.textSecondary.toARGB32(),
-          iconSize: 1.35,
+          geometry: Point(coordinates: Position(pLng!, pLat!)),
+          iconImage: 'marker-15',
+          iconSize: 2.0,
+          iconColor: colors.success.toARGB32(),
         ));
       }
-      await _pointManager!.create(PointAnnotationOptions(
-        geometry: Point(coordinates: Position(pLng, pLat)),
-        iconColor: colors.primary.toARGB32(),
-        iconSize: 1.45,
-      ));
-      if (driverMapCoordIsValid(dLat, dLng)) {
+      if (hasDest) {
         await _pointManager!.create(PointAnnotationOptions(
           geometry: Point(coordinates: Position(dLng!, dLat!)),
+          iconImage: 'marker-15',
+          iconSize: 2.0,
           iconColor: colors.error.toARGB32(),
-          iconSize: 1.45,
         ));
       }
     }
+
+    if (mounted) setState(() => _cameraTick++);
+  }
+
+  bool get _hasMapData {
+    return driverMapCoordIsValid(offer.pickupLat, offer.pickupLng) ||
+        driverMapCoordIsValid(offer.destLat, offer.destLng);
   }
 
   @override
   Widget build(BuildContext context) {
     final themeId = HeyCabyAppChrome.themeIdOf(context);
     final hasPickup = driverMapCoordIsValid(offer.pickupLat, offer.pickupLng);
-    final fallbackCenter = hasPickup
-        ? Point(
-            coordinates: Position(offer.pickupLng!, offer.pickupLat!),
-          )
-        : Point(coordinates: Position(4.9041, 52.3676));
+    final hasDest = driverMapCoordIsValid(offer.destLat, offer.destLng);
+    final hasMapData = _hasMapData;
+    final fallbackCenter = hasDest
+        ? Point(coordinates: Position(offer.destLng!, offer.destLat!))
+        : hasPickup
+            ? Point(coordinates: Position(offer.pickupLng!, offer.pickupLat!))
+            : Point(coordinates: Position(4.9041, 52.3676));
     return IgnorePointer(
       child: Stack(
         fit: StackFit.expand,
         children: [
-          MapWidget(
-            key: ValueKey('driver-opportunity-map-$themeId'),
-            styleUri: mapboxStyleUriForTheme(themeId),
-            cameraOptions: hasPickup
-                ? null
-                : CameraOptions(
-                    center: fallbackCenter,
-                    zoom: 13.5,
-                    pitch: 22,
-                  ),
-            onMapCreated: hasPickup ? _onMapCreated : null,
-          ),
+          if (widget.renderMap)
+            MapWidget(
+              key: ValueKey(
+                'driver-opportunity-map-$themeId-'
+                '${offer.pickupLat}-${offer.destLat}',
+              ),
+              styleUri: mapboxStyleUriForTheme(themeId),
+              cameraOptions: hasMapData
+                  ? null
+                  : CameraOptions(
+                      center: fallbackCenter,
+                      zoom: 13.5,
+                      pitch: 22,
+                    ),
+              onMapCreated: hasMapData ? _onMapCreated : null,
+              onCameraChangeListener: hasMapData ? _onCameraChange : null,
+            )
+          else
+            ColoredBox(color: colors.backgroundAlt),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -629,95 +718,113 @@ class _OpportunityMapLayerState extends State<_OpportunityMapLayer> {
               ),
             ),
           ),
+          if (widget.renderMap && hasMapData)
+            DriverRideMapPinsOverlay(
+              mapboxMap: _mapboxMap,
+              pickupLat: offer.pickupLat,
+              pickupLng: offer.pickupLng,
+              destinationLat: offer.destLat,
+              destinationLng: offer.destLng,
+              pickupColor: colors.success,
+              dropoffColor: colors.error,
+              cameraTick: _cameraTick,
+              pinSize: 44,
+            ),
         ],
       ),
     );
   }
 }
 
-class _DeclineMapButton extends StatelessWidget {
-  const _DeclineMapButton({
+/// Accept + Skip pinned together — Accept is the dominant CTA.
+class _OpportunityAcceptSkipDock extends StatelessWidget {
+  const _OpportunityAcceptSkipDock({
     required this.colors,
     required this.typography,
-    required this.loading,
-    required this.onTap,
+    required this.isAccepting,
+    required this.isDeclining,
+    required this.onAccept,
+    required this.onSkip,
+    this.embedded = false,
   });
 
   final DriverColors colors;
   final DriverTypography typography;
-  final bool loading;
-  final VoidCallback? onTap;
+  final bool isAccepting;
+  final bool isDeclining;
+  final VoidCallback onAccept;
+  final VoidCallback onSkip;
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: colors.card.withValues(alpha: 0.92),
-      elevation: 4,
-      shadowColor: colors.text.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(999),
-      child: InkWell(
-        onTap: loading ? null : onTap,
-        borderRadius: BorderRadius.circular(999),
-        child: Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(14, 10, 16, 10),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (loading)
-                SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: colors.textSecondary,
-                  ),
-                )
-              else
-                Icon(Icons.close_rounded, size: 20, color: colors.text),
-              const SizedBox(width: 6),
-              Text(
-                DriverStrings.incomingRideMapDecline,
-                style: typography.labelLarge.copyWith(
-                  color: colors.text,
-                  fontWeight: FontWeight.w800,
+    final busy = isAccepting || isDeclining;
+
+    final actions = Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          flex: 5,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: DriverRadius.smAll,
+              boxShadow: [
+                BoxShadow(
+                  color: colors.primary.withValues(alpha: 0.28),
+                  blurRadius: 14,
+                  offset: const Offset(0, 5),
                 ),
-              ),
-            ],
+              ],
+            ),
+            child: DriverButton(
+              label: DriverStrings.accept,
+              icon: Icons.check_rounded,
+              onPressed: busy ? null : onAccept,
+              loading: isAccepting,
+              variant: DriverButtonVariant.primary,
+              size: DriverButtonSize.lg,
+              colors: colors,
+              typography: typography,
+            ),
           ),
         ),
-      ),
+        const SizedBox(width: DriverSpacing.sm),
+        Expanded(
+          flex: 2,
+          child: DriverButton(
+            label: DriverStrings.skip,
+            onPressed: busy ? null : onSkip,
+            loading: isDeclining,
+            variant: DriverButtonVariant.outline,
+            size: DriverButtonSize.lg,
+            colors: colors,
+            typography: typography,
+          ),
+        ),
+      ],
     );
-  }
-}
+    if (embedded) return actions;
 
-class _MapTripChip extends StatelessWidget {
-  const _MapTripChip({
-    required this.colors,
-    required this.typography,
-    required this.label,
-  });
-
-  final DriverColors colors;
-  final DriverTypography typography;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.card.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: DriverShadows.subtle(colors),
+    return DriverRidePremiumStyle.glassSurface(
+      colors: colors,
+      borderRadius: DriverRadius.sheetTop,
+      blurSigma: 26,
+      tintOpacity: 0.8,
+      boxShadow: DriverShadows.floating(colors),
+      padding: EdgeInsets.fromLTRB(
+        DriverSpacing.screenEdge,
+        DriverSpacing.md,
+        DriverSpacing.screenEdge,
+        DriverSpacing.lg + MediaQuery.paddingOf(context).bottom,
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Text(
-          label,
-          style: typography.labelLarge.copyWith(
-            color: colors.text,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          DriverRidePremiumStyle.sheetHandle(colors),
+          const SizedBox(height: DriverSpacing.md),
+          actions,
+        ],
       ),
     );
   }
@@ -731,6 +838,7 @@ class _OpportunityDecisionCard extends StatelessWidget {
     required this.countdownSeconds,
     required this.totalCountdownSeconds,
     required this.showCountdown,
+    this.embedded = false,
   });
 
   final DriverColors colors;
@@ -739,12 +847,135 @@ class _OpportunityDecisionCard extends StatelessWidget {
   final int countdownSeconds;
   final int totalCountdownSeconds;
   final bool showCountdown;
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
     final progress = totalCountdownSeconds <= 0
         ? 0.0
         : (countdownSeconds / totalCountdownSeconds).clamp(0.0, 1.0);
+
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (showCountdown) ...[
+          Row(
+            children: [
+              Text(
+                DriverStrings.opportunityIncomingBadge,
+                style: typography.labelMedium.copyWith(
+                  color: colors.textSecondary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const Spacer(),
+              Icon(
+                Icons.timer_rounded,
+                size: 18,
+                color: countdownSeconds <= 8 ? colors.warning : colors.primary,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '${countdownSeconds}s',
+                style: typography.titleMedium.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: DriverSpacing.sm),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              minHeight: 5,
+              value: progress,
+              backgroundColor: colors.backgroundAlt,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                countdownSeconds <= 8 ? colors.warning : colors.primary,
+              ),
+            ),
+          ),
+          const SizedBox(height: DriverSpacing.md),
+        ],
+        if (offer.productBadges.isNotEmpty || offer.contextBadges.isNotEmpty)
+          Wrap(
+            spacing: DriverSpacing.sm,
+            runSpacing: DriverSpacing.sm,
+            children: [
+              for (final badge in offer.productBadges)
+                _BadgeChip(
+                  colors: colors,
+                  typography: typography,
+                  label: badge,
+                  tone: _BadgeTone.product,
+                ),
+              for (final badge in offer.contextBadges)
+                _BadgeChip(
+                  colors: colors,
+                  typography: typography,
+                  label: badge.label,
+                  tone: badge.warning
+                      ? _BadgeTone.warning
+                      : badge.highlight
+                          ? _BadgeTone.highlight
+                          : _BadgeTone.neutral,
+                ),
+              if (offer.paymentLabel != null)
+                _BadgeChip(
+                  colors: colors,
+                  typography: typography,
+                  label: offer.paymentLabel!,
+                  tone: _BadgeTone.neutral,
+                ),
+            ],
+          ),
+        if (offer.productBadges.isNotEmpty || offer.contextBadges.isNotEmpty)
+          const SizedBox(height: DriverSpacing.md),
+        _OpportunityFareDeadheadHero(
+          colors: colors,
+          typography: typography,
+          fareHero:
+              offer.fareHero ?? DriverStrings.incomingRideEstimatedEarnings,
+          fareSubline: offer.fareSubline,
+          pickupDistanceLabel: offer.pickupDistanceLabel,
+          pickupEtaLabel: offer.pickupEtaLabel,
+        ),
+        const SizedBox(height: DriverSpacing.md),
+        _OpportunityPassengerHero(
+          colors: colors,
+          typography: typography,
+          riderLabel: offer.riderLabel,
+          ratingLabel: offer.ratingLabel,
+        ),
+        const SizedBox(height: DriverSpacing.lg),
+        _OpportunityAddressHero(
+          colors: colors,
+          typography: typography,
+          pickupAddress: offer.pickupAddress,
+          destinationAddress: offer.destinationAddress,
+        ),
+        if (offer.tripMeta != null) ...[
+          const SizedBox(height: DriverSpacing.md),
+          _BoltLegRow(
+            colors: colors,
+            typography: typography,
+            dotColor: colors.success,
+            title: DriverStrings.incomingRideTripPaid,
+            meta: offer.tripMeta!,
+          ),
+        ],
+        const SizedBox(height: DriverSpacing.sm),
+        Text(
+          DriverStrings.incomingRideDeclineSafe,
+          textAlign: TextAlign.center,
+          style: typography.bodySmall.copyWith(
+            color: colors.textMuted,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+    if (embedded) return content;
 
     return DriverRidePremiumStyle.glassSurface(
       colors: colors,
@@ -759,173 +990,349 @@ class _OpportunityDecisionCard extends StatelessWidget {
         DriverSpacing.lg,
         DriverSpacing.lg,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: content,
+    );
+  }
+}
+
+enum _BadgeTone { product, highlight, warning, neutral }
+
+/// Passenger identity — quick scan before addresses.
+class _OpportunityPassengerHero extends StatelessWidget {
+  const _OpportunityPassengerHero({
+    required this.colors,
+    required this.typography,
+    required this.riderLabel,
+    this.ratingLabel,
+  });
+
+  final DriverColors colors;
+  final DriverTypography typography;
+  final String riderLabel;
+  final String? ratingLabel;
+
+  String get _initial {
+    final trimmed = riderLabel.trim();
+    if (trimmed.isEmpty) return '?';
+    return trimmed[0].toUpperCase();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            colors.primary.withValues(alpha: 0.14),
+            colors.primaryLight.withValues(alpha: 0.55),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colors.primary.withValues(alpha: 0.28)),
+      ),
+      child: Row(
         children: [
-          if (showCountdown) ...[
-            Row(
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: colors.card,
+              shape: BoxShape.circle,
+              border: Border.all(color: colors.primary.withValues(alpha: 0.35)),
+              boxShadow: [
+                BoxShadow(
+                  color: colors.primary.withValues(alpha: 0.12),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              _initial,
+              style: typography.titleLarge.copyWith(
+                fontWeight: FontWeight.w900,
+                color: colors.primary,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  DriverStrings.opportunityIncomingBadge,
-                  style: typography.labelMedium.copyWith(
-                    color: colors.textSecondary,
+                  DriverStrings.rider.toUpperCase(),
+                  style: typography.labelSmall.copyWith(
+                    color: colors.textMuted,
                     fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
                   ),
                 ),
-                const Spacer(),
-                Icon(
-                  Icons.timer_rounded,
-                  size: 18,
-                  color:
-                      countdownSeconds <= 8 ? colors.warning : colors.primary,
-                ),
-                const SizedBox(width: 4),
+                const SizedBox(height: 2),
                 Text(
-                  '${countdownSeconds}s',
-                  style: typography.titleMedium.copyWith(
+                  riderLabel,
+                  style: typography.headlineSmall.copyWith(
                     fontWeight: FontWeight.w900,
+                    height: 1.1,
+                    letterSpacing: 0,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
-            const SizedBox(height: DriverSpacing.sm),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(999),
-              child: LinearProgressIndicator(
-                minHeight: 5,
-                value: progress,
-                backgroundColor: colors.backgroundAlt,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  countdownSeconds <= 8 ? colors.warning : colors.primary,
-                ),
+          ),
+          if (ratingLabel != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: colors.card.withValues(alpha: 0.92),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: colors.border.withValues(alpha: 0.6)),
               ),
-            ),
-            const SizedBox(height: DriverSpacing.md),
-          ],
-          if (offer.productBadges.isNotEmpty || offer.contextBadges.isNotEmpty)
-            Wrap(
-              spacing: DriverSpacing.sm,
-              runSpacing: DriverSpacing.sm,
-              children: [
-                for (final badge in offer.productBadges)
-                  _BadgeChip(
-                    colors: colors,
-                    typography: typography,
-                    label: badge,
-                    tone: _BadgeTone.product,
-                  ),
-                for (final badge in offer.contextBadges)
-                  _BadgeChip(
-                    colors: colors,
-                    typography: typography,
-                    label: badge.label,
-                    tone: badge.warning
-                        ? _BadgeTone.warning
-                        : badge.highlight
-                            ? _BadgeTone.highlight
-                            : _BadgeTone.neutral,
-                  ),
-                if (offer.paymentLabel != null)
-                  _BadgeChip(
-                    colors: colors,
-                    typography: typography,
-                    label: offer.paymentLabel!,
-                    tone: _BadgeTone.neutral,
-                  ),
-              ],
-            ),
-          if (offer.productBadges.isNotEmpty || offer.contextBadges.isNotEmpty)
-            const SizedBox(height: DriverSpacing.md),
-          Text(
-            offer.fareHero ?? DriverStrings.incomingRideEstimatedEarnings,
-            style: typography.displaySmall.copyWith(
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.5,
-              height: 1.05,
-            ),
-          ),
-          if (offer.fareSubline != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              offer.fareSubline!,
-              style: typography.bodyMedium.copyWith(
-                color: colors.textSecondary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-          const SizedBox(height: DriverSpacing.md),
-          _BoltLegRow(
-            colors: colors,
-            typography: typography,
-            dotColor: colors.primary,
-            title: DriverStrings.incomingRidePickupDeadhead,
-            meta: offer.pickupMeta ?? '—',
-          ),
-          const SizedBox(height: DriverSpacing.sm),
-          _BoltLegRow(
-            colors: colors,
-            typography: typography,
-            dotColor: colors.success,
-            title: DriverStrings.incomingRideTripPaid,
-            meta: offer.tripMeta ?? '—',
-          ),
-          const SizedBox(height: DriverSpacing.md),
-          Row(
-            children: [
-              Text(
-                offer.riderLabel,
-                style: typography.titleMedium.copyWith(
+              child: Text(
+                ratingLabel!,
+                style: typography.labelLarge.copyWith(
                   fontWeight: FontWeight.w900,
+                  color: colors.warning,
                 ),
               ),
-              if (offer.ratingLabel != null) ...[
-                const SizedBox(width: 8),
-                Text(
-                  offer.ratingLabel!,
-                  style: typography.labelLarge.copyWith(
-                    color: colors.textSecondary,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            offer.pickupAddress,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: typography.bodySmall.copyWith(
-              color: colors.textSecondary,
-              fontWeight: FontWeight.w600,
             ),
-          ),
-          Text(
-            offer.destinationAddress,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: typography.bodySmall.copyWith(
-              color: colors.textSecondary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: DriverSpacing.sm),
-          Text(
-            DriverStrings.incomingRideDeclineSafe,
-            textAlign: TextAlign.center,
-            style: typography.bodySmall.copyWith(
-              color: colors.textMuted,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
         ],
       ),
     );
   }
 }
 
-enum _BadgeTone { product, highlight, warning, neutral }
+/// Fare (left) + distance/ETA to pickup (right) — scannable in under 2 seconds.
+class _OpportunityFareDeadheadHero extends StatelessWidget {
+  const _OpportunityFareDeadheadHero({
+    required this.colors,
+    required this.typography,
+    required this.fareHero,
+    this.fareSubline,
+    this.pickupDistanceLabel,
+    this.pickupEtaLabel,
+  });
+
+  final DriverColors colors;
+  final DriverTypography typography;
+  final String fareHero;
+  final String? fareSubline;
+  final String? pickupDistanceLabel;
+  final String? pickupEtaLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasDeadhead = pickupDistanceLabel != null || pickupEtaLabel != null;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                fareHero,
+                style: typography.displaySmall.copyWith(
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0,
+                  height: 1.02,
+                ),
+              ),
+              if (fareSubline != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  fareSubline!,
+                  style: typography.bodySmall.copyWith(
+                    color: colors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (hasDeadhead) ...[
+          const SizedBox(width: DriverSpacing.md),
+          Container(
+            constraints: const BoxConstraints(minWidth: 96),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: colors.primaryLight,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: colors.primary.withValues(alpha: 0.35),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (pickupDistanceLabel != null)
+                  Text(
+                    pickupDistanceLabel!,
+                    style: typography.titleLarge.copyWith(
+                      fontWeight: FontWeight.w900,
+                      height: 1.05,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                if (pickupEtaLabel != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    pickupEtaLabel!,
+                    style: typography.labelLarge.copyWith(
+                      color: colors.textSecondary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                ],
+                const SizedBox(height: 4),
+                Text(
+                  DriverStrings.incomingRidePickupDeadhead,
+                  style: typography.labelSmall.copyWith(
+                    color: colors.textMuted,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  textAlign: TextAlign.right,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Pickup + drop-off with route rail — primary scan target for drivers.
+class _OpportunityAddressHero extends StatelessWidget {
+  const _OpportunityAddressHero({
+    required this.colors,
+    required this.typography,
+    required this.pickupAddress,
+    required this.destinationAddress,
+  });
+
+  final DriverColors colors;
+  final DriverTypography typography;
+  final String pickupAddress;
+  final String destinationAddress;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+      decoration: BoxDecoration(
+        color: colors.backgroundAlt.withValues(alpha: 0.82),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colors.border.withValues(alpha: 0.65)),
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Column(
+              children: [
+                _RouteDot(color: colors.primary, size: 12),
+                Expanded(
+                  child: Container(
+                    width: 2.5,
+                    margin: const EdgeInsets.symmetric(vertical: 6),
+                    color: colors.border,
+                  ),
+                ),
+                _RouteDot(color: colors.text, size: 12),
+              ],
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    DriverStrings.incomingRidePickup.toUpperCase(),
+                    style: typography.labelSmall.copyWith(
+                      color: colors.primary,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    pickupAddress,
+                    style: typography.titleMedium.copyWith(
+                      color: colors.text,
+                      fontWeight: FontWeight.w900,
+                      height: 1.25,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    DriverStrings.incomingRideDropoff.toUpperCase(),
+                    style: typography.labelSmall.copyWith(
+                      color: colors.textMuted,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    destinationAddress,
+                    style: typography.titleMedium.copyWith(
+                      color: colors.text,
+                      fontWeight: FontWeight.w800,
+                      height: 1.25,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RouteDot extends StatelessWidget {
+  const _RouteDot({required this.color, this.size = 10});
+
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.35),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _BadgeChip extends StatelessWidget {
   const _BadgeChip({

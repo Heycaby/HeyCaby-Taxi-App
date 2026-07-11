@@ -55,10 +55,14 @@ Future<void> showDriverSearchExpiredDialog(
             RiderMatchingRecoveryActions.schedule(ref, context);
           }),
           onMarketplace: () => closeAnd(() {
-            RiderMatchingRecoveryActions.marketplace(ref, context);
+            RiderMatchingRecoveryActions.taxiTerug(ref, context);
           }),
-          showDismiss: true,
-          onDismiss: () => Navigator.of(sheetContext).pop(),
+          onDismiss: () {
+            Navigator.of(sheetContext).pop();
+            unawaited(
+              RiderMatchingRecoveryActions.goHomeWithoutBooking(ref, context),
+            );
+          },
         ),
       );
     },

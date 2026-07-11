@@ -266,7 +266,7 @@ class _DriverTermsScreenState extends ConsumerState<DriverTermsScreen> {
     await Clipboard.setData(ClipboardData(text: _fullText));
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.copiedToClipboard)),
+        SnackBar(content: Text(DriverStrings.copiedToClipboard)),
       );
     }
   }

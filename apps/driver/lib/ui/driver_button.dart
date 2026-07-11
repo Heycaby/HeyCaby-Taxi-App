@@ -7,7 +7,14 @@ import '../theme/driver_radius.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
 
-enum DriverButtonVariant { primary, secondary, outline, ghost, destructive }
+enum DriverButtonVariant {
+  primary,
+  secondary,
+  outline,
+  ghost,
+  destructive,
+  warning
+}
 
 enum DriverButtonSize { sm, md, lg }
 
@@ -127,7 +134,9 @@ class _DriverButtonState extends State<DriverButton> {
       ),
     );
 
-    return widget.expanded ? SizedBox(width: double.infinity, child: child) : child;
+    return widget.expanded
+        ? SizedBox(width: double.infinity, child: child)
+        : child;
   }
 
   (Color, Color, Border?) _colorsForVariant(DriverColors colors) {
@@ -146,6 +155,8 @@ class _DriverButtonState extends State<DriverButton> {
         return (Colors.transparent, colors.textSecondary, null);
       case DriverButtonVariant.destructive:
         return (colors.error, colors.onError, null);
+      case DriverButtonVariant.warning:
+        return (colors.warning, colors.onPrimary, null);
     }
   }
 }

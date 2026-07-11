@@ -18,6 +18,7 @@
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
 		D4E8F9012DA10001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = D4E8F9012DA10002 /* PrivacyInfo.xcprivacy */; };
 		F4C7B0012E901000004EC9D /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F4C7B0012E901000004EC9C /* GoogleService-Info.plist */; };
+		F4C7B0052E901000004EC9D /* heycaby_ride_request.wav in Resources */ = {isa = PBXBuildFile; fileRef = F4C7B0042E901000004EC9C /* heycaby_ride_request.wav */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -71,6 +72,7 @@
 		F4C7B0012E901000004EC9C /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		F4C7B0022E901000004EC9C /* RunnerDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RunnerDebug.entitlements; sourceTree = "<group>"; };
 		F4C7B0032E901000004EC9C /* RunnerRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RunnerRelease.entitlements; sourceTree = "<group>"; };
+		F4C7B0042E901000004EC9C /* heycaby_ride_request.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = heycaby_ride_request.wav; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -165,6 +167,7 @@
 				F4C7B0022E901000004EC9C /* RunnerDebug.entitlements */,
 				F4C7B0032E901000004EC9C /* RunnerRelease.entitlements */,
 				F4C7B0012E901000004EC9C /* GoogleService-Info.plist */,
+				F4C7B0042E901000004EC9C /* heycaby_ride_request.wav */,
 				D4E8F9012DA10002 /* PrivacyInfo.xcprivacy */,
 				1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */,
 				1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */,
@@ -276,6 +279,7 @@
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
 				D4E8F9012DA10001 /* PrivacyInfo.xcprivacy in Resources */,
 				F4C7B0012E901000004EC9D /* GoogleService-Info.plist in Resources */,
+				F4C7B0052E901000004EC9D /* heycaby_ride_request.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

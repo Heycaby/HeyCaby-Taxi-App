@@ -172,7 +172,7 @@ void _showCreatePostModal(
                       ref.invalidate(communityPostsProvider('general'));
                       if (!ok) {
                         ScaffoldMessenger.of(ctx).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content:
                                 Text(DriverStrings.communityPostCreateFailed),
                           ),

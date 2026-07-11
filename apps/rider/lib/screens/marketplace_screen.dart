@@ -15,6 +15,8 @@ import '../widgets/marketplace/marketplace_offer_price_panel.dart';
 import '../widgets/marketplace/marketplace_offer_route_card.dart';
 import '../widgets/marketplace/marketplace_screen_header.dart';
 import '../widgets/marketplace/marketplace_step_progress.dart';
+import '../widgets/marketplace/taxi_terug_candidates_section.dart';
+import '../widgets/marketplace/taxi_terug_wait_tolerance_section.dart';
 import 'location_required_screen.dart';
 
 /// Marketplace — name your price; same Supabase booking + auction backend.
@@ -30,6 +32,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
   bool _isSubmitting = false;
   bool _showDriverScope = false;
   bool _bidSyncedFromRoute = false;
+  bool _delayedPickupAcknowledged = false;
 
   @override
   void initState() {
@@ -71,6 +74,14 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
   Future<void> _submitOffer() async {
     HapticService.mediumTap();
     final currentMode = ref.read(bookingProvider).mode;
+    if (currentMode == BookingMode.terug && !_delayedPickupAcknowledged) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).taxiTerugConfirmDelayedPickup),
+        ),
+      );
+      return;
+    }
     ref.read(bookingProvider.notifier).setMarketplaceBidEuro(_bidAmount);
     if (currentMode == BookingMode.terug) {
       ref.read(bookingProvider.notifier).setTaxiTerug();
@@ -103,6 +114,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
     final typo = ref.watch(typographyProvider);
     final l10n = AppLocalizations.of(context);
     final booking = ref.watch(bookingProvider);
+    final isTaxiTerug = booking.mode == BookingMode.terug;
     final hasAddresses = booking.pickup != null && booking.destination != null;
     final refFareAsync = ref.watch(marketplaceReferenceFareEuroProvider);
 
@@ -119,6 +131,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
               typo: typo,
               l10n: l10n,
               onClose: _close,
+              isTaxiTerug: isTaxiTerug,
             ),
             Expanded(
               child: ListView(
@@ -128,6 +141,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                     colors: colors,
                     typo: typo,
                     l10n: l10n,
+                    isTaxiTerug: isTaxiTerug,
                   ),
                   const SizedBox(height: 16),
                   MarketplaceStepProgress(
@@ -151,6 +165,47 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                     onClearDestination: () =>
                         ref.read(bookingProvider.notifier).clearDestination(),
                   ),
+                  if (isTaxiTerug && hasAddresses) ...[
+                    const SizedBox(height: 20),
+                    TaxiTerugWaitToleranceSection(
+                      colors: colors,
+                      typo: typo,
+                      l10n: l10n,
+                    ),
+                    const SizedBox(height: 16),
+                    TaxiTerugCandidatesSection(
+                      colors: colors,
+                      typo: typo,
+                      l10n: l10n,
+                      onSuggestedBid: (v) {
+                        if (_bidSyncedFromRoute && _bidAmount == v) return;
+                        setState(() {
+                          _bidAmount = v;
+                          _bidSyncedFromRoute = true;
+                        });
+                      },
+                    ),
+                  ],
+                  if (isTaxiTerug && hasAddresses) ...[
+                    const SizedBox(height: 12),
+                    CheckboxListTile(
+                      value: _delayedPickupAcknowledged,
+                      onChanged: (v) => setState(
+                        () => _delayedPickupAcknowledged = v ?? false,
+                      ),
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      title: Text(
+                        l10n.taxiTerugDelayedPickupAck,
+                        style: typo.bodySmall.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
+                        ),
+                      ),
+                      activeColor: colors.accent,
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   MarketplaceOfferPricePanel(
                     bidAmount: _bidAmount,
@@ -158,6 +213,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                     colors: colors,
                     typo: typo,
                     l10n: l10n,
+                    isTaxiTerug: isTaxiTerug,
                     onBidChanged: (v) => setState(() => _bidAmount = v),
                   ),
                   const SizedBox(height: 8),

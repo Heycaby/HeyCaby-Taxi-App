@@ -39,8 +39,8 @@ class _DriverFcmListenerState extends ConsumerState<DriverFcmListener> {
               foreground: true,
             ));
 
-    _openedSub ??= FirebaseMessaging.onMessageOpenedApp.listen((message) =>
-        _dispatch(message, fromTap: true, foreground: false));
+    _openedSub ??= FirebaseMessaging.onMessageOpenedApp.listen(
+        (message) => _dispatch(message, fromTap: true, foreground: false));
 
     if (_initialMessageHandled) return;
     _initialMessageHandled = true;
@@ -61,8 +61,7 @@ class _DriverFcmListenerState extends ConsumerState<DriverFcmListener> {
   }) async {
     if (!mounted) return;
     final payload = DriverFcmPayload.fromRemoteMessage(message);
-    if (payload.effectiveCategory == null &&
-        payload.rideRequestId == null) {
+    if (payload.effectiveCategory == null && payload.rideRequestId == null) {
       return;
     }
     await DriverFcmHandler.dispatch(

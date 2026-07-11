@@ -20,12 +20,10 @@ class DriverPaymentLedgerItem {
   final String? statusLabel;
 
   static DriverPaymentLedgerItem fromMap(Map<String, dynamic> j) {
-    final id = (j['id'] ?? j['payment_id'] ?? j['mollie_payment_id'] ?? '').toString();
-    final title = (j['title'] ??
-            j['description'] ??
-            j['type'] ??
-            'Payment')
-        .toString();
+    final id =
+        (j['id'] ?? j['payment_id'] ?? j['mollie_payment_id'] ?? '').toString();
+    final title =
+        (j['title'] ?? j['description'] ?? j['type'] ?? 'Payment').toString();
     final status = j['status']?.toString();
     final amountLabel = _formatAmount(j);
 
@@ -62,7 +60,8 @@ class DriverPaymentLedgerItem {
   static String? _formatAmount(Map<String, dynamic> j) {
     if (j['amount_label'] is String) return j['amount_label'] as String;
     if (j['amount_display'] is String) return j['amount_display'] as String;
-    final cents = j['amount_cents'] ?? j['amount_cents_total'] ?? j['total_cents'];
+    final cents =
+        j['amount_cents'] ?? j['amount_cents_total'] ?? j['total_cents'];
     if (cents is num) {
       final cur = (j['currency'] as String?)?.trim().toUpperCase();
       final sym = cur == 'EUR' || cur == null ? '€' : '$cur ';

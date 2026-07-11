@@ -178,31 +178,39 @@ class PinnedPollCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: colors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.thumb_up_alt_rounded, color: colors.success, size: 16),
+                      Icon(Icons.thumb_up_alt_rounded,
+                          color: colors.success, size: 16),
                       const SizedBox(width: 6),
-                      Text('$upPct%', style: typo.labelMedium.copyWith(color: colors.text, fontWeight: FontWeight.w600)),
+                      Text('$upPct%',
+                          style: typo.labelMedium.copyWith(
+                              color: colors.text, fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: colors.error.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.thumb_down_alt_rounded, color: colors.error, size: 16),
+                      Icon(Icons.thumb_down_alt_rounded,
+                          color: colors.error, size: 16),
                       const SizedBox(width: 6),
-                      Text('$downPct%', style: typo.labelMedium.copyWith(color: colors.text, fontWeight: FontWeight.w600)),
+                      Text('$downPct%',
+                          style: typo.labelMedium.copyWith(
+                              color: colors.text, fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ),
@@ -283,9 +291,8 @@ class CommunityTalkItem {
         ? parts.first
         : DriverStrings.communityPostLegacyUntitled;
     final msg = parts.length > 1 ? parts[1] : clean;
-    final location = parts.length > 2
-        ? parts[2]
-        : DriverStrings.communityPostLegacyNearby;
+    final location =
+        parts.length > 2 ? parts[2] : DriverStrings.communityPostLegacyNearby;
     return CommunityTalkItem(
       post.id,
       post.authorDriverId,
@@ -331,6 +338,7 @@ class TalkRow extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final bool canManage;
+
   /// Hub preview uses 3 lines; full feed uses a higher value so content is readable.
   final int messageMaxLines;
   final CommunityPollData? poll;
@@ -461,14 +469,14 @@ class TalkRow extends StatelessWidget {
                       final items = <PopupMenuEntry<String>>[];
                       if (allowEdit) {
                         items.add(
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'edit',
                             child: Text(DriverStrings.communityMenuEdit),
                           ),
                         );
                       }
                       items.add(
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'delete',
                           child: Text(DriverStrings.communityMenuDelete),
                         ),
@@ -503,7 +511,8 @@ class TalkRow extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: colors.border.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(8),

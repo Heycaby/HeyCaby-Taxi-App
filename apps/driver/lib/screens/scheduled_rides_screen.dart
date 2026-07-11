@@ -176,7 +176,7 @@ class _ScheduledRidesScreenState extends ConsumerState<ScheduledRidesScreen> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => _openRideDetail(context, ride),
-                    child: const Text(DriverStrings.rideDetails),
+                    child: Text(DriverStrings.rideDetails),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -207,7 +207,7 @@ class _ScheduledRidesScreenState extends ConsumerState<ScheduledRidesScreen> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => _openRideDetail(context, ride),
-                    child: const Text(DriverStrings.rideDetails),
+                    child: Text(DriverStrings.rideDetails),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -223,7 +223,7 @@ class _ScheduledRidesScreenState extends ConsumerState<ScheduledRidesScreen> {
                     ),
                     icon: Icon(Icons.swap_horiz_rounded,
                         size: 18, color: colors.text),
-                    label: const Text(DriverStrings.swapAction),
+                    label: Text(DriverStrings.swapAction),
                   ),
                 ),
               ],
@@ -270,7 +270,7 @@ class _ScheduledRidesScreenState extends ConsumerState<ScheduledRidesScreen> {
     if (!context.mounted) return;
     if (swapId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.swapErrorNotAvailable)),
+        SnackBar(content: Text(DriverStrings.swapErrorNotAvailable)),
       );
       return;
     }
@@ -296,7 +296,7 @@ class _ScheduledRidesScreenState extends ConsumerState<ScheduledRidesScreen> {
     if (res?['success'] == true) {
       ref.invalidate(scheduledRidesByTabProvider('confirmed'));
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.swapCancelledOk)),
+        SnackBar(content: Text(DriverStrings.swapCancelledOk)),
       );
     } else {
       final err = res?['error']?.toString() ?? '';

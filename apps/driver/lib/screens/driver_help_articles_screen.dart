@@ -18,7 +18,8 @@ class DriverHelpArticlesScreen extends ConsumerStatefulWidget {
       _DriverHelpArticlesScreenState();
 }
 
-class _DriverHelpArticlesScreenState extends ConsumerState<DriverHelpArticlesScreen> {
+class _DriverHelpArticlesScreenState
+    extends ConsumerState<DriverHelpArticlesScreen> {
   late final WebViewController _controller;
 
   @override
@@ -36,7 +37,8 @@ class _DriverHelpArticlesScreenState extends ConsumerState<DriverHelpArticlesScr
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
 
     return DriverKnowledgeBaseBody(
       colors: colors,

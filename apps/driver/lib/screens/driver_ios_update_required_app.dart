@@ -19,8 +19,7 @@ class DriverIosUpdateRequiredApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final platformLocale =
-        WidgetsBinding.instance.platformDispatcher.locale;
+    final platformLocale = WidgetsBinding.instance.platformDispatcher.locale;
     final strings = driverIosUpdateStringsFor(platformLocale);
     final themeEntry = kThemes[kDriverDefaultTheme]!;
     final colors = DriverColors.fromTheme(themeEntry.colors);

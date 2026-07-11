@@ -18,7 +18,9 @@ import '../utils/driver_communication_distance.dart';
 import '../utils/driver_ride_lifecycle_error_message.dart';
 import '../widgets/driver_ride_communication_sheet.dart';
 import '../utils/driver_navigation_launch.dart';
+import '../utils/driver_nav_app_helpers.dart';
 import '../utils/driver_ride_coord_utils.dart';
+import '../utils/driver_rider_ping.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_ride_bolt_layout.dart';
@@ -37,15 +39,33 @@ class ActiveRideScreen extends ConsumerStatefulWidget {
 class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
   bool _loading = false;
   bool _statusBusy = false;
+  bool _startingTrip = false;
+  bool _enRouteStarted = false;
   String? _farePill;
 
   @override
   void initState() {
     super.initState();
     unawaited(_loadFarePill());
+    unawaited(_hydrateEnRouteState());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(hydrateDriverRideCoordsIfNeeded(ref, widget.rideId));
     });
+  }
+
+  Future<void> _hydrateEnRouteState() async {
+    try {
+      final row = await HeyCabySupabase.client
+          .from('ride_requests')
+          .select('status')
+          .eq('id', widget.rideId)
+          .maybeSingle();
+      if (!mounted || row == null) return;
+      final status = row['status'] as String?;
+      if (status == 'driver_en_route') {
+        setState(() => _enRouteStarted = true);
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadFarePill() async {
@@ -75,8 +95,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
 
   void _openSafety() {
     final colors = DriverColors.fromTheme(ref.read(colorsProvider));
-    final typography =
-        DriverTypography.fromTheme(ref.read(typographyProvider));
+    final typography = DriverTypography.fromTheme(ref.read(typographyProvider));
     unawaited(showDriverRideSafetyToolkitSheet(
       context: context,
       ref: ref,
@@ -115,8 +134,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
 
   Future<void> _openNavigationApp() async {
     final driver = ref.read(driverStateProvider);
-    final pickupAddress =
-        driver.pickupAddress ?? DriverStrings.pickupAddress;
+    final pickupAddress = driver.pickupAddress ?? DriverStrings.pickupAddress;
     await launchDriverNavigation(
       context: context,
       ref: ref,
@@ -125,6 +143,52 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
       addressFallback: pickupAddress,
       coordinatesUnavailableMessage: DriverStrings.pickupCoordinatesUnavailable,
     );
+  }
+
+  Future<void> _startTripToPickup() async {
+    if (_startingTrip) return;
+    setState(() => _startingTrip = true);
+    var statusOk = _enRouteStarted;
+    try {
+      if (!_enRouteStarted) {
+        try {
+          await ref
+              .read(driverApiProvider)
+              .markEnRoute(rideRequestId: widget.rideId);
+          statusOk = true;
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(driverRideLifecycleErrorMessage(e))),
+          );
+        }
+
+        if (statusOk) {
+          if (!mounted) return;
+          setState(() => _enRouteStarted = true);
+          final navLabel = watchDriverNavAppLabel(ref);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                DriverStrings.startTripRiderNotifiedOpensIn(navLabel),
+              ),
+            ),
+          );
+          unawaited(
+            sendDriverRiderPing(
+              context: context,
+              ref: ref,
+              rideRequestId: widget.rideId,
+              type: DriverPingType.onMyWay,
+              silent: true,
+            ),
+          );
+        }
+      }
+      await _openNavigationApp();
+    } finally {
+      if (mounted) setState(() => _startingTrip = false);
+    }
   }
 
   Future<void> _toggleNewRequests() async {
@@ -208,13 +272,12 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
       driverLng: driverPos?.longitude,
       farePill: _farePill,
       onArrived: _markArrived,
-      onNavigate: _openNavigationApp,
+      onNavigate: _startTripToPickup,
       onOpenCommunication: _openCommunication,
       onCancelOrder: _cancelOrder,
       onToggleRequests: _toggleNewRequests,
       onSafety: _openSafety,
-      showNearPickupAssist:
-          proximity == DriverRideProximityAssist.nearPickup,
+      showNearPickupAssist: proximity == DriverRideProximityAssist.nearPickup,
     );
   }
 }

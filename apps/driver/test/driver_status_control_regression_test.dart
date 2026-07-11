@@ -25,7 +25,7 @@ void main() {
           homeSheetSource, contains('label: DriverStrings.homeRidesSection'));
       expect(
         homeSheetSource,
-        contains('label: DriverStrings.homeSettingsSection'),
+        contains('DriverStrings.driverHub'),
       );
     });
 

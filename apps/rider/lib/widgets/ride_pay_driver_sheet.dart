@@ -1,72 +1,68 @@
+import 'dart:async' show Timer, unawaited;
+
 import 'package:flutter/material.dart';
+import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
+import 'package:heycaby_utils/heycaby_utils.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class RidePayDriverResult {
   const RidePayDriverResult({
     required this.confirmed,
     this.tipEuro,
+    required this.paymentMethod,
   });
 
   final bool confirmed;
   final double? tipEuro;
+  final RidePaymentMethod paymentMethod;
 }
 
-/// Rider payment reminder when the driver ends the trip — fare, optional tip, total.
+/// Rider payment sheet — cash / Tikkie / PIN with live method toggle.
 Future<RidePayDriverResult?> showRidePayDriverSheet(
   BuildContext context, {
   required HeyCabyColorTokens colors,
   required HeyCabyTypography typography,
   required AppLocalizations l10n,
+  required String rideId,
+  String? riderToken,
   String? fareLabel,
-  required String paymentMethodTitle,
-  String? paymentMethodSubtitle,
+  RidePaymentMethod initialMethod = RidePaymentMethod.cash,
 }) async {
   return showModalBottomSheet<RidePayDriverResult>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    barrierColor: colors.text.withValues(alpha: 0.48),
+    barrierColor: colors.text.withValues(alpha: 0.42),
     isDismissible: false,
     enableDrag: false,
     builder: (ctx) => _RidePayDriverSheet(
       colors: colors,
       typography: typography,
       l10n: l10n,
-      fareEuro: parseEuroAmountLabel(fareLabel),
-      paymentMethodTitle: paymentMethodTitle,
-      paymentMethodSubtitle: paymentMethodSubtitle,
+      rideId: rideId,
+      riderToken: riderToken,
+      fareEuro: parseRidePaymentEuroLabel(fareLabel),
+      initialMethod: initialMethod,
     ),
   );
 }
 
-double? parseEuroAmountLabel(String? raw) {
-  if (raw == null || raw.trim().isEmpty || raw.trim() == '—') return null;
-  final cleaned = raw
-      .replaceAll('€', '')
-      .replaceAll(RegExp(r'EUR', caseSensitive: false), '')
-      .trim()
-      .replaceAll(',', '.');
-  return double.tryParse(cleaned);
-}
+@Deprecated('Use parseRidePaymentEuroLabel from heycaby_utils')
+double? parseEuroAmountLabel(String? raw) => parseRidePaymentEuroLabel(raw);
 
-String formatEuroAmount(double value) => '€${value.toStringAsFixed(2)}';
+@Deprecated('Use formatRidePaymentEuro from heycaby_utils')
+String formatEuroAmount(double value) => formatRidePaymentEuro(value);
 
 String riderPaymentMethodTitle(
   AppLocalizations l10n,
   List<String> paymentMethods,
 ) {
-  if (paymentMethods.isEmpty) return l10n.cash;
-  final raw = paymentMethods.first.trim().toLowerCase();
-  return switch (raw) {
-    'cash' => l10n.cash,
-    'pin' => 'PIN',
-    'tikkie' => l10n.tikkie,
-    _ => raw
-        .split(RegExp(r'[_\s]+'))
-        .where((word) => word.isNotEmpty)
-        .map((word) => word[0].toUpperCase() + word.substring(1).toLowerCase())
-        .join(' '),
+  return switch (RidePaymentMethod.fromBookingMethods(paymentMethods)) {
+    RidePaymentMethod.cash => l10n.cash,
+    RidePaymentMethod.pin => 'PIN',
+    RidePaymentMethod.tikkie => l10n.tikkie,
   };
 }
 
@@ -74,13 +70,10 @@ String? riderPaymentMethodSubtitle(
   AppLocalizations l10n,
   List<String> paymentMethods,
 ) {
-  if (paymentMethods.isEmpty) return l10n.pinSubtitle;
-  final raw = paymentMethods.first.trim().toLowerCase();
-  return switch (raw) {
-    'cash' => l10n.cash,
-    'pin' => l10n.pinSubtitle,
-    'tikkie' => l10n.tikkieSubtitle,
-    _ => null,
+  return switch (RidePaymentMethod.fromBookingMethods(paymentMethods)) {
+    RidePaymentMethod.cash => l10n.paymentCashPayBeforeExit,
+    RidePaymentMethod.pin => l10n.paymentPinTapReader,
+    RidePaymentMethod.tikkie => l10n.paymentTikkieScanQrHint,
   };
 }
 
@@ -89,50 +82,185 @@ class _RidePayDriverSheet extends StatefulWidget {
     required this.colors,
     required this.typography,
     required this.l10n,
+    required this.rideId,
+    required this.riderToken,
     required this.fareEuro,
-    required this.paymentMethodTitle,
-    required this.paymentMethodSubtitle,
+    required this.initialMethod,
   });
 
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typography;
   final AppLocalizations l10n;
+  final String rideId;
+  final String? riderToken;
   final double? fareEuro;
-  final String paymentMethodTitle;
-  final String? paymentMethodSubtitle;
+  final RidePaymentMethod initialMethod;
 
   @override
   State<_RidePayDriverSheet> createState() => _RidePayDriverSheetState();
 }
 
 class _RidePayDriverSheetState extends State<_RidePayDriverSheet> {
-  static const List<int> _presetTips = [1, 2, 3, 5];
-  static const double _scale = 1.1;
+  static const _tipPresets = <double>[0, 2, 5, 10];
+  static const _paymentService = RidePaymentService();
+  static const _riderSelfConfirmAfter = Duration(minutes: 10);
 
-  bool _tipExpanded = false;
-  int? _selectedTip;
-  bool _customTip = false;
-  final _customTipController = TextEditingController();
+  late RidePaymentMethod _method;
+  double _selectedTip = 0;
+  bool _confirming = false;
+  bool _driverConfirmed = false;
+  bool _riderCanSelfConfirm = false;
+  bool _checkoutAdvanced = false;
+  DateTime? _completedAt;
+  Timer? _pollTimer;
+  Timer? _selfConfirmTimer;
+  RealtimeChannel? _paymentChannel;
+
+  @override
+  void initState() {
+    super.initState();
+    _method = widget.initialMethod;
+    unawaited(_refreshPaymentSnapshot());
+    _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      unawaited(_refreshPaymentSnapshot());
+    });
+    _paymentChannel = HeyCabySupabase.client
+        .channel('rider_payment:${widget.rideId}')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'ride_requests',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'id',
+            value: widget.rideId,
+          ),
+          callback: (_) => unawaited(_refreshPaymentSnapshot()),
+        )
+        .subscribe();
+  }
 
   @override
   void dispose() {
-    _customTipController.dispose();
+    _pollTimer?.cancel();
+    _selfConfirmTimer?.cancel();
+    unawaited(_paymentChannel?.unsubscribe());
     super.dispose();
   }
 
-  double? get _tipEuro {
-    if (!_tipExpanded) return null;
-    if (_customTip) {
-      return double.tryParse(_customTipController.text.trim().replaceAll(',', '.'));
+  void _scheduleRiderSelfConfirmTimer() {
+    if (_riderCanSelfConfirm || _completedAt == null) return;
+    final elapsed = DateTime.now().toUtc().difference(_completedAt!);
+    final remaining = _riderSelfConfirmAfter - elapsed;
+    if (remaining <= Duration.zero) {
+      if (mounted) setState(() => _riderCanSelfConfirm = true);
+      return;
     }
-    return _selectedTip?.toDouble();
+    _selfConfirmTimer?.cancel();
+    _selfConfirmTimer = Timer(remaining, () {
+      if (mounted) setState(() => _riderCanSelfConfirm = true);
+    });
   }
 
-  double? get _totalEuro {
-    final fare = widget.fareEuro;
-    final tip = _tipEuro;
-    if (fare == null && tip == null) return null;
-    return (fare ?? 0) + (tip ?? 0);
+  Future<void> _refreshPaymentSnapshot() async {
+    try {
+      final row = await HeyCabySupabase.client
+          .from('ride_requests')
+          .select('completed_at, driver_payment_confirmed_at, tip_amount_eur')
+          .eq('id', widget.rideId)
+          .maybeSingle();
+      if (!mounted || row == null) return;
+
+      final completedRaw = row['completed_at']?.toString();
+      final completedAt = completedRaw != null
+          ? DateTime.tryParse(completedRaw)?.toUtc()
+          : null;
+      final driverConfirmed = row['driver_payment_confirmed_at'] != null;
+      final tip = row['tip_amount_eur'];
+
+      setState(() {
+        _completedAt = completedAt ?? _completedAt;
+        _driverConfirmed = driverConfirmed;
+        if (tip is num && tip.toDouble() > 0) {
+          _selectedTip = tip.toDouble().clamp(0, 99999);
+        }
+      });
+      _scheduleRiderSelfConfirmTimer();
+      if (driverConfirmed) {
+        unawaited(_advanceOnDriverConfirmed());
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _advanceOnDriverConfirmed() async {
+    if (_checkoutAdvanced || _confirming || !mounted) return;
+    _checkoutAdvanced = true;
+    setState(() => _confirming = true);
+    HapticService.success();
+    try {
+      if (_selectedTip > 0 || widget.riderToken != null) {
+        await _paymentService.confirm(
+          rideId: widget.rideId,
+          tipEuro: _selectedTip,
+          riderToken: widget.riderToken,
+          paymentMethod: _method.id,
+        );
+      }
+      if (!mounted) return;
+      Navigator.of(context).pop(
+        RidePayDriverResult(
+          confirmed: true,
+          tipEuro: _selectedTip > 0 ? _selectedTip : null,
+          paymentMethod: _method,
+        ),
+      );
+    } catch (_) {
+      _checkoutAdvanced = false;
+    } finally {
+      if (mounted) setState(() => _confirming = false);
+    }
+  }
+
+  double? get _fare => widget.fareEuro;
+
+  double get _total => (_fare ?? 0) + _selectedTip;
+
+  String get _totalLabel => formatRidePaymentEuro(_total);
+
+  bool get _showsTips => true;
+
+  bool get _canTapSelfConfirm => _riderCanSelfConfirm && !_driverConfirmed;
+
+  Future<void> _confirmPaid() async {
+    if (_confirming || !_canTapSelfConfirm) return;
+    setState(() => _confirming = true);
+    HapticService.mediumTap();
+    try {
+      final res = await _paymentService.confirm(
+        rideId: widget.rideId,
+        tipEuro: _selectedTip,
+        riderToken: widget.riderToken,
+        paymentMethod: _method.id,
+      );
+      if (!mounted) return;
+      if (!res.ok) {
+        HapticService.error();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(widget.l10n.paymentConfirmFailed)),
+        );
+        return;
+      }
+      HapticService.success();
+      Navigator.of(context).pop(
+        RidePayDriverResult(
+          confirmed: true,
+          tipEuro: _selectedTip > 0 ? _selectedTip : null,
+          paymentMethod: _method,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _confirming = false);
+    }
   }
 
   @override
@@ -141,387 +269,361 @@ class _RidePayDriverSheetState extends State<_RidePayDriverSheet> {
     final typography = widget.typography;
     final l10n = widget.l10n;
     final bottom = MediaQuery.paddingOf(context).bottom;
-    final fare = widget.fareEuro;
-    final tip = _tipEuro;
-    final total = _totalEuro;
     final fareLabel =
-        fare != null ? formatEuroAmount(fare) : '—';
-    final totalLabel =
-        total != null && total > 0 ? formatEuroAmount(total) : fareLabel;
-    final iconSize = 58.0 * _scale;
-    final buttonHeight = 58.0 * _scale;
+        _fare != null ? formatRidePaymentEuro(_fare!) : '—';
+    final amountLabel = _selectedTip > 0 ? _totalLabel : fareLabel;
 
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(12, 0, 12, bottom + 14),
-        child: GlassPanel(
-          colors: colors,
-          typography: typography,
-          padding: EdgeInsets.fromLTRB(
-            22 * _scale,
-            12 * _scale,
-            22 * _scale,
-            22 * _scale,
-          ),
-          borderRadius: BorderRadius.circular(30 * _scale),
-          tintColor: colors.card,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 48 * _scale,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: colors.border.withValues(alpha: 0.9),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 20 * _scale),
-                Center(
-                  child: Container(
-                    width: iconSize,
-                    height: iconSize,
-                    decoration: BoxDecoration(
-                      color: colors.warning.withValues(alpha: 0.14),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: MoneySilhouetteIcon(
-                        color: colors.warning,
-                        size: 30 * _scale,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 18 * _scale),
-                Text(
-                  l10n.ridePayDriverTitle,
-                  textAlign: TextAlign.center,
-                  style: typography.titleLarge.copyWith(
-                    color: colors.text,
-                    fontWeight: FontWeight.w900,
-                    fontSize: (typography.titleLarge.fontSize ?? 22) * _scale,
-                    height: 1.15,
-                  ),
-                ),
-                SizedBox(height: 10 * _scale),
-                Text(
-                  l10n.ridePayDriverBody,
-                  textAlign: TextAlign.center,
-                  style: typography.bodyMedium.copyWith(
-                    color: colors.textMid,
-                    height: 1.45,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(height: 20 * _scale),
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 20 * _scale,
-                    vertical: 18 * _scale,
-                  ),
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, bottom + 16),
+      child: GlassPanel(
+        colors: colors,
+        typography: typography,
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 22),
+        borderRadius: BorderRadius.circular(28),
+        tintColor: colors.card,
+        borderColor: colors.border.withValues(alpha: 0.55),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 5,
                   decoration: BoxDecoration(
-                    color: colors.warning.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20 * _scale),
-                    border: Border.all(
-                      color: colors.warning.withValues(alpha: 0.32),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      if (tip != null && tip > 0) ...[
-                        _PayLineRow(
-                          label: l10n.ridePayDriverFareLine,
-                          amount: fareLabel,
-                          colors: colors,
-                          typo: typography,
-                        ),
-                        SizedBox(height: 6 * _scale),
-                        _PayLineRow(
-                          label: l10n.ridePayDriverTipLine,
-                          amount: formatEuroAmount(tip),
-                          colors: colors,
-                          typo: typography,
-                        ),
-                        Padding(
-                          padding: EdgeInsets.symmetric(vertical: 10 * _scale),
-                          child: Divider(
-                            color: colors.border.withValues(alpha: 0.8),
-                            height: 1,
-                          ),
-                        ),
-                        Text(
-                          l10n.ridePayDriverTotalCaption,
-                          textAlign: TextAlign.center,
-                          style: typography.labelLarge.copyWith(
-                            color: colors.textMid,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        SizedBox(height: 6 * _scale),
-                        Text(
-                          totalLabel,
-                          textAlign: TextAlign.center,
-                          style: typography.displaySmall.copyWith(
-                            color: colors.text,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 44 * _scale,
-                            height: 1.05,
-                            letterSpacing: -1.2,
-                          ),
-                        ),
-                      ] else ...[
-                        Text(
-                          l10n.ridePayDriverAmountCaption,
-                          textAlign: TextAlign.center,
-                          style: typography.labelLarge.copyWith(
-                            color: colors.textMid,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        SizedBox(height: 8 * _scale),
-                        Text(
-                          fareLabel,
-                          textAlign: TextAlign.center,
-                          style: typography.displaySmall.copyWith(
-                            color: colors.text,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 42 * _scale,
-                            height: 1.05,
-                            letterSpacing: -1.2,
-                          ),
-                        ),
-                      ],
-                    ],
+                    color: colors.border.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(999),
                   ),
                 ),
-                SizedBox(height: 12 * _scale),
-                if (!_tipExpanded)
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      HapticService.lightTap();
-                      setState(() => _tipExpanded = true);
-                    },
-                    icon: const Icon(Icons.add_rounded, size: 20),
-                    label: Text(l10n.ridePayDriverAddTip),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: Size.fromHeight(48 * _scale),
-                      foregroundColor: colors.accent,
-                      side: BorderSide(color: colors.accent.withValues(alpha: 0.45)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14 * _scale),
-                      ),
-                    ),
-                  )
-                else ...[
-                  Text(
-                    l10n.tipDriverTitle,
-                    textAlign: TextAlign.center,
-                    style: typography.bodySmall.copyWith(
-                      color: colors.textMid,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 10 * _scale),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      ..._presetTips.map((amount) {
-                        final selected = !_customTip && _selectedTip == amount;
-                        return _TipChip(
-                          label: '€$amount',
-                          selected: selected,
-                          colors: colors,
-                          typo: typography,
-                          onTap: () {
-                            HapticService.lightTap();
-                            setState(() {
-                              _selectedTip = amount;
-                              _customTip = false;
-                            });
-                          },
-                        );
-                      }),
-                      _TipChip(
-                        label: l10n.tipAmountCustom,
-                        selected: _customTip,
-                        colors: colors,
-                        typo: typography,
-                        onTap: () {
-                          HapticService.lightTap();
-                          setState(() {
-                            _customTip = true;
-                            _selectedTip = null;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                  if (_customTip) ...[
-                    SizedBox(height: 10 * _scale),
-                    Center(
-                      child: SizedBox(
-                        width: 140,
-                        child: TextField(
-                          controller: _customTipController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          textAlign: TextAlign.center,
-                          onChanged: (_) => setState(() {}),
-                          decoration: InputDecoration(
-                            prefixText: '€ ',
-                            isDense: true,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: colors.border),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: colors.accent, width: 1.5),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-                SizedBox(height: 14 * _scale),
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16 * _scale,
-                    vertical: 14 * _scale,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colors.accentL.withValues(alpha: 0.55),
-                    borderRadius: BorderRadius.circular(16 * _scale),
-                    border: Border.all(
-                      color: colors.accent.withValues(alpha: 0.24),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        l10n.ridePayDriverPayVia(widget.paymentMethodTitle),
-                        textAlign: TextAlign.center,
-                        style: typography.titleSmall.copyWith(
-                          color: colors.text,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      if (widget.paymentMethodSubtitle != null &&
-                          widget.paymentMethodSubtitle!.trim().isNotEmpty) ...[
-                        SizedBox(height: 4 * _scale),
-                        Text(
-                          widget.paymentMethodSubtitle!,
-                          textAlign: TextAlign.center,
-                          style: typography.bodySmall.copyWith(
-                            color: colors.textMid,
-                          ),
-                        ),
-                      ],
-                    ],
+              ),
+              const SizedBox(height: 18),
+              _PaymentMethodTabs(
+                colors: colors,
+                typo: typography,
+                l10n: l10n,
+                selected: _method,
+                onChanged: (m) {
+                  HapticService.lightTap();
+                  setState(() => _method = m);
+                },
+              ),
+              const SizedBox(height: 20),
+              Text(
+                l10n.paymentRiderHeadline.toUpperCase(),
+                textAlign: TextAlign.center,
+                style: typography.labelSmall.copyWith(
+                  color: colors.textSoft,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _instructionTitle(l10n),
+                textAlign: TextAlign.center,
+                style: typography.titleMedium.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w800,
+                  height: 1.25,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                amountLabel,
+                textAlign: TextAlign.center,
+                style: typography.displaySmall.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 44,
+                  height: 1.02,
+                  letterSpacing: -1.2,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+              const SizedBox(height: 14),
+              _MethodHintCard(
+                colors: colors,
+                typo: typography,
+                method: _method,
+                l10n: l10n,
+              ),
+              if (_showsTips) ...[
+                const SizedBox(height: 18),
+                Text(
+                  l10n.paymentAddTipQuestion,
+                  textAlign: TextAlign.center,
+                  style: typography.labelMedium.copyWith(
+                    color: colors.textSoft,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                SizedBox(height: 24 * _scale),
-                FilledButton(
-                  onPressed: () {
-                    HapticService.lightTap();
-                    Navigator.of(context).pop(
-                      const RidePayDriverResult(confirmed: false),
+                const SizedBox(height: 10),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _tipPresets.map((amount) {
+                    final selected = _selectedTip == amount;
+                    final label = amount == 0
+                        ? l10n.paymentNoTip
+                        : formatRidePaymentEuro(amount);
+                    return _TipChip(
+                      label: label,
+                      selected: selected,
+                      colors: colors,
+                      typo: typography,
+                      onTap: () {
+                        HapticService.lightTap();
+                        setState(() => _selectedTip = amount);
+                      },
                     );
-                  },
-                  style: FilledButton.styleFrom(
-                    minimumSize: Size.fromHeight(buttonHeight),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18 * _scale),
-                    ),
-                  ),
-                  child: Text(l10n.ridePayDriverDismiss),
-                ),
-                SizedBox(height: 11 * _scale),
-                OutlinedButton(
-                  onPressed: () {
-                    HapticService.mediumTap();
-                    final tipValue = _tipEuro;
-                    Navigator.of(context).pop(
-                      RidePayDriverResult(
-                        confirmed: true,
-                        tipEuro: tipValue != null && tipValue > 0
-                            ? tipValue
-                            : null,
-                      ),
-                    );
-                  },
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: Size.fromHeight(buttonHeight),
-                    foregroundColor: colors.accent,
-                    side: BorderSide(
-                      color: colors.accent.withValues(alpha: 0.55),
-                      width: 1.5,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18 * _scale),
-                    ),
-                  ),
-                  child: Text(
-                    total != null && total > 0
-                        ? l10n.ridePayDriverConfirmWithTotal(totalLabel)
-                        : l10n.ridePayDriverConfirm,
-                  ),
+                  }).toList(),
                 ),
               ],
-            ),
+              if (_driverConfirmed) ...[
+                const SizedBox(height: 22),
+                Text(
+                  l10n.paymentDriverConfirmedProceed,
+                  textAlign: TextAlign.center,
+                  style: typography.labelMedium.copyWith(
+                    color: colors.accent,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ] else ...[
+                const SizedBox(height: 22),
+                FilledButton(
+                  onPressed: (_confirming || !_canTapSelfConfirm)
+                      ? null
+                      : _confirmPaid,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(54),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: _confirming
+                      ? SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: colors.onAccent,
+                          ),
+                        )
+                      : Text(
+                          _canTapSelfConfirm
+                              ? _primaryCtaLabel(l10n)
+                              : l10n.paymentWaitingForDriver,
+                          style: typography.labelLarge.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                ),
+                if (!_canTapSelfConfirm) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.paymentWaitingForDriverHint,
+                    textAlign: TextAlign.center,
+                    style: typography.bodySmall.copyWith(
+                      color: colors.textSoft,
+                      fontWeight: FontWeight.w600,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ],
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: _confirming
+                    ? null
+                    : () {
+                        HapticService.lightTap();
+                        Navigator.of(context).pop(
+                          RidePayDriverResult(
+                            confirmed: false,
+                            paymentMethod: _method,
+                          ),
+                        );
+                      },
+                child: Text(
+                  l10n.ridePayDriverDismiss,
+                  style: typography.labelLarge.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: colors.textMid,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
+
+  String _instructionTitle(AppLocalizations l10n) {
+    return switch (_method) {
+      RidePaymentMethod.cash => l10n.paymentRiderCashInstruction(_totalLabel),
+      RidePaymentMethod.pin => l10n.paymentRiderPinInstruction,
+      RidePaymentMethod.tikkie => l10n.paymentRiderTikkieInstruction,
+    };
+  }
+
+  String _primaryCtaLabel(AppLocalizations l10n) {
+    return switch (_method) {
+      RidePaymentMethod.cash => l10n.ridePayDriverConfirmWithTotal(_totalLabel),
+      RidePaymentMethod.pin => l10n.paymentRiderPaidConfirm,
+      RidePaymentMethod.tikkie => l10n.ridePayDriverConfirmWithTotal(_totalLabel),
+    };
+  }
 }
 
-class _PayLineRow extends StatelessWidget {
-  const _PayLineRow({
-    required this.label,
-    required this.amount,
+class _PaymentMethodTabs extends StatelessWidget {
+  const _PaymentMethodTabs({
     required this.colors,
     required this.typo,
+    required this.l10n,
+    required this.selected,
+    required this.onChanged,
   });
 
-  final String label;
-  final String amount;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
+  final AppLocalizations l10n;
+  final RidePaymentMethod selected;
+  final ValueChanged<RidePaymentMethod> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: typo.bodyMedium.copyWith(
-            color: colors.textMid,
-            fontWeight: FontWeight.w600,
-          ),
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: colors.bg.withValues(alpha: 0.65),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: colors.border.withValues(alpha: 0.55)),
+      ),
+      child: Row(
+        children: RidePaymentMethod.values.map((method) {
+          final isSelected = method == selected;
+          final label = switch (method) {
+            RidePaymentMethod.cash => l10n.cash,
+            RidePaymentMethod.pin => 'PIN',
+            RidePaymentMethod.tikkie => l10n.tikkie,
+          };
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => onChanged(method),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected ? colors.card : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: colors.text.withValues(alpha: 0.06),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: typo.labelLarge.copyWith(
+                    color: isSelected ? colors.text : colors.textSoft,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _MethodHintCard extends StatelessWidget {
+  const _MethodHintCard({
+    required this.colors,
+    required this.typo,
+    required this.method,
+    required this.l10n,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final RidePaymentMethod method;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final (icon, title, subtitle) = switch (method) {
+      RidePaymentMethod.cash => (
+          Icons.payments_outlined,
+          l10n.cash,
+          l10n.paymentCashPayBeforeExit,
         ),
-        Text(
-          amount,
-          style: typo.titleSmall.copyWith(
-            color: colors.text,
-            fontWeight: FontWeight.w700,
-          ),
+      RidePaymentMethod.pin => (
+          Icons.credit_card_rounded,
+          'PIN',
+          l10n.paymentPinTapReader,
         ),
-      ],
+      RidePaymentMethod.tikkie => (
+          Icons.qr_code_2_rounded,
+          l10n.tikkie,
+          l10n.paymentTikkieScanQrHint,
+        ),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: colors.bg.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.border.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: colors.accent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: colors.accent, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: typo.titleSmall.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colors.text,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: typo.bodyMedium.copyWith(
+                    color: colors.textMid,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -554,15 +656,16 @@ class _TipChip extends StatelessWidget {
               : colors.card,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected ? colors.accent : colors.border,
-            width: selected ? 1.5 : 1,
+            color: selected
+                ? colors.accent.withValues(alpha: 0.45)
+                : colors.border.withValues(alpha: 0.65),
           ),
         ),
         child: Text(
           label,
-          style: typo.bodyMedium.copyWith(
-            color: selected ? colors.accent : colors.text,
-            fontWeight: FontWeight.w600,
+          style: typo.labelLarge.copyWith(
+            color: selected ? colors.accent : colors.textMid,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),

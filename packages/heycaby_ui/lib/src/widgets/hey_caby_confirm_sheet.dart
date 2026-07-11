@@ -5,6 +5,10 @@ import '../theme/color_tokens.dart';
 import '../theme/typography.dart';
 import 'glass_panel.dart';
 
+const _kPremiumSheetRadius = 32.0;
+const _kPremiumSheetInset = 16.0;
+const _kPremiumButtonRadius = 18.0;
+
 /// Sleek pull-up confirmation for cancel, delete, go back, logout, etc.
 ///
 /// Returns `true` when the user taps [confirmLabel] (the committing action).
@@ -29,9 +33,10 @@ Future<bool> showHeyCabyConfirmSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    barrierColor: colors.text.withValues(alpha: 0.42),
+    barrierColor: colors.text.withValues(alpha: 0.48),
     isDismissible: barrierDismissible,
-    enableDrag: true,
+    enableDrag: barrierDismissible,
+    useSafeArea: false,
     builder: (ctx) => _HeyCabyConfirmSheet(
       colors: colors,
       typography: typography,
@@ -66,9 +71,10 @@ Future<void> showHeyCabyAcknowledgeSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    barrierColor: colors.text.withValues(alpha: 0.42),
+    barrierColor: colors.text.withValues(alpha: 0.48),
     isDismissible: barrierDismissible,
     enableDrag: barrierDismissible,
+    useSafeArea: false,
     builder: (ctx) => _HeyCabyAcknowledgeSheet(
       colors: colors,
       typography: typography,
@@ -80,6 +86,102 @@ Future<void> showHeyCabyAcknowledgeSheet(
       iconBackgroundColor: iconBackgroundColor,
     ),
   );
+}
+
+/// Floating premium card — rounded on all corners, lifted above the home indicator.
+class _HeyCabyPremiumSheetFrame extends StatelessWidget {
+  const _HeyCabyPremiumSheetFrame({
+    required this.colors,
+    required this.typography,
+    required this.child,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typography;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.paddingOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        _kPremiumSheetInset,
+        0,
+        _kPremiumSheetInset,
+        bottom + _kPremiumSheetInset,
+      ),
+      child: GlassPanel(
+        colors: colors,
+        typography: typography,
+        padding: const EdgeInsets.fromLTRB(22, 12, 22, 22),
+        borderRadius: BorderRadius.circular(_kPremiumSheetRadius),
+        tintColor: colors.card,
+        borderColor: colors.border.withValues(alpha: 0.55),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _HeyCabySheetHandle extends StatelessWidget {
+  const _HeyCabySheetHandle({required this.colors});
+
+  final HeyCabyColorTokens colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 44,
+        height: 5,
+        margin: const EdgeInsets.only(bottom: 18),
+        decoration: BoxDecoration(
+          color: colors.border.withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(999),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeyCabySheetIconBadge extends StatelessWidget {
+  const _HeyCabySheetIconBadge({
+    required this.colors,
+    required this.icon,
+    required this.iconColor,
+    required this.iconBackgroundColor,
+  });
+
+  final HeyCabyColorTokens colors;
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBackgroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          color: iconBackgroundColor,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: iconColor.withValues(alpha: 0.22),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: iconColor.withValues(alpha: 0.14),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: iconColor, size: 28),
+      ),
+    );
+  }
 }
 
 class _HeyCabyAcknowledgeSheet extends StatelessWidget {
@@ -105,88 +207,64 @@ class _HeyCabyAcknowledgeSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.paddingOf(context).bottom;
     final accentIcon = iconColor ?? colors.warning;
     final iconBg = iconBackgroundColor ?? accentIcon.withValues(alpha: 0.12);
 
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(12, 0, 12, bottom + 12),
-        child: GlassPanel(
-          colors: colors,
-          typography: typography,
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          tintColor: colors.card,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 44,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: colors.border.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Center(
-                child: Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: iconBg,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: accentIcon, size: 26),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: typography.titleLarge.copyWith(
-                  color: colors.text,
-                  fontWeight: FontWeight.w900,
-                  height: 1.2,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: typography.bodyMedium.copyWith(
-                  color: colors.textMid,
-                  height: 1.45,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 22),
-              FilledButton(
-                onPressed: () {
-                  HapticService.lightTap();
-                  Navigator.of(context).pop();
-                },
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: Text(
-                  actionLabel,
-                  style: typography.labelLarge.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
+    return _HeyCabyPremiumSheetFrame(
+      colors: colors,
+      typography: typography,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _HeyCabySheetHandle(colors: colors),
+          _HeyCabySheetIconBadge(
+            colors: colors,
+            icon: icon,
+            iconColor: accentIcon,
+            iconBackgroundColor: iconBg,
           ),
-        ),
+          const SizedBox(height: 18),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: typography.titleLarge.copyWith(
+              color: colors.text,
+              fontWeight: FontWeight.w900,
+              height: 1.15,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: typography.bodyMedium.copyWith(
+              color: colors.textMid,
+              height: 1.5,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: () {
+              HapticService.lightTap();
+              Navigator.of(context).pop();
+            },
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(54),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(_kPremiumButtonRadius),
+              ),
+            ),
+            child: Text(
+              actionLabel,
+              style: typography.labelLarge.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -221,122 +299,103 @@ class _HeyCabyConfirmSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.paddingOf(context).bottom;
     final accentIcon = iconColor ??
         (confirmDestructive ? colors.error : colors.warning);
     final iconBg = iconBackgroundColor ??
         accentIcon.withValues(alpha: 0.12);
+    final confirmColor =
+        confirmDestructive ? colors.error : colors.accent;
 
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(12, 0, 12, bottom + 12),
-        child: GlassPanel(
-          colors: colors,
-          typography: typography,
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          tintColor: colors.card,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 44,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: colors.border.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: accentIcon, size: 26),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                title,
-                style: typography.titleLarge.copyWith(
-                  color: colors.text,
-                  fontWeight: FontWeight.w900,
-                  height: 1.2,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                message,
-                style: typography.bodyMedium.copyWith(
-                  color: colors.textMid,
-                  height: 1.45,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              if (detail != null && detail!.trim().isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Text(
-                  detail!,
-                  style: typography.bodySmall.copyWith(
-                    color: colors.textSoft,
-                    height: 1.35,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 22),
-              FilledButton(
-                onPressed: () {
-                  HapticService.lightTap();
-                  Navigator.of(context).pop(false);
-                },
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: Text(
-                  dismissLabel,
-                  style: typography.labelLarge.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              OutlinedButton(
-                onPressed: () {
-                  HapticService.mediumTap();
-                  Navigator.of(context).pop(true);
-                },
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                  foregroundColor:
-                      confirmDestructive ? colors.error : colors.accent,
-                  side: BorderSide(
-                    color: (confirmDestructive ? colors.error : colors.accent)
-                        .withValues(alpha: 0.55),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: Text(
-                  confirmLabel,
-                  style: typography.labelLarge.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
+    return _HeyCabyPremiumSheetFrame(
+      colors: colors,
+      typography: typography,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _HeyCabySheetHandle(colors: colors),
+          _HeyCabySheetIconBadge(
+            colors: colors,
+            icon: icon,
+            iconColor: accentIcon,
+            iconBackgroundColor: iconBg,
           ),
-        ),
+          const SizedBox(height: 18),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: typography.titleLarge.copyWith(
+              color: colors.text,
+              fontWeight: FontWeight.w900,
+              height: 1.15,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: typography.bodyMedium.copyWith(
+              color: colors.textMid,
+              height: 1.5,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          if (detail != null && detail!.trim().isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              detail!,
+              textAlign: TextAlign.center,
+              style: typography.bodySmall.copyWith(
+                color: colors.textSoft,
+                height: 1.4,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: () {
+              HapticService.lightTap();
+              Navigator.of(context).pop(false);
+            },
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(54),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(_kPremiumButtonRadius),
+              ),
+            ),
+            child: Text(
+              dismissLabel,
+              style: typography.labelLarge.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton(
+            onPressed: () {
+              HapticService.mediumTap();
+              Navigator.of(context).pop(true);
+            },
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(54),
+              foregroundColor: confirmColor,
+              side: BorderSide(
+                color: confirmColor.withValues(alpha: 0.5),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(_kPremiumButtonRadius),
+              ),
+            ),
+            child: Text(
+              confirmLabel,
+              style: typography.labelLarge.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

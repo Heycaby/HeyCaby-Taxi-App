@@ -2,12 +2,14 @@
 // Re-run `flutterfire configure` after adding/removing Firebase apps.
 
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError('DefaultFirebaseOptions have not been configured for web.');
+      throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for web.');
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -37,5 +39,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'heycaby-2457a.firebasestorage.app',
     iosBundleId: 'nl.heycaby.driver',
   );
-
 }

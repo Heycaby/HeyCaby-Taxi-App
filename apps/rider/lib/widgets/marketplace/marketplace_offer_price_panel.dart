@@ -15,6 +15,7 @@ class MarketplaceOfferPricePanel extends ConsumerStatefulWidget {
     required this.typo,
     required this.l10n,
     required this.onBidChanged,
+    this.isTaxiTerug = false,
   });
 
   final int bidAmount;
@@ -23,6 +24,7 @@ class MarketplaceOfferPricePanel extends ConsumerStatefulWidget {
   final HeyCabyTypography typo;
   final AppLocalizations l10n;
   final ValueChanged<int> onBidChanged;
+  final bool isTaxiTerug;
 
   @override
   ConsumerState<MarketplaceOfferPricePanel> createState() =>
@@ -127,7 +129,9 @@ class _MarketplaceOfferPricePanelState
           ),
           const SizedBox(height: 4),
           Text(
-            widget.l10n.marketplaceDriversAcceptHint,
+            widget.isTaxiTerug
+                ? widget.l10n.taxiTerugDriversAcceptHint
+                : widget.l10n.marketplaceDriversAcceptHint,
             style: widget.typo.bodySmall.copyWith(
               color: widget.colors.textMid,
               height: 1.35,
@@ -285,9 +289,19 @@ class _MarketplaceOfferPricePanelState
             ],
           ),
           const SizedBox(height: 10),
+          if (widget.isTaxiTerug) ...[
+            Text(
+              widget.l10n.taxiTerugFareExplanation,
+              style: widget.typo.bodySmall.copyWith(
+                color: widget.colors.textMid,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
           Center(
             child: TextButton(
-              onPressed: widget.bidAmount < bounds.maxEuro
+              onPressed: !widget.isTaxiTerug && widget.bidAmount < bounds.maxEuro
                   ? () => _step(2, bounds)
                   : null,
               style: TextButton.styleFrom(

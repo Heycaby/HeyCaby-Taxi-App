@@ -17,5 +17,5 @@ class DriverGpsHealthNotifier extends Notifier<bool> {
   }
 }
 
-final driverGpsHealthProvider =
-    NotifierProvider<DriverGpsHealthNotifier, bool>(DriverGpsHealthNotifier.new);
+final driverGpsHealthProvider = NotifierProvider<DriverGpsHealthNotifier, bool>(
+    DriverGpsHealthNotifier.new);

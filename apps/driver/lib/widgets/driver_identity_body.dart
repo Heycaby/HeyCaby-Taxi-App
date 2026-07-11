@@ -72,6 +72,7 @@ class DriverIdentityBody extends StatelessWidget {
     required this.onEditProfile,
     required this.onOpenVehicle,
     required this.onAddVehiclePhoto,
+    required this.onOpenRatings,
     required this.onOpenSettings,
     required this.onOpenRequirement,
   });
@@ -82,6 +83,7 @@ class DriverIdentityBody extends StatelessWidget {
   final VoidCallback onEditProfile;
   final VoidCallback onOpenVehicle;
   final VoidCallback onAddVehiclePhoto;
+  final VoidCallback onOpenRatings;
   final VoidCallback onOpenSettings;
   final void Function(String key) onOpenRequirement;
 
@@ -129,6 +131,7 @@ class DriverIdentityBody extends StatelessWidget {
                         typography: typography,
                         model: model,
                         onTap: onEditProfile,
+                        onOpenRatings: onOpenRatings,
                       ).driverFadeSlideIn(staggerIndex: 1),
                       const SizedBox(height: DriverSpacing.lg),
                       _VehicleSummaryCard(
@@ -181,12 +184,14 @@ class _ProfileHeroCard extends StatelessWidget {
     required this.typography,
     required this.model,
     required this.onTap,
+    required this.onOpenRatings,
   });
 
   final DriverColors colors;
   final DriverTypography typography;
   final DriverIdentityViewModel model;
   final VoidCallback onTap;
+  final VoidCallback onOpenRatings;
 
   @override
   Widget build(BuildContext context) {
@@ -373,6 +378,7 @@ class _ProfileHeroCard extends StatelessWidget {
                         icon: Icons.star_rounded,
                         value: model.rating.toStringAsFixed(1),
                         label: DriverStrings.driverRating,
+                        onTap: onOpenRatings,
                       ),
                       const SizedBox(width: DriverSpacing.sm),
                       Expanded(
@@ -405,6 +411,7 @@ class _ProfileStatPill extends StatelessWidget {
     required this.icon,
     required this.value,
     required this.label,
+    this.onTap,
   });
 
   final DriverColors colors;
@@ -412,41 +419,54 @@ class _ProfileStatPill extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: DriverSpacing.md,
-        vertical: DriverSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: colors.surface,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: colors.primary.withValues(alpha: 0.10)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: colors.primary, size: 18),
-          const SizedBox(width: DriverSpacing.xs),
-          Text(
-            value,
-            style: typography.titleMedium.copyWith(
-              color: colors.text,
-              fontWeight: FontWeight.w900,
-              height: 1,
-            ),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(
+            horizontal: DriverSpacing.md,
+            vertical: DriverSpacing.sm,
           ),
-          const SizedBox(width: DriverSpacing.xs),
-          Text(
-            label,
-            style: typography.labelSmall.copyWith(
-              color: colors.textMuted,
-              fontWeight: FontWeight.w800,
-            ),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: colors.primary.withValues(alpha: 0.10)),
           ),
-        ],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: colors.warning, size: 18),
+              const SizedBox(width: DriverSpacing.xs),
+              Text(
+                value,
+                style: typography.titleMedium.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
+              ),
+              const SizedBox(width: DriverSpacing.xs),
+              Text(
+                label,
+                style: typography.labelSmall.copyWith(
+                  color: colors.textMuted,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              if (onTap != null) ...[
+                const SizedBox(width: DriverSpacing.xs),
+                Icon(Icons.chevron_right_rounded,
+                    color: colors.textMuted, size: 17),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

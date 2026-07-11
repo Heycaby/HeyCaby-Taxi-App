@@ -69,10 +69,11 @@ class AppLocalizationsNl extends AppLocalizations {
   String get homeSmartOptionsTitle => 'Hoe wil je rijden?';
 
   @override
-  String get homeBestPriceTitle => 'Marktplaats';
+  String get homeBestPriceTitle => 'TAXI TERUG';
 
   @override
-  String get homeBestPriceSubtitle => 'Chauffeurs strijden om jouw rit.';
+  String get homeBestPriceSubtitle =>
+      'Vind chauffeurs die al jouw kant op rijden.';
 
   @override
   String get homeTaxiTerugTitle => 'TAXI TERUG';
@@ -80,6 +81,101 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get homeTaxiTerugSubtitle =>
       'Vind chauffeurs die al jouw richting op gaan.';
+
+  @override
+  String get taxiTerugOfferHeadline =>
+      'Rij mee met taxi\'s die al jouw kant op gaan.';
+
+  @override
+  String get taxiTerugIntroBody =>
+      'Bepaal je prijs. Chauffeurs die al jouw richting op rijden kunnen je bod accepteren.';
+
+  @override
+  String get taxiTerugFareExplanation =>
+      'Taxi Terug betekent dat de taxi al jouw kant op rijdt. De prijs hangt af van het tarief van de chauffeur — geen automatische korting.';
+
+  @override
+  String get taxiTerugDriversAcceptHint =>
+      'Onafhankelijke chauffeurs bepalen zelf of ze je bod accepteren.';
+
+  @override
+  String get taxiTerugCandidatesTitle => 'Taxi\'s richting jouw bestemming';
+
+  @override
+  String get taxiTerugCandidatesEmpty =>
+      'Nog geen taxi\'s richting jouw bestemming. Noem je prijs hieronder — we sturen het naar passende chauffeurs.';
+
+  @override
+  String taxiTerugCandidatesSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count taxi\'s passen bij je route',
+      one: '1 taxi past bij je route',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String taxiTerugCandidateHeading(String destination) {
+    return 'Richting $destination';
+  }
+
+  @override
+  String taxiTerugCandidateEta(int minutes) {
+    return '$minutes min tot ophalen';
+  }
+
+  @override
+  String taxiTerugCandidateMatch(int score) {
+    return '$score% match';
+  }
+
+  @override
+  String taxiTerugCandidateFareRange(String minFare, String maxFare) {
+    return '$minFare – $maxFare';
+  }
+
+  @override
+  String get taxiTerugWaitToleranceTitle => 'Hoe lang kun je wachten?';
+
+  @override
+  String get taxiTerugWaitToleranceBody =>
+      'Taxi Terug-chauffeurs ronden soms eerst een rit in de buurt af. We tonen alleen taxi\'s die je binnen je wachttijd kunnen ophalen.';
+
+  @override
+  String taxiTerugWaitMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get taxiTerugDelayedPickupAck =>
+      'Ik begrijp dat ophalen later kan zijn terwijl de taxi eerst een rit afrondt.';
+
+  @override
+  String get taxiTerugConfirmDelayedPickup =>
+      'Bevestig dat je de latere ophaaltijd begrijpt.';
+
+  @override
+  String taxiTerugCandidatePickupWindow(int minMinutes, int maxMinutes) {
+    return 'Ophalen beschikbaar over $minMinutes–$maxMinutes min';
+  }
+
+  @override
+  String get taxiTerugCandidateFinishingRide =>
+      'Chauffeur rondt eerst een rit in de buurt af.';
+
+  @override
+  String taxiTerugCandidateDepartsAt(String time) {
+    return 'Vertrekt om $time';
+  }
+
+  @override
+  String get taxiTerugQueuedConfirmed => 'Taxi Terug bevestigd';
+
+  @override
+  String get taxiTerugQueuedWaitingForDriver =>
+      'Je chauffeur rondt eerst een rit af.';
 
   @override
   String get homeScheduleLaterTitle => 'Later plannen';
@@ -115,7 +211,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get homeSupplyNoneSubtitle =>
-      'Probeer Marktplaats of plan een rit voor later.';
+      'Probeer TAXI TERUG of plan een rit voor later.';
 
   @override
   String homeSupplyNearbyTitle(int count) {
@@ -218,6 +314,14 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get vehicleCategoryTitle => 'Heb je een specifiek voertuig nodig?';
+
+  @override
+  String get vehicleSelectUpToThree =>
+      'Kies maximaal 3 types met chauffeurs in de buurt';
+
+  @override
+  String get vehicleMaxCategoriesSelected =>
+      'Je kunt maximaal 3 voertuigtypes kiezen';
 
   @override
   String get homeAirportChipSchiphol => 'Schiphol';
@@ -615,6 +719,36 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get growCityBadgeTopPromoter => 'Top Promoter';
+
+  @override
+  String get growCityRideBadgesTitle => 'Ride milestones';
+
+  @override
+  String get growCityRideBadgeFirstRide => 'First Ride';
+
+  @override
+  String get growCityRideBadgeRegular => 'Regular';
+
+  @override
+  String get growCityRideBadgeDedicated => 'Dedicated';
+
+  @override
+  String get growCityRideBadgeLegend => 'HeyCaby Legend';
+
+  @override
+  String growCityStreakWeeks(int count) {
+    return '$count week streak';
+  }
+
+  @override
+  String growCityProgressToRideBadge(String badge) {
+    return 'Progress to $badge';
+  }
+
+  @override
+  String growCityProgressToInviteBadge(String badge) {
+    return 'Progress to $badge';
+  }
 
   @override
   String get growCityWhyHelpTitle => 'Waarom helpen?';
@@ -1321,6 +1455,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get ridesFilterActive => 'Actief';
 
   @override
+  String get ridesFilterAll => 'Alle';
+
+  @override
   String get ridesFilterBidding => 'Biedingen';
 
   @override
@@ -1593,7 +1730,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Je boekingsnaam, e-mail en hoe de app eruitziet.';
 
   @override
-  String get accountProfilePreferencesLabel => 'Taal en thema';
+  String get accountProfilePreferencesLabel => 'Taal';
 
   @override
   String get riderPassportTitle => 'Rider Passport';
@@ -1662,6 +1799,38 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String riderRatingTrips(int count) {
     return '$count ritten beoordeeld';
+  }
+
+  @override
+  String get riderRatingDetailsTitle => 'Jouw reputatie als passagier';
+
+  @override
+  String get riderRatingBreakdownTitle => 'Verdeling van beoordelingen';
+
+  @override
+  String get riderRatingDriverNotesTitle => 'Berichten van chauffeurs';
+
+  @override
+  String get riderRatingDriverNotesBody =>
+      'Privéfeedback wordt zichtbaar nadat beide partijen de rit hebben beoordeeld.';
+
+  @override
+  String get riderRatingNoComments => 'Nog geen geschreven feedback.';
+
+  @override
+  String get riderRatingAnonymousDriver => 'Feedback van chauffeur';
+
+  @override
+  String get riderRatingLoadFailed => 'Je beoordeling kon niet worden geladen.';
+
+  @override
+  String riderRatingBasedOn(int count) {
+    return 'Gebaseerd op $count voltooide ritten die chauffeurs hebben beoordeeld.';
+  }
+
+  @override
+  String riderRatingAccessibility(String rating, int count) {
+    return 'Passagiersbeoordeling $rating van 5, gebaseerd op $count beoordelingen';
   }
 
   @override
@@ -2732,6 +2901,29 @@ class AppLocalizationsNl extends AppLocalizations {
       'Tik om te boeken of sla hieronder nog een plek op.';
 
   @override
+  String get savedPlacesEmptyStartWith => 'Begin met';
+
+  @override
+  String savedPlacesSectionCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count plaatsen opgeslagen',
+      one: '1 plaats opgeslagen',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get savedPlacesTapToBook => 'Tik om te boeken';
+
+  @override
+  String get savedPlacesGhostHome => 'Thuis';
+
+  @override
+  String get savedPlacesGhostMom => 'Mama thuis';
+
+  @override
   String get noSavedAddressesYet => 'Jouw snelkoppelingen';
 
   @override
@@ -2743,6 +2935,23 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get addSavedAddressSheetTitle => 'Nieuwe plaats opslaan';
+
+  @override
+  String get editSavedAddress => 'Plaats bewerken';
+
+  @override
+  String get editSavedAddressSheetTitle => 'Opgeslagen plaats bewerken';
+
+  @override
+  String get editSavedAddressSheetBody =>
+      'Wijzig de naam, categorie of het adres wanneer je verhuist of gegevens wijzigen.';
+
+  @override
+  String get editSavedAddressNotFound =>
+      'Deze plaats is verwijderd. Vernieuw je lijst en probeer opnieuw.';
+
+  @override
+  String get saveChanges => 'Wijzigingen opslaan';
 
   @override
   String get savedAddressCategoryLabel => 'Categorie';
@@ -2786,6 +2995,10 @@ class AppLocalizationsNl extends AppLocalizations {
       'Je kunt maximaal 10 plekken opslaan. Verwijder er een om een nieuwe toe te voegen.';
 
   @override
+  String get savedAddressesSessionRequired =>
+      'We konden je account niet verifiëren. Open Account, bevestig je e-mail en probeer opnieuw.';
+
+  @override
   String get deleteSavedAddress => 'Verwijderen';
 
   @override
@@ -2802,7 +3015,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get searchFactMarketplace =>
-      'Chauffeurs die teruggaan naar hun stad rijden soms voor minder. Check de marketplace voor de beste prijs.';
+      'Chauffeurs die teruggaan naar hun stad rijden soms voor minder. Probeer TAXI TERUG voor een betere prijs.';
 
   @override
   String get searchFactZZP =>
@@ -2964,7 +3177,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get activeBookingInstantBody =>
-      'Verwachte wachttijd: 1–2 min. We melden het zodra een chauffeur accepteert.';
+      'HeyCaby is nieuw — matchen kan enkele minuten duren. We blijven zoeken en laten het weten zodra een chauffeur accepteert.';
 
   @override
   String get activeBookingMarketplaceBody =>
@@ -3048,7 +3261,11 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get searchNoSupplyInlineBody =>
-      'We vinden geen chauffeurs bij je opstapplaats. Plan voor later of probeer Marktplaats. We blijven zoeken.';
+      'Geen chauffeurs bij je opstapplaats. Plan voor later — we blijven zoeken.';
+
+  @override
+  String get searchNoSupplyTaxiTerugCardSubtitle =>
+      'Chauffeurs onderweg, vaak voordeliger';
 
   @override
   String get searchNoSupplySheetTitle => 'Geen chauffeurs in de buurt';
@@ -3065,7 +3282,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get searchKeepSearching => 'Blijf zoeken';
 
   @override
-  String get searchSeeOptions => 'Inplannen of Marktplaats';
+  String get searchExpiredGoHome => 'Naar home zonder te boeken';
+
+  @override
+  String get searchSeeOptions => 'Meer opties';
 
   @override
   String get searchExpiredShareSecondary =>
@@ -3365,6 +3585,88 @@ class AppLocalizationsNl extends AppLocalizations {
   String get ridePayDriverDismiss => 'Nog even';
 
   @override
+  String get paymentRiderHeadline => 'Betaal je chauffeur';
+
+  @override
+  String paymentRiderCashInstruction(String amount) {
+    return 'Betaal $amount contant voordat je uitstapt';
+  }
+
+  @override
+  String get paymentRiderPinInstruction =>
+      'Tik of steek je pas in de pinterminal van de chauffeur';
+
+  @override
+  String get paymentRiderTikkieInstruction =>
+      'Scan de Tikkie-QR van je chauffeur';
+
+  @override
+  String get paymentCashPayBeforeExit => 'Betaal voor je uitstapt';
+
+  @override
+  String get paymentPinTapReader => 'Pinbetaling in de taxi';
+
+  @override
+  String get paymentTikkieScanQrHint =>
+      'Open Camera en scan de QR op de telefoon van je chauffeur.';
+
+  @override
+  String get paymentWaitingForDriver => 'Wachten op chauffeur';
+
+  @override
+  String get paymentWaitingForDriverHint =>
+      'Je chauffeur bevestigt wanneer de betaling is ontvangen. Na 10 minuten kun je hier zelf bevestigen.';
+
+  @override
+  String get paymentDriverConfirmedProceed =>
+      'Chauffeur bevestigd — beoordeling openen…';
+
+  @override
+  String get paymentThankYou => 'Bedankt voor het betalen!';
+
+  @override
+  String get paymentAddTipQuestion => 'Fooi geven?';
+
+  @override
+  String get paymentNoTip => 'Geen fooi';
+
+  @override
+  String get paymentRiderPaidConfirm => 'Ik heb betaald ✓';
+
+  @override
+  String get paymentConfirmFailed =>
+      'Betaling bevestigen mislukt. Probeer opnieuw.';
+
+  @override
+  String get activeRideDriverNearPickup =>
+      'Je chauffeur is ongeveer 1 km verwijderd. Kom naar beneden — na aankomst kan wachttijd in rekening worden gebracht.';
+
+  @override
+  String get activeRideDriverAroundCorner =>
+      'Maak je klaar — je chauffeur is om de hoek!';
+
+  @override
+  String get activeRideTripProgress => 'Ritvoortgang';
+
+  @override
+  String activeRideDistanceRemaining(String km) {
+    return 'Nog $km km';
+  }
+
+  @override
+  String activeRideTimeRemaining(String minutes) {
+    return 'Nog $minutes min';
+  }
+
+  @override
+  String activeRideArrivingAround(String time) {
+    return 'Aankomst rond $time';
+  }
+
+  @override
+  String get activeRideTripInProgressHeadline => 'Onderweg';
+
+  @override
   String get activeRideWaitingFeeWaived => 'Wachttarief kwijtgescholden';
 
   @override
@@ -3449,6 +3751,15 @@ class AppLocalizationsNl extends AppLocalizations {
       'Bewaar deze ritbon voor je ritgeschiedenis en declaraties.';
 
   @override
+  String get rideReceiptShareWhatsapp => 'Delen via WhatsApp';
+
+  @override
+  String get rideReceiptShareEmail => 'Verstuur via e-mail';
+
+  @override
+  String get rideReceiptShareFailed => 'Kon bon niet delen';
+
+  @override
   String get rideReceiptFareBreakdown => 'Prijsopbouw';
 
   @override
@@ -3512,4 +3823,123 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get smartBundleTapToHide => 'Tik om ritklassen te verbergen';
+
+  @override
+  String get taxiTerugScreenTitle => 'Taxi Terug';
+
+  @override
+  String get taxiTerugScreenSubtitle =>
+      'Rijd met taxi\'s die al jouw kant op gaan.';
+
+  @override
+  String get taxiTerugScreenTabAvailable => 'Beschikbare taxi\'s';
+
+  @override
+  String get taxiTerugScreenTabPostRequest => 'Plaats een aanvraag';
+
+  @override
+  String get taxiTerugScreenPickupPlaceholder => 'Ophaallocatie';
+
+  @override
+  String get taxiTerugScreenDestinationPlaceholder => 'Waar ga je heen?';
+
+  @override
+  String get taxiTerugScreenSetRoute =>
+      'Stel je ophaal- en bestemmingslocatie in om overeenkomende taxi\'s te zien.';
+
+  @override
+  String get taxiTerugScreenLoadError =>
+      'Kon taxi\'s niet laden. Probeer opnieuw.';
+
+  @override
+  String get taxiTerugScreenDisabled =>
+      'Taxi Terug is momenteel niet beschikbaar.';
+
+  @override
+  String get taxiTerugScreenNoRides => 'Geen Taxi Terug-ritten gevonden.';
+
+  @override
+  String get taxiTerugScreenNoRidesBody =>
+      'Plaats je rit zodat chauffeurs die die kant op gaan kunnen accepteren.';
+
+  @override
+  String get taxiTerugScreenPostCta => 'Taxi Terug-aanvraag plaatsen';
+
+  @override
+  String get taxiTerugScreenBook => 'Boeken';
+
+  @override
+  String get taxiTerugScreenPostTitle => 'Taxi Terug-aanvraag plaatsen';
+
+  @override
+  String get taxiTerugScreenPostBody =>
+      'Chauffeurs die jouw kant op gaan kunnen accepteren of een aanbod sturen.';
+
+  @override
+  String get taxiTerugScreenOfferLabel => 'Jouw aanbod';
+
+  @override
+  String get taxiTerugScreenPostButton => 'Aanvraag plaatsen';
+
+  @override
+  String get taxiTerugScreenPosting => 'Plaatsen…';
+
+  @override
+  String get taxiTerugScreenPostConfirmation =>
+      'Je aanvraag verschijnt bij chauffeurs die naar jouw bestemming onderweg zijn.';
+
+  @override
+  String get taxiTerugHotDestinationsTitle => 'Chauffeurs richting';
+
+  @override
+  String get taxiTerugHotDestinationsSubtitle =>
+      'Tik op een stad om taxi\'s op jouw route te zien.';
+
+  @override
+  String get taxiTerugPickCityHint => 'Kies hierboven een stad';
+
+  @override
+  String get taxiTerugTrackerSearching => 'Je Taxi Terug-match zoeken';
+
+  @override
+  String get taxiTerugTrackerSearchingBody =>
+      'We zoeken naar taxi\'s die jouw kant op gaan. Je kunt hier wachten of verder gaan met je dag.';
+
+  @override
+  String get taxiTerugTrackerNoMatch => 'Geen match gevonden';
+
+  @override
+  String get taxiTerugTrackerNoMatchBody =>
+      'Binnen 1 uur zijn geen Taxi Terug-chauffeurs gevonden. Probeer het later opnieuw.';
+
+  @override
+  String get taxiTerugTrackerCancelTitle => 'Aanvraag annuleren';
+
+  @override
+  String get taxiTerugTrackerCancelConfirm =>
+      'Weet je zeker dat je je Taxi Terug-aanvraag wilt annuleren?';
+
+  @override
+  String get taxiTerugTrackerBoost => 'Aanbod verhogen';
+
+  @override
+  String get taxiTerugTrackerBoostTitle => 'Verhoog je aanbod';
+
+  @override
+  String get taxiTerugTrackerBoostSubtitle =>
+      'Verhoog je aanbod zodat meer chauffeurs het kunnen zien en sneller kunnen accepteren.';
+
+  @override
+  String taxiTerugTrackerBoostSuccess(Object amount) {
+    return 'Aanbod verhoogd naar €$amount! Chauffeurs kunnen het direct zien.';
+  }
+
+  @override
+  String get taxiTerugTrackerBoostFailed =>
+      'Kon aanbod niet verhogen. Probeer het opnieuw.';
+
+  @override
+  String taxiTerugTrackerCurrentOffer(Object amount) {
+    return 'Huidig aanbod: €$amount';
+  }
 }

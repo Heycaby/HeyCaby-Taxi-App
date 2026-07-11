@@ -16,6 +16,7 @@ class DriverDynamicChecklistCard extends StatelessWidget {
   final List<DriverReadinessItem> items;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
+
   /// When set, incomplete rows with a known route become tappable (e.g. open profile / documents).
   final void Function(DriverReadinessItem item)? onIncompleteItemTapped;
 

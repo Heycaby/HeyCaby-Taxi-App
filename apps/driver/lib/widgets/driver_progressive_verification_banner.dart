@@ -87,7 +87,8 @@ class DriverProgressiveVerificationBanner extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  DriverStrings.progressiveVerificationProgress(rides, milestone),
+                  DriverStrings.progressiveVerificationProgress(
+                      rides, milestone),
                   style: typography.titleSmall.copyWith(
                     color: colors.text,
                     fontWeight: FontWeight.w800,

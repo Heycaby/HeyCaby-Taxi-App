@@ -1,5 +1,5 @@
 /// App Group used by Runner + WidgetKit extension (must match Xcode capabilities).
-const String kHeyCabyIosWidgetAppGroup = 'group.nl.heycaby.rider.widgets';
+const String kHeyCabyIosWidgetAppGroup = 'group.nl.heycaby.rider.app.widgets';
 
 /// Custom URL scheme for widget taps → [HeyCabyWidgetDeepLinkScope] (Info.plist + Swift widgetURL).
 const String kHeyCabyWidgetUrlScheme = 'heycabyrider';

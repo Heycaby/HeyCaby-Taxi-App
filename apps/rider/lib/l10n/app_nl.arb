@@ -19,10 +19,31 @@
   "homeDestinationPrompt": "Waar wil je naartoe?",
   "homeContinue": "Doorgaan",
   "homeSmartOptionsTitle": "Hoe wil je rijden?",
-  "homeBestPriceTitle": "Marktplaats",
-  "homeBestPriceSubtitle": "Chauffeurs strijden om jouw rit.",
+  "homeBestPriceTitle": "TAXI TERUG",
+  "homeBestPriceSubtitle": "Vind chauffeurs die al jouw kant op rijden.",
   "homeTaxiTerugTitle": "TAXI TERUG",
   "homeTaxiTerugSubtitle": "Vind chauffeurs die al jouw richting op gaan.",
+  "taxiTerugOfferHeadline": "Rij mee met taxi's die al jouw kant op gaan.",
+  "taxiTerugIntroBody": "Bepaal je prijs. Chauffeurs die al jouw richting op rijden kunnen je bod accepteren.",
+  "taxiTerugFareExplanation": "Taxi Terug betekent dat de taxi al jouw kant op rijdt. De prijs hangt af van het tarief van de chauffeur — geen automatische korting.",
+  "taxiTerugDriversAcceptHint": "Onafhankelijke chauffeurs bepalen zelf of ze je bod accepteren.",
+  "taxiTerugCandidatesTitle": "Taxi's richting jouw bestemming",
+  "taxiTerugCandidatesEmpty": "Nog geen taxi's richting jouw bestemming. Noem je prijs hieronder — we sturen het naar passende chauffeurs.",
+  "taxiTerugCandidatesSubtitle": "{count, plural, =1{1 taxi past bij je route} other{{count} taxi's passen bij je route}}",
+  "taxiTerugCandidateHeading": "Richting {destination}",
+  "taxiTerugCandidateEta": "{minutes} min tot ophalen",
+  "taxiTerugCandidateMatch": "{score}% match",
+  "taxiTerugCandidateFareRange": "{minFare} – {maxFare}",
+  "taxiTerugWaitToleranceTitle": "Hoe lang kun je wachten?",
+  "taxiTerugWaitToleranceBody": "Taxi Terug-chauffeurs ronden soms eerst een rit in de buurt af. We tonen alleen taxi's die je binnen je wachttijd kunnen ophalen.",
+  "taxiTerugWaitMinutes": "{minutes} min",
+  "taxiTerugDelayedPickupAck": "Ik begrijp dat ophalen later kan zijn terwijl de taxi eerst een rit afrondt.",
+  "taxiTerugConfirmDelayedPickup": "Bevestig dat je de latere ophaaltijd begrijpt.",
+  "taxiTerugCandidatePickupWindow": "Ophalen beschikbaar over {minMinutes}–{maxMinutes} min",
+  "taxiTerugCandidateFinishingRide": "Chauffeur rondt eerst een rit in de buurt af.",
+  "taxiTerugCandidateDepartsAt": "Vertrekt om {time}",
+  "taxiTerugQueuedConfirmed": "Taxi Terug bevestigd",
+  "taxiTerugQueuedWaitingForDriver": "Je chauffeur rondt eerst een rit af.",
   "homeScheduleLaterTitle": "Later plannen",
   "homeScheduleLaterSubtitle": "Kies een ophaaltijd die voor jou werkt.",
   "homePopularAirportsTitle": "Populair",
@@ -33,7 +54,7 @@
   "homeEnterDestination": "Voer je bestemming in",
   "homeNoTaxisNearbySubtitle": "Je kunt toch een rit aanvragen. We laten het weten zodra een chauffeur accepteert.",
   "homeSupplyNoneTitle": "Geen chauffeurs bij jou in de buurt",
-  "homeSupplyNoneSubtitle": "Probeer Marktplaats of plan een rit voor later.",
+  "homeSupplyNoneSubtitle": "Probeer TAXI TERUG of plan een rit voor later.",
   "homeSupplyNearbyTitle": "{count, plural, one{1 chauffeur in de buurt} other{{count} chauffeurs in de buurt}}",
   "@homeSupplyNearbyTitle": {
     "placeholders": {
@@ -92,6 +113,8 @@
   "savedTripsTitle": "Opgeslagen ritten",
   "homeCompleteProfile": "Profiel aanvullen",
   "vehicleCategoryTitle": "Heb je een specifiek voertuig nodig?",
+  "vehicleSelectUpToThree": "Kies maximaal 3 types met chauffeurs in de buurt",
+  "vehicleMaxCategoriesSelected": "Je kunt maximaal 3 voertuigtypes kiezen",
   "homeAirportChipSchiphol": "Schiphol",
   "homeAirportChipRotterdam": "Rotterdam Airport",
   "homeAirportChipEindhoven": "Eindhoven",
@@ -565,6 +588,7 @@
   "keepGoing": "Doorgaan",
   "nameSavedSuccess": "Naam succesvol opgeslagen",
   "ridesFilterActive": "Actief",
+  "ridesFilterAll": "Alle",
   "ridesFilterBidding": "Biedingen",
   "ridesFilterCompleted": "Voltooid",
   "ridesFilterCancelled": "Geannuleerd",
@@ -675,7 +699,7 @@
   "whenRowLabel": "Wanneer",
   "accountProfileHeading": "Profiel",
   "accountProfileCardSubtitle": "Je boekingsnaam, e-mail en hoe de app eruitziet.",
-  "accountProfilePreferencesLabel": "Taal en thema",
+  "accountProfilePreferencesLabel": "Taal",
   "riderPassportTitle": "Rider Passport",
   "riderPassportSubtitle": "Je HeyCaby-reisidentiteit voor sneller en soepeler boeken.",
   "riderPassportReady": "Klaar voor sneller boeken",
@@ -699,6 +723,26 @@
   "riderRatingTrips": "{count} ritten beoordeeld",
   "@riderRatingTrips": {
     "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "riderRatingDetailsTitle": "Jouw reputatie als passagier",
+  "riderRatingBreakdownTitle": "Verdeling van beoordelingen",
+  "riderRatingDriverNotesTitle": "Berichten van chauffeurs",
+  "riderRatingDriverNotesBody": "Privéfeedback wordt zichtbaar nadat beide partijen de rit hebben beoordeeld.",
+  "riderRatingNoComments": "Nog geen geschreven feedback.",
+  "riderRatingAnonymousDriver": "Feedback van chauffeur",
+  "riderRatingLoadFailed": "Je beoordeling kon niet worden geladen.",
+  "riderRatingBasedOn": "Gebaseerd op {count} voltooide ritten die chauffeurs hebben beoordeeld.",
+  "@riderRatingBasedOn": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "riderRatingAccessibility": "Passagiersbeoordeling {rating} van 5, gebaseerd op {count} beoordelingen",
+  "@riderRatingAccessibility": {
+    "placeholders": {
+      "rating": { "type": "String" },
       "count": { "type": "int" }
     }
   },
@@ -1109,10 +1153,25 @@
   "saveButton": "Opslaan",
   "savedAddressesSubtitle": "Jouw opgeslagen bestemmingen",
   "savedPlacesSheetSubtitle": "Tik om te boeken of sla hieronder nog een plek op.",
+  "savedPlacesEmptyStartWith": "Begin met",
+  "savedPlacesSectionCount": "{count, plural, one{1 plaats opgeslagen} other{{count} plaatsen opgeslagen}}",
+  "@savedPlacesSectionCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "savedPlacesTapToBook": "Tik om te boeken",
+  "savedPlacesGhostHome": "Thuis",
+  "savedPlacesGhostMom": "Mama thuis",
   "noSavedAddressesYet": "Jouw snelkoppelingen",
   "noSavedAddressesEmptyBody": "Sla thuis, werk of sportschool op — of meerdere thuisadressen (mama, papa, vakantie). Hetzelfde icoon, elke keer een eigen naam.",
   "addSavedAddress": "Plaats opslaan",
   "addSavedAddressSheetTitle": "Nieuwe plaats opslaan",
+  "editSavedAddress": "Plaats bewerken",
+  "editSavedAddressSheetTitle": "Opgeslagen plaats bewerken",
+  "editSavedAddressSheetBody": "Wijzig de naam, categorie of het adres wanneer je verhuist of gegevens wijzigen.",
+  "editSavedAddressNotFound": "Deze plaats is verwijderd. Vernieuw je lijst en probeer opnieuw.",
+  "saveChanges": "Wijzigingen opslaan",
   "savedAddressCategoryLabel": "Categorie",
   "savedAddressNameLabel": "Geef een naam",
   "savedAddressNameHint": "bijv. Mama thuis, Kantoor, Sportschool",
@@ -1126,11 +1185,12 @@
   "savedAddressLabelGym": "Gym",
   "savedAddressLabelCustom": "Aangepast",
   "savedAddressesLimitReached": "Je kunt maximaal 10 plekken opslaan. Verwijder er een om een nieuwe toe te voegen.",
+  "savedAddressesSessionRequired": "We konden je account niet verifiëren. Open Account, bevestig je e-mail en probeer opnieuw.",
   "deleteSavedAddress": "Verwijderen",
   "searchFactDriversKeep100": "Alle chauffeurs houden 100% van hun verdiensten. HeyCaby neemt geen commissie per rit.",
   "searchFactNoSurgePricing": "Geen surge pricing. Ooit. De prijs die je ziet is de prijs die je betaalt.",
   "searchFactAllVerified": "HeyCaby is gemaakt voor echte taxi's — erkend beroepsvervoer, geen privé-gig-auto's.",
-  "searchFactMarketplace": "Chauffeurs die teruggaan naar hun stad rijden soms voor minder. Check de marketplace voor de beste prijs.",
+  "searchFactMarketplace": "Chauffeurs die teruggaan naar hun stad rijden soms voor minder. Probeer TAXI TERUG voor een betere prijs.",
   "searchFactZZP": "Elke Caby-chauffeur is een zelfstandige professional. Je rijdt met iemand die trots is op zijn werk.",
   "searchFactSaveAddresses": "Woon in Rotterdam? Tik één keer op het huis-icoontje en je bestemming is ingevuld. Altijd.",
   "searchFactPayHowYouWant": "Contant, Tikkie, pin of factuur — jouw chauffeur vertelt je welke opties beschikbaar zijn.",
@@ -1183,7 +1243,7 @@
       }
     }
   },
-  "activeBookingInstantBody": "Verwachte wachttijd: 1–2 min. We melden het zodra een chauffeur accepteert.",
+  "activeBookingInstantBody": "HeyCaby is nieuw — matchen kan enkele minuten duren. We blijven zoeken en laten het weten zodra een chauffeur accepteert.",
   "activeBookingMarketplaceBody": "Onafhankelijke chauffeurs kunnen accepteren, tegenbieden of negeren. Jij kiest met wie je rijdt.",
   "activeBookingOffersBody": "{count, plural, one{Bekijk het bod en kies je chauffeur.} other{Vergelijk biedingen en kies je chauffeur.}}",
   "@activeBookingOffersBody": {
@@ -1243,7 +1303,8 @@
   "ridesScheduledMatchingSection": "Geplande aanvragen",
   "noDriverFoundCard": "Nog geen Caby gevonden. Wat wil je doen?",
   "searchNoSupplyInlineTitle": "Geen chauffeurs in de buurt",
-  "searchNoSupplyInlineBody": "We vinden geen chauffeurs bij je opstapplaats. Plan voor later of probeer Marktplaats. We blijven zoeken.",
+  "searchNoSupplyInlineBody": "Geen chauffeurs bij je opstapplaats. Plan voor later — we blijven zoeken.",
+  "searchNoSupplyTaxiTerugCardSubtitle": "Chauffeurs onderweg, vaak voordeliger",
   "searchNoSupplySheetTitle": "Geen chauffeurs in de buurt",
   "searchExpiredSheetTitle": "Nog geen chauffeur geaccepteerd",
   "searchExpiredSheetBody": "Je zoektocht van {minutes} minuten is zonder match geëindigd. Kies je volgende stap.",
@@ -1255,7 +1316,8 @@
     }
   },
   "searchKeepSearching": "Blijf zoeken",
-  "searchSeeOptions": "Inplannen of Marktplaats",
+  "searchExpiredGoHome": "Naar home zonder te boeken",
+  "searchSeeOptions": "Meer opties",
   "searchExpiredShareSecondary": "Ken je een chauffeur? Deel HeyCaby",
   "notifyMeWhenFound": "Meld mij",
   "scheduleRideInstead": "Inplannen",
@@ -1411,6 +1473,54 @@
   },
   "ridePayDriverConfirm": "Ik heb betaald",
   "ridePayDriverDismiss": "Nog even",
+  "paymentRiderHeadline": "Betaal je chauffeur",
+  "paymentRiderCashInstruction": "Betaal {amount} contant voordat je uitstapt",
+  "@paymentRiderCashInstruction": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "paymentRiderPinInstruction": "Tik of steek je pas in de pinterminal van de chauffeur",
+  "paymentRiderTikkieInstruction": "Scan de Tikkie-QR van je chauffeur",
+  "paymentCashPayBeforeExit": "Betaal voor je uitstapt",
+  "paymentPinTapReader": "Pinbetaling in de taxi",
+  "paymentTikkieScanQrHint": "Open Camera en scan de QR op de telefoon van je chauffeur.",
+  "paymentWaitingForDriver": "Wachten op chauffeur",
+  "paymentWaitingForDriverHint": "Je chauffeur bevestigt wanneer de betaling is ontvangen. Na 10 minuten kun je hier zelf bevestigen.",
+  "paymentDriverConfirmedProceed": "Chauffeur bevestigd — beoordeling openen…",
+  "paymentThankYou": "Bedankt voor het betalen!",
+  "paymentAddTipQuestion": "Fooi geven?",
+  "paymentNoTip": "Geen fooi",
+  "paymentRiderPaidConfirm": "Ik heb betaald ✓",
+  "paymentConfirmFailed": "Betaling bevestigen mislukt. Probeer opnieuw.",
+  "activeRideDriverNearPickup": "Je chauffeur is ongeveer 1 km verwijderd. Kom naar beneden — na aankomst kan wachttijd in rekening worden gebracht.",
+  "activeRideDriverAroundCorner": "Maak je klaar — je chauffeur is om de hoek!",
+  "activeRideTripProgress": "Ritvoortgang",
+  "activeRideDistanceRemaining": "Nog {km} km",
+  "@activeRideDistanceRemaining": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideTimeRemaining": "Nog {minutes} min",
+  "@activeRideTimeRemaining": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideArrivingAround": "Aankomst rond {time}",
+  "@activeRideArrivingAround": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideTripInProgressHeadline": "Onderweg",
   "activeRideWaitingFeeWaived": "Wachttarief kwijtgescholden",
   "activeRideWaitingFreePickupTime": "Gratis ophaaltijd",
   "activeRideWaitingTime": "Wachttijd",
@@ -1476,6 +1586,9 @@
   "rideReceiptPaidTitle": "Betaald",
   "rideReceiptBusinessReady": "Zakelijke ritbon",
   "rideReceiptBusinessReadyBody": "Bewaar deze ritbon voor je ritgeschiedenis en declaraties.",
+  "rideReceiptShareWhatsapp": "Delen via WhatsApp",
+  "rideReceiptShareEmail": "Verstuur via e-mail",
+  "rideReceiptShareFailed": "Kon bon niet delen",
   "rideReceiptFareBreakdown": "Prijsopbouw",
   "rideReceiptBaseFare": "Ritprijs",
   "rideReceiptWaitingFee": "Wachttijd",
@@ -1508,5 +1621,39 @@
     }
   },
   "smartBundleDriverPricingNote": "Chauffeurs bepalen hun eigen prijzen. Wij matchen je met de beste opties in de buurt.",
-  "smartBundleTapToHide": "Tik om ritklassen te verbergen"
+  "smartBundleTapToHide": "Tik om ritklassen te verbergen",
+  "taxiTerugScreenTitle": "Taxi Terug",
+  "taxiTerugScreenSubtitle": "Rijd met taxi's die al jouw kant op gaan.",
+  "taxiTerugScreenTabAvailable": "Beschikbare taxi's",
+  "taxiTerugScreenTabPostRequest": "Plaats een aanvraag",
+  "taxiTerugScreenPickupPlaceholder": "Ophaallocatie",
+  "taxiTerugScreenDestinationPlaceholder": "Waar ga je heen?",
+  "taxiTerugScreenSetRoute": "Stel je ophaal- en bestemmingslocatie in om overeenkomende taxi's te zien.",
+  "taxiTerugScreenLoadError": "Kon taxi's niet laden. Probeer opnieuw.",
+  "taxiTerugScreenDisabled": "Taxi Terug is momenteel niet beschikbaar.",
+  "taxiTerugScreenNoRides": "Geen Taxi Terug-ritten gevonden.",
+  "taxiTerugScreenNoRidesBody": "Plaats je rit zodat chauffeurs die die kant op gaan kunnen accepteren.",
+  "taxiTerugScreenPostCta": "Taxi Terug-aanvraag plaatsen",
+  "taxiTerugScreenBook": "Boeken",
+  "taxiTerugScreenPostTitle": "Taxi Terug-aanvraag plaatsen",
+  "taxiTerugScreenPostBody": "Chauffeurs die jouw kant op gaan kunnen accepteren of een aanbod sturen.",
+  "taxiTerugScreenOfferLabel": "Jouw aanbod",
+  "taxiTerugScreenPostButton": "Aanvraag plaatsen",
+  "taxiTerugScreenPosting": "Plaatsen…",
+  "taxiTerugScreenPostConfirmation": "Je aanvraag verschijnt bij chauffeurs die naar jouw bestemming onderweg zijn.",
+  "taxiTerugHotDestinationsTitle": "Chauffeurs richting",
+  "taxiTerugHotDestinationsSubtitle": "Tik op een stad om taxi's op jouw route te zien.",
+  "taxiTerugPickCityHint": "Kies hierboven een stad",
+  "taxiTerugTrackerSearching": "Je Taxi Terug-match zoeken",
+  "taxiTerugTrackerSearchingBody": "We zoeken naar taxi's die jouw kant op gaan. Je kunt hier wachten of verder gaan met je dag.",
+  "taxiTerugTrackerNoMatch": "Geen match gevonden",
+  "taxiTerugTrackerNoMatchBody": "Binnen 1 uur zijn geen Taxi Terug-chauffeurs gevonden. Probeer het later opnieuw.",
+  "taxiTerugTrackerCancelTitle": "Aanvraag annuleren",
+  "taxiTerugTrackerCancelConfirm": "Weet je zeker dat je je Taxi Terug-aanvraag wilt annuleren?",
+  "taxiTerugTrackerBoost": "Aanbod verhogen",
+  "taxiTerugTrackerBoostTitle": "Verhoog je aanbod",
+  "taxiTerugTrackerBoostSubtitle": "Verhoog je aanbod zodat meer chauffeurs het kunnen zien en sneller kunnen accepteren.",
+  "taxiTerugTrackerBoostSuccess": "Aanbod verhoogd naar €{amount}! Chauffeurs kunnen het direct zien.",
+  "taxiTerugTrackerBoostFailed": "Kon aanbod niet verhogen. Probeer het opnieuw.",
+  "taxiTerugTrackerCurrentOffer": "Huidig aanbod: €{amount}"
 }

@@ -65,7 +65,7 @@ Future<void> showDriverShiftHandoverSecurityAlert({
                 const SizedBox(height: DriverSpacing.lg),
                 FilledButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text(DriverStrings.close),
+                  child: Text(DriverStrings.close),
                 ),
               ],
             ),

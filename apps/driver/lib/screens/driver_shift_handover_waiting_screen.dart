@@ -104,7 +104,7 @@ class _DriverShiftHandoverWaitingScreenState
       Navigator.of(context).pop(false);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.shiftHandoverDeniedMessage)),
+        SnackBar(content: Text(DriverStrings.shiftHandoverDeniedMessage)),
       );
       return;
     }
@@ -117,7 +117,7 @@ class _DriverShiftHandoverWaitingScreenState
       Navigator.of(context).pop(false);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(DriverStrings.shiftHandoverActiveRideMessage),
         ),
       );

@@ -338,7 +338,7 @@ void showHotspotsLearnSheet(
               width: double.infinity,
               child: FilledButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text(DriverStrings.hotspotsLearnClose),
+                child: Text(DriverStrings.hotspotsLearnClose),
               ),
             ),
           ],

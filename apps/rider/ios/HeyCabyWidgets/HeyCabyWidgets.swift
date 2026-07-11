@@ -1,7 +1,7 @@
 import WidgetKit
 import SwiftUI
 
-let kAppGroup = "group.nl.heycaby.rider.widgets"
+let kAppGroup = "group.nl.heycaby.rider.app.widgets"
 
 struct RideWidgetData {
     let status: String

@@ -43,6 +43,32 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   /// When true, [_suggestions] come from on-device recents only (no Mapbox call).
   bool _suggestionsFromLocal = false;
 
+  bool _sameAddress(AddressResult? a, AddressResult? b) {
+    if (a == null && b == null) return true;
+    if (a == null || b == null) return false;
+    return a.fullAddress == b.fullAddress &&
+        a.lat == b.lat &&
+        a.lng == b.lng;
+  }
+
+  void _syncAddressFieldsFromBooking(BookingState booking) {
+    final pickup = booking.pickup;
+    if (pickup != null && !_pickupFocus.hasFocus) {
+      final name = pickup.displayName;
+      if (_pickupController.text != name) {
+        _pickupController.text = name;
+      }
+    }
+
+    final destination = booking.destination;
+    if (destination != null && !_destinationFocus.hasFocus) {
+      final name = destination.displayName;
+      if (_destinationController.text != name) {
+        _destinationController.text = name;
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -71,6 +97,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       unawaited(
         ref.read(localRecentAddressesProvider.notifier).refreshFromDisk(),
       );
+      _syncAddressFieldsFromBooking(ref.read(bookingProvider));
       if (_activeFocus == SearchAddressFocus.pickup) {
         _pickupFocus.requestFocus();
       } else {
@@ -320,6 +347,22 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final typo = ref.watch(typographyProvider);
     final l10n = AppLocalizations.of(context);
     final booking = ref.watch(bookingProvider);
+
+    ref.listen<BookingState>(bookingProvider, (prev, next) {
+      if (!mounted) return;
+      final pickupChanged = !_sameAddress(prev?.pickup, next.pickup);
+      final destinationChanged =
+          !_sameAddress(prev?.destination, next.destination);
+      if (!pickupChanged && !destinationChanged) return;
+      _syncAddressFieldsFromBooking(next);
+      if (destinationChanged && next.destination != null) {
+        setState(() {
+          _activeFocus = SearchAddressFocus.destination;
+          _suggestions = [];
+          _suggestionsFromLocal = false;
+        });
+      }
+    });
 
     final canContinue = booking.pickup != null && booking.destination != null;
 

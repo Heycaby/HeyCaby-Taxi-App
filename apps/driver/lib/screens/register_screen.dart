@@ -63,7 +63,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
     final compact = MediaQuery.sizeOf(context).height < 720;
 
     return DriverOnboardingGateBody(

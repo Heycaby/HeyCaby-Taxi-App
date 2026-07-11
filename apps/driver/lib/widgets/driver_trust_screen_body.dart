@@ -163,7 +163,8 @@ class DriverTrustScreenBody extends StatelessWidget {
             ),
             label: Text(
               DriverStrings.loginPasteCode,
-              style: typography.labelLarge.copyWith(color: colors.textSecondary),
+              style:
+                  typography.labelLarge.copyWith(color: colors.textSecondary),
             ),
           ),
         ),
@@ -204,7 +205,8 @@ class DriverTrustScreenBody extends StatelessWidget {
               onPressed: loading ? null : onChangeEmail,
               child: Text(
                 DriverStrings.loginChangeEmail,
-                style: typography.labelLarge.copyWith(color: colors.textSecondary),
+                style:
+                    typography.labelLarge.copyWith(color: colors.textSecondary),
               ),
             ),
           ],

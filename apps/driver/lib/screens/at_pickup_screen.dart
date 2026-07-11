@@ -176,7 +176,7 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
       if (!mounted) return;
       context.go('/driver');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.noShowReported)),
+        SnackBar(content: Text(DriverStrings.noShowReported)),
       );
     } catch (_) {
       if (!mounted) return;
@@ -270,8 +270,7 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
 
   void _openSafety() {
     final colors = DriverColors.fromTheme(ref.read(colorsProvider));
-    final typography =
-        DriverTypography.fromTheme(ref.read(typographyProvider));
+    final typography = DriverTypography.fromTheme(ref.read(typographyProvider));
     unawaited(showDriverRideSafetyToolkitSheet(
       context: context,
       ref: ref,

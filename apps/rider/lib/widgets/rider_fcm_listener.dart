@@ -10,6 +10,7 @@ import 'package:heycaby_api/heycaby_api.dart';
 import '../models/ride_matching_variant.dart';
 import '../providers/ride_request_provider.dart';
 import '../services/rider_notification_router.dart';
+import '../services/rider_ride_lifecycle_engine.dart';
 
 /// Rider FCM wiring for foreground, notification taps, and cold-start opens.
 class RiderFcmListener extends ConsumerStatefulWidget {
@@ -61,6 +62,8 @@ class _RiderFcmListenerState extends ConsumerState<RiderFcmListener> {
         message.notification?.title ?? data['title']?.toString() ?? '';
     final body = message.notification?.body ?? data['body']?.toString() ?? '';
 
+    unawaited(_refreshLiveActivityFromPush(data, category));
+
     unawaited(dispatchRiderNotification(
       context: context,
       category: category,
@@ -76,6 +79,7 @@ class _RiderFcmListenerState extends ConsumerState<RiderFcmListener> {
     if (!mounted) return;
     final data = Map<String, dynamic>.from(message.data);
     final category = data['category']?.toString();
+    await _refreshLiveActivityFromPush(data, category);
     final rideId = _rideIdFromData(data);
     final behavior = behaviorForCategory(category);
 
@@ -106,23 +110,29 @@ class _RiderFcmListenerState extends ConsumerState<RiderFcmListener> {
     context.go(riderDeepLinkForBehavior(behavior));
   }
 
-  String? _rideIdFromData(Map<String, dynamic> data) {
-    for (final key in const [
-      'ride_request_id',
-      'rideRequestId',
-      'ride_id',
-      'rideId',
-      'request_id',
-    ]) {
-      final value = data[key]?.toString().trim();
-      if (value != null && value.isNotEmpty) return value;
-    }
-    return null;
+  Future<void> _refreshLiveActivityFromPush(
+    Map<String, dynamic> data,
+    String? category,
+  ) async {
+    if (!isRideLifecyclePushCategory(category)) return;
+    var rideId = _rideIdFromData(data);
+    rideId ??= ref.read(rideRequestProvider).rideRequestId;
+    if (rideId == null || rideId.isEmpty) return;
+    await riderRideLifecycleEngineRefreshFromServer(
+      ref,
+      rideRequestId: rideId,
+      source: 'fcm',
+    );
   }
+
+  String? _rideIdFromData(Map<String, dynamic> data) =>
+      rideRequestIdFromPushData(data);
 
   bool _isActiveRideStatus(String status) {
     return status == 'assigned' ||
         status == 'accepted' ||
+        status == 'driver_found' ||
+        status == 'driver_en_route' ||
         status == 'driver_arrived' ||
         status == 'arrived' ||
         status == 'in_progress';

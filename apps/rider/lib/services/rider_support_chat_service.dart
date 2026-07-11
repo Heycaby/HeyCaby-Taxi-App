@@ -11,6 +11,7 @@ class RiderSupportChatResult {
     this.error,
     this.ticketId,
     this.usedLocalFallback = false,
+    this.degraded = false,
   });
 
   final bool ok;
@@ -18,6 +19,7 @@ class RiderSupportChatResult {
   final String? error;
   final String? ticketId;
   final bool usedLocalFallback;
+  final bool degraded;
 }
 
 /// Invokes Supabase Edge Function `rider-support-chat` with JWT. No LLM keys in the app.
@@ -76,6 +78,7 @@ class RiderSupportChatService {
         ok: true,
         reply: map['reply'] as String?,
         ticketId: tid,
+        degraded: map['degraded'] == true,
       );
     }
     return const RiderSupportChatResult(ok: true);
@@ -112,14 +115,18 @@ class RiderSupportChatService {
           .maybeSingle();
       if (row == null) return null;
       final status = row['status'] as String? ?? 'open';
-      if (status == 'closed' || status == 'resolved' || status == 'auto_resolved') {
+      if (status == 'closed' ||
+          status == 'resolved' ||
+          status == 'auto_resolved') {
         return null;
       }
 
       final existing = row['messages'];
-      final list = existing is List ? List<dynamic>.from(existing) : <dynamic>[];
+      final list =
+          existing is List ? List<dynamic>.from(existing) : <dynamic>[];
       final now = DateTime.now().toUtc().toIso8601String();
-      list.add(<String, dynamic>{'role': 'user', 'content': userText, 'ts': now});
+      list.add(
+          <String, dynamic>{'role': 'user', 'content': userText, 'ts': now});
       list.add(<String, dynamic>{
         'role': 'assistant',
         'content': assistantText,
@@ -226,7 +233,8 @@ class RiderSupportChatService {
         } catch (_) {}
         res = await invokeWithSessionToken();
         if (res == null) {
-          return const RiderSupportChatResult(ok: false, error: 'not_signed_in');
+          return const RiderSupportChatResult(
+              ok: false, error: 'not_signed_in');
         }
         status = res.status as int;
       }

@@ -25,7 +25,8 @@ class DriverBreakReminderBanner extends ConsumerStatefulWidget {
       _DriverBreakReminderBannerState();
 }
 
-class _DriverBreakReminderBannerState extends ConsumerState<DriverBreakReminderBanner> {
+class _DriverBreakReminderBannerState
+    extends ConsumerState<DriverBreakReminderBanner> {
   Timer? _tick;
   Timer? _autoDismiss;
   bool _dismissedForThisStreak = false;
@@ -77,7 +78,7 @@ class _DriverBreakReminderBannerState extends ConsumerState<DriverBreakReminderB
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(DriverStrings.endShiftDetail)),
+          SnackBar(content: Text(DriverStrings.endShiftDetail)),
         );
       }
     }
@@ -187,7 +188,8 @@ class _DriverBreakReminderBannerState extends ConsumerState<DriverBreakReminderB
                   const SizedBox(height: 2),
                   Text(
                     body,
-                    style: typo.bodySmall.copyWith(color: colors.textMid, height: 1.25),
+                    style: typo.bodySmall
+                        .copyWith(color: colors.textMid, height: 1.25),
                   ),
                 ],
               ),
@@ -200,7 +202,8 @@ class _DriverBreakReminderBannerState extends ConsumerState<DriverBreakReminderB
                 disabledBackgroundColor: colors.border,
                 disabledForegroundColor: colors.textSoft,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(color: colors.border),

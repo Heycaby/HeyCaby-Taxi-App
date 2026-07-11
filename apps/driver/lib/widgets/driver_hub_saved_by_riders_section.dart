@@ -88,8 +88,8 @@ class DriverHubSavedByRidersSection extends ConsumerWidget {
               if (summary.addedThisWeek > 0) ...[
                 const SizedBox(width: 8),
                 _StatPill(
-                  label:
-                      DriverStrings.savedByRidersThisWeek(summary.addedThisWeek),
+                  label: DriverStrings.savedByRidersThisWeek(
+                      summary.addedThisWeek),
                   colors: colors,
                   typo: typo,
                 ),

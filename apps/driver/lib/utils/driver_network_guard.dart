@@ -13,8 +13,7 @@ Future<bool> ensureDriverNetworkForAction(
   if (isDriverNetworkOnline(status)) return true;
   if (!context.mounted) return false;
   ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-        content: Text(DriverStrings.connectivityOfflineActionBlocked)),
+    SnackBar(content: Text(DriverStrings.connectivityOfflineActionBlocked)),
   );
   return false;
 }

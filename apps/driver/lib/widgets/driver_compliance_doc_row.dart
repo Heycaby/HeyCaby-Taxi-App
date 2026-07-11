@@ -66,7 +66,8 @@ class DriverComplianceDocRow extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: typo.bodySmall.copyWith(color: colors.textMid, height: 1.35),
+                      style: typo.bodySmall
+                          .copyWith(color: colors.textMid, height: 1.35),
                     ),
                   ],
                 ),
@@ -76,7 +77,8 @@ class DriverComplianceDocRow extends StatelessWidget {
                 trailing!
               else
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: chipBg,
                     borderRadius: BorderRadius.circular(999),

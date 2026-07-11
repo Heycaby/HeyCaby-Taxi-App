@@ -37,7 +37,8 @@ class DriverListTile extends StatelessWidget {
         borderRadius: DriverRadius.smAll,
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            minHeight: dense ? DriverSpacing.touchTarget : DriverSpacing.touchTarget,
+            minHeight:
+                dense ? DriverSpacing.touchTarget : DriverSpacing.touchTarget,
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -54,7 +55,8 @@ class DriverListTile extends StatelessWidget {
                       color: colors.primaryLight,
                       borderRadius: DriverRadius.smAll,
                     ),
-                    child: DriverIcon(leadingIcon!, color: colors.primary, size: 20),
+                    child: DriverIcon(leadingIcon!,
+                        color: colors.primary, size: 20),
                   ),
                   const SizedBox(width: DriverSpacing.lg),
                 ],
@@ -65,12 +67,14 @@ class DriverListTile extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: typography.titleMedium.copyWith(color: colors.text),
+                        style:
+                            typography.titleMedium.copyWith(color: colors.text),
                       ),
                       if (subtitle != null)
                         Text(
                           subtitle!,
-                          style: typography.bodySmall.copyWith(color: colors.textSecondary),
+                          style: typography.bodySmall
+                              .copyWith(color: colors.textSecondary),
                         ),
                     ],
                   ),

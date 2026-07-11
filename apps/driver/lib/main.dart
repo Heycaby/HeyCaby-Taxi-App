@@ -35,10 +35,12 @@ void main() async {
   }
 
   try {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   } catch (e, st) {
-    debugPrint('Firebase init failed (add firebase_options / GoogleService files): $e $st');
+    debugPrint(
+        'Firebase init failed (add firebase_options / GoogleService files): $e $st');
   }
 
   await HeyCabySupabase.initialize();

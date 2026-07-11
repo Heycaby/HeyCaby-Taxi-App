@@ -60,7 +60,8 @@ class _DriverRideMapPinsOverlayState extends State<DriverRideMapPinsOverlay>
   @override
   void didUpdateWidget(covariant DriverRideMapPinsOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.cameraTick != widget.cameraTick ||
+    if (oldWidget.mapboxMap != widget.mapboxMap ||
+        oldWidget.cameraTick != widget.cameraTick ||
         oldWidget.pickupLat != widget.pickupLat ||
         oldWidget.pickupLng != widget.pickupLng ||
         oldWidget.destinationLat != widget.destinationLat ||
@@ -121,8 +122,7 @@ class _DriverRideMapPinsOverlayState extends State<DriverRideMapPinsOverlay>
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          if (_pickupPx != null)
-            _positionedPin(_pickupPx!, widget.pickupColor),
+          if (_pickupPx != null) _positionedPin(_pickupPx!, widget.pickupColor),
           if (_dropoffPx != null)
             _positionedPin(_dropoffPx!, widget.dropoffColor),
         ],

@@ -169,8 +169,8 @@ class DriverComplianceVaultBody extends StatelessWidget {
                             child: TextButton.icon(
                               onPressed: onRefreshChecklist,
                               icon: const Icon(Icons.refresh_rounded, size: 18),
-                              label: const Text(
-                                  DriverStrings.goOnlineChecklistRefresh),
+                              label:
+                                  Text(DriverStrings.goOnlineChecklistRefresh),
                             ),
                           ),
                         ],

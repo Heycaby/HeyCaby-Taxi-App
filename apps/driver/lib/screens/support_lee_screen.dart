@@ -114,7 +114,7 @@ class _SupportLeeScreenState extends ConsumerState<SupportLeeScreen> {
             FilledButton(
               onPressed:
                   consentChecked ? () => Navigator.of(ctx).pop(true) : null,
-              child: const Text(DriverStrings.supportAiConsentContinue),
+              child: Text(DriverStrings.supportAiConsentContinue),
             ),
           ],
         ),

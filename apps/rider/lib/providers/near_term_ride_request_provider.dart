@@ -2,7 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 
 import '../constants/rider_near_term_window.dart';
+import '../constants/rider_rides_status_contract.dart';
 import '../constants/rider_search_window.dart';
+import '../services/rider_my_rides_service.dart';
 import '../services/stale_ride_cleanup.dart';
 
 DateTime? _parseScheduledPickup(dynamic raw) {
@@ -55,12 +57,16 @@ class NearTermRideSnapshot {
     'assigned',
     'accepted',
     'driver_found',
+    'driver_en_route',
     'driver_arrived',
     'arrived',
     'in_progress',
   };
 
-  bool get isLiveRide => liveStatuses.contains(status);
+  bool get isLiveRide {
+    if (scheduledPickupAt?.isAfter(DateTime.now()) ?? false) return false;
+    return liveStatuses.contains(status);
+  }
 
   bool get isMatching => status == 'pending' || status == 'bidding';
 }
@@ -167,7 +173,8 @@ final farFutureScheduledRideRequestsProvider =
       final m = Map<String, dynamic>.from(raw as Map);
       final id = m['id'] as String?;
       if (id == null) continue;
-      final createdAt = DateTime.tryParse((m['created_at'] ?? '').toString()) ?? now;
+      final createdAt =
+          DateTime.tryParse((m['created_at'] ?? '').toString()) ?? now;
       final scheduled = _parseScheduledPickup(m['scheduled_pickup_at']);
       if (await _expireStaleInstantRideIfNeeded(
         rideId: id,
@@ -188,7 +195,8 @@ final farFutureScheduledRideRequestsProvider =
           destinationAddress: (m['destination_address'] as String?) ?? '',
           scheduledPickupAt: scheduled,
           bookingMode: m['booking_mode'] as String?,
-          createdAt: DateTime.tryParse((m['created_at'] ?? '').toString()) ?? now,
+          createdAt:
+              DateTime.tryParse((m['created_at'] ?? '').toString()) ?? now,
         ),
       );
     }
@@ -205,29 +213,11 @@ final ridesTabUpcomingRequestsProvider =
   final identity = await ref.watch(riderIdentityProvider.future);
   if (!identity.hasSession || identity.riderToken == null) return [];
 
-  const openStatuses = [
-    'pending',
-    'bidding',
-    'assigned',
-    'accepted',
-    'driver_found',
-    'driver_arrived',
-    'arrived',
-    'in_progress',
-  ];
-
   try {
-    final rows = await HeyCabySupabase.client
-        .from('ride_requests')
-        .select(
-          'id, status, pickup_address, destination_address, scheduled_pickup_at, booking_mode, created_at',
-        )
-        .eq('rider_token', identity.riderToken!)
-        .inFilter('status', openStatuses)
-        .order('created_at', ascending: false)
-        .limit(40);
-
-    final list = rows as List<dynamic>;
+    final rows = await const RiderMyRidesService().fetchAll(scope: 'upcoming');
+    final list = rows
+        .where((row) => riderUpcomingRideStatuses.contains(row['status']))
+        .toList();
     final now = DateTime.now();
     final snaps = <NearTermRideSnapshot>[];
     for (final raw in list) {
@@ -237,15 +227,6 @@ final ridesTabUpcomingRequestsProvider =
       final createdAt =
           DateTime.tryParse((m['created_at'] ?? '').toString()) ?? now;
       final scheduled = _parseScheduledPickup(m['scheduled_pickup_at']);
-      if (await _expireStaleInstantRideIfNeeded(
-        rideId: id,
-        riderToken: identity.riderToken!,
-        createdAt: createdAt,
-        now: now,
-        scheduledPickupAt: scheduled,
-      )) {
-        continue;
-      }
       final status = m['status'] as String? ?? 'pending';
       snaps.add(
         NearTermRideSnapshot(
@@ -279,13 +260,14 @@ final ridesTabUpcomingRequestsProvider =
         .where(
           (s) =>
               !s.isLiveRide &&
-              (s.scheduledPickupAt == null || !s.scheduledPickupAt!.isAfter(now)),
+              (s.scheduledPickupAt == null ||
+                  !s.scheduledPickupAt!.isAfter(now)),
         )
         .toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     return [...live, ...futureSched, ...matching];
   } catch (_) {
-    return [];
+    rethrow;
   }
 });

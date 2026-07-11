@@ -105,8 +105,7 @@ class _DriverSmartPingBannerState extends ConsumerState<DriverSmartPingBanner> {
       onMyWayDismissed: onMyWayDismissed,
       outsideDismissed: outsideDismissed,
     );
-    if (widget.onlyOnMyWay &&
-        next == DriverSmartPingSuggestion.outside) {
+    if (widget.onlyOnMyWay && next == DriverSmartPingSuggestion.outside) {
       next = null;
     }
     if (next != _suggestion) {
@@ -277,7 +276,7 @@ class _BannerLayout extends StatelessWidget {
                 const SizedBox(width: 10),
                 TextButton(
                   onPressed: busy ? null : onDismiss,
-                  child: const Text(DriverStrings.smartPingDismiss),
+                  child: Text(DriverStrings.smartPingDismiss),
                 ),
                 const SizedBox(width: 4),
                 FilledButton(
@@ -291,7 +290,7 @@ class _BannerLayout extends StatelessWidget {
                             color: colors.onPrimary,
                           ),
                         )
-                      : const Text(DriverStrings.smartPingSend),
+                      : Text(DriverStrings.smartPingSend),
                 ),
               ],
             ),

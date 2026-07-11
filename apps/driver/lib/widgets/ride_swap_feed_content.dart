@@ -23,7 +23,7 @@ class RideSwapHowIntroSection extends StatelessWidget {
   final HeyCabyTypography typo;
   final bool includePullHint;
 
-  static const List<String> _bulletKeys = [
+  static List<String> _bulletKeys = [
     DriverStrings.rideSwapBulletViewSwaps,
     DriverStrings.rideSwapBulletCheckDetails,
     DriverStrings.rideSwapBulletTakeRide,
@@ -156,7 +156,7 @@ Future<void> showRideSwapHowBottomSheet({
                     }
                     if (ctx.mounted) Navigator.of(ctx).pop();
                   },
-                  child: const Text(DriverStrings.rideSwapGotIt),
+                  child: Text(DriverStrings.rideSwapGotIt),
                 ),
               ),
             ],
@@ -303,7 +303,7 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(DriverStrings.swapConfirmCta),
+            child: Text(DriverStrings.swapConfirmCta),
           ),
         ],
       ),
@@ -319,7 +319,7 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
       ref.invalidate(rideSwapFeedProvider);
       ref.invalidate(scheduledRidesByTabProvider('confirmed'));
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.swapClaimSuccess)),
+        SnackBar(content: Text(DriverStrings.swapClaimSuccess)),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -379,7 +379,7 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
                       typo: typo,
                     ),
                     icon: const Icon(Icons.info_outline_rounded),
-                    label: const Text(DriverStrings.rideSwapHowButton),
+                    label: Text(DriverStrings.rideSwapHowButton),
                   ),
                 ],
               ),
@@ -498,14 +498,14 @@ class _RideSwapFeedContentState extends ConsumerState<RideSwapFeedContent> {
                                   ),
                                 );
                               },
-                              child: const Text(DriverStrings.swapViewDetails),
+                              child: Text(DriverStrings.swapViewDetails),
                             ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: FilledButton(
                               onPressed: () => _claim(swap),
-                              child: const Text(DriverStrings.swapClaim),
+                              child: Text(DriverStrings.swapClaim),
                             ),
                           ),
                         ],

@@ -6,18 +6,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
+import 'package:heycaby_map/heycaby_map.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:heycaby_utils/heycaby_utils.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
 import '../providers/driver_location_provider.dart';
 import '../providers/driver_state_provider.dart';
-import '../services/driver_automatic_ping_service.dart';
 import '../services/location_service.dart';
 import '../services/sound_service.dart';
 import '../utils/accept_ride_error_message.dart';
 import '../utils/driver_ride_coord_utils.dart';
+import '../utils/driver_rider_cancelled_flow.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_opportunity_screen_body.dart';
@@ -28,10 +30,12 @@ class NewRideRequestScreen extends ConsumerStatefulWidget {
   const NewRideRequestScreen({
     super.key,
     required this.rideId,
+    this.inviteId,
     this.urgent = true,
   });
 
   final String rideId;
+  final String? inviteId;
 
   /// When false, no ringtone/countdown alarm (manual browse). Realtime/FCM use true.
   final bool urgent;
@@ -43,7 +47,6 @@ class NewRideRequestScreen extends ConsumerStatefulWidget {
 
 class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
   static const _countdownFallback = 30;
-  static const _countdownMin = 5;
   static const _countdownMax = 60;
 
   Map<String, dynamic>? _rideData;
@@ -51,16 +54,45 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
   int _countdown = _countdownFallback;
   int _countdownTotal = _countdownFallback;
   Timer? _countdownTimer;
+  RealtimeChannel? _cancelChannel;
   bool _isAccepting = false;
   bool _isDeclining = false;
 
   @override
   void initState() {
     super.initState();
+    _subscribeRideCancelled();
     _loadRide();
     if (widget.urgent) {
       HapticService.heavyTap();
     }
+  }
+
+  void _subscribeRideCancelled() {
+    _cancelChannel?.unsubscribe();
+    _cancelChannel = HeyCabySupabase.client
+        .channel('ride-cancel-incoming-${widget.rideId}')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'ride_requests',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'id',
+            value: widget.rideId,
+          ),
+          callback: (payload) {
+            final status = payload.newRecord['status'] as String?;
+            if (status != 'cancelled' || !mounted) return;
+            _countdownTimer?.cancel();
+            handleDriverRiderCancelled(
+              ref: ref,
+              context: context,
+              rideId: widget.rideId,
+            );
+          },
+        )
+        .subscribe();
   }
 
   void _startCountdownIfNeeded() {
@@ -83,6 +115,7 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
   @override
   void dispose() {
     _countdownTimer?.cancel();
+    _cancelChannel?.unsubscribe();
     if (widget.urgent) {
       SoundService().stopRideRequest();
     }
@@ -92,26 +125,36 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
   Future<void> _loadRide() async {
     try {
       // Select with extracted lat/lng from PostGIS coords + explicit lat/lng columns
-      final res = await HeyCabySupabase.client
-          .from('ride_requests')
-          .select('''
+      final res = await HeyCabySupabase.client.from('ride_requests').select('''
             *,
             pickup_lat,
             pickup_lng,
             destination_lat,
-            destination_lng
-          ''')
-          .eq('id', widget.rideId)
-          .maybeSingle();
+            destination_lng,
+            pickup_coords,
+            destination_coords
+          ''').eq('id', widget.rideId).maybeSingle();
       if (!mounted) return;
       if (res == null) {
         setState(() => _error = DriverStrings.rideNotFound);
         return;
       }
 
+      if (res['status'] == 'cancelled') {
+        _countdownTimer?.cancel();
+        stopDriverIncomingRideRinging();
+        if (!mounted) return;
+        await handleDriverRiderCancelled(
+          ref: ref,
+          context: context,
+          rideId: widget.rideId,
+        );
+        return;
+      }
+
       final bookingMode = res['booking_mode'] as String?;
-      final isScheduled = bookingMode == 'scheduled' ||
-          res['is_scheduled'] == true;
+      final isScheduled =
+          bookingMode == 'scheduled' || res['is_scheduled'] == true;
       if (isScheduled) {
         setState(() {
           _error = DriverStrings.scheduledRideWrongEntryMessage;
@@ -121,6 +164,10 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
 
       // Enrich: extract lat/lng from PostGIS if separate columns are null
       enrichDriverRideRequestCoords(res);
+
+      final geo = ref.read(geocodingServiceProvider);
+      geo.startSession();
+      await geocodeDriverRideRequestCoordsIfNeeded(res, geo);
 
       var seconds = _countdownFallback;
       final driverId = await ref.read(driverIdProvider.future);
@@ -135,31 +182,50 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
       await _enrichOfferContext(res);
 
       if (driverId != null && driverId.isNotEmpty) {
-        final invite = await HeyCabySupabase.client
+        final baseInviteQuery = HeyCabySupabase.client
             .from('ride_request_invites')
-            .select('expires_at, status, distance_km, eta_minutes')
+            .select('id, expires_at, status, distance_km, eta_minutes')
             .eq('ride_request_id', widget.rideId)
-            .eq('driver_id', driverId)
-            .inFilter('status', ['pending', 'wave_expired'])
-            .order('invited_at', ascending: false)
-            .limit(1)
-            .maybeSingle();
-        final expiresRaw = invite?['expires_at'];
+            .eq('driver_id', driverId);
+        final invite = widget.inviteId != null && widget.inviteId!.isNotEmpty
+            ? await baseInviteQuery.eq('id', widget.inviteId!).maybeSingle()
+            : await baseInviteQuery
+                .inFilter('status', ['pending', 'wave_expired'])
+                .order('invited_at', ascending: false)
+                .limit(1)
+                .maybeSingle();
+        if (invite == null) {
+          setState(() =>
+              _error = DriverStrings.acceptRideErrorMessage('invite_missing'));
+          return;
+        }
+        final inviteStatus = invite['status']?.toString();
+        if (widget.urgent && inviteStatus != 'pending') {
+          setState(() => _error =
+              DriverStrings.acceptRideErrorMessage('invite_not_pending'));
+          return;
+        }
+        final expiresRaw = invite['expires_at'];
         if (expiresRaw is String) {
           final expiresAt = DateTime.tryParse(expiresRaw)?.toUtc();
           if (expiresAt != null) {
             final remaining =
                 expiresAt.difference(DateTime.now().toUtc()).inSeconds;
-            seconds = remaining.clamp(_countdownMin, _countdownMax);
+            if (widget.urgent && remaining <= 0) {
+              setState(() => _error =
+                  DriverStrings.acceptRideErrorMessage('invite_expired'));
+              return;
+            }
+            seconds = remaining.clamp(1, _countdownMax);
           }
         }
-        final inviteKm = (invite?['distance_km'] as num?)?.toDouble();
+        final inviteKm = (invite['distance_km'] as num?)?.toDouble();
         if (inviteKm != null && inviteKm > 0) {
           res['pickup_distance_km'] = inviteKm;
           res['pickup_eta_min'] ??=
               HeyCabyFormatters.estimateDrivingMinutes(inviteKm).toDouble();
         }
-        final inviteEta = (invite?['eta_minutes'] as num?)?.toDouble();
+        final inviteEta = (invite['eta_minutes'] as num?)?.toDouble();
         if (inviteEta != null && inviteEta > 0) {
           res['pickup_eta_min'] = inviteEta;
         }
@@ -268,25 +334,44 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
       }
     } catch (_) {}
 
+    final bookingMode = (res['booking_mode'] as String?)?.toLowerCase();
+    if (bookingMode != 'terug') return;
+
     try {
-      final returnMode = await ref.read(driverReturnModeProvider.future);
-      if (returnMode.enabled) {
-        res['return_mode_active'] = true;
-        if (returnMode.destinationLabel != null &&
-            returnMode.destinationLabel!.isNotEmpty) {
-          res['return_destination_label'] = returnMode.destinationLabel;
+      final driverId = await ref.read(driverIdProvider.future);
+      if (driverId == null || driverId.isEmpty) return;
+      final qualify =
+          await ref.read(driverDataServiceProvider).qualifyTaxiTerugRide(
+                driverId: driverId,
+                rideRequestId: widget.rideId,
+              );
+      res['taxi_terug_qualified'] = qualify.qualified;
+      if (qualify.destinationLabel != null &&
+          qualify.destinationLabel!.isNotEmpty) {
+        res['taxi_terug_destination_label'] = qualify.destinationLabel;
+      }
+      if (qualify.inTransit) {
+        res['taxi_terug_next_ride'] = true;
+        if (qualify.estimatedPickupMinutes != null) {
+          res['taxi_terug_estimated_pickup_minutes'] =
+              qualify.estimatedPickupMinutes;
         }
       }
-    } catch (_) {}
+    } catch (_) {
+      res['taxi_terug_qualified'] = false;
+    }
   }
 
-  static double _haversineKm(double lat1, double lng1, double lat2, double lng2) {
+  static double _haversineKm(
+      double lat1, double lng1, double lat2, double lng2) {
     const r = 6371.0;
     final dLat = _rad(lat2 - lat1);
     final dLng = _rad(lng2 - lng1);
     final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
-        math.cos(_rad(lat1)) * math.cos(_rad(lat2)) *
-            math.sin(dLng / 2) * math.sin(dLng / 2);
+        math.cos(_rad(lat1)) *
+            math.cos(_rad(lat2)) *
+            math.sin(dLng / 2) *
+            math.sin(dLng / 2);
     return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
   }
 
@@ -326,6 +411,22 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
     SoundService().stopRideRequest();
 
     try {
+      final statusRow = await HeyCabySupabase.client
+          .from('ride_requests')
+          .select('status, cancelled_by')
+          .eq('id', widget.rideId)
+          .maybeSingle();
+      final status = statusRow?['status'] as String?;
+      if (status == 'cancelled') {
+        if (!mounted) return;
+        await handleDriverRiderCancelled(
+          ref: ref,
+          context: context,
+          rideId: widget.rideId,
+        );
+        return;
+      }
+
       final driverId = await ref.read(driverIdProvider.future);
       await _logAcceptPreflight(driverId);
 
@@ -336,9 +437,8 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
       await _persistAcceptedFareSnapshot();
       SoundService().playRideAccepted();
       HapticService.success();
-      final r = _rideData == null
-          ? null
-          : Map<String, dynamic>.from(_rideData!);
+      final r =
+          _rideData == null ? null : Map<String, dynamic>.from(_rideData!);
       if (r != null) {
         enrichDriverRideRequestCoords(r);
       }
@@ -354,31 +454,34 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
             bookingMode: r?['booking_mode'] as String?,
             riderName: r?['pickup_contact_name'] as String?,
           );
-      unawaited(
-        const DriverAutomaticPingService().sendIfNeeded(
-          rideRequestId: widget.rideId,
-          type: DriverPingType.onMyWay,
-        ),
-      );
       if (!mounted) return;
       context.go('/driver/ride/active/${widget.rideId}');
-    } on DriverAcceptRideException catch (e) {
+    } on DriverAcceptRideException catch (acceptError) {
       if (!mounted) return;
-      _logAcceptFailure(e);
+      _logAcceptFailure(acceptError);
       setState(() => _isAccepting = false);
+      if (acceptError.code == 'rider_cancelled' ||
+          acceptError.reason?.contains('rider_cancelled') == true) {
+        await handleDriverRiderCancelled(
+          ref: ref,
+          context: context,
+          rideId: widget.rideId,
+        );
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(acceptRideErrorMessageFor(e)),
+          content: Text(acceptRideErrorMessageFor(acceptError)),
         ),
       );
-      if (_shouldLeaveAfterAcceptError(e.code)) {
+      if (_shouldLeaveAfterAcceptError(acceptError.code)) {
         context.go('/driver');
       }
     } catch (_) {
       if (!mounted) return;
       setState(() => _isAccepting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.rideActionFailedMessage)),
+        SnackBar(content: Text(DriverStrings.acceptRideFailedMessage)),
       );
     }
   }
@@ -386,7 +489,8 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
   Future<void> _logAcceptPreflight(String? driverId) async {
     if (!kDebugMode) return;
     final supabaseUrl = HeyCabySupabase.supabaseUrl;
-    debugPrint('[accept] rideId=${widget.rideId} driverId=$driverId supabase=$supabaseUrl');
+    debugPrint(
+        '[accept] rideId=${widget.rideId} driverId=$driverId supabase=$supabaseUrl');
     try {
       final ride = await HeyCabySupabase.client
           .from('ride_requests')
@@ -405,8 +509,8 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
             .maybeSingle();
         debugPrint('[accept] invite preflight: $invite');
       }
-    } catch (e) {
-      debugPrint('[accept] preflight read failed: $e');
+    } catch (_) {
+      debugPrint('[accept] preflight read failed');
     }
   }
 

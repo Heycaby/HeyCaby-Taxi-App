@@ -73,7 +73,8 @@ class DriverPerformanceScorecardBody extends StatelessWidget {
       typography: typography,
       onBack: onBack,
       body: loading
-          ? Center(child: DriverSkeleton(colors: colors, width: 200, height: 24))
+          ? Center(
+              child: DriverSkeleton(colors: colors, width: 200, height: 24))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(DriverSpacing.screenEdge),
               child: Column(
@@ -101,8 +102,7 @@ class DriverPerformanceScorecardBody extends StatelessWidget {
                       value: scorePercent / 100,
                       minHeight: 8,
                       backgroundColor: colors.border,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(colors.primary),
+                      valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
                     ),
                   ).driverFadeSlideIn(staggerIndex: 1),
                   if (trustScore != null) ...[
@@ -141,7 +141,8 @@ class DriverPerformanceScorecardBody extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       child: Text(
                         DriverStrings.ratingBadges,
-                        style: typography.titleSmall.copyWith(color: colors.text),
+                        style:
+                            typography.titleSmall.copyWith(color: colors.text),
                       ),
                     ),
                     const SizedBox(height: DriverSpacing.sm),
@@ -172,7 +173,8 @@ class DriverPerformanceScorecardBody extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       child: Text(
                         DriverStrings.ratingBreakdownTitle,
-                        style: typography.titleSmall.copyWith(color: colors.text),
+                        style:
+                            typography.titleSmall.copyWith(color: colors.text),
                       ),
                     ),
                     const SizedBox(height: DriverSpacing.md),

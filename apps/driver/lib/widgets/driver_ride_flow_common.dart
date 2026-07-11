@@ -131,23 +131,23 @@ class DriverRideFlowScaffold extends StatelessWidget {
                             DriverSpacing.lg,
                           ),
                           child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                DriverRidePremiumStyle.sheetHandle(colors),
-                                const SizedBox(height: DriverSpacing.md),
-                                DriverRidePremiumStyle.modalTopBar(
-                                  colors: colors,
-                                  title: title,
-                                  titleStyle: typography.titleLarge.copyWith(
-                                    color: colors.text,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                  onBack: onBack,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              DriverRidePremiumStyle.sheetHandle(colors),
+                              const SizedBox(height: DriverSpacing.md),
+                              DriverRidePremiumStyle.modalTopBar(
+                                colors: colors,
+                                title: title,
+                                titleStyle: typography.titleLarge.copyWith(
+                                  color: colors.text,
+                                  fontWeight: FontWeight.w900,
                                 ),
-                                const SizedBox(height: DriverSpacing.xl),
-                                content,
-                              ],
-                            ),
+                                onBack: onBack,
+                              ),
+                              const SizedBox(height: DriverSpacing.xl),
+                              content,
+                            ],
+                          ),
                         ),
                       );
                     },
@@ -194,10 +194,13 @@ class _DriverRideMapBackdropState extends State<_DriverRideMapBackdrop> {
     _mapboxMap = map;
     await _mapboxMap!.scaleBar.updateSettings(ScaleBarSettings(enabled: false));
     await _mapboxMap!.compass.updateSettings(CompassSettings(enabled: false));
-    await _mapboxMap!.attribution.updateSettings(AttributionSettings(enabled: false));
+    await _mapboxMap!.attribution
+        .updateSettings(AttributionSettings(enabled: false));
     await _mapboxMap!.logo.updateSettings(LogoSettings(enabled: false));
-    _lineManager = await _mapboxMap!.annotations.createPolylineAnnotationManager();
-    _pointManager = await _mapboxMap!.annotations.createPointAnnotationManager();
+    _lineManager =
+        await _mapboxMap!.annotations.createPolylineAnnotationManager();
+    _pointManager =
+        await _mapboxMap!.annotations.createPointAnnotationManager();
     _initialized = true;
     _fitAndDraw();
   }
@@ -229,12 +232,17 @@ class _DriverRideMapBackdropState extends State<_DriverRideMapBackdrop> {
 
     final camera = await _mapboxMap!.cameraForCoordinateBounds(
       CoordinateBounds(
-        southwest: Point(coordinates: Position(minLng - lngPad, minLat - latPad)),
-        northeast: Point(coordinates: Position(maxLng + lngPad, maxLat + latPad)),
+        southwest:
+            Point(coordinates: Position(minLng - lngPad, minLat - latPad)),
+        northeast:
+            Point(coordinates: Position(maxLng + lngPad, maxLat + latPad)),
         infiniteBounds: false,
       ),
       MbxEdgeInsets(top: 40, left: 20, bottom: 40, right: 20),
-      null, null, null, null,
+      null,
+      null,
+      null,
+      null,
     );
     await _mapboxMap!.setCamera(camera);
 
@@ -359,46 +367,46 @@ class DriverRideFlowBottomBar extends StatelessWidget {
         DriverSpacing.lg + MediaQuery.paddingOf(context).bottom,
       ),
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DriverRidePremiumStyle.sheetHandle(colors),
-            const SizedBox(height: DriverSpacing.md),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          DriverRidePremiumStyle.sheetHandle(colors),
+          const SizedBox(height: DriverSpacing.md),
+          DriverButton(
+            label: primaryLabel,
+            icon: primaryIcon,
+            onPressed: onPrimary,
+            loading: primaryLoading,
+            variant: primaryVariant,
+            size: DriverButtonSize.lg,
+            colors: colors,
+            typography: typography,
+          ),
+          if (secondaryLabel != null) ...[
+            const SizedBox(height: DriverSpacing.sm),
             DriverButton(
-              label: primaryLabel,
-              icon: primaryIcon,
-              onPressed: onPrimary,
-              loading: primaryLoading,
-              variant: primaryVariant,
-              size: DriverButtonSize.lg,
+              label: secondaryLabel!,
+              onPressed: onSecondary,
+              loading: secondaryLoading,
+              variant: secondaryVariant,
               colors: colors,
               typography: typography,
             ),
-            if (secondaryLabel != null) ...[
-              const SizedBox(height: DriverSpacing.sm),
-              DriverButton(
-                label: secondaryLabel!,
-                onPressed: onSecondary,
-                loading: secondaryLoading,
-                variant: secondaryVariant,
-                colors: colors,
-                typography: typography,
-              ),
-            ],
-            if (tertiaryLabel != null) ...[
-              const SizedBox(height: DriverSpacing.sm),
-              DriverButton(
-                label: tertiaryLabel!,
-                onPressed: onTertiary,
-                variant: tertiaryDestructive
-                    ? DriverButtonVariant.destructive
-                    : DriverButtonVariant.ghost,
-                colors: colors,
-                typography: typography,
-              ),
-            ],
           ],
-        ),
+          if (tertiaryLabel != null) ...[
+            const SizedBox(height: DriverSpacing.sm),
+            DriverButton(
+              label: tertiaryLabel!,
+              onPressed: onTertiary,
+              variant: tertiaryDestructive
+                  ? DriverButtonVariant.destructive
+                  : DriverButtonVariant.ghost,
+              colors: colors,
+              typography: typography,
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

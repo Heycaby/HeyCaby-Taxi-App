@@ -8,10 +8,14 @@ void main() {
       final payload = DriverFcmPayload.fromData({
         'category': 'incoming_ride',
         'ride_request_id': 'ride-1',
+        'ride_invite_id': 'invite-1',
+        'expires_at': '2026-07-10T12:30:00Z',
         'screen': 'incoming',
       });
       expect(payload.effectiveCategory, 'incoming_ride');
       expect(payload.rideRequestId, 'ride-1');
+      expect(payload.rideInviteId, 'invite-1');
+      expect(payload.expiresAt, DateTime.utc(2026, 7, 10, 12, 30));
     });
 
     test('infers incoming_ride from screen', () {

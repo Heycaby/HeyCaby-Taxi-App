@@ -5,6 +5,8 @@ import 'package:heycaby_api/heycaby_api.dart';
 
 import '../providers/driver_data_providers.dart';
 import '../providers/driver_state_provider.dart';
+import '../providers/driver_taxi_terug_queued_provider.dart';
+import '../providers/driver_taxi_terug_stats_provider.dart';
 import '../services/driver_data_service.dart';
 import 'driver_operational_restore_models.dart';
 
@@ -14,7 +16,8 @@ class DriverOperationalRestoreService {
 
   final DriverDataService _dataService;
 
-  Future<DriverOperationalRestoreSnapshot?> fetchSnapshot(String driverId) async {
+  Future<DriverOperationalRestoreSnapshot?> fetchSnapshot(
+      String driverId) async {
     try {
       final driverRow = await HeyCabySupabase.client
           .from('drivers')
@@ -45,7 +48,8 @@ class DriverOperationalRestoreService {
     }
   }
 
-  void applyToState(DriverStateNotifier notifier, DriverOperationalRestoreSnapshot snap) {
+  void applyToState(
+      DriverStateNotifier notifier, DriverOperationalRestoreSnapshot snap) {
     final ride = snap.activeRide;
     if (ride != null) {
       notifier.applyOperationalRestore(
@@ -70,7 +74,8 @@ class DriverOperationalRestoreService {
   }
 
   /// Returns true if navigation was performed.
-  bool navigateIfNeeded(GoRouter router, DriverOperationalRestoreSnapshot snap) {
+  bool navigateIfNeeded(
+      GoRouter router, DriverOperationalRestoreSnapshot snap) {
     final target = snap.navigationRoute;
     if (target == null) return false;
 
@@ -84,12 +89,14 @@ class DriverOperationalRestoreService {
   }
 }
 
-final driverOperationalRestoreServiceProvider = Provider<DriverOperationalRestoreService>(
+final driverOperationalRestoreServiceProvider =
+    Provider<DriverOperationalRestoreService>(
   (ref) => DriverOperationalRestoreService(ref.read(driverDataServiceProvider)),
 );
 
 /// One-shot cold-start restore after auth + driver row exist.
-Future<void> restoreDriverOperationalState(WidgetRef ref, GoRouter router) async {
+Future<void> restoreDriverOperationalState(
+    WidgetRef ref, GoRouter router) async {
   final driverId = await ref.read(driverIdProvider.future);
   if (driverId == null) return;
 
@@ -100,6 +107,7 @@ Future<void> restoreDriverOperationalState(WidgetRef ref, GoRouter router) async
   service.applyToState(ref.read(driverStateProvider.notifier), snap);
   ref.invalidate(driverShiftStatsProvider);
   ref.invalidate(driverEarningsProvider);
+  ref.invalidate(driverTaxiTerugStatsProvider);
 
   service.navigateIfNeeded(router, snap);
 
@@ -109,4 +117,24 @@ Future<void> restoreDriverOperationalState(WidgetRef ref, GoRouter router) async
       'effective=${snap.effectiveAppState} route=${snap.navigationRoute}',
     );
   }
+}
+
+/// After completing a ride, resume an activated queued Taxi Terug booking if any.
+Future<bool> resumeActivatedTaxiTerugRideIfAny(
+  WidgetRef ref,
+  GoRouter router,
+) async {
+  final driverId = await ref.read(driverIdProvider.future);
+  if (driverId == null) return false;
+
+  final service = ref.read(driverOperationalRestoreServiceProvider);
+  final snap = await service.fetchSnapshot(driverId);
+  if (snap?.activeRide == null) return false;
+
+  service.applyToState(ref.read(driverStateProvider.notifier), snap!);
+  ref.invalidate(driverShiftStatsProvider);
+  ref.invalidate(driverEarningsProvider);
+  ref.invalidate(driverTaxiTerugStatsProvider);
+  ref.invalidate(driverTaxiTerugQueuedProvider);
+  return service.navigateIfNeeded(router, snap);
 }

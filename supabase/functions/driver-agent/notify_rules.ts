@@ -40,6 +40,31 @@ export function buildAgentNotification(
       }
 
       if (
+        status === "driver_en_route" &&
+        oldStatus !== "driver_en_route"
+      ) {
+        const riderIdentityId = record?.rider_identity_id as string | undefined;
+        if (riderIdentityId) {
+          return {
+            target: "rider",
+            user_type: "rider",
+            user_id: riderIdentityId,
+            agent: "driver_agent",
+            category: "driver_en_route",
+            title: "Driver on the way",
+            body: "Your driver is heading to your pickup.",
+            data: {
+              ride_request_id: rideRequestId,
+              screen: "active",
+              notification_type: "driver_en_route",
+            },
+            priority: "high",
+            channel: "both",
+          };
+        }
+      }
+
+      if (
         status === "driver_arrived" &&
         oldStatus !== "driver_arrived"
       ) {
@@ -187,6 +212,10 @@ export function buildAgentNotification(
     const rideInviteId = record?.id as string | undefined;
     const driverId = record?.driver_id as string | undefined;
     if (!rideRequestId || !driverId) return null;
+    const expiresAt = typeof record?.expires_at === "string"
+      ? Date.parse(record.expires_at)
+      : Number.NaN;
+    if (Number.isFinite(expiresAt) && expiresAt <= Date.now()) return null;
 
     return {
       target: "driver",
@@ -195,7 +224,7 @@ export function buildAgentNotification(
       agent: "driver_agent",
       category: "incoming_ride",
       title: "New ride request",
-      body: "Open HeyCaby to accept or decline.",
+      body: "Pickup nearby · Open HeyCaby to review",
       data: {
         ride_request_id: rideRequestId,
         ride_invite_id: rideInviteId,

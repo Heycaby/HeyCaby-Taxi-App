@@ -5,9 +5,9 @@
 
 import {
   createClient,
+  resolveWebhookSecret,
   serviceRoleKey,
   supabaseUrl,
-  WEBHOOK_SECRET,
 } from "./config.ts";
 import { buildAgentNotification } from "./notify_rules.ts";
 import type {
@@ -99,6 +99,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
+    const webhookSecret = await resolveWebhookSecret();
 
     const manual = body as
       | ManualPreridePayload
@@ -113,6 +114,7 @@ Deno.serve(async (req) => {
       const authorized = await authorizeManualPreride(
         req,
         ping.ride_request_id,
+        webhookSecret,
       );
       if (!authorized) {
         console.warn(
@@ -147,9 +149,15 @@ Deno.serve(async (req) => {
       if (!rid) return json({ error: "ride_not_found" }, 400);
       if (
         !driverFk ||
-        !["accepted", "driver_arrived", "arrived", "in_progress"].includes(
-          rideStatus,
-        )
+        ![
+          "accepted",
+          "assigned",
+          "driver_found",
+          "driver_en_route",
+          "driver_arrived",
+          "arrived",
+          "in_progress",
+        ].includes(rideStatus)
       ) {
         return json(
           { error: "ride_not_active", status: rideStatus || null },
@@ -218,6 +226,7 @@ Deno.serve(async (req) => {
       const authorized = await authorizeManualPreride(
         req,
         manual.ride_request_id,
+        webhookSecret,
       );
       if (!authorized) {
         console.warn(
@@ -256,9 +265,9 @@ Deno.serve(async (req) => {
       const fav = manual as FavoriteAddedPayload;
 
       // Auth: webhook secret or service-role (RPC calls via net.http_post)
-      if (WEBHOOK_SECRET) {
+      if (webhookSecret) {
         const incomingSecret = req.headers.get("x-webhook-secret") ?? "";
-        const valid = await safeCompare(incomingSecret, WEBHOOK_SECRET);
+        const valid = await safeCompare(incomingSecret, webhookSecret);
         if (!valid) {
           return json({ error: "Unauthorized" }, 401);
         }
@@ -268,15 +277,17 @@ Deno.serve(async (req) => {
       // Just send FCM push to the driver's registered devices.
       const { data: pushRows } = await supabase
         .from("push_devices")
-        .select("fcm_token")
+        .select("id, fcm_token")
         .eq("driver_id", fav.driver_id)
         .eq("app_role", "driver");
 
       let pushed = 0;
+      let failed = 0;
+      let invalidTokensRemoved = 0;
       for (const row of pushRows ?? []) {
         const token = row?.fcm_token as string | null;
         if (!token || token.length < 10) continue;
-        await sendFcmNotification(token, {
+        const result = await sendFcmNotification(token, {
           title: fav.title,
           body: fav.body,
           data: {
@@ -286,28 +297,43 @@ Deno.serve(async (req) => {
           },
           priority: fav.priority ?? "medium",
         });
-        pushed++;
+        if (result.ok) {
+          pushed++;
+        } else {
+          failed++;
+          if (result.permanentFailure && row?.id) {
+            await supabase.from("push_devices").delete().eq("id", row.id);
+            invalidTokensRemoved++;
+          }
+        }
       }
 
       // Mark push_sent_at on the notification row
-      await supabase
-        .from("notifications")
-        .update({ push_sent_at: new Date().toISOString() })
-        .eq("id", fav.notification_id);
+      if (pushed > 0) {
+        await supabase
+          .from("notifications")
+          .update({ push_sent_at: new Date().toISOString() })
+          .eq("id", fav.notification_id);
+      }
 
-      return json({ ok: true, pushed });
+      return json({
+        ok: true,
+        pushed,
+        failed,
+        invalid_tokens_removed: invalidTokensRemoved,
+      });
     }
 
     // Webhook fallback path — requires WEBHOOK_SECRET
-    if (!WEBHOOK_SECRET) {
+    if (!webhookSecret) {
       console.error(
-        "AGENT_WEBHOOK_SECRET env var not set — rejecting webhook request",
+        "driver-agent webhook secret unavailable — rejecting webhook request",
       );
       return json({ error: "Misconfigured" }, 500);
     }
 
     const incomingSecret = req.headers.get("x-webhook-secret") ?? "";
-    const valid = await safeCompare(incomingSecret, WEBHOOK_SECRET);
+    const valid = await safeCompare(incomingSecret, webhookSecret);
     if (!valid) {
       console.warn(
         "driver-agent: rejected request with invalid webhook secret",

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
-/// Minimal marketplace header.
+/// Minimal marketplace / Taxi Terug header.
 class MarketplaceScreenHeader extends StatelessWidget {
   const MarketplaceScreenHeader({
     super.key,
@@ -10,12 +10,14 @@ class MarketplaceScreenHeader extends StatelessWidget {
     required this.typo,
     required this.l10n,
     required this.onClose,
+    this.isTaxiTerug = false,
   });
 
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
   final AppLocalizations l10n;
   final VoidCallback onClose;
+  final bool isTaxiTerug;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +37,7 @@ class MarketplaceScreenHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l10n.marketplace,
+                  isTaxiTerug ? l10n.homeTaxiTerugTitle : l10n.marketplace,
                   style: typo.headingMedium.copyWith(
                     fontWeight: FontWeight.w900,
                     color: colors.text,
@@ -43,7 +45,9 @@ class MarketplaceScreenHeader extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  l10n.marketplaceSubtitle,
+                  isTaxiTerug
+                      ? l10n.homeTaxiTerugSubtitle
+                      : l10n.marketplaceSubtitle,
                   style: typo.bodySmall.copyWith(
                     color: colors.textMid,
                     height: 1.3,

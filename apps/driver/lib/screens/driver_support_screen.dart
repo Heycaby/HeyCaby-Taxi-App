@@ -156,9 +156,8 @@ class _DriverSupportScreenState extends ConsumerState<DriverSupportScreen> {
       onShiftHandoverAudit: _staffUser
           ? () => context.push('/driver/admin/shift-handovers')
           : null,
-      onFleetAllowlist: _fleetManager
-          ? () => context.push('/driver/fleet/allowlist')
-          : null,
+      onFleetAllowlist:
+          _fleetManager ? () => context.push('/driver/fleet/allowlist') : null,
     );
   }
 }

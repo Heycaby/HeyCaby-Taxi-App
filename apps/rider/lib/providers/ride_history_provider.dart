@@ -2,6 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_utils/heycaby_utils.dart';
 
+import '../constants/rider_rides_status_contract.dart';
+import '../services/rider_my_rides_service.dart';
+
 class RideHistoryItem {
   final String id;
   final String status;
@@ -44,19 +47,6 @@ class RideHistoryItem {
   }
 }
 
-const _activeStatuses = [
-  'pending',
-  'bidding',
-  'assigned',
-  'accepted',
-  'driver_found',
-  'driver_arrived',
-  'arrived',
-  'in_progress',
-];
-
-const _cancelledStatuses = ['cancelled', 'expired', 'no_driver'];
-
 String _displayStatus(Map<String, dynamic> row) {
   final status = (row['status'] as String?)?.trim() ?? '';
   final bookingMode = (row['booking_mode'] as String?)?.trim().toLowerCase();
@@ -86,86 +76,27 @@ RideHistoryItem _rideHistoryItemFromRow(Map<String, dynamic> row) {
 Future<List<RideHistoryItem>> fetchRideHistoryItems({
   required RiderIdentityState identity,
   String filter = 'all',
-  int limit = 60,
+  int? limit,
 }) async {
-  final riderToken = identity.riderToken?.trim();
-  final identityId = identity.identityId?.trim();
-
-  if ((riderToken == null || riderToken.isEmpty) &&
-      (identityId == null || identityId.isEmpty)) {
+  if (!identity.hasSession) {
     return [];
   }
 
-  try {
-    const select = '''
-      id,
-      status,
-      booking_mode,
-      pickup_address,
-      destination_address,
-      final_fare,
-      quoted_fare,
-      offered_fare,
-      marketplace_offered_fare,
-      estimated_fare,
-      waiting_fee_cents,
-      waiting_fee_waived,
-      created_at,
-      completed_at,
-      driver:driver_id (
-        full_name,
-        profile_photo_url
-      )
-    ''';
+  final rows = await const RiderMyRidesService().fetchAll(scope: 'history');
+  var items = rows.map(_rideHistoryItemFromRow).toList();
 
-    var query = HeyCabySupabase.client.from('ride_requests').select(select);
-
-    if (riderToken != null && riderToken.isNotEmpty) {
-      query = query.eq('rider_token', riderToken);
-    } else {
-      query = query.eq('rider_identity_id', identityId!);
-    }
-
-    if (filter != 'all') {
-      switch (filter) {
-        case 'active':
-          query = query.inFilter('status', _activeStatuses);
-          break;
-        case 'bidding':
-          query = query.inFilter('status', ['bidding', 'pending']);
-          break;
-        case 'completed':
-          query = query.eq('status', 'completed');
-          break;
-        case 'cancelled':
-          query = query.inFilter('status', _cancelledStatuses);
-          break;
-      }
-    } else {
-      query = query.inFilter('status', [
-        ..._activeStatuses,
-        'completed',
-        ..._cancelledStatuses,
-      ]);
-    }
-
-    final response =
-        await query.order('created_at', ascending: false).limit(limit);
-
-    final items = (response as List)
-        .map((raw) => _rideHistoryItemFromRow(Map<String, dynamic>.from(raw as Map)))
-        .toList();
-
-    if (filter == 'bidding') {
-      return items
-          .where((r) => r.status == 'marketplace' || r.status == 'bidding')
+  switch (filter) {
+    case 'completed':
+      items = items.where((ride) => ride.status == 'completed').toList();
+      break;
+    case 'cancelled':
+      items = items
+          .where((ride) => riderCancelledHistoryStatuses.contains(ride.status))
           .toList();
-    }
-
-    return items;
-  } catch (_) {
-    return [];
+      break;
   }
+
+  return limit == null ? items : items.take(limit).toList();
 }
 
 class RideHistoryNotifier extends AsyncNotifier<List<RideHistoryItem>> {

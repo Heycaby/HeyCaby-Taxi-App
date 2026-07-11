@@ -19,10 +19,73 @@
   "homeDestinationPrompt": "Where do you want to go?",
   "homeContinue": "Continue",
   "homeSmartOptionsTitle": "How do you want to ride?",
-  "homeBestPriceTitle": "Marketplace",
-  "homeBestPriceSubtitle": "Drivers compete for your trip.",
+  "homeBestPriceTitle": "TAXI TERUG",
+  "homeBestPriceSubtitle": "Find drivers already heading your way.",
   "homeTaxiTerugTitle": "TAXI TERUG",
   "homeTaxiTerugSubtitle": "Find drivers already heading your way.",
+  "taxiTerugOfferHeadline": "Ride with taxis already heading your way.",
+  "taxiTerugIntroBody": "Name your price. Drivers already travelling your direction can accept your offer.",
+  "taxiTerugFareExplanation": "Taxi Terug means the taxi is already going your direction. The fare depends on the driver's tariff — not a platform discount.",
+  "taxiTerugDriversAcceptHint": "Independent drivers decide whether to accept your offer.",
+  "taxiTerugCandidatesTitle": "Taxis heading your way",
+  "taxiTerugCandidatesEmpty": "No taxis heading your way yet. Name your price below — we'll notify matching drivers.",
+  "taxiTerugCandidatesSubtitle": "{count, plural, =1{1 taxi matches your route} other{{count} taxis match your route}}",
+  "@taxiTerugCandidatesSubtitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "taxiTerugCandidateHeading": "Heading to {destination}",
+  "@taxiTerugCandidateHeading": {
+    "placeholders": {
+      "destination": { "type": "String" }
+    }
+  },
+  "taxiTerugCandidateEta": "{minutes} min to pickup",
+  "@taxiTerugCandidateEta": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "taxiTerugCandidateMatch": "{score}% match",
+  "@taxiTerugCandidateMatch": {
+    "placeholders": {
+      "score": { "type": "int" }
+    }
+  },
+  "taxiTerugCandidateFareRange": "{minFare} – {maxFare}",
+  "@taxiTerugCandidateFareRange": {
+    "placeholders": {
+      "minFare": { "type": "String" },
+      "maxFare": { "type": "String" }
+    }
+  },
+  "taxiTerugWaitToleranceTitle": "How long can you wait?",
+  "taxiTerugWaitToleranceBody": "Taxi Terug drivers may finish a ride nearby first. We only show taxis that can reach you within your wait time.",
+  "taxiTerugWaitMinutes": "{minutes} min",
+  "@taxiTerugWaitMinutes": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "taxiTerugDelayedPickupAck": "I understand pickup may be later while the taxi finishes its current ride.",
+  "taxiTerugConfirmDelayedPickup": "Please confirm you understand the delayed pickup time.",
+  "taxiTerugCandidatePickupWindow": "Pickup available in {minMinutes}–{maxMinutes} min",
+  "@taxiTerugCandidatePickupWindow": {
+    "placeholders": {
+      "minMinutes": { "type": "int" },
+      "maxMinutes": { "type": "int" }
+    }
+  },
+  "taxiTerugCandidateFinishingRide": "Driver is finishing a nearby ride first.",
+  "taxiTerugCandidateDepartsAt": "Departs at {time}",
+  "@taxiTerugCandidateDepartsAt": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "taxiTerugQueuedConfirmed": "Taxi Terug confirmed",
+  "taxiTerugQueuedWaitingForDriver": "Your driver is finishing their current ride first.",
   "homeScheduleLaterTitle": "Schedule later",
   "homeScheduleLaterSubtitle": "Pick a pickup time that works for you.",
   "homePopularAirportsTitle": "Popular",
@@ -33,7 +96,7 @@
   "homeEnterDestination": "Enter your destination",
   "homeNoTaxisNearbySubtitle": "You can still request a ride. We will notify you when a driver accepts.",
   "homeSupplyNoneTitle": "No drivers near you",
-  "homeSupplyNoneSubtitle": "Try Marketplace or schedule a ride for later.",
+  "homeSupplyNoneSubtitle": "Try TAXI TERUG or schedule a ride for later.",
   "homeSupplyNearbyTitle": "{count, plural, one{1 driver nearby} other{{count} drivers nearby}}",
   "@homeSupplyNearbyTitle": {
     "placeholders": {
@@ -92,6 +155,8 @@
   "savedTripsTitle": "Saved trips",
   "homeCompleteProfile": "Complete profile",
   "vehicleCategoryTitle": "Do you need a specific vehicle?",
+  "vehicleSelectUpToThree": "Select up to 3 types with drivers nearby",
+  "vehicleMaxCategoriesSelected": "You can select up to 3 vehicle types",
   "homeAirportChipSchiphol": "Schiphol",
   "homeAirportChipRotterdam": "Rotterdam Airport",
   "homeAirportChipEindhoven": "Eindhoven",
@@ -256,6 +321,29 @@
   "growCityBadgeBuilder": "Community Builder",
   "growCityBadgeAmbassador": "City Ambassador",
   "growCityBadgeTopPromoter": "Top Promoter",
+  "growCityRideBadgesTitle": "Ride milestones",
+  "growCityRideBadgeFirstRide": "First Ride",
+  "growCityRideBadgeRegular": "Regular",
+  "growCityRideBadgeDedicated": "Dedicated",
+  "growCityRideBadgeLegend": "HeyCaby Legend",
+  "growCityStreakWeeks": "{count} week streak",
+  "@growCityStreakWeeks": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "growCityProgressToRideBadge": "Progress to {badge}",
+  "@growCityProgressToRideBadge": {
+    "placeholders": {
+      "badge": {"type": "String"}
+    }
+  },
+  "growCityProgressToInviteBadge": "Progress to {badge}",
+  "@growCityProgressToInviteBadge": {
+    "placeholders": {
+      "badge": {"type": "String"}
+    }
+  },
   "growCityWhyHelpTitle": "Why help?",
   "growCityWhyHelpBullet1": "More riders nearby",
   "growCityWhyHelpBullet2": "More work for local taxi drivers",
@@ -564,6 +652,7 @@
   "keepGoing": "Keep going",
   "nameSavedSuccess": "Name saved successfully",
   "ridesFilterActive": "Active",
+  "ridesFilterAll": "All",
   "ridesFilterBidding": "Bidding",
   "ridesFilterCompleted": "Completed",
   "ridesFilterCancelled": "Cancelled",
@@ -677,7 +766,7 @@
   "whenRowLabel": "When",
   "accountProfileHeading": "Profile",
   "accountProfileCardSubtitle": "Your booking name, email, and how the app looks.",
-  "accountProfilePreferencesLabel": "Language & theme",
+  "accountProfilePreferencesLabel": "Language",
   "riderPassportTitle": "Rider Passport",
   "riderPassportSubtitle": "Your HeyCaby travel identity for faster, smoother bookings.",
   "riderPassportReady": "Ready for faster bookings",
@@ -701,6 +790,26 @@
   "riderRatingTrips": "{count} trips rated",
   "@riderRatingTrips": {
     "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "riderRatingDetailsTitle": "Your rider reputation",
+  "riderRatingBreakdownTitle": "Ratings breakdown",
+  "riderRatingDriverNotesTitle": "Notes from drivers",
+  "riderRatingDriverNotesBody": "Private feedback becomes visible after both sides have rated the trip.",
+  "riderRatingNoComments": "No written feedback yet.",
+  "riderRatingAnonymousDriver": "Driver feedback",
+  "riderRatingLoadFailed": "Your rating could not be loaded.",
+  "riderRatingBasedOn": "Based on {count} completed trips rated by drivers.",
+  "@riderRatingBasedOn": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "riderRatingAccessibility": "Rider rating {rating} out of 5, based on {count} ratings",
+  "@riderRatingAccessibility": {
+    "placeholders": {
+      "rating": { "type": "String" },
       "count": { "type": "int" }
     }
   },
@@ -1111,10 +1220,25 @@
   "saveButton": "Save",
   "savedAddressesSubtitle": "Your saved destinations",
   "savedPlacesSheetSubtitle": "Tap a place to book, or save another below.",
+  "savedPlacesEmptyStartWith": "Start with",
+  "savedPlacesSectionCount": "{count, plural, one{1 place saved} other{{count} places saved}}",
+  "@savedPlacesSectionCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "savedPlacesTapToBook": "Tap to book",
+  "savedPlacesGhostHome": "Home",
+  "savedPlacesGhostMom": "Mom's home",
   "noSavedAddressesYet": "Build your shortcut list",
   "noSavedAddressesEmptyBody": "Save home, work, the gym — or several homes (Mom, Dad, vacation). Same icon, different names.",
   "addSavedAddress": "Save a place",
   "addSavedAddressSheetTitle": "Save a new place",
+  "editSavedAddress": "Edit place",
+  "editSavedAddressSheetTitle": "Edit saved place",
+  "editSavedAddressSheetBody": "Update the name, category, or address when you move or the details change.",
+  "editSavedAddressNotFound": "This place was removed. Refresh your list and try again.",
+  "saveChanges": "Save changes",
   "savedAddressCategoryLabel": "Category",
   "savedAddressNameLabel": "Name this place",
   "savedAddressNameHint": "e.g. Mom’s home, Office, Gym",
@@ -1128,11 +1252,12 @@
   "savedAddressLabelGym": "Gym",
   "savedAddressLabelCustom": "Custom",
   "savedAddressesLimitReached": "You can save up to 10 places. Remove one to add another.",
+  "savedAddressesSessionRequired": "We couldn't verify your account. Open Account, confirm your email, then try again.",
   "deleteSavedAddress": "Delete",
   "searchFactDriversKeep100": "Drivers keep 100% of their earnings. HeyCaby takes zero commission per ride.",
   "searchFactNoSurgePricing": "No surge pricing. Ever. The price you see is the price you pay.",
   "searchFactAllVerified": "HeyCaby is built for licensed taxis — professional transport, not private gig-hail cars.",
-  "searchFactMarketplace": "Drivers heading home sometimes ride for less. Check the marketplace for the best price.",
+  "searchFactMarketplace": "Drivers heading home sometimes ride for less. Try TAXI TERUG for a better price.",
   "searchFactZZP": "Every Caby driver is an independent professional. You ride with someone proud of their work.",
   "searchFactSaveAddresses": "Live in Rotterdam? Tap the house icon once and your destination is filled in. Always.",
   "searchFactPayHowYouWant": "Cash, Tikkie, card or invoice — your driver will tell you which options are available.",
@@ -1212,7 +1337,7 @@
       }
     }
   },
-  "activeBookingInstantBody": "Expected wait: 1 – 2 min. We'll notify you when a driver accepts.",
+  "activeBookingInstantBody": "HeyCaby is new — matching can take several minutes. We'll keep searching and notify you when a driver accepts.",
   "activeBookingMarketplaceBody": "Independent drivers can accept, counter, or ignore. You choose who to ride with.",
   "activeBookingOffersBody": "{count, plural, one{Review the offer and choose your driver.} other{Compare offers and choose your driver.}}",
   "@activeBookingOffersBody": {
@@ -1272,7 +1397,8 @@
   "ridesScheduledMatchingSection": "Upcoming scheduled requests",
   "noDriverFoundCard": "No Caby found yet. What would you like to do?",
   "searchNoSupplyInlineTitle": "No drivers close by",
-  "searchNoSupplyInlineBody": "We could not find any drivers near your pickup. Schedule for later or try Marketplace. We will keep searching.",
+  "searchNoSupplyInlineBody": "No drivers at your pickup right now. Schedule for later — we'll keep searching.",
+  "searchNoSupplyTaxiTerugCardSubtitle": "Drivers heading your way for less",
   "searchNoSupplySheetTitle": "No drivers close by",
   "searchExpiredSheetTitle": "No driver accepted yet",
   "searchExpiredSheetBody": "Your {minutes}-minute search ended without a match. Pick your next step.",
@@ -1284,7 +1410,8 @@
     }
   },
   "searchKeepSearching": "Keep searching",
-  "searchSeeOptions": "Schedule or Marketplace",
+  "searchExpiredGoHome": "Go home without booking",
+  "searchSeeOptions": "More options",
   "searchExpiredShareSecondary": "Know a driver? Share HeyCaby",
   "notifyMeWhenFound": "Notify Me",
   "scheduleRideInstead": "Schedule",
@@ -1440,6 +1567,54 @@
   },
   "ridePayDriverConfirm": "I've paid",
   "ridePayDriverDismiss": "One moment",
+  "paymentRiderHeadline": "Pay your driver",
+  "paymentRiderCashInstruction": "Pay {amount} in cash before you leave the vehicle",
+  "@paymentRiderCashInstruction": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "paymentRiderPinInstruction": "Tap or insert your card on the driver's PIN reader",
+  "paymentRiderTikkieInstruction": "Scan your driver's Tikkie QR",
+  "paymentCashPayBeforeExit": "Pay before leaving",
+  "paymentPinTapReader": "Debit card on driver's terminal",
+  "paymentTikkieScanQrHint": "Open Camera and scan the QR on your driver's phone.",
+  "paymentWaitingForDriver": "Waiting for driver",
+  "paymentWaitingForDriverHint": "Your driver confirms when payment is received. You can confirm here after 10 minutes if needed.",
+  "paymentDriverConfirmedProceed": "Driver confirmed — opening rating…",
+  "paymentThankYou": "Thanks for paying!",
+  "paymentAddTipQuestion": "Add a tip?",
+  "paymentNoTip": "No tip",
+  "paymentRiderPaidConfirm": "I've paid ✓",
+  "paymentConfirmFailed": "Could not confirm payment. Try again.",
+  "activeRideDriverNearPickup": "Your driver is about 1 km away. Come downstairs soon — waiting time may be charged after arrival.",
+  "activeRideDriverAroundCorner": "Get ready — your driver is around the corner!",
+  "activeRideTripProgress": "Trip progress",
+  "activeRideDistanceRemaining": "{km} km remaining",
+  "@activeRideDistanceRemaining": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideTimeRemaining": "{minutes} min to arrival",
+  "@activeRideTimeRemaining": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideArrivingAround": "Arriving around {time}",
+  "@activeRideArrivingAround": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "activeRideTripInProgressHeadline": "On your way",
   "activeRideWaitingFeeWaived": "Waiting fee waived",
   "activeRideWaitingFreePickupTime": "Free pickup time",
   "activeRideWaitingTime": "Waiting time",
@@ -1505,6 +1680,9 @@
   "rideReceiptPaidTitle": "Paid",
   "rideReceiptBusinessReady": "Business-ready receipt",
   "rideReceiptBusinessReadyBody": "Keep this receipt for your trip history and expense records.",
+  "rideReceiptShareWhatsapp": "Share via WhatsApp",
+  "rideReceiptShareEmail": "Send via email",
+  "rideReceiptShareFailed": "Could not share receipt",
   "rideReceiptFareBreakdown": "Fare breakdown",
   "rideReceiptBaseFare": "Ride fare",
   "rideReceiptWaitingFee": "Waiting time",
@@ -1537,5 +1715,39 @@
     }
   },
   "smartBundleDriverPricingNote": "Drivers set their own prices. We'll match you with the best options nearby.",
-  "smartBundleTapToHide": "Tap to hide ride classes"
+  "smartBundleTapToHide": "Tap to hide ride classes",
+  "taxiTerugScreenTitle": "Taxi Terug",
+  "taxiTerugScreenSubtitle": "Ride with taxis already heading your way.",
+  "taxiTerugScreenTabAvailable": "Available taxis",
+  "taxiTerugScreenTabPostRequest": "Post a request",
+  "taxiTerugScreenPickupPlaceholder": "Pickup location",
+  "taxiTerugScreenDestinationPlaceholder": "Where are you going?",
+  "taxiTerugScreenSetRoute": "Set your pickup and destination to see matching taxis.",
+  "taxiTerugScreenLoadError": "Could not load taxis. Try again.",
+  "taxiTerugScreenDisabled": "Taxi Terug is not available right now.",
+  "taxiTerugScreenNoRides": "No Taxi Terug rides found.",
+  "taxiTerugScreenNoRidesBody": "Post your trip so drivers heading that way can accept.",
+  "taxiTerugScreenPostCta": "Post Taxi Terug Request",
+  "taxiTerugScreenBook": "Book",
+  "taxiTerugScreenPostTitle": "Post Taxi Terug Request",
+  "taxiTerugScreenPostBody": "Drivers heading your way can accept or send an offer.",
+  "taxiTerugScreenOfferLabel": "Your offer",
+  "taxiTerugScreenPostButton": "Post Request",
+  "taxiTerugScreenPosting": "Posting…",
+  "taxiTerugScreenPostConfirmation": "Your request will appear to drivers heading toward your destination.",
+  "taxiTerugHotDestinationsTitle": "Drivers heading to",
+  "taxiTerugHotDestinationsSubtitle": "Tap a city to see taxis on your route.",
+  "taxiTerugPickCityHint": "Pick a city above",
+  "taxiTerugTrackerSearching": "Finding your Taxi Terug match",
+  "taxiTerugTrackerSearchingBody": "We're looking for taxis heading your way. You can wait here or go about your day.",
+  "taxiTerugTrackerNoMatch": "No match found",
+  "taxiTerugTrackerNoMatchBody": "No Taxi Terug drivers were found within 1 hour. Please try again later.",
+  "taxiTerugTrackerCancelTitle": "Cancel request",
+  "taxiTerugTrackerCancelConfirm": "Are you sure you want to cancel your Taxi Terug request?",
+  "taxiTerugTrackerBoost": "Boost offer",
+  "taxiTerugTrackerBoostTitle": "Boost your offer",
+  "taxiTerugTrackerBoostSubtitle": "Increase your offer so more drivers can see it and accept faster.",
+  "taxiTerugTrackerBoostSuccess": "Offer boosted to €{amount}! Drivers can see it instantly.",
+  "taxiTerugTrackerBoostFailed": "Could not boost offer. Please try again.",
+  "taxiTerugTrackerCurrentOffer": "Current offer: €{amount}"
 }

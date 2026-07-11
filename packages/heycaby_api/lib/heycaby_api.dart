@@ -14,5 +14,7 @@ export 'src/driver_api.dart';
 export 'src/rider_api.dart';
 export 'src/secure_storage.dart';
 export 'src/rider_identity_provider.dart';
+export 'src/ride_payment_service.dart';
+export 'src/rider_session_service.dart';
 export 'src/fcm_registration.dart';
 export 'src/driver_ping_types.dart';

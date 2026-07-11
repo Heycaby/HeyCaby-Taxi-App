@@ -46,6 +46,16 @@ class HomeBottomSheet extends ConsumerWidget {
     final banners = bannersAsync.valueOrNull ?? const [];
     final hasActiveBooking =
         ref.watch(nearTermRideRequestProvider).valueOrNull != null;
+    final bookingExpanded = ref.watch(activeBookingHomeExpandedProvider);
+    final hideHomeChrome = hasActiveBooking && bookingExpanded;
+
+    ref.listen<AsyncValue<NearTermRideSnapshot?>>(nearTermRideRequestProvider,
+        (previous, next) {
+      if (next.valueOrNull == null &&
+          ref.read(activeBookingHomeExpandedProvider)) {
+        ref.read(activeBookingHomeExpandedProvider.notifier).state = false;
+      }
+    });
     final announcement = pickRiderHomeBanner(
       banners: banners,
       nearbyTaxiCount: nearbyTaxiCount,
@@ -88,7 +98,8 @@ class HomeBottomSheet extends ConsumerWidget {
             const ActiveBookingCard(
               placement: ActiveBookingCardPlacement.homeSheet,
             ),
-            HomeSearchHeroCard(colors: colors, typo: typo, l10n: l10n),
+            if (!hideHomeChrome)
+              HomeSearchHeroCard(colors: colors, typo: typo, l10n: l10n),
             if (announcement != null)
               HomeAnnouncementBanner(
                 banner: announcement,
@@ -111,8 +122,10 @@ class HomeBottomSheet extends ConsumerWidget {
               ),
             HomeRideAgainSection(colors: colors, typo: typo, l10n: l10n),
             HomeSavedTripsSection(colors: colors, typo: typo, l10n: l10n),
-            HomeBookingOptionsGrid(colors: colors, typo: typo, l10n: l10n),
-            HomeRecentPlacesSection(colors: colors, typo: typo, l10n: l10n),
+            if (!hideHomeChrome)
+              HomeBookingOptionsGrid(colors: colors, typo: typo, l10n: l10n),
+            if (!hideHomeChrome)
+              HomeRecentPlacesSection(colors: colors, typo: typo, l10n: l10n),
             SizedBox(
               height: kBottomNavigationBarHeight +
                   MediaQuery.paddingOf(context).bottom +

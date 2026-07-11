@@ -65,7 +65,8 @@ class DriverMapOnlineChip extends StatelessWidget {
                 Container(
                   width: 1,
                   height: 14,
-                  margin: const EdgeInsets.symmetric(horizontal: DriverSpacing.sm),
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: DriverSpacing.sm),
                   color: colors.border,
                 ),
                 Flexible(
@@ -125,7 +126,8 @@ class _LiveDot extends StatefulWidget {
   State<_LiveDot> createState() => _LiveDotState();
 }
 
-class _LiveDotState extends State<_LiveDot> with SingleTickerProviderStateMixin {
+class _LiveDotState extends State<_LiveDot>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override

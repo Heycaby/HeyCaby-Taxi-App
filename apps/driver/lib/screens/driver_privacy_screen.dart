@@ -297,7 +297,7 @@ class _DriverPrivacyScreenState extends ConsumerState<DriverPrivacyScreen> {
     await Clipboard.setData(ClipboardData(text: _fullText));
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(DriverStrings.copiedToClipboard)),
+        SnackBar(content: Text(DriverStrings.copiedToClipboard)),
       );
     }
   }

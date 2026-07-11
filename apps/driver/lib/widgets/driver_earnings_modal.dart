@@ -120,8 +120,7 @@ class _DriverEarningsModalState extends ConsumerState<DriverEarningsModal> {
   Widget build(BuildContext context) {
     final driverColors = DriverColors.fromTheme(widget.colors);
     final driverTypo = DriverTypography.fromTheme(widget.typo);
-    final displayAmount =
-        _amountVisible ? widget.todayEarnings : '••••••';
+    final displayAmount = _amountVisible ? widget.todayEarnings : '••••••';
     final activeAsync = ref.watch(activeRateProfileProvider);
     final activeProfile = activeAsync.valueOrNull;
     final profilesAsync = ref.watch(driverRateProfilesProvider);
@@ -889,7 +888,8 @@ class _TariffDetailsSheetState extends State<_TariffDetailsSheet> {
             if (hasMultipleProfiles) ...[
               const SizedBox(height: DriverSpacing.lg),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: DriverSpacing.lg),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: DriverSpacing.lg),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -903,7 +903,8 @@ class _TariffDetailsSheetState extends State<_TariffDetailsSheet> {
               ),
               const SizedBox(height: DriverSpacing.sm),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: DriverSpacing.lg),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: DriverSpacing.lg),
                 child: Wrap(
                   spacing: DriverSpacing.sm,
                   runSpacing: DriverSpacing.sm,

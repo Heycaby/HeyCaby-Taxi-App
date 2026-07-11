@@ -14,9 +14,9 @@ String? flutterRouteForReadinessItem(DriverReadinessItem item) {
 
   switch (key) {
     case 'profile_photo':
-      return '/driver/profile';
+      return '/driver/me?action=profile_photo&return=1';
     case 'vehicle_photos':
-      return '/driver/vehicle';
+      return '/driver/me?action=vehicle_photo&return=1';
     case 'terms_of_service':
       return '/driver/terms';
     case 'indemnification_quiz':
@@ -41,7 +41,14 @@ String? flutterRouteForReadinessItem(DriverReadinessItem item) {
 
 String? _routeFromActionPath(String action) {
   final a = action.toLowerCase();
-  if (a.startsWith('/driver/profile')) return '/driver/profile';
+  if (a.startsWith('/driver/profile/photo')) {
+    return '/driver/me?action=profile_photo&return=1';
+  }
+  if (a.startsWith('/driver/vehicle/photo')) {
+    return '/driver/me?action=vehicle_photo&return=1';
+  }
+  if (a.startsWith('/driver/me')) return action;
+  if (a.startsWith('/driver/profile')) return '/driver/me';
   if (a.startsWith('/driver/vehicle')) return '/driver/vehicle';
   if (a.startsWith('/driver/terms')) return '/driver/terms';
   if (a.startsWith('/driver/indemnification')) return '/driver/indemnification';

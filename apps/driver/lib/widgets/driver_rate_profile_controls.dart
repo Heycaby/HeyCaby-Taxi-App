@@ -37,12 +37,14 @@ class DriverRateEditableField extends StatelessWidget {
           children: [
             Text(
               label,
-              style: typo.labelSmall.copyWith(color: colors.textSoft, fontSize: 11),
+              style: typo.labelSmall
+                  .copyWith(color: colors.textSoft, fontSize: 11),
             ),
             const SizedBox(height: 4),
             TextField(
               controller: controller,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               style: typo.bodyMedium.copyWith(
                 color: colors.text,
                 fontWeight: FontWeight.w700,
@@ -250,7 +252,8 @@ class DriverTariffModeChip extends StatelessWidget {
               Row(
                 children: [
                   if (selected) ...[
-                    Icon(Icons.check_circle_rounded, size: 14, color: colors.accent),
+                    Icon(Icons.check_circle_rounded,
+                        size: 14, color: colors.accent),
                     const SizedBox(width: 4),
                   ],
                   Expanded(
@@ -321,7 +324,8 @@ class DriverEditTariffsCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 alignment: Alignment.center,
-                child: Icon(Icons.edit_note_rounded, color: colors.accent, size: 18),
+                child: Icon(Icons.edit_note_rounded,
+                    color: colors.accent, size: 18),
               ),
               const SizedBox(width: 10),
               Expanded(

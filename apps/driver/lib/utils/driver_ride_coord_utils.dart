@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
+import 'package:heycaby_map/heycaby_map.dart';
 
 import '../providers/driver_state_provider.dart';
 import '../widgets/driver_ride_flow_common.dart';
@@ -28,6 +29,61 @@ void enrichDriverRideRequestCoords(Map<String, dynamic> row) {
       row['destination_lng'] = parsed.$2;
     }
   }
+}
+
+/// Forward-geocode pickup/destination when lat/lng columns are empty.
+Future<void> geocodeDriverRideRequestCoordsIfNeeded(
+  Map<String, dynamic> row,
+  GeocodingService geo,
+) async {
+  enrichDriverRideRequestCoords(row);
+
+  Future<void> resolve({
+    required List<String> addressKeys,
+    required String latKey,
+    required String lngKey,
+  }) async {
+    final lat = (row[latKey] as num?)?.toDouble();
+    final lng = (row[lngKey] as num?)?.toDouble();
+    if (driverMapCoordIsValid(lat, lng)) return;
+
+    String? address;
+    for (final key in addressKeys) {
+      final value = row[key];
+      if (value is String && value.trim().length >= 3) {
+        address = value.trim();
+        break;
+      }
+    }
+    if (address == null) return;
+
+    final hits = await geo.search(query: address);
+    if (hits.isEmpty) return;
+
+    var hit = hits.first;
+    if (hit.lat == 0.0 && (hit.mapboxId?.isNotEmpty ?? false)) {
+      final resolved = await geo.retrieve(hit.mapboxId!);
+      if (resolved != null) hit = resolved;
+    }
+    if (!driverMapCoordIsValid(hit.lat, hit.lng)) return;
+    row[latKey] = hit.lat;
+    row[lngKey] = hit.lng;
+  }
+
+  await resolve(
+    addressKeys: const ['pickup_address', 'origin_address', 'from_address'],
+    latKey: 'pickup_lat',
+    lngKey: 'pickup_lng',
+  );
+  await resolve(
+    addressKeys: const [
+      'destination_address',
+      'dropoff_address',
+      'to_address',
+    ],
+    latKey: 'destination_lat',
+    lngKey: 'destination_lng',
+  );
 }
 
 /// Returns `(lat, lng)` or null.
@@ -113,10 +169,10 @@ double? _readDouble(List<int> bytes, int offset, bool littleEndian) {
 }
 
 /// Load pickup/destination coordinates into [driverStateProvider] when missing.
-Future<void> hydrateDriverRideCoordsIfNeeded(WidgetRef ref, String rideId) async {
+Future<void> hydrateDriverRideCoordsIfNeeded(
+    WidgetRef ref, String rideId) async {
   final driver = ref.read(driverStateProvider);
-  final hasPickup =
-      driverMapCoordIsValid(driver.pickupLat, driver.pickupLng);
+  final hasPickup = driverMapCoordIsValid(driver.pickupLat, driver.pickupLng);
   final hasDest = driverMapCoordIsValid(
     driver.destinationLat,
     driver.destinationLng,

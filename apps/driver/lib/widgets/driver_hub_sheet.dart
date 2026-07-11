@@ -139,8 +139,8 @@ class DriverHubSheet extends ConsumerWidget {
                 child: _Divider(colors: colors),
               ),
               SliverToBoxAdapter(
-                child: DriverHubSavedByRidersSection(
-                    colors: colors, typo: typo),
+                child:
+                    DriverHubSavedByRidersSection(colors: colors, typo: typo),
               ),
               SliverToBoxAdapter(
                 child: _Divider(colors: colors),
@@ -306,7 +306,7 @@ class _HubLiveStripState extends ConsumerState<_HubLiveStrip> {
                 ),
                 TextButton(
                   onPressed: () => context.push('/driver/return-trips'),
-                  child: const Text(DriverStrings.openReturnRides),
+                  child: Text(DriverStrings.openReturnRides),
                 ),
               ],
             ),

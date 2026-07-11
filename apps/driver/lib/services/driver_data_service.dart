@@ -6,7 +6,12 @@ import 'package:flutter/foundation.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_utils/heycaby_utils.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'
-    show FileOptions, FunctionException, UserAttributes;
+    show FileOptions, FunctionException, PostgrestException, UserAttributes;
+
+import '../l10n/driver_strings.dart';
+import '../models/driver_taxi_terug_queued_status.dart';
+import '../models/driver_taxi_terug_stats.dart';
+import '../models/driver_taxi_thru_rider_post.dart';
 
 /// Thrown when profile photo upload fails due to TLS/network (e.g. SSLV3_ALERT_BAD_RECORD_MAC).
 /// UI should show a connection-specific message; this is not a code or backend bug.
@@ -756,24 +761,18 @@ class DriverDataService {
   /// Create or get ride share link for active ride. Returns track URL.
   Future<String?> getOrCreateRideShareUrl(String rideRequestId) async {
     try {
-      final existing = await _client
-          .from('ride_shares')
-          .select('share_token')
-          .eq('ride_request_id', rideRequestId)
-          .maybeSingle();
-      final token = existing?['share_token'] as String?;
-      if (token != null && token.isNotEmpty) {
-        return '$kAppPublicWebOrigin/track/$token';
-      }
-      final newRow = await _client
-          .from('ride_shares')
-          .insert({
-            'ride_request_id': rideRequestId,
-          })
-          .select('share_token')
-          .single();
-      final t = newRow['share_token'] as String?;
-      return t != null ? '$kAppPublicWebOrigin/track/$t' : null;
+      final raw = await _client.rpc(
+        'fn_rider_create_share_token',
+        params: <String, dynamic>{
+          'p_ride_request_id': rideRequestId,
+          'p_rider_token': null,
+        },
+      );
+      if (raw is! Map || raw['ok'] != true) return null;
+      final token = raw['share_token'] as String?;
+      return token == null || token.isEmpty
+          ? null
+          : '$kAppPublicWebOrigin/track/$token';
     } catch (_) {
       return null;
     }
@@ -820,16 +819,21 @@ class DriverDataService {
 
   /// scheduled_rides_available view — for home card count and scheduled screen.
   /// tab: 'requests' = pending, 'confirmed' = driver accepted.
+  /// [zoneId] filters by pickup zone so drivers only see rides in their area.
   Future<List<ScheduledRide>> getScheduledRidesAvailable({
     required String? driverId,
     String tab = 'requests',
     int limit = 20,
+    String? zoneId,
   }) async {
     try {
       if (tab == 'confirmed' && driverId != null) {
         return getConfirmedRidesForDriver(driverId, limit: limit);
       }
       var query = _client.from('scheduled_rides_available').select();
+      if (zoneId != null && zoneId.isNotEmpty) {
+        query = query.eq('pickup_zone_id', zoneId);
+      }
       final res = await query
           .order('scheduled_pickup_at', ascending: true)
           .limit(limit);
@@ -842,31 +846,105 @@ class DriverDataService {
   }
 
   /// Active in-progress ride for cold-start restore (Program 3B).
+  /// Prefers the current (non-queued) ride over a queued Taxi Terug booking.
   Future<Map<String, dynamic>?> getActiveRideForRestore(String driverId) async {
     try {
-      final row = await _client
+      final rows = await _client
           .from('ride_requests')
           .select(
             'id, status, pickup_address, pickup_lat, pickup_lng, '
             'destination_address, destination_lat, destination_lng, '
-            'pickup_coords, destination_coords, '
+            'pickup_coords, destination_coords, dispatch_state, '
             'booking_mode, payment_method, payment_methods, pickup_contact_name',
           )
           .eq('driver_id', driverId)
           .inFilter('status', [
             'accepted',
             'assigned',
+            'driver_en_route',
             'driver_arrived',
             'in_progress',
           ])
           .order('created_at', ascending: false)
-          .limit(1)
-          .maybeSingle();
-      if (row == null) return null;
-      return Map<String, dynamic>.from(row);
+          .limit(5);
+      if (rows.isEmpty) return null;
+
+      Map<String, dynamic>? queuedFallback;
+      for (final raw in rows) {
+        final row = Map<String, dynamic>.from(raw);
+        final dispatch = row['dispatch_state'];
+        final dispatchMap = dispatch is Map
+            ? Map<String, dynamic>.from(dispatch)
+            : const <String, dynamic>{};
+        final isQueued = dispatchMap['queued_taxi_terug'] == true;
+        if (!isQueued) return row;
+        queuedFallback ??= row;
+      }
+      return queuedFallback;
     } catch (e) {
       if (kDebugMode) debugPrint('getActiveRideForRestore: $e');
       return null;
+    }
+  }
+
+  Future<DriverTaxiTerugQueuedStatus?> fetchTaxiTerugQueueStatus() async {
+    try {
+      final res = await _client.rpc('fn_driver_taxi_terug_queue_status');
+      return DriverTaxiTerugQueuedStatus.parseRpc(res);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<DriverTaxiTerugStats?> fetchTaxiTerugStats(
+      {String period = 'month'}) async {
+    try {
+      final res = await _client.rpc(
+        'fn_driver_taxi_terug_stats',
+        params: {'p_period': period},
+      );
+      return DriverTaxiTerugStats.parseRpc(res);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<DriverTaxiThruRiderPostsSnapshot> fetchTaxiThruRiderPosts({
+    double? driverLat,
+    double? driverLng,
+    int limit = 20,
+  }) async {
+    try {
+      final res = await _client.rpc(
+        'fn_driver_taxi_thru_rider_posts',
+        params: {
+          'p_driver_lat': driverLat,
+          'p_driver_lng': driverLng,
+          'p_limit': limit,
+        },
+      );
+      final map =
+          res is Map ? Map<String, dynamic>.from(res) : <String, dynamic>{};
+      final enabled = map['enabled'] == true;
+      final postsRaw = map['posts'];
+      final posts = <DriverTaxiThruRiderPost>[];
+      if (postsRaw is List) {
+        for (final e in postsRaw) {
+          if (e is Map) {
+            final post = DriverTaxiThruRiderPost.fromJson(
+              Map<String, dynamic>.from(e),
+            );
+            if (post != null) posts.add(post);
+          }
+        }
+      }
+      return DriverTaxiThruRiderPostsSnapshot(
+        enabled: enabled,
+        posts: posts,
+        rpcSucceeded: true,
+      );
+    } catch (_) {
+      return DriverTaxiThruRiderPostsSnapshot.empty;
     }
   }
 
@@ -1114,6 +1192,32 @@ class DriverDataService {
     }
   }
 
+  /// Today's rides for current driver — all statuses (completed, upcoming, cancelled).
+  Future<List<MyRideSummary>> getTodayMyRides(String driverId) async {
+    try {
+      final todayStart =
+          DateTime.now().toUtc().toIso8601String().substring(0, 10);
+      final res = await _client
+          .from('ride_requests')
+          .select(
+            'id, created_at, status, pickup_address, destination_address, '
+            'final_fare, quoted_fare, offered_fare, estimated_fare, '
+            'marketplace_offered_fare, manual_fare_cents, manual_entry, currency, '
+            'waiting_fee_cents, waiting_fee_waived',
+          )
+          .eq('driver_id', driverId)
+          .gte('created_at', todayStart)
+          .order('created_at', ascending: false)
+          .limit(100);
+      final rows = (res as List).whereType<Map>().toList();
+      return rows
+          .map((raw) => MyRideSummary.fromJson(Map<String, dynamic>.from(raw)))
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
   /// Ride detail payload for "My Rides" full-screen details.
   Future<MyRideDetails?> getMyRideDetails(
     String rideId, {
@@ -1257,6 +1361,7 @@ class DriverDataService {
         completedRides: rides,
         cancelledRides: cancelled.count,
         cancellationFees: cancelled.cancellationFees,
+        averageFare: rides > 0 ? gross / rides : 0,
       );
     } catch (e) {
       await logClientTelemetry(
@@ -1744,9 +1849,53 @@ class DriverDataService {
     try {
       final res = await _client.rpc('fn_driver_return_mode_status');
       return DriverReturnModeStatus.fromJson(_mapFromRpc(res));
+    } on PostgrestException catch (e) {
+      return DriverReturnModeStatus(
+          ok: false, error: _returnModeRpcErrorCode(e));
     } catch (_) {
-      return const DriverReturnModeStatus(ok: false);
+      return const DriverReturnModeStatus(ok: false, error: 'rpc_error');
     }
+  }
+
+  Map<String, dynamic> _returnModeActivateParams({
+    String? destinationLabel,
+    String? destinationZoneId,
+    double? destinationLat,
+    double? destinationLng,
+    double? pickupRadiusKm,
+    double? returnDiscountPct,
+    String? intentType,
+    DateTime? departureTime,
+    double? destinationRadiusKm,
+  }) {
+    final params = <String, dynamic>{
+      'p_destination_label': destinationLabel,
+      'p_destination_zone_id': destinationZoneId,
+      'p_destination_lat': destinationLat,
+      'p_destination_lng': destinationLng,
+      'p_pickup_radius_km': pickupRadiusKm,
+      'p_return_discount_pct': returnDiscountPct,
+    };
+    final intent = intentType?.trim();
+    if (intent != null && intent.isNotEmpty) {
+      params['p_intent_type'] = intent;
+    }
+    if (departureTime != null) {
+      params['p_departure_time'] = departureTime.toUtc().toIso8601String();
+    }
+    if (destinationRadiusKm != null) {
+      params['p_destination_radius_km'] = destinationRadiusKm;
+    }
+    return params;
+  }
+
+  String _returnModeRpcErrorCode(PostgrestException e) {
+    final message = e.message.toLowerCase();
+    if (message.contains('could not find the function') ||
+        message.contains('does not exist')) {
+      return 'rpc_not_deployed';
+    }
+    return 'rpc_error';
   }
 
   Future<DriverReturnModeStatus> activateReturnMode({
@@ -1756,19 +1905,33 @@ class DriverDataService {
     double? destinationLng,
     double? pickupRadiusKm,
     double? returnDiscountPct,
+    String? intentType,
+    DateTime? departureTime,
+    double? destinationRadiusKm,
   }) async {
     try {
-      final res = await _client.rpc('fn_driver_return_mode_activate', params: {
-        'p_destination_label': destinationLabel,
-        'p_destination_zone_id': destinationZoneId,
-        'p_destination_lat': destinationLat,
-        'p_destination_lng': destinationLng,
-        'p_pickup_radius_km': pickupRadiusKm,
-        'p_return_discount_pct': returnDiscountPct,
-      });
+      final res = await _client.rpc(
+        'fn_driver_return_mode_activate',
+        params: _returnModeActivateParams(
+          destinationLabel: destinationLabel,
+          destinationZoneId: destinationZoneId,
+          destinationLat: destinationLat,
+          destinationLng: destinationLng,
+          pickupRadiusKm: pickupRadiusKm,
+          returnDiscountPct: returnDiscountPct,
+          intentType: intentType,
+          departureTime: departureTime,
+          destinationRadiusKm: destinationRadiusKm,
+        ),
+      );
       return DriverReturnModeStatus.fromJson(_mapFromRpc(res));
+    } on PostgrestException catch (e) {
+      return DriverReturnModeStatus(
+        ok: false,
+        error: _returnModeRpcErrorCode(e),
+      );
     } catch (_) {
-      return const DriverReturnModeStatus(ok: false);
+      return const DriverReturnModeStatus(ok: false, error: 'rpc_error');
     }
   }
 
@@ -1776,8 +1939,13 @@ class DriverDataService {
     try {
       final res = await _client.rpc('fn_driver_return_mode_disable');
       return DriverReturnModeStatus.fromJson(_mapFromRpc(res));
+    } on PostgrestException catch (e) {
+      return DriverReturnModeStatus(
+        ok: false,
+        error: _returnModeRpcErrorCode(e),
+      );
     } catch (_) {
-      return const DriverReturnModeStatus(ok: false);
+      return const DriverReturnModeStatus(ok: false, error: 'rpc_error');
     }
   }
 
@@ -1792,6 +1960,26 @@ class DriverDataService {
       return DriverReturnModeStatus.fromJson(_mapFromRpc(res));
     } catch (_) {
       return const DriverReturnModeStatus(ok: false);
+    }
+  }
+
+  /// Whether this driver may show the Taxi Terug badge for a terug booking.
+  Future<TaxiTerugQualifyResult> qualifyTaxiTerugRide({
+    required String driverId,
+    required String rideRequestId,
+  }) async {
+    try {
+      final res = await _client.rpc(
+        'fn_terugtaxi_qualify',
+        params: {
+          'p_driver_id': driverId,
+          'p_ride_request_id': rideRequestId,
+        },
+      );
+      return TaxiTerugQualifyResult.fromJson(_mapFromRpc(res));
+    } catch (_) {
+      return const TaxiTerugQualifyResult(
+          qualified: false, reason: 'rpc_error');
     }
   }
 
@@ -3251,8 +3439,8 @@ class DriverDataService {
           .limit(limit);
 
       final rideIds = (inviteRows as List)
-          .map((row) => (row as Map<String, dynamic>)['ride_request_id']
-              ?.toString())
+          .map((row) =>
+              (row as Map<String, dynamic>)['ride_request_id']?.toString())
           .whereType<String>()
           .where((id) => id.isNotEmpty)
           .toList();
@@ -4207,6 +4395,10 @@ class DriverFinanceMetrics {
   final int completedRides;
   final int cancelledRides;
   final double cancellationFees;
+  final double averageFare;
+  final double hoursOnline;
+  final int totalShifts;
+  final List<DriverFinanceRideRow> rideBreakdown;
 
   const DriverFinanceMetrics({
     this.grossEarnings = 0,
@@ -4218,9 +4410,23 @@ class DriverFinanceMetrics {
     this.completedRides = 0,
     this.cancelledRides = 0,
     this.cancellationFees = 0,
+    this.averageFare = 0,
+    this.hoursOnline = 0,
+    this.totalShifts = 0,
+    this.rideBreakdown = const [],
   });
 
   static DriverFinanceMetrics fromJson(Map<String, dynamic> j) {
+    final breakdownRaw = j['ride_breakdown'];
+    final breakdown = <DriverFinanceRideRow>[];
+    if (breakdownRaw is List) {
+      for (final row in breakdownRaw) {
+        if (row is Map) {
+          breakdown.add(
+              DriverFinanceRideRow.fromJson(Map<String, dynamic>.from(row)));
+        }
+      }
+    }
     return DriverFinanceMetrics(
       grossEarnings: (j['gross_earnings'] as num?)?.toDouble() ?? 0,
       netEarnings: (j['net_earnings'] as num?)?.toDouble() ?? 0,
@@ -4231,6 +4437,42 @@ class DriverFinanceMetrics {
       completedRides: (j['completed_rides'] as num?)?.toInt() ?? 0,
       cancelledRides: (j['cancelled_rides'] as num?)?.toInt() ?? 0,
       cancellationFees: (j['cancellation_fees'] as num?)?.toDouble() ?? 0,
+      averageFare: (j['average_fare'] as num?)?.toDouble() ?? 0,
+      hoursOnline: (j['hours_online'] as num?)?.toDouble() ?? 0,
+      totalShifts: (j['total_shifts'] as num?)?.toInt() ?? 0,
+      rideBreakdown: breakdown,
+    );
+  }
+}
+
+@immutable
+class DriverFinanceRideRow {
+  final String id;
+  final double fare;
+  final double tip;
+  final double distanceKm;
+  final DateTime? completedAt;
+  final String? paymentMethod;
+
+  const DriverFinanceRideRow({
+    required this.id,
+    required this.fare,
+    required this.tip,
+    required this.distanceKm,
+    this.completedAt,
+    this.paymentMethod,
+  });
+
+  static DriverFinanceRideRow fromJson(Map<String, dynamic> j) {
+    return DriverFinanceRideRow(
+      id: (j['id'] ?? '').toString(),
+      fare: (j['fare'] as num?)?.toDouble() ?? 0,
+      tip: (j['tip'] as num?)?.toDouble() ?? 0,
+      distanceKm: (j['distance_km'] as num?)?.toDouble() ?? 0,
+      completedAt: j['completed_at'] is String
+          ? DateTime.tryParse(j['completed_at'] as String)
+          : null,
+      paymentMethod: j['payment_method']?.toString(),
     );
   }
 }
@@ -4754,6 +4996,40 @@ class DriverReturnTrip {
 }
 
 @immutable
+class TaxiTerugQualifyResult {
+  const TaxiTerugQualifyResult({
+    required this.qualified,
+    this.reason,
+    this.destinationLabel,
+    this.progressTowardHomeKm,
+    this.progressRatio,
+    this.inTransit = false,
+    this.estimatedPickupMinutes,
+  });
+
+  final bool qualified;
+  final String? reason;
+  final String? destinationLabel;
+  final double? progressTowardHomeKm;
+  final double? progressRatio;
+  final bool inTransit;
+  final int? estimatedPickupMinutes;
+
+  static TaxiTerugQualifyResult fromJson(Map<String, dynamic> j) {
+    double? dbl(dynamic v) => (v as num?)?.toDouble();
+    return TaxiTerugQualifyResult(
+      qualified: j['qualified'] == true,
+      reason: j['reason'] as String?,
+      destinationLabel: (j['destination_label'] as String?)?.trim(),
+      progressTowardHomeKm: dbl(j['progress_toward_home_km']),
+      progressRatio: dbl(j['progress_ratio']),
+      inTransit: j['in_transit'] == true,
+      estimatedPickupMinutes: (j['estimated_pickup_minutes'] as num?)?.toInt(),
+    );
+  }
+}
+
+@immutable
 class DriverReturnModeStatus {
   final bool ok;
   final bool enabled;
@@ -4769,7 +5045,15 @@ class DriverReturnModeStatus {
   final DateTime? lastPromptAt;
   final DateTime? promptDismissedUntil;
   final bool canPrompt;
+  final double? kmFromHome;
+  final bool suggestTaxiTerug;
+  final double suggestHomeDistanceKm;
+  final int? retryAfterHours;
+  final int? maxDestinationChangesPerDay;
   final String? error;
+  final String intentType;
+  final DateTime? departureTime;
+  final double destinationRadiusKm;
 
   const DriverReturnModeStatus({
     required this.ok,
@@ -4786,7 +5070,15 @@ class DriverReturnModeStatus {
     this.lastPromptAt,
     this.promptDismissedUntil,
     this.canPrompt = false,
+    this.kmFromHome,
+    this.suggestTaxiTerug = false,
+    this.suggestHomeDistanceKm = 20,
+    this.retryAfterHours,
+    this.maxDestinationChangesPerDay,
     this.error,
+    this.intentType = 'post_ride_return',
+    this.departureTime,
+    this.destinationRadiusKm = 5,
   });
 
   static DriverReturnModeStatus fromJson(Map<String, dynamic> j) {
@@ -4812,14 +5104,50 @@ class DriverReturnModeStatus {
       lastPromptAt: dt(j['last_prompt_at']),
       promptDismissedUntil: dt(j['prompt_dismissed_until']),
       canPrompt: j['can_prompt'] == true,
+      kmFromHome: dbl(j['km_from_home']),
+      suggestTaxiTerug: j['suggest_taxi_terug'] == true,
+      suggestHomeDistanceKm: dbl(j['suggest_home_distance_km']) ?? 20,
+      retryAfterHours: (j['retry_after_hours'] as num?)?.toInt(),
+      maxDestinationChangesPerDay: (j['max_per_day'] as num?)?.toInt(),
       error: j['error'] as String?,
+      intentType: (j['intent_type'] as String?) ?? 'post_ride_return',
+      departureTime: dt(j['departure_time']),
+      destinationRadiusKm: dbl(j['destination_radius_km']) ?? 5,
     );
+  }
+
+  String get activationErrorMessage {
+    switch (error) {
+      case 'destination_cooldown':
+        return DriverStrings.returnModeDestinationCooldown(
+          retryAfterHours ?? 4,
+        );
+      case 'daily_destination_change_limit':
+        return DriverStrings.returnModeDailyDestinationLimit(
+          maxDestinationChangesPerDay ?? 3,
+        );
+      case 'missing_return_destination':
+        return DriverStrings.returnModeMissingDestination;
+      case 'driver_not_found':
+        return DriverStrings.returnModeDriverNotFound;
+      case 'rpc_not_deployed':
+        return DriverStrings.returnModeBackendNotReady;
+      case 'rpc_error':
+        return DriverStrings.returnModeActivationFailed;
+      case 'departure_time_too_far':
+        return DriverStrings.journeyIntentDepartureTooFar;
+      default:
+        return DriverStrings.returnModeActivationFailed;
+    }
   }
 
   bool get hasDestination =>
       destinationLabel != null && destinationLabel!.trim().isNotEmpty;
 
   String get destinationDisplay => hasDestination ? destinationLabel! : '—';
+
+  bool get isPlannedDirection => intentType == 'planned_direction';
+  bool get hasDepartureTime => departureTime != null;
 }
 
 @immutable

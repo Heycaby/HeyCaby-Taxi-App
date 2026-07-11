@@ -61,7 +61,7 @@ class _SupportNewTicketScreenState
               Navigator.of(ctx).pop();
               if (mounted) context.push('/driver/support/lee');
             },
-            child: const Text(DriverStrings.chatWithLee),
+            child: Text(DriverStrings.chatWithLee),
           ),
         ],
       ),
@@ -86,14 +86,14 @@ class _SupportNewTicketScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text(DriverStrings.close),
+            child: Text(DriverStrings.close),
           ),
           FilledButton(
             onPressed: () {
               Navigator.of(ctx).pop();
               if (mounted) context.push('/driver/support/lee');
             },
-            child: const Text(DriverStrings.chatWithLee),
+            child: Text(DriverStrings.chatWithLee),
           ),
         ],
       ),

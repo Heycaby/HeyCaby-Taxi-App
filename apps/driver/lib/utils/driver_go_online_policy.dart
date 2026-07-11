@@ -32,7 +32,8 @@ bool driverHasRequiredNonLicenseInfo(
   if (isReviewAccount) return true;
   if (c == null) return false;
 
-  final hasChauffeurspas = _hasText(c.chauffeurspasNumber) && c.chauffeurspasExpiry != null;
+  final hasChauffeurspas =
+      _hasText(c.chauffeurspasNumber) && c.chauffeurspasExpiry != null;
   final hasKvk = _hasText(c.kvkNumber) && _hasText(c.kvkAddress);
   final hasInsurance = _hasText(c.taxiInsuranceProvider) &&
       _hasText(c.taxiInsurancePolicyNumber) &&

@@ -58,13 +58,13 @@ class _DriverDeleteAccountConfirmDialogState
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text(DriverStrings.deleteAccountConfirmTitle),
+      title: Text(DriverStrings.deleteAccountConfirmTitle),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(DriverStrings.deleteAccountConfirmBody),
+            Text(DriverStrings.deleteAccountConfirmBody),
             const SizedBox(height: 16),
             TextField(
               controller: _controller,

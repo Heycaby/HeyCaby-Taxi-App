@@ -20,10 +20,12 @@ class DriverReturnTripsScreen extends ConsumerStatefulWidget {
   const DriverReturnTripsScreen({super.key});
 
   @override
-  ConsumerState<DriverReturnTripsScreen> createState() => _DriverReturnTripsScreenState();
+  ConsumerState<DriverReturnTripsScreen> createState() =>
+      _DriverReturnTripsScreenState();
 }
 
-class _DriverReturnTripsScreenState extends ConsumerState<DriverReturnTripsScreen> {
+class _DriverReturnTripsScreenState
+    extends ConsumerState<DriverReturnTripsScreen> {
   RealtimeChannel? _channel;
   Timer? _debounce;
   bool _initializedFromProfile = false;
@@ -59,13 +61,15 @@ class _DriverReturnTripsScreenState extends ConsumerState<DriverReturnTripsScree
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
 
     final tripsAsync = ref.watch(filteredReturnTripsProvider);
     final trips = tripsAsync.valueOrNull ?? const <DriverReturnTrip>[];
 
     final activeProfile = ref.watch(activeRateProfileProvider).valueOrNull;
-    final initialPct = (activeProfile?.returnDiscountPct ?? 0).clamp(0, 40).toDouble();
+    final initialPct =
+        (activeProfile?.returnDiscountPct ?? 0).clamp(0, 40).toDouble();
     final currentPct = ref.watch(_returnDiscountPctProvider);
 
     if (activeProfile != null && !_initializedFromProfile) {
@@ -86,7 +90,8 @@ class _DriverReturnTripsScreenState extends ConsumerState<DriverReturnTripsScree
       typography: typography,
       subtitle: subtitle,
       discountPct: currentPct,
-      computedFareText: _computedFareText(trips: trips, discountPct: currentPct),
+      computedFareText:
+          _computedFareText(trips: trips, discountPct: currentPct),
       chanceLabel: _matchChanceLabel(discountPct: currentPct),
       chanceColor: _matchChanceColor(colors: colors, discountPct: currentPct),
       loading: tripsAsync.isLoading,
@@ -99,9 +104,8 @@ class _DriverReturnTripsScreenState extends ConsumerState<DriverReturnTripsScree
           toLabel: trip.destinationZoneName ?? trip.destinationCity ?? '—',
           offeredFareLabel:
               offered == null ? null : '€${offered.toStringAsFixed(2)}',
-          discountedFareLabel: discounted == null
-              ? null
-              : '€${discounted.toStringAsFixed(2)}',
+          discountedFareLabel:
+              discounted == null ? null : '€${discounted.toStringAsFixed(2)}',
           distanceLabel: trip.distanceKm == null
               ? null
               : '${trip.distanceKm!.toStringAsFixed(1)} km',
@@ -123,7 +127,8 @@ class _DriverReturnTripsScreenState extends ConsumerState<DriverReturnTripsScree
     );
   }
 
-  void _onDiscountChanged({required DriverRateProfile? activeProfile, required double v}) {
+  void _onDiscountChanged(
+      {required DriverRateProfile? activeProfile, required double v}) {
     final snapped = (v / 5).round() * 5.0;
     ref.read(_returnDiscountPctProvider.notifier).state = snapped;
 
@@ -139,7 +144,8 @@ class _DriverReturnTripsScreenState extends ConsumerState<DriverReturnTripsScree
     });
   }
 
-  String _computedFareText({required List<DriverReturnTrip> trips, required double discountPct}) {
+  String _computedFareText(
+      {required List<DriverReturnTrip> trips, required double discountPct}) {
     final fare = trips.isNotEmpty ? trips.first.offeredFare : null;
     if (fare == null) return '€—';
     final discounted = fare * (1 - (discountPct / 100));
@@ -152,10 +158,10 @@ class _DriverReturnTripsScreenState extends ConsumerState<DriverReturnTripsScree
     return 'high';
   }
 
-  Color _matchChanceColor({required DriverColors colors, required double discountPct}) {
+  Color _matchChanceColor(
+      {required DriverColors colors, required double discountPct}) {
     if (discountPct <= 10) return colors.error;
     if (discountPct <= 25) return colors.warning;
     return colors.success;
   }
 }
-

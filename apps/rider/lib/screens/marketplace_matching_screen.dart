@@ -83,6 +83,8 @@ class _MarketplaceMatchingScreenState
     final st = ref.read(rideRequestProvider).status;
     if (st == 'assigned' ||
         st == 'accepted' ||
+        st == 'driver_found' ||
+        st == 'driver_en_route' ||
         st == 'driver_arrived' ||
         st == 'in_progress') {
       if (mounted) context.go('/active');
@@ -157,7 +159,10 @@ class _MarketplaceMatchingScreenState
             final newStatus = payload.newRecord['status'] as String?;
             if (newStatus == null) return;
             ref.read(rideRequestProvider.notifier).updateStatus(newStatus);
-            if (newStatus == 'assigned' || newStatus == 'accepted') {
+            if (newStatus == 'assigned' ||
+                newStatus == 'accepted' ||
+                newStatus == 'driver_found' ||
+                newStatus == 'driver_en_route') {
               final pickup =
                   ref.read(bookingProvider).pickup?.displayName ?? '';
               await HeycabyWidgetSync.refreshInstantDriverFromRide(
@@ -245,20 +250,12 @@ class _MarketplaceMatchingScreenState
     if (rideId != null) {
       try {
         final identity = await ref.read(riderIdentityProvider.future);
-        final token = identity.riderToken;
-        if (token != null && token.isNotEmpty) {
-          await cancelExpiredRiderOpenRide(
-            rideId: rideId,
-            riderToken: token,
-            cancellationReason: 'rider_cancelled_marketplace_matching',
-          );
-        } else {
-          await HeyCabySupabase.client.from('ride_requests').update({
-            'status': 'cancelled',
-            'cancelled_by': 'rider',
-            'cancellation_reason': 'rider_cancelled_marketplace_matching',
-          }).eq('id', rideId);
-        }
+        final ride = ref.read(rideRequestProvider);
+        await cancelExpiredRiderOpenRide(
+          rideId: rideId,
+          riderToken: ride.riderToken ?? identity.riderToken,
+          cancellationReason: 'rider_cancelled_marketplace_matching',
+        );
 
         try {
           await HeyCabySupabase.client

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:heycaby_api/src/app_notifications_service.dart';
+import 'package:heycaby_api/src/rider_session_service.dart';
 import 'package:heycaby_api/src/supabase_client.dart';
 
 class RiderApi {
@@ -49,11 +50,23 @@ class RiderApi {
   /// Fetches a completed-ride receipt payload for rider view (Supabase RPC).
   Future<Map<String, dynamic>?> fetchRideReceipt({
     required String rideRequestId,
+    String? riderToken,
   }) async {
     try {
+      const sessions = RiderSessionService();
+      final token = await sessions.fetchRideRiderToken(
+        rideRequestId,
+        hintToken: riderToken,
+      );
+      final params = <String, dynamic>{
+        'p_ride_request_id': rideRequestId,
+      };
+      if (token != null && token.isNotEmpty) {
+        params['p_rider_token'] = token;
+      }
       final raw = await HeyCabySupabase.client.rpc(
         'fn_rider_receipt_for_ride',
-        params: {'p_ride_request_id': rideRequestId},
+        params: params,
       );
       if (raw is! Map) return null;
       final map = Map<String, dynamic>.from(raw);
@@ -109,6 +122,38 @@ class RiderApi {
     throw UnsupportedError(
       'Use Supabase ride_requests update (acceptMarketplaceOffer).',
     );
+  }
+
+  /// Fetch Taxi Terug candidate drivers heading toward the rider's destination.
+  /// Returns privacy-safe driver cards (first name, vehicle, ETA, fare range, match score).
+  Future<Map<String, dynamic>?> fetchTaxiTerugCandidates({
+    required double pickupLat,
+    required double pickupLng,
+    required double destinationLat,
+    required double destinationLng,
+    int limit = 10,
+    int? maxWaitMinutes,
+  }) async {
+    try {
+      final params = <String, dynamic>{
+        'p_pickup_lat': pickupLat,
+        'p_pickup_lng': pickupLng,
+        'p_destination_lat': destinationLat,
+        'p_destination_lng': destinationLng,
+        'p_limit': limit,
+      };
+      if (maxWaitMinutes != null) {
+        params['p_max_wait_minutes'] = maxWaitMinutes;
+      }
+      final raw = await HeyCabySupabase.client.rpc(
+        'fn_rider_taxi_terug_candidates',
+        params: params,
+      );
+      if (raw is! Map) return null;
+      return Map<String, dynamic>.from(raw);
+    } catch (_) {
+      return null;
+    }
   }
 }
 

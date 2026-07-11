@@ -8,6 +8,8 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
 import '../providers/driver_state_provider.dart';
+import '../providers/driver_taxi_terug_stats_provider.dart';
+import '../services/driver_operational_restore_service.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_feedback_loop_body.dart';
@@ -55,8 +57,7 @@ class _RateRiderScreenState extends ConsumerState<RateRiderScreen> {
       }
       await ref.read(driverApiProvider).rateRider(payload: payload);
       HapticService.success();
-      final wasPendingBreak =
-          ref.read(driverStateProvider).pendingBreak;
+      final wasPendingBreak = ref.read(driverStateProvider).pendingBreak;
       ref.read(driverStateProvider.notifier).clearActiveRide();
       if (wasPendingBreak) {
         unawaited(
@@ -64,7 +65,13 @@ class _RateRiderScreenState extends ConsumerState<RateRiderScreen> {
         );
       }
       if (!mounted) return;
-      context.go('/driver');
+      ref.invalidate(driverTaxiTerugStatsProvider);
+      final resumed = await resumeActivatedTaxiTerugRideIfAny(
+        ref,
+        GoRouter.of(context),
+      );
+      if (!mounted) return;
+      if (!resumed) context.go('/driver');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(DriverStrings.thanksForRating)),
       );
@@ -79,17 +86,22 @@ class _RateRiderScreenState extends ConsumerState<RateRiderScreen> {
     }
   }
 
-  void _skip() {
+  Future<void> _skip() async {
     HapticService.lightTap();
-    final wasPendingBreak =
-        ref.read(driverStateProvider).pendingBreak;
+    final wasPendingBreak = ref.read(driverStateProvider).pendingBreak;
     ref.read(driverStateProvider.notifier).clearActiveRide();
     if (wasPendingBreak) {
       unawaited(
         ref.read(driverApiProvider).setStatus(status: 'on_break'),
       );
     }
-    context.go('/driver');
+    ref.invalidate(driverTaxiTerugStatsProvider);
+    final resumed = await resumeActivatedTaxiTerugRideIfAny(
+      ref,
+      GoRouter.of(context),
+    );
+    if (!mounted) return;
+    if (!resumed) context.go('/driver');
   }
 
   @override

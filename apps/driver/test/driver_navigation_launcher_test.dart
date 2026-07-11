@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:heycaby_driver/l10n/driver_strings.dart';
 import 'package:heycaby_driver/services/driver_nav_app_pref.dart';
 import 'package:heycaby_driver/services/driver_navigation_launcher.dart';
 
@@ -9,6 +10,11 @@ void main() {
       expect(DriverNavApp.fromStored(''), DriverNavApp.waze);
       expect(DriverNavApp.fromStored('waze'), DriverNavApp.waze);
       expect(DriverNavApp.fromStored('google'), DriverNavApp.google);
+    });
+
+    test('label maps to profile display names', () {
+      expect(DriverNavApp.waze.label, DriverStrings.hotspotsWaze);
+      expect(DriverNavApp.google.label, DriverStrings.hotspotsGoogleMaps);
     });
   });
 

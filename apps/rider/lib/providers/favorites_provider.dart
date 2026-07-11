@@ -145,9 +145,13 @@ class FavoritesNotifier extends AsyncNotifier<List<FavoriteDriver>> {
         final identity = await ref.read(riderIdentityProvider.future);
         final riderIdentityId = identity.identityId;
         if (riderIdentityId != null && riderIdentityId.isNotEmpty) {
-          state = const AsyncLoading();
-          state =
-              await AsyncValue.guard(() => _loadFavorites(riderIdentityId));
+          // Defer list refresh so modal dismiss / route transitions are not
+          // interrupted by a synchronous home-tab rebuild.
+          Future.microtask(() async {
+            state = await AsyncValue.guard(
+              () => _loadFavorites(riderIdentityId),
+            );
+          });
         }
       }
 

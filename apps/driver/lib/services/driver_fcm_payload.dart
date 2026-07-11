@@ -5,6 +5,8 @@ class DriverFcmPayload {
   const DriverFcmPayload({
     this.category,
     this.rideRequestId,
+    this.rideInviteId,
+    this.expiresAt,
     this.screen,
     this.notificationId,
     this.requestId,
@@ -15,6 +17,8 @@ class DriverFcmPayload {
 
   final String? category;
   final String? rideRequestId;
+  final String? rideInviteId;
+  final DateTime? expiresAt;
   final String? screen;
   final String? notificationId;
   final String? requestId;
@@ -40,6 +44,8 @@ class DriverFcmPayload {
   }) {
     final category = (data['category'] as String?)?.trim();
     final rideId = (data['ride_request_id'] as String?)?.trim();
+    final inviteId = (data['ride_invite_id'] as String?)?.trim();
+    final expiresAt = DateTime.tryParse(data['expires_at']?.toString() ?? '');
     final screen = (data['screen'] as String?)?.trim();
     final notificationId = (data['notification_id'] as String?)?.trim();
     final requestId = (data['request_id'] as String?)?.trim();
@@ -52,8 +58,11 @@ class DriverFcmPayload {
               title: notificationTitle,
             ),
       rideRequestId: rideId?.isNotEmpty == true ? rideId : null,
+      rideInviteId: inviteId?.isNotEmpty == true ? inviteId : null,
+      expiresAt: expiresAt?.toUtc(),
       screen: screen?.isNotEmpty == true ? screen : null,
-      notificationId: notificationId?.isNotEmpty == true ? notificationId : null,
+      notificationId:
+          notificationId?.isNotEmpty == true ? notificationId : null,
       requestId: requestId?.isNotEmpty == true ? requestId : null,
       title: notificationTitle.isNotEmpty ? notificationTitle : null,
       body: notificationBody.isNotEmpty ? notificationBody : null,

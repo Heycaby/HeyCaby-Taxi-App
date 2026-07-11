@@ -113,7 +113,8 @@ class DriverRiderConversationBody extends StatelessWidget {
                                 )
                               : ListView.builder(
                                   controller: scrollController,
-                                  padding: const EdgeInsets.all(DriverSpacing.lg),
+                                  padding:
+                                      const EdgeInsets.all(DriverSpacing.lg),
                                   itemCount: messages.length,
                                   itemBuilder: (context, index) {
                                     final message = messages[index];
@@ -211,7 +212,8 @@ class DriverRiderConversationBody extends StatelessWidget {
                           const SizedBox(width: DriverSpacing.sm),
                           IconButton(
                             onPressed: onSend,
-                            icon: Icon(Icons.send_rounded, color: colors.primary),
+                            icon:
+                                Icon(Icons.send_rounded, color: colors.primary),
                           ),
                         ],
                       ),
@@ -259,7 +261,8 @@ class _BlockedState extends StatelessWidget {
             Text(
               DriverStrings.chatOnlyDuringActiveRideBody,
               textAlign: TextAlign.center,
-              style: typography.bodyMedium.copyWith(color: colors.textSecondary),
+              style:
+                  typography.bodyMedium.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: DriverSpacing.lg),
             DriverButton(

@@ -396,3 +396,186 @@ class RiderGrowCityLearnMoreButton extends StatelessWidget {
     );
   }
 }
+
+class RiderRideBadgesRow extends StatelessWidget {
+  const RiderRideBadgesRow({
+    super.key,
+    required this.totalRides,
+    required this.colors,
+    required this.typo,
+    required this.l10n,
+  });
+
+  final int totalRides;
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final earned = RiderRideBadgeTierX.earnedForRides(totalRides);
+    if (earned.isEmpty && totalRides == 0) return const SizedBox.shrink();
+
+    const all = RiderRideBadgeTier.values;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.growCityRideBadgesTitle,
+          style: typo.labelLarge.copyWith(
+            color: colors.text,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final tier in all)
+              _BadgeChip(
+                emoji: _emojiFor(tier),
+                label: _labelFor(tier, l10n),
+                earned: earned.contains(tier),
+                colors: colors,
+                typo: typo,
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  static String _emojiFor(RiderRideBadgeTier tier) {
+    switch (tier) {
+      case RiderRideBadgeTier.firstRide:
+        return '🚀';
+      case RiderRideBadgeTier.regular:
+        return '🌟';
+      case RiderRideBadgeTier.dedicated:
+        return '🔥';
+      case RiderRideBadgeTier.legend:
+        return '👑';
+    }
+  }
+
+  static String _labelFor(RiderRideBadgeTier tier, AppLocalizations l10n) {
+    switch (tier) {
+      case RiderRideBadgeTier.firstRide:
+        return l10n.growCityRideBadgeFirstRide;
+      case RiderRideBadgeTier.regular:
+        return l10n.growCityRideBadgeRegular;
+      case RiderRideBadgeTier.dedicated:
+        return l10n.growCityRideBadgeDedicated;
+      case RiderRideBadgeTier.legend:
+        return l10n.growCityRideBadgeLegend;
+    }
+  }
+}
+
+class RiderStreakChip extends StatelessWidget {
+  const RiderStreakChip({
+    super.key,
+    required this.weekCount,
+    required this.colors,
+    required this.typo,
+    required this.l10n,
+  });
+
+  final int weekCount;
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    if (weekCount <= 0) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: colors.accentL.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.accent.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('🔥', style: const TextStyle(fontSize: 16)),
+          const SizedBox(width: 6),
+          Text(
+            l10n.growCityStreakWeeks(weekCount),
+            style: typo.labelMedium.copyWith(
+              color: colors.text,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class RiderBadgeProgressBar extends StatelessWidget {
+  const RiderBadgeProgressBar({
+    super.key,
+    required this.current,
+    required this.target,
+    required this.label,
+    required this.colors,
+    required this.typo,
+  });
+
+  final int current;
+  final int target;
+  final String label;
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+
+  @override
+  Widget build(BuildContext context) {
+    if (target <= 0 || current >= target) return const SizedBox.shrink();
+
+    final progress = (current / target).clamp(0.0, 1.0);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: typo.labelSmall.copyWith(
+                    color: colors.textMid,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Text(
+                '$current / $target',
+                style: typo.labelSmall.copyWith(
+                  color: colors.accent,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 6,
+              backgroundColor: colors.border.withValues(alpha: 0.3),
+              color: colors.accent,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

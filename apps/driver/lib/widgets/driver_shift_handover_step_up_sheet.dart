@@ -217,96 +217,95 @@ class _DriverShiftHandoverStepUpSheetState
             children: [
               Text(
                 DriverStrings.shiftHandoverStepUpTitle,
-                  style: typography.titleLarge.copyWith(
-                    color: colors.text,
-                    fontWeight: FontWeight.w800,
-                  ),
+                style: typography.titleLarge.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w800,
                 ),
-                const SizedBox(height: DriverSpacing.sm),
-                Text(
-                  DriverStrings.shiftHandoverStepUpBody,
-                  style: typography.bodyMedium.copyWith(
-                    color: colors.textSecondary,
-                    height: 1.45,
-                  ),
+              ),
+              const SizedBox(height: DriverSpacing.sm),
+              Text(
+                DriverStrings.shiftHandoverStepUpBody,
+                style: typography.bodyMedium.copyWith(
+                  color: colors.textSecondary,
+                  height: 1.45,
                 ),
-                if (_busy && !_showOtpFallback) ...[
-                  const SizedBox(height: DriverSpacing.xl),
-                  const Center(child: CircularProgressIndicator()),
-                ],
-                if (_showOtpFallback) ...[
-                  if (_email != null) ...[
-                    const SizedBox(height: DriverSpacing.sm),
-                    Text(
-                      _email!,
-                      style: typography.labelMedium.copyWith(
-                        color: colors.text,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                  if (_otpSent) ...[
-                    const SizedBox(height: DriverSpacing.lg),
-                    TextField(
-                      controller: _otpController,
-                      keyboardType: TextInputType.number,
-                      maxLength: 6,
-                      decoration: InputDecoration(
-                        labelText: DriverStrings.loginEnterSixDigitCode,
-                        counterText: '',
-                      ),
-                    ),
-                  ],
-                ],
-                if (_error != null) ...[
+              ),
+              if (_busy && !_showOtpFallback) ...[
+                const SizedBox(height: DriverSpacing.xl),
+                const Center(child: CircularProgressIndicator()),
+              ],
+              if (_showOtpFallback) ...[
+                if (_email != null) ...[
                   const SizedBox(height: DriverSpacing.sm),
                   Text(
-                    _error!,
-                    style: typography.bodySmall.copyWith(color: colors.error),
+                    _email!,
+                    style: typography.labelMedium.copyWith(
+                      color: colors.text,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
-                if (_showOtpFallback) ...[
-                  const SizedBox(height: DriverSpacing.xl),
-                  if (_biometricAvailable && !_otpSent)
-                    DriverButton(
-                      label: DriverStrings.shiftHandoverBrandName,
-                      onPressed: _busy ? null : _completeWithBiometric,
-                      loading: _busy,
-                      colors: colors,
-                      typography: typography,
-                      size: DriverButtonSize.lg,
-                      icon: LucideIcons.scanFace,
+                if (_otpSent) ...[
+                  const SizedBox(height: DriverSpacing.lg),
+                  TextField(
+                    controller: _otpController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    decoration: InputDecoration(
+                      labelText: DriverStrings.loginEnterSixDigitCode,
+                      counterText: '',
                     ),
-                  if (_biometricAvailable && !_otpSent)
-                    const SizedBox(height: DriverSpacing.sm),
+                  ),
+                ],
+              ],
+              if (_error != null) ...[
+                const SizedBox(height: DriverSpacing.sm),
+                Text(
+                  _error!,
+                  style: typography.bodySmall.copyWith(color: colors.error),
+                ),
+              ],
+              if (_showOtpFallback) ...[
+                const SizedBox(height: DriverSpacing.xl),
+                if (_biometricAvailable && !_otpSent)
                   DriverButton(
-                    label: _otpSent
-                        ? DriverStrings.shiftHandoverStepUpConfirm
-                        : DriverStrings.shiftHandoverStepUpUseEmail,
-                    onPressed: _busy
-                        ? null
-                        : (_otpSent ? _verifyOtpAndIssue : _sendOtp),
+                    label: DriverStrings.shiftHandoverBrandName,
+                    onPressed: _busy ? null : _completeWithBiometric,
                     loading: _busy,
                     colors: colors,
                     typography: typography,
                     size: DriverButtonSize.lg,
-                    icon: LucideIcons.mail,
-                    variant: _biometricAvailable && !_otpSent
-                        ? DriverButtonVariant.outline
-                        : DriverButtonVariant.primary,
+                    icon: LucideIcons.scanFace,
                   ),
-                ],
-                const SizedBox(height: DriverSpacing.sm),
+                if (_biometricAvailable && !_otpSent)
+                  const SizedBox(height: DriverSpacing.sm),
                 DriverButton(
-                  label: DriverStrings.cancel,
-                  onPressed: _busy ? null : () => Navigator.of(context).pop(),
-                  variant: DriverButtonVariant.outline,
+                  label: _otpSent
+                      ? DriverStrings.shiftHandoverStepUpConfirm
+                      : DriverStrings.shiftHandoverStepUpUseEmail,
+                  onPressed:
+                      _busy ? null : (_otpSent ? _verifyOtpAndIssue : _sendOtp),
+                  loading: _busy,
                   colors: colors,
                   typography: typography,
                   size: DriverButtonSize.lg,
+                  icon: LucideIcons.mail,
+                  variant: _biometricAvailable && !_otpSent
+                      ? DriverButtonVariant.outline
+                      : DriverButtonVariant.primary,
                 ),
               ],
-            ),
+              const SizedBox(height: DriverSpacing.sm),
+              DriverButton(
+                label: DriverStrings.cancel,
+                onPressed: _busy ? null : () => Navigator.of(context).pop(),
+                variant: DriverButtonVariant.outline,
+                colors: colors,
+                typography: typography,
+                size: DriverButtonSize.lg,
+              ),
+            ],
+          ),
         ),
       ),
     );

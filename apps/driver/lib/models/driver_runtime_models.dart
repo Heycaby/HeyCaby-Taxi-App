@@ -26,7 +26,8 @@ class DriverRemoteConfig {
   bool get driverOnboardingV2 => featureFlags['driver_onboarding_v2'] == true;
 
   factory DriverRemoteConfig.fromJson(Map<String, dynamic> json) {
-    final search = (json['search'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final search =
+        (json['search'] as Map?)?.cast<String, dynamic>() ?? const {};
     final flagsRaw =
         (json['feature_flags'] as Map?)?.cast<String, dynamic>() ?? const {};
     final flags = <String, bool>{};
@@ -34,11 +35,14 @@ class DriverRemoteConfig {
       flags[entry.key] = entry.value == true;
     }
     return DriverRemoteConfig(
-      searchWindowMinutes: (search['driver_search_window_minutes'] as num?)?.toInt() ?? 10,
-      noDriverDelaySeconds: (search['no_driver_card_delay_seconds'] as num?)?.toInt() ?? 5,
+      searchWindowMinutes:
+          (search['driver_search_window_minutes'] as num?)?.toInt() ?? 10,
+      noDriverDelaySeconds:
+          (search['no_driver_card_delay_seconds'] as num?)?.toInt() ?? 5,
       nearTermWindowHours:
           (search['near_term_scheduled_window_hours'] as num?)?.toInt() ?? 48,
-      maxSearchRadiusKm: (search['max_search_radius_km'] as num?)?.toDouble() ?? 12,
+      maxSearchRadiusKm:
+          (search['max_search_radius_km'] as num?)?.toDouble() ?? 12,
       driverLocationMaxAgeMinutes:
           (search['driver_location_max_age_minutes'] as num?)?.toInt() ?? 3,
       featureFlags: flags,
@@ -54,6 +58,7 @@ class DriverReadinessItem {
     required this.complete,
     this.action,
     this.note,
+    this.priority = 999,
   });
 
   final String key;
@@ -61,6 +66,7 @@ class DriverReadinessItem {
   final bool complete;
   final String? action;
   final String? note;
+  final int priority;
 
   factory DriverReadinessItem.fromJson(Map<String, dynamic> json) {
     return DriverReadinessItem(
@@ -69,6 +75,7 @@ class DriverReadinessItem {
       complete: json['complete'] == true,
       action: json['action'] as String?,
       note: json['note'] as String?,
+      priority: (json['priority'] as num?)?.toInt() ?? 999,
     );
   }
 }
@@ -85,6 +92,15 @@ class DriverReadinessState {
     this.onboardingV2Stage = 0,
     this.verificationRequired = false,
     this.premiumEligible = false,
+    this.launchRequirements = const [],
+    this.launchBlockers = const [],
+    this.completedRequirements = const [],
+    this.reviewStatus = 'none',
+    this.reviewReason,
+    this.reviewRestrictsOnline = false,
+    this.reviewRequirements = const [],
+    this.reviewBlockers = const [],
+    this.optionalProfileItems = const [],
   });
 
   final bool canGoOnline;
@@ -97,22 +113,59 @@ class DriverReadinessState {
   final int onboardingV2Stage;
   final bool verificationRequired;
   final bool premiumEligible;
+  final List<DriverReadinessItem> launchRequirements;
+  final List<DriverReadinessItem> launchBlockers;
+  final List<String> completedRequirements;
+  final String reviewStatus;
+  final String? reviewReason;
+  final bool reviewRestrictsOnline;
+  final List<DriverReadinessItem> reviewRequirements;
+  final List<DriverReadinessItem> reviewBlockers;
+  final List<String> optionalProfileItems;
 
-  List<DriverReadinessItem> get missingItems =>
-      checklist.where((item) => !item.complete).toList();
+  List<DriverReadinessItem> get missingItems => [
+        ...launchBlockers,
+        ...reviewBlockers,
+      ];
+
+  bool get hasActiveReview =>
+      reviewStatus != 'none' && reviewStatus != 'cleared';
 
   bool get hasUpcomingMilestone =>
       nextMilestoneAt > 0 && completedRides < nextMilestoneAt;
 
   factory DriverReadinessState.fromJson(Map<String, dynamic> json) {
     final checklistRaw = (json['checklist'] as List?) ?? const [];
+    List<DriverReadinessItem> parseItems(Object? raw) =>
+        (raw as List? ?? const [])
+            .whereType<Map>()
+            .map((e) => DriverReadinessItem.fromJson(e.cast<String, dynamic>()))
+            .toList()
+          ..sort((a, b) => a.priority.compareTo(b.priority));
+
+    const launchKeys = {
+      'vehicle_plate',
+      'terms_of_service',
+      'indemnification_quiz',
+      'profile_photo',
+      'vehicle_photos',
+      'initial_tariff',
+    };
+    final checklist = parseItems(checklistRaw);
+    final explicitLaunch = parseItems(json['launch_requirements']);
+    final launch = explicitLaunch.isNotEmpty
+        ? explicitLaunch
+        : checklist.where((item) => launchKeys.contains(item.key)).toList();
+    final explicitLaunchBlockers = parseItems(json['launch_blockers']);
+    final launchMissing = explicitLaunchBlockers.isNotEmpty
+        ? explicitLaunchBlockers
+        : launch.where((item) => !item.complete).toList();
+    final reviewRequirements = parseItems(json['review_requirements']);
+    final reviewBlockers = parseItems(json['review_blockers']);
     return DriverReadinessState(
       canGoOnline: json['can_go_online'] == true,
       gatesSkipped: json['gates_skipped'] == true,
-      checklist: checklistRaw
-          .whereType<Map>()
-          .map((e) => DriverReadinessItem.fromJson(e.cast<String, dynamic>()))
-          .toList(),
+      checklist: checklist,
       statusMessage: json['status_message'] as String?,
       complianceType: json['compliance_type'] as String?,
       completedRides: (json['completed_rides'] as num?)?.toInt() ?? 0,
@@ -120,6 +173,21 @@ class DriverReadinessState {
       onboardingV2Stage: (json['onboarding_v2_stage'] as num?)?.toInt() ?? 0,
       verificationRequired: json['verification_required'] == true,
       premiumEligible: json['premium_eligible'] == true,
+      launchRequirements: launch,
+      launchBlockers: launchMissing,
+      completedRequirements:
+          (json['completed_requirements'] as List? ?? const [])
+              .map((value) => value.toString())
+              .toList(growable: false),
+      reviewStatus: (json['review_status'] ?? 'none').toString(),
+      reviewReason: json['review_reason']?.toString(),
+      reviewRestrictsOnline: json['review_restricts_online'] == true,
+      reviewRequirements: reviewRequirements,
+      reviewBlockers: reviewBlockers,
+      optionalProfileItems:
+          (json['optional_profile_items'] as List? ?? const [])
+              .map((value) => value.toString())
+              .toList(growable: false),
     );
   }
 }
@@ -134,6 +202,10 @@ class DriverRuntimeSnapshot {
     this.runtimeVersion = 0,
     this.generatedAt,
     this.billingAllowed = true,
+    this.platformRideEligible = true,
+    this.platformDispatchEligibleNow = false,
+    this.eligibilityReason,
+    this.balanceState = 'current',
     this.plateVerified = false,
     this.termsAccepted = false,
     this.sessionActive = false,
@@ -152,7 +224,13 @@ class DriverRuntimeSnapshot {
   final bool canGoOnline;
   final DriverReadinessState readiness;
   final DriverRemoteConfig config;
+
+  /// Legacy alias for [platformRideEligible]. It never controls presence.
   final bool billingAllowed;
+  final bool platformRideEligible;
+  final bool platformDispatchEligibleNow;
+  final String? eligibilityReason;
+  final String balanceState;
   final bool plateVerified;
   final bool termsAccepted;
   final bool sessionActive;
@@ -169,7 +247,8 @@ class DriverRuntimeSnapshot {
       return DriverRuntimeSnapshot(
         ok: false,
         canGoOnline: false,
-        readiness: const DriverReadinessState(canGoOnline: false, checklist: []),
+        readiness:
+            const DriverReadinessState(canGoOnline: false, checklist: []),
         config: DriverRemoteConfig.fromJson(const {}),
         error: 'invalid_runtime_response',
       );
@@ -179,20 +258,30 @@ class DriverRuntimeSnapshot {
       return DriverRuntimeSnapshot(
         ok: false,
         canGoOnline: false,
-        readiness: const DriverReadinessState(canGoOnline: false, checklist: []),
+        readiness:
+            const DriverReadinessState(canGoOnline: false, checklist: []),
         config: DriverRemoteConfig.fromJson(const {}),
         error: json['error'] as String? ?? 'runtime_error',
       );
     }
 
-    final readinessRaw = (json['permissions'] as Map?)?.cast<String, dynamic>() ??
-        (json['readiness'] as Map?)?.cast<String, dynamic>() ??
-        json;
+    final readinessRaw =
+        (json['permissions'] as Map?)?.cast<String, dynamic>() ??
+            (json['readiness'] as Map?)?.cast<String, dynamic>() ??
+            json;
     final configRaw =
         (json['config'] as Map?)?.cast<String, dynamic>() ?? const {};
     final onboardingRaw =
         (json['onboarding'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final billingRaw =
+        (json['billing'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final dispatchRaw =
+        (json['dispatch'] as Map?)?.cast<String, dynamic>() ?? const {};
     final generatedRaw = json['generated_at'];
+    final platformEligibilityRaw = json['platform_ride_eligible'] ??
+        json['billing_allowed'] ??
+        billingRaw['allowed'];
+    final platformRideEligible = platformEligibilityRaw != false;
 
     final plateVerified = json['plate_verified'] == true ||
         onboardingRaw['plate_verified'] == true;
@@ -208,7 +297,18 @@ class DriverRuntimeSnapshot {
       canGoOnline: json['can_go_online'] == true,
       readiness: DriverReadinessState.fromJson(readinessRaw),
       config: DriverRemoteConfig.fromJson(configRaw),
-      billingAllowed: json['billing_allowed'] == true,
+      billingAllowed: platformRideEligible,
+      platformRideEligible: platformRideEligible,
+      platformDispatchEligibleNow:
+          json['platform_dispatch_eligible_now'] == true ||
+              (json['platform_dispatch_eligible_now'] == null &&
+                  dispatchRaw['eligible'] == true),
+      eligibilityReason:
+          (json['eligibility_reason'] ?? billingRaw['eligibility_reason'])
+              ?.toString(),
+      balanceState:
+          (json['balance_state'] ?? billingRaw['balance_state'] ?? 'current')
+              .toString(),
       plateVerified: plateVerified,
       termsAccepted: termsAccepted,
       sessionActive: json['session_active'] == true,
@@ -233,6 +333,9 @@ class DriverStatusDecision {
     this.redirect,
     this.paymentUrl,
     this.message,
+    this.platformRideEligible = true,
+    this.eligibilityReason,
+    this.balanceState = 'current',
   });
 
   final String status;
@@ -240,6 +343,9 @@ class DriverStatusDecision {
   final String? redirect;
   final String? paymentUrl;
   final String? message;
+  final bool platformRideEligible;
+  final String? eligibilityReason;
+  final String balanceState;
 
   bool get isBlocked => blockedReason != null && blockedReason!.isNotEmpty;
 
@@ -250,6 +356,9 @@ class DriverStatusDecision {
       redirect: json['redirect'] as String?,
       paymentUrl: json['payment_url'] as String?,
       message: (json['message'] ?? json['error']) as String?,
+      platformRideEligible: json['platform_ride_eligible'] != false,
+      eligibilityReason: json['eligibility_reason'] as String?,
+      balanceState: (json['balance_state'] ?? 'current').toString(),
     );
   }
 }

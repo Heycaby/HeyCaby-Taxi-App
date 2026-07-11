@@ -300,10 +300,9 @@ class _DriverChatScreenState extends ConsumerState<DriverChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeColors = Theme.of(context).extension<HeyCabyColorTokens>()!;
-    final themeTypo = Theme.of(context).extension<HeyCabyTypography>()!;
-    final colors = DriverColors.fromTheme(themeColors);
-    final typography = DriverTypography.fromTheme(themeTypo);
+    final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
     final chatState = ref.watch(driverChatProvider);
     final driver = ref.watch(driverStateProvider);
     final canUseChat = _chatAllowedForCurrentState(driver);
@@ -322,11 +321,11 @@ class _DriverChatScreenState extends ConsumerState<DriverChatScreen> {
           icon: Icon(Icons.more_vert, color: colors.text),
           onSelected: (v) => _onChatMenuSelected(v, peer),
           itemBuilder: (_) => [
-            const PopupMenuItem(
+            PopupMenuItem(
               value: 'report',
               child: Text(DriverStrings.reportRider),
             ),
-            const PopupMenuItem(
+            PopupMenuItem(
               value: 'block',
               child: Text(DriverStrings.blockRider),
             ),
@@ -412,8 +411,8 @@ class _DriverChatScreenState extends ConsumerState<DriverChatScreen> {
 
   Future<void> _reportRider(String peer) async {
     final reason = TextEditingController();
-    final themeColors = Theme.of(context).extension<HeyCabyColorTokens>()!;
-    final typo = Theme.of(context).extension<HeyCabyTypography>()!;
+    final themeColors = ref.read(colorsProvider);
+    final typo = ref.read(typographyProvider);
     final submit = await showDialog<bool>(
       context: context,
       builder: (dCtx) => AlertDialog(
@@ -479,8 +478,8 @@ class _DriverChatScreenState extends ConsumerState<DriverChatScreen> {
   }
 
   Future<void> _blockRider(String peer) async {
-    final themeColors = Theme.of(context).extension<HeyCabyColorTokens>()!;
-    final typo = Theme.of(context).extension<HeyCabyTypography>()!;
+    final themeColors = ref.read(colorsProvider);
+    final typo = ref.read(typographyProvider);
     final ok = await showDialog<bool>(
       context: context,
       builder: (dCtx) => AlertDialog(

@@ -73,8 +73,7 @@ Future<void> showFoundingDriverWelcomeDialog(
                         }
                       });
                     },
-                    child:
-                        const Text(DriverStrings.foundingDriverProfilePhotoCta),
+                    child: Text(DriverStrings.foundingDriverProfilePhotoCta),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -93,8 +92,7 @@ Future<void> showFoundingDriverWelcomeDialog(
                         }
                       });
                     },
-                    child:
-                        const Text(DriverStrings.foundingDriverVehiclePhotoCta),
+                    child: Text(DriverStrings.foundingDriverVehiclePhotoCta),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -107,7 +105,7 @@ Future<void> showFoundingDriverWelcomeDialog(
                     ref.read(foundingDriverPostClaimProvider.notifier).state =
                         null;
                   },
-                  child: const Text(DriverStrings.foundingDriverClose),
+                  child: Text(DriverStrings.foundingDriverClose),
                 ),
               ),
             ],

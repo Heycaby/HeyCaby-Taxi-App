@@ -20,7 +20,7 @@ class _TourCard {
   });
 }
 
-const _kCards = [
+final _kCards = [
   _TourCard(
     kicker: DriverStrings.featureTour1Kicker,
     heading: DriverStrings.featureTour1Heading,

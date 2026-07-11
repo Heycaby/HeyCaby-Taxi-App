@@ -27,6 +27,7 @@ class DriverOpportunityScreenBody extends StatelessWidget {
     this.rideData,
     this.errorMessage,
     this.showCountdown = true,
+    this.renderMap = true,
   });
 
   final DriverColors colors;
@@ -41,6 +42,7 @@ class DriverOpportunityScreenBody extends StatelessWidget {
   final VoidCallback? onErrorBack;
   final Map<String, dynamic>? rideData;
   final String? errorMessage;
+  final bool renderMap;
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +58,7 @@ class DriverOpportunityScreenBody extends StatelessWidget {
         isDeclining: isDeclining,
         onAccept: onAccept,
         onDecline: onDecline,
+        renderMap: renderMap,
       );
     }
 
@@ -93,6 +96,7 @@ class _OfferContent extends StatelessWidget {
     required this.isDeclining,
     required this.onAccept,
     required this.onDecline,
+    required this.renderMap,
   });
 
   final DriverColors colors;
@@ -105,6 +109,7 @@ class _OfferContent extends StatelessWidget {
   final bool isDeclining;
   final VoidCallback onAccept;
   final VoidCallback onDecline;
+  final bool renderMap;
 
   @override
   Widget build(BuildContext context) {
@@ -121,6 +126,7 @@ class _OfferContent extends StatelessWidget {
       isDeclining: isDeclining,
       onAccept: onAccept,
       onDecline: onDecline,
+      renderMap: renderMap,
     );
   }
 }

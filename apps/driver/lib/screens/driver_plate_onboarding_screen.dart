@@ -118,7 +118,8 @@ class _DriverPlateOnboardingScreenState
     final row = _rdwRow!;
     final verification =
         row.isTaxiVehicle ? 'rdw_verified_taxi' : 'rdw_verified_not_taxi';
-    final resumeGoOnline = driverGoOnlineResumeRequested(GoRouterState.of(context));
+    final resumeGoOnline =
+        driverGoOnlineResumeRequested(GoRouterState.of(context));
 
     final res = await ref.read(driverDataServiceProvider).claimVehiclePlateV2(
           vehiclePlate: cleaned,
@@ -203,7 +204,8 @@ class _DriverPlateOnboardingScreenState
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
     final typography =
         DriverTypography.fromTheme(ref.watch(typographyProvider));
-    final resumeGoOnline = driverGoOnlineResumeRequested(GoRouterState.of(context));
+    final resumeGoOnline =
+        driverGoOnlineResumeRequested(GoRouterState.of(context));
 
     return PopScope(
       canPop: !_saving,

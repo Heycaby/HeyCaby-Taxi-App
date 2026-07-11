@@ -82,7 +82,7 @@ class _DriverFleetAllowlistVehicleScreenState
       await _load();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(DriverStrings.fleetAllowlistUpdateFailed),
         ),
       );
@@ -128,7 +128,7 @@ class _DriverFleetAllowlistVehicleScreenState
           ? FloatingActionButton.extended(
               onPressed: _showAddSheet,
               icon: const Icon(LucideIcons.userPlus),
-              label: const Text(DriverStrings.fleetAllowlistAddDriver),
+              label: Text(DriverStrings.fleetAllowlistAddDriver),
             )
           : null,
       body: _loading
@@ -224,7 +224,7 @@ class _AddDriverSheetState extends ConsumerState<_AddDriverSheet> {
     final q = _queryController.text.trim();
     if (q.length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(DriverStrings.fleetAllowlistSearchHint),
         ),
       );
@@ -260,7 +260,7 @@ class _AddDriverSheetState extends ConsumerState<_AddDriverSheet> {
       await widget.onAdded();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(DriverStrings.fleetAllowlistUpdateFailed),
         ),
       );
@@ -300,7 +300,7 @@ class _AddDriverSheetState extends ConsumerState<_AddDriverSheet> {
                 const SizedBox(height: DriverSpacing.md),
                 TextField(
                   controller: _queryController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: DriverStrings.fleetAllowlistSearchLabel,
                     hintText: DriverStrings.fleetAllowlistSearchHint,
                   ),

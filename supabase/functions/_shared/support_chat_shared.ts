@@ -108,7 +108,7 @@ async function callOpenRouter(
   messages: ChatTurn[],
   model: string,
   apiKey: string,
-): Promise<string> {
+): Promise<{ text: string; model: string }> {
   const siteUrl = Deno.env.get("OPENROUTER_SITE_URL") ??
     Deno.env.get("SUPABASE_URL") ?? "https://heycaby.nl";
   const title = Deno.env.get("OPENROUTER_APP_TITLE") ?? "HeyCaby Support";
@@ -134,7 +134,9 @@ async function callOpenRouter(
   try {
     parsed = JSON.parse(rawText);
   } catch {
-    throw new Error(`OpenRouter non-JSON (${res.status}): ${rawText.slice(0, 200)}`);
+    throw new Error(
+      `OpenRouter non-JSON (${res.status}): ${rawText.slice(0, 200)}`,
+    );
   }
 
   if (!res.ok) {
@@ -147,7 +149,51 @@ async function callOpenRouter(
 
   const text = extractOpenRouterText(parsed);
   if (!text) throw new Error("OpenRouter returned empty content");
-  return text;
+  const responseModel =
+    typeof (parsed as Record<string, unknown>)["model"] === "string"
+      ? String((parsed as Record<string, unknown>)["model"])
+      : model;
+  return { text, model: responseModel };
+}
+
+async function callOpenRouterWithFallback(
+  messages: ChatTurn[],
+  configuredModel: string,
+  apiKey: string,
+): Promise<{ text: string; model: string; usedFallbackModel: boolean }> {
+  const candidates = configuredModel === "openrouter/free"
+    ? [configuredModel]
+    : [configuredModel, "openrouter/free"];
+  let lastError: unknown;
+
+  for (const candidate of candidates) {
+    try {
+      const result = await callOpenRouter(messages, candidate, apiKey);
+      return {
+        ...result,
+        usedFallbackModel: candidate !== configuredModel,
+      };
+    } catch (error) {
+      lastError = error;
+      console.error(`OpenRouter model ${candidate}:`, error);
+    }
+  }
+
+  throw lastError ?? new Error("OpenRouter request failed");
+}
+
+function providerUnavailableReply(
+  userType: SupportUserType,
+  message: string,
+): string {
+  const isDutch =
+    /\b(ik|mijn|rit|chauffeur|betaling|probleem|niet|waarom|hoe|kan|help)\b/i
+      .test(message);
+  const assistant = userType === "driver" ? "Lee" : "Yaz";
+  if (isDutch) {
+    return `${assistant} kan nu geen AI-antwoord ophalen. Je bericht is wel veilig opgeslagen voor het supportteam. Probeer het zo opnieuw of neem bij een dringend probleem contact op via support.`;
+  }
+  return `${assistant} cannot retrieve an AI answer right now. Your message has been safely saved for the support team. Try again shortly or contact support if the issue is urgent.`;
 }
 
 async function getUserFromJwt(
@@ -166,7 +212,8 @@ async function resolveTicketId(
   requestedId: string | undefined,
 ): Promise<{ ticketId: string } | { error: string; status: number }> {
   const now = new Date();
-  const staleCutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+  const staleCutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+    .toISOString();
 
   // Auto-close inactive ongoing tickets so stale "open" threads do not stick forever.
   const { error: staleErr } = await admin
@@ -250,10 +297,9 @@ export async function handleSupportChatRequest(
   const apiKey = Deno.env.get("OPENROUTER_API_KEY")?.trim();
   if (!apiKey) {
     console.error("OPENROUTER_API_KEY missing");
-    return json({ error: "ai_not_configured" }, 503);
   }
 
-  const model = (Deno.env.get("SUPPORT_AI_MODEL") ?? "openai/gpt-4o").trim();
+  const model = (Deno.env.get("SUPPORT_AI_MODEL") ?? "openrouter/free").trim();
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -326,6 +372,22 @@ export async function handleSupportChatRequest(
   const userRow = { role: "user", content: message, ts: now };
   const withUser = [...existing, userRow];
 
+  // Persist the user's message before calling the AI provider. Provider outages
+  // must never erase a support request or leave an empty ticket behind.
+  const { error: userPersistError } = await admin
+    .from("tickets")
+    .update({
+      messages: withUser,
+      status: shouldReopen ? "open" : status,
+      updated_at: now,
+    })
+    .eq("id", ticketId);
+
+  if (userPersistError) {
+    console.error("ticket user message update:", userPersistError);
+    return json({ error: "persist_failed" }, 500);
+  }
+
   const turns = buildChatTurnsFromMessages(withUser);
   const sys = systemPrompt(userType);
   const apiMessages: ChatTurn[] = [
@@ -334,14 +396,23 @@ export async function handleSupportChatRequest(
   ];
 
   let reply: string;
+  let responseModel: string | null = null;
+  let usedFallbackModel = false;
+  let degraded = false;
   try {
-    reply = await callOpenRouter(apiMessages, model, apiKey);
-  } catch (e) {
-    console.error("OpenRouter:", e);
-    return json(
-      { error: "ai_upstream_error", detail: String(e).slice(0, 500) },
-      502,
+    if (!apiKey) throw new Error("OPENROUTER_API_KEY missing");
+    const completion = await callOpenRouterWithFallback(
+      apiMessages,
+      model,
+      apiKey,
     );
+    reply = completion.text;
+    responseModel = completion.model;
+    usedFallbackModel = completion.usedFallbackModel;
+  } catch (e) {
+    console.error("OpenRouter exhausted all models:", e);
+    reply = providerUnavailableReply(userType, message);
+    degraded = true;
   }
 
   const assistantRow = {
@@ -368,5 +439,8 @@ export async function handleSupportChatRequest(
   return json({
     reply,
     ticket_id: ticketId,
+    degraded,
+    model: responseModel,
+    used_fallback_model: usedFallbackModel,
   });
 }

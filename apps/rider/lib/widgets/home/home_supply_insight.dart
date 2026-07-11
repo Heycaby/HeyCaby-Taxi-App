@@ -213,19 +213,24 @@ class HomeSupplyInsightCard extends ConsumerWidget {
                 ),
                 Divider(height: 1, color: colors.border.withValues(alpha: 0.6)),
                 ListTile(
-                  leading: Icon(Icons.groups_outlined, color: colors.accent),
+                  leading: Icon(Icons.keyboard_return_rounded, color: colors.accent),
                   title: Text(
-                    l10n.marketplace,
+                    l10n.homeTaxiTerugTitle,
                     style: typo.titleSmall.copyWith(fontWeight: FontWeight.w700),
                   ),
                   subtitle: Text(
-                    l10n.marketplaceTagline,
+                    l10n.homeTaxiTerugSubtitle,
                     style: typo.bodySmall.copyWith(color: colors.textMid),
                   ),
-                  onTap: () {
+                  onTap: () async {
                     Navigator.of(sheetContext).pop();
-                    ref.read(bookingProvider.notifier).setMarketplace();
-                    context.push('/marketplace');
+                    final ok = await ensureLocationForBooking(
+                      context: context,
+                      ref: ref,
+                    );
+                    if (!ok) return;
+                    ref.read(bookingProvider.notifier).setTaxiTerug();
+                    if (context.mounted) context.push('/taxi-terug');
                   },
                 ),
               ],

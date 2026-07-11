@@ -52,12 +52,14 @@ class DriverComplianceOverallBanner extends StatelessWidget {
               children: [
                 Text(
                   DriverStrings.complianceOverall,
-                  style: typo.labelSmall.copyWith(color: colors.textSoft, fontWeight: FontWeight.w600),
+                  style: typo.labelSmall.copyWith(
+                      color: colors.textSoft, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   st.title,
-                  style: typo.titleMedium.copyWith(color: st.fg, fontWeight: FontWeight.w800),
+                  style: typo.titleMedium
+                      .copyWith(color: st.fg, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -160,7 +162,8 @@ String subtitleRijbewijs(DriverComplianceSnapshot? d) {
 
 /// Driving licence: verified only when `rijbewijs_verified` (ops after Veriff review).
 /// Veriff-approved but unconfirmed stays **pending**.
-(String, Color, Color) chipRijbewijs(DriverComplianceSnapshot? d, HeyCabyColorTokens colors) {
+(String, Color, Color) chipRijbewijs(
+    DriverComplianceSnapshot? d, HeyCabyColorTokens colors) {
   if (d == null) return rowChip(null, null, colors);
   if (d.rijbewijsVerified == true) {
     final exp = d.rijbewijsExpiry ?? d.veriffIdExpiry;
@@ -176,7 +179,8 @@ String subtitleRijbewijs(DriverComplianceSnapshot? d) {
 String subtitleVog(DriverComplianceSnapshot? d) {
   if (d == null) return DriverStrings.statusNotSet;
   if (d.vogImpliedByChauffeurspas == true) return DriverStrings.statusImplied;
-  if (d.vogExpiresAt != null) return '${DriverStrings.expiresOn} ${fmtNlDate(d.vogExpiresAt!)}';
+  if (d.vogExpiresAt != null)
+    return '${DriverStrings.expiresOn} ${fmtNlDate(d.vogExpiresAt!)}';
   return DriverStrings.complianceUploadPortal;
 }
 
@@ -191,15 +195,21 @@ String subtitleInsurance(DriverComplianceSnapshot? d) {
 String subtitleVehicle(DriverComplianceSnapshot? d) {
   if (d == null) return DriverStrings.statusNotSet;
   final plate = d.vehiclePlate ?? '—';
-  final brand = [d.rdwMerk, d.rdwHandelsbenaming].whereType<String>().where((e) => e.isNotEmpty).join(' ');
+  final brand = [d.rdwMerk, d.rdwHandelsbenaming]
+      .whereType<String>()
+      .where((e) => e.isNotEmpty)
+      .join(' ');
   final apk = d.apkExpiry;
-  final apkStr = apk != null ? '${DriverStrings.expiresOn} ${fmtNlDate(apk)}' : DriverStrings.statusNotSet;
+  final apkStr = apk != null
+      ? '${DriverStrings.expiresOn} ${fmtNlDate(apk)}'
+      : DriverStrings.statusNotSet;
   final wam = d.rdwWamVerzekerd;
   final wamStr = wam != null ? 'WAM: $wam' : '';
   return '$plate · $brand\n$apkStr ${wamStr.isEmpty ? '' : '· $wamStr'}';
 }
 
-(String, Color, Color) chipChauffeurspas(DriverComplianceSnapshot? d, HeyCabyColorTokens colors) {
+(String, Color, Color) chipChauffeurspas(
+    DriverComplianceSnapshot? d, HeyCabyColorTokens colors) {
   if (d == null) {
     return (
       DriverStrings.statusActionNeeded,
@@ -211,10 +221,18 @@ String subtitleVehicle(DriverComplianceSnapshot? d) {
   final expiry = d.chauffeurspasExpiry;
   final hasNumber = (d.chauffeurspasNumber ?? '').trim().isNotEmpty;
   if (expiry != null && expiry.isBefore(now)) {
-    return (DriverStrings.statusExpired, colors.error, colors.error.withValues(alpha: 0.12));
+    return (
+      DriverStrings.statusExpired,
+      colors.error,
+      colors.error.withValues(alpha: 0.12)
+    );
   }
   if (hasNumber && expiry != null) {
-    return (DriverStrings.statusVerified, colors.success, colors.success.withValues(alpha: 0.12));
+    return (
+      DriverStrings.statusVerified,
+      colors.success,
+      colors.success.withValues(alpha: 0.12)
+    );
   }
   return (
     DriverStrings.statusActionNeeded,
@@ -223,41 +241,80 @@ String subtitleVehicle(DriverComplianceSnapshot? d) {
   );
 }
 
-(String, Color, Color) rowChip(bool? verified, DateTime? expiry, HeyCabyColorTokens colors) {
+(String, Color, Color) rowChip(
+    bool? verified, DateTime? expiry, HeyCabyColorTokens colors) {
   final now = DateTime.now();
   if (expiry != null && expiry.isBefore(now)) {
-    return (DriverStrings.statusExpired, colors.error, colors.error.withValues(alpha: 0.12));
+    return (
+      DriverStrings.statusExpired,
+      colors.error,
+      colors.error.withValues(alpha: 0.12)
+    );
   }
   if (verified == true) {
-    return (DriverStrings.statusVerified, colors.success, colors.success.withValues(alpha: 0.12));
+    return (
+      DriverStrings.statusVerified,
+      colors.success,
+      colors.success.withValues(alpha: 0.12)
+    );
   }
   if (verified == false) {
-    return (DriverStrings.statusActionNeeded, colors.warning, colors.warning.withValues(alpha: 0.14));
+    return (
+      DriverStrings.statusActionNeeded,
+      colors.warning,
+      colors.warning.withValues(alpha: 0.14)
+    );
   }
-  return (DriverStrings.statusPending, colors.textMid, colors.border.withValues(alpha: 0.35));
+  return (
+    DriverStrings.statusPending,
+    colors.textMid,
+    colors.border.withValues(alpha: 0.35)
+  );
 }
 
-(String, Color, Color) rowChipVog(DriverComplianceSnapshot? d, HeyCabyColorTokens colors) {
+(String, Color, Color) rowChipVog(
+    DriverComplianceSnapshot? d, HeyCabyColorTokens colors) {
   if (d?.vogImpliedByChauffeurspas == true) {
-    return (DriverStrings.statusImplied, colors.accent, colors.accent.withValues(alpha: 0.12));
+    return (
+      DriverStrings.statusImplied,
+      colors.accent,
+      colors.accent.withValues(alpha: 0.12)
+    );
   }
   return rowChip(d?.vogVerified, d?.vogExpiresAt, colors);
 }
 
-(String, Color, Color) chipVehicle(DriverComplianceSnapshot? d, HeyCabyColorTokens colors) {
+(String, Color, Color) chipVehicle(
+    DriverComplianceSnapshot? d, HeyCabyColorTokens colors) {
   final now = DateTime.now();
   final apk = d?.apkExpiry;
   if (apk != null && apk.isBefore(now)) {
-    return (DriverStrings.statusExpired, colors.error, colors.error.withValues(alpha: 0.12));
+    return (
+      DriverStrings.statusExpired,
+      colors.error,
+      colors.error.withValues(alpha: 0.12)
+    );
   }
   final status = d?.vehicleVerificationStatus?.toLowerCase() ?? '';
   if (status.contains('taxi') || d?.vehicleVerified == true) {
-    return (DriverStrings.statusVerified, colors.success, colors.success.withValues(alpha: 0.12));
+    return (
+      DriverStrings.statusVerified,
+      colors.success,
+      colors.success.withValues(alpha: 0.12)
+    );
   }
   if (d?.vehicleVerified == false || status.contains('not_taxi')) {
-    return (DriverStrings.statusActionNeeded, colors.warning, colors.warning.withValues(alpha: 0.14));
+    return (
+      DriverStrings.statusActionNeeded,
+      colors.warning,
+      colors.warning.withValues(alpha: 0.14)
+    );
   }
-  return (DriverStrings.statusPending, colors.textMid, colors.border.withValues(alpha: 0.35));
+  return (
+    DriverStrings.statusPending,
+    colors.textMid,
+    colors.border.withValues(alpha: 0.35)
+  );
 }
 
 class DriverComplianceProgress {
@@ -286,8 +343,10 @@ DriverComplianceProgress driverComplianceProgress(
       hasText(d.taxiInsurancePolicyNumber) &&
       d.taxiInsuranceExpiry != null &&
       hasText(d.taxiInsurancePhotoUrl);
-  final licenceDone = d.rijbewijsVerified == true || veriffDecisionLooksApproved(d.veriffStatus);
-  final chauffeurDone = hasText(d.chauffeurspasNumber) && d.chauffeurspasExpiry != null;
+  final licenceDone = d.rijbewijsVerified == true ||
+      veriffDecisionLooksApproved(d.veriffStatus);
+  final chauffeurDone =
+      hasText(d.chauffeurspasNumber) && d.chauffeurspasExpiry != null;
   final vehicleAndApkDone = hasText(d.vehiclePlate) && d.apkExpiry != null;
   final termsDone = d.termsAcceptedAt != null;
   final shortQuizDone = d.indemnificationQuizPassed == true;

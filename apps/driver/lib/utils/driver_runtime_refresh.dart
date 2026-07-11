@@ -15,5 +15,7 @@ void invalidateDriverRuntime(WidgetRef ref) {
 /// Mutation → refresh runtime → render.
 Future<DriverRuntimeSnapshot> refreshDriverRuntime(WidgetRef ref) async {
   invalidateDriverRuntime(ref);
-  return ref.read(driverRuntimeServiceProvider).fetchRuntime(cacheFor: Duration.zero);
+  return ref
+      .read(driverRuntimeServiceProvider)
+      .fetchRuntime(cacheFor: Duration.zero);
 }

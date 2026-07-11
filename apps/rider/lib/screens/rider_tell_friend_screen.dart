@@ -5,6 +5,7 @@ import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_rider/models/rider_community_growth_models.dart';
 import 'package:heycaby_rider/providers/rider_invite_impact_provider.dart';
 import 'package:heycaby_rider/providers/rider_invite_url_provider.dart';
+import 'package:heycaby_rider/providers/rider_ride_milestones_provider.dart';
 import 'package:heycaby_rider/widgets/community/rider_grow_city_share_block.dart';
 import 'package:heycaby_rider/widgets/community/rider_grow_city_why_sheet.dart';
 import 'package:heycaby_rider/widgets/community/tell_friend_screen_header.dart';
@@ -75,6 +76,13 @@ class RiderTellFriendScreen extends ConsumerWidget {
                               delay: 40.ms,
                               curve: Curves.easeOut,
                             ),
+                        const SizedBox(height: HeyCabySpacing.component),
+                        RiderStreakChip(
+                          weekCount: ref.watch(riderStreakProvider).weekCount,
+                          colors: colors,
+                          typo: typo,
+                          l10n: l10n,
+                        ),
                         const SizedBox(height: HeyCabySpacing.sectionMedium),
                         cityStatsAsync.when(
                           data: (stats) => RiderGrowCityMilestoneStrip(
@@ -132,6 +140,64 @@ class RiderTellFriendScreen extends ConsumerWidget {
                           loading: () => const SizedBox.shrink(),
                           error: (_, __) => const SizedBox.shrink(),
                         ),
+                        const SizedBox(height: HeyCabySpacing.component),
+                        ref.watch(riderRideMilestonesProvider).when(
+                              data: (milestones) {
+                                final rides = milestones.totalCompletedRides;
+                                if (rides == 0) return const SizedBox.shrink();
+
+                                final nextRide =
+                                    RiderRideBadgeTierX.nextUnearned(rides);
+                                final nextInvite =
+                                    RiderCommunityBadgeTierX.nextUnearned(
+                                        ref
+                                            .read(riderInviteImpactProvider)
+                                            .valueOrNull
+                                            ?.joined ??
+                                        0);
+
+                                return Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    RiderRideBadgesRow(
+                                      totalRides: rides,
+                                      colors: colors,
+                                      typo: typo,
+                                      l10n: l10n,
+                                    ),
+                                    if (nextRide != null)
+                                      RiderBadgeProgressBar(
+                                        current: rides,
+                                        target: nextRide.threshold(),
+                                        label: l10n
+                                            .growCityProgressToRideBadge(
+                                          _rideBadgeLabel(nextRide, l10n),
+                                        ),
+                                        colors: colors,
+                                        typo: typo,
+                                      )
+                                    else if (nextInvite != null)
+                                      RiderBadgeProgressBar(
+                                        current: ref
+                                                .read(riderInviteImpactProvider)
+                                                .valueOrNull
+                                                ?.joined ??
+                                            0,
+                                        target: nextInvite.threshold(),
+                                        label: l10n
+                                            .growCityProgressToInviteBadge(
+                                          _inviteBadgeLabel(nextInvite, l10n),
+                                        ),
+                                        colors: colors,
+                                        typo: typo,
+                                      ),
+                                  ],
+                                );
+                              },
+                              loading: () => const SizedBox.shrink(),
+                              error: (_, __) => const SizedBox.shrink(),
+                            ),
                         const SizedBox(height: 4),
                         RiderGrowCityLearnMoreButton(
                           colors: colors,
@@ -200,5 +266,32 @@ class RiderTellFriendScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  static String _rideBadgeLabel(RiderRideBadgeTier tier, AppLocalizations l10n) {
+    switch (tier) {
+      case RiderRideBadgeTier.firstRide:
+        return l10n.growCityRideBadgeFirstRide;
+      case RiderRideBadgeTier.regular:
+        return l10n.growCityRideBadgeRegular;
+      case RiderRideBadgeTier.dedicated:
+        return l10n.growCityRideBadgeDedicated;
+      case RiderRideBadgeTier.legend:
+        return l10n.growCityRideBadgeLegend;
+    }
+  }
+
+  static String _inviteBadgeLabel(
+      RiderCommunityBadgeTier tier, AppLocalizations l10n) {
+    switch (tier) {
+      case RiderCommunityBadgeTier.supporter:
+        return l10n.growCityBadgeSupporter;
+      case RiderCommunityBadgeTier.builder:
+        return l10n.growCityBadgeBuilder;
+      case RiderCommunityBadgeTier.ambassador:
+        return l10n.growCityBadgeAmbassador;
+      case RiderCommunityBadgeTier.topPromoter:
+        return l10n.growCityBadgeTopPromoter;
+    }
   }
 }

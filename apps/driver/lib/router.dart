@@ -38,6 +38,8 @@ import 'screens/driver_indemnification_screen.dart';
 import 'screens/driver_app_suggestion_screen.dart';
 import 'screens/today_rides_screen.dart';
 import 'screens/driver_return_trips_screen.dart';
+import 'screens/driver_journey_intent_screen.dart';
+import 'screens/driver_taxi_thru_screen.dart';
 import 'screens/ride_swap_screen.dart';
 import 'screens/support_threads_screen.dart';
 import 'screens/support_new_ticket_screen.dart';
@@ -215,8 +217,13 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: '/driver/me',
-          pageBuilder: (_, state) =>
-              _shellPage(state, const DriverProfileScreen()),
+          pageBuilder: (_, state) => _shellPage(
+            state,
+            DriverProfileScreen(
+              initialAction: state.uri.queryParameters['action'],
+              returnAfterAction: state.uri.queryParameters['return'] == '1',
+            ),
+          ),
         ),
         GoRoute(
           path: '/driver/settings',
@@ -391,8 +398,19 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: '/driver/rides/today',
-          pageBuilder: (_, state) =>
-              _shellPage(state, const TodayRidesScreen()),
+          pageBuilder: (_, state) {
+            final filter = state.uri.queryParameters['filter'];
+            final initialFilter = switch (filter) {
+              'upcoming' => TodayFilter.upcoming,
+              'completed' => TodayFilter.completed,
+              'cancelled' => TodayFilter.cancelled,
+              _ => TodayFilter.all,
+            };
+            return _shellPage(
+              state,
+              TodayRidesScreen(initialFilter: initialFilter),
+            );
+          },
         ),
         GoRoute(
           path: '/driver/help-articles',
@@ -409,6 +427,16 @@ final appRouter = GoRouter(
               _shellPage(state, const DriverReturnTripsScreen()),
         ),
         GoRoute(
+          path: '/driver/journey-intent',
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverJourneyIntentScreen()),
+        ),
+        GoRoute(
+          path: '/driver/taxi-thru',
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverTaxiThruScreen()),
+        ),
+        GoRoute(
           path: '/driver/ride/new/:rideId',
           redirect: (context, state) {
             if (!isValidUuid(state.pathParameters['rideId'])) return '/driver';
@@ -416,7 +444,20 @@ final appRouter = GoRouter(
           },
           pageBuilder: (_, state) {
             final rideId = state.pathParameters['rideId']!;
-            return _page(state, NewRideRequestScreen(rideId: rideId));
+            final extra = state.extra;
+            final urgent = extra is Map && extra['urgent'] is bool
+                ? extra['urgent'] as bool
+                : true;
+            final inviteId =
+                extra is Map ? extra['inviteId']?.toString() : null;
+            return _page(
+              state,
+              NewRideRequestScreen(
+                rideId: rideId,
+                inviteId: inviteId,
+                urgent: urgent,
+              ),
+            );
           },
         ),
         GoRoute(

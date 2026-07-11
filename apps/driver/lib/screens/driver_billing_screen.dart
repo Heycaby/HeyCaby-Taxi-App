@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
@@ -13,7 +14,7 @@ import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../ui/driver_status_badge.dart';
 import '../utils/driver_runtime_refresh.dart';
-import '../widgets/driver_mollie_checkout_screen.dart';
+import '../widgets/driver_bank_transfer_sheet.dart';
 import '../widgets/driver_platform_balance_body.dart';
 
 String _money(Map<String, dynamic>? status, int cents) {
@@ -60,6 +61,16 @@ void _refreshAfterBalanceMutation(WidgetRef ref) {
   ref.invalidate(driverProfileProvider);
   ref.invalidate(driverPaymentLedgerProvider);
   unawaited(refreshDriverRuntime(ref));
+}
+
+Future<void> _refreshPlatformBalance(WidgetRef ref) async {
+  ref.invalidate(driverBillingStatusProvider);
+  ref.invalidate(driverPaymentLedgerProvider);
+  await Future.wait([
+    ref.read(driverBillingStatusProvider.future),
+    ref.read(driverPaymentLedgerProvider.future),
+    refreshDriverRuntime(ref),
+  ]);
 }
 
 class DriverBillingScreen extends ConsumerWidget {
@@ -135,6 +146,7 @@ class DriverBillingScreen extends ConsumerWidget {
       onViewHistory: () => context.push('/driver/billing/history'),
       onSettleBalance:
           canSettle ? () => _handleSettleBalance(context, ref) : null,
+      onRefresh: () => _refreshPlatformBalance(ref),
     );
   }
 
@@ -145,6 +157,26 @@ class DriverBillingScreen extends ConsumerWidget {
     final colors = ref.read(colorsProvider);
     final typo = ref.read(typographyProvider);
     final api = ref.read(driverApiProvider);
+    final status = ref.read(driverBillingStatusProvider).valueOrNull;
+    final outstanding = status?['outstanding_cents'] is num
+        ? (status!['outstanding_cents'] as num).toInt()
+        : 0;
+    final bankTransfer = DriverBankTransferDetails.fromBillingStatus(
+      status,
+      amount: _money(status, outstanding),
+    );
+
+    if (bankTransfer != null) {
+      await showDriverBankTransferSheet(
+        context: context,
+        colors: DriverColors.fromTheme(colors),
+        typography: DriverTypography.fromTheme(typo),
+        details: bankTransfer,
+        allowOnlineFallback: false,
+      );
+      if (context.mounted) _refreshAfterBalanceMutation(ref);
+      return;
+    }
 
     showDialog<void>(
       context: context,
@@ -188,7 +220,7 @@ class DriverBillingScreen extends ConsumerWidget {
     if (url == null || url.isEmpty) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(DriverStrings.platformFeeStartError)),
+          SnackBar(content: Text(DriverStrings.platformFeeStartError)),
         );
       }
       return;
@@ -196,28 +228,24 @@ class DriverBillingScreen extends ConsumerWidget {
 
     if (!context.mounted) return;
 
-    final success = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => DriverMollieCheckoutScreen(
-          checkoutUrl: url,
-          colors: colors,
-          typo: typo,
-          appBarTitle: DriverStrings.platformBalanceSettleBalance,
-        ),
-      ),
-    );
+    final uri = Uri.tryParse(url);
+    final opened = uri != null &&
+        uri.scheme == 'https' &&
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!context.mounted) return;
 
-    if (success == true && context.mounted) {
-      final paymentId = created['mollie_payment_id']?.toString();
-      if (paymentId != null && paymentId.isNotEmpty) {
-        await api.syncDriverBillingPayment(paymentId);
-      }
-      _refreshAfterBalanceMutation(ref);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(DriverStrings.platformBalanceVerifyPayment)),
-        );
-      }
+    if (!opened) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(DriverStrings.platformBalanceBrowserOpenFailed),
+        ),
+      );
+      return;
     }
+
+    _refreshAfterBalanceMutation(ref);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(DriverStrings.platformBalanceBrowserOpened)),
+    );
   }
 }

@@ -39,9 +39,13 @@ class DriverTrackingNotifier extends AutoDisposeAsyncNotifier<DriverLocation?> {
     await _fetchDriverLocation();
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(
-      const Duration(seconds: 5),
+      const Duration(seconds: 3),
       (_) => unawaited(_fetchDriverLocation()),
     );
+  }
+
+  Future<void> refreshNow() async {
+    await _fetchDriverLocation();
   }
 
   Future<void> _fetchDriverLocation() async {

@@ -3,16 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../models/ride_matching_variant.dart';
-import '../providers/active_search_provider.dart';
 import '../providers/near_term_ride_request_provider.dart';
 import '../providers/ride_request_provider.dart';
-import '../services/sound_service.dart';
-import '../services/stale_ride_cleanup.dart';
+import '../services/rider_matching_recovery_actions.dart';
 import '../utils/ride_matching_labels.dart';
 import 'active_search_stop_dialog.dart';
 
@@ -45,28 +42,11 @@ class _NearTermRideHomeBannerState
     );
     if (!mounted || !stop) return;
 
-    try {
-      final identity = await ref.read(riderIdentityProvider.future);
-      final token = identity.riderToken;
-      if (token != null) {
-        await cancelExpiredRiderOpenRide(
-          rideId: snap.id,
-          riderToken: token,
-          cancellationReason: 'rider_stopped_home_banner_search',
-        );
-      }
-    } catch (_) {
-      // Keep UI responsive even if backend cancel fails.
-    }
-
-    ref.invalidate(nearTermRideRequestProvider);
-    ref.invalidate(ridesTabUpcomingRequestsProvider);
-
-    final active = ref.read(activeSearchProvider).valueOrNull;
-    if (active?.rideRequestId == snap.id) {
-      await ref.read(activeSearchProvider.notifier).clear();
-    }
-    unawaited(SoundService().playRideCancelled());
+    await RiderMatchingRecoveryActions.cancelOpenRideAndClearLocalState(
+      ref,
+      rideId: snap.id,
+      cancellationReason: 'rider_stopped_home_banner_search',
+    );
   }
 
   @override

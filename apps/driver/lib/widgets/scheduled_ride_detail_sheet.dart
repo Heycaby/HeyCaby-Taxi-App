@@ -114,7 +114,8 @@ class _ScheduledRideDetailSheetState
     final typo = DriverTypography.fromTheme(ref.watch(typographyProvider));
     final ride = widget.ride;
     final when = ride.scheduledPickupAt != null
-        ? DateFormat('EEE d MMM · HH:mm').format(ride.scheduledPickupAt!.toLocal())
+        ? DateFormat('EEE d MMM · HH:mm')
+            .format(ride.scheduledPickupAt!.toLocal())
         : '—';
     final duration = ride.estimatedDurationMin != null
         ? HeyCabyFormatters.formatDuration(ride.estimatedDurationMin!)
@@ -190,9 +191,12 @@ class _ScheduledRideDetailSheetState
                 if (distance != null || duration != null) ...[
                   const SizedBox(height: DriverSpacing.sm),
                   Text(
-                    [if (duration != null) duration, if (distance != null) distance]
-                        .join(' · '),
-                    style: typo.bodyMedium.copyWith(color: colors.textSecondary),
+                    [
+                      if (duration != null) duration,
+                      if (distance != null) distance
+                    ].join(' · '),
+                    style:
+                        typo.bodyMedium.copyWith(color: colors.textSecondary),
                   ),
                 ],
                 const SizedBox(height: DriverSpacing.md),

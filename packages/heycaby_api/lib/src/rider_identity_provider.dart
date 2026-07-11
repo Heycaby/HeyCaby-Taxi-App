@@ -1,16 +1,18 @@
+import 'dart:async' show unawaited;
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'secure_storage.dart';
-import 'supabase_client.dart';
+import 'package:heycaby_api/src/rider_session_service.dart';
+import 'package:heycaby_api/src/secure_storage.dart';
+import 'package:heycaby_api/src/supabase_client.dart';
 
 class RiderIdentityState {
   final String? riderToken;
   final String? identityId;
   final String? email;
   final String? bookingName;
+
   /// Cached default payment methods (`cash`, `pin`, `tikkie`) for the booking flow.
   final List<String> preferredPaymentMethods;
   final String? preferredVehicleCategory;
@@ -49,8 +51,7 @@ class RiderIdentityState {
             preferredPaymentMethods ?? this.preferredPaymentMethods,
         preferredVehicleCategory:
             preferredVehicleCategory ?? this.preferredVehicleCategory,
-        preferredPetFriendly:
-            preferredPetFriendly ?? this.preferredPetFriendly,
+        preferredPetFriendly: preferredPetFriendly ?? this.preferredPetFriendly,
         isLoaded: isLoaded ?? this.isLoaded,
       );
 }
@@ -60,8 +61,37 @@ class RiderIdentityNotifier extends AsyncNotifier<RiderIdentityState> {
   Future<RiderIdentityState> build() async {
     final stored = await SecureStorage.getRiderIdentity();
     var local = _stateFromStored(stored);
+    if (local.riderToken != null && local.riderToken!.isNotEmpty) {
+      unawaited(const RiderSessionService().bindToken(local.riderToken));
+    }
+    local = await _repairAuthenticatedIdentity(local);
     if (local.identityId != null && local.identityId!.isNotEmpty) {
       local = await _mergeServerProfile(local) ?? local;
+    }
+    return local;
+  }
+
+  Future<RiderIdentityState> _repairAuthenticatedIdentity(
+    RiderIdentityState local,
+  ) async {
+    final userId = HeyCabySupabase.client.auth.currentUser?.id;
+    if (userId == null || userId.isEmpty) return local;
+    try {
+      final row = await HeyCabySupabase.client
+          .from('rider_identities')
+          .select('id')
+          .eq('user_id', userId)
+          .order('updated_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      final canonicalId = row?['id']?.toString().trim();
+      if (canonicalId == null || canonicalId.isEmpty) return local;
+      if (canonicalId != local.identityId) {
+        await SecureStorage.updateRiderIdentityId(canonicalId);
+        return local.copyWith(identityId: canonicalId);
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('repairAuthenticatedIdentity: $e');
     }
     return local;
   }
@@ -98,13 +128,15 @@ class RiderIdentityNotifier extends AsyncNotifier<RiderIdentityState> {
 
   /// Select columns in order until one works (older DBs may lack booking-prefs columns).
   static const _riderIdentitySelectAttempts = [
-    'booking_name, preferred_payment_methods, preferred_vehicle_category, preferred_pet_friendly, app_location_permission_granted, app_notification_permission_granted, app_permissions_synced_at',
-    'booking_name, preferred_payment_methods, preferred_vehicle_category, preferred_pet_friendly',
-    'booking_name, preferred_payment_methods, preferred_pet_friendly',
+    'booking_name, email, preferred_payment_methods, preferred_vehicle_category, preferred_pet_friendly, app_location_permission_granted, app_notification_permission_granted, app_permissions_synced_at',
+    'booking_name, email, preferred_payment_methods, preferred_vehicle_category, preferred_pet_friendly',
+    'booking_name, email, preferred_payment_methods, preferred_pet_friendly',
+    'booking_name, email',
     'booking_name',
   ];
 
-  Future<Map<String, dynamic>?> _selectRiderIdentityRow(String identityId) async {
+  Future<Map<String, dynamic>?> _selectRiderIdentityRow(
+      String identityId) async {
     Object? lastMissingColumnError;
     for (final cols in _riderIdentitySelectAttempts) {
       try {
@@ -122,13 +154,15 @@ class RiderIdentityNotifier extends AsyncNotifier<RiderIdentityState> {
       }
     }
     if (kDebugMode && lastMissingColumnError != null) {
-      debugPrint('mergeServerProfile rider_identities: $lastMissingColumnError');
+      debugPrint(
+          'mergeServerProfile rider_identities: $lastMissingColumnError');
     }
     return null;
   }
 
   /// Fetches `booking_name` + default ride prefs from Supabase and refreshes secure storage.
-  Future<RiderIdentityState?> _mergeServerProfile(RiderIdentityState local) async {
+  Future<RiderIdentityState?> _mergeServerProfile(
+      RiderIdentityState local) async {
     final id = local.identityId;
     if (id == null || id.isEmpty) return local;
 
@@ -143,9 +177,16 @@ class RiderIdentityNotifier extends AsyncNotifier<RiderIdentityState> {
         next = next.copyWith(bookingName: bn);
       }
 
+      final em = (row['email'] as String?)?.trim();
+      if (em != null && em.isNotEmpty) {
+        await SecureStorage.updateRiderEmail(em);
+        next = next.copyWith(email: em);
+      }
+
       final pmRaw = row['preferred_payment_methods'];
       if (pmRaw is List) {
-        final methods = pmRaw.map((e) => '$e').where((s) => s.isNotEmpty).toList();
+        final methods =
+            pmRaw.map((e) => '$e').where((s) => s.isNotEmpty).toList();
         await SecureStorage.updateRiderBookingPrefs(paymentMethods: methods);
         next = next.copyWith(preferredPaymentMethods: methods);
       }
@@ -241,6 +282,7 @@ class RiderIdentityNotifier extends AsyncNotifier<RiderIdentityState> {
 
   Future<void> saveGuestToken(String token) async {
     await SecureStorage.updateRiderToken(token);
+    await const RiderSessionService().bindToken(token);
     final current = state.valueOrNull;
     if (current != null) {
       state = AsyncData(current.copyWith(riderToken: token, isLoaded: true));
@@ -253,6 +295,17 @@ class RiderIdentityNotifier extends AsyncNotifier<RiderIdentityState> {
   Future<void> clearSession() async {
     await SecureStorage.clearRiderIdentity();
     state = const AsyncData(RiderIdentityState(isLoaded: true));
+  }
+
+  /// Re-fetches `rider_identities` and refreshes local secure storage.
+  Future<void> refreshFromServer() async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    final repaired = await _repairAuthenticatedIdentity(current);
+    final merged = await _mergeServerProfile(repaired);
+    if (merged != null) {
+      state = AsyncData(merged);
+    }
   }
 
   /// Persists chosen payment methods for future bookings (device + Supabase when logged in).

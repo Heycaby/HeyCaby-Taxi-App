@@ -20,22 +20,24 @@ void main() {
     expect(DriverStrings.accept, 'قبول');
   });
 
-  test('DriverStrings defaults to English for unsupported or missing locales',
+  test('DriverStrings defaults to Dutch for unsupported or missing locales',
       () {
     DriverStrings.useLocale(null);
-    expect(DriverStrings.home, 'Home');
-    expect(DriverStrings.goOnline, 'Go online');
+    expect(DriverStrings.home, 'Start');
+    expect(DriverStrings.goOnline, 'Ga online');
     expect(
       DriverStrings.statusControlOfflineHint,
-      'Go online to see live ride requests in your zone.',
+      'Ga online om live ritaanvragen in jouw zone te zien.',
     );
-    expect(DriverStrings.mapDemandWaiting(12), '12 waiting');
+    expect(DriverStrings.mapDemandWaiting(12), '12 wachtend');
 
     DriverStrings.useLocale(const Locale('fr'));
-    expect(DriverStrings.home, 'Home');
-    expect(DriverStrings.goOnline, 'Go online');
-    expect(DriverStrings.goBreakFailed,
-        'Could not start break. Check your connection and try again.');
+    expect(DriverStrings.home, 'Start');
+    expect(DriverStrings.goOnline, 'Ga online');
+    expect(
+      DriverStrings.goBreakFailed,
+      'Pauze starten mislukt. Controleer je verbinding en probeer opnieuw.',
+    );
   });
 
   test('DriverStrings supports Dutch driver labels explicitly', () {
@@ -84,7 +86,7 @@ void main() {
     expect(DriverStrings.profileNameSaved, 'Name saved.');
     expect(DriverStrings.profilePhotoAddHint,
         'Tap the photo to choose from gallery');
-    expect(DriverStrings.addVehiclePhoto, 'Add vehicle photo');
+    expect(DriverStrings.addVehiclePhoto, 'Add taxi photo');
     expect(DriverStrings.vehiclePhotoUploadFailed,
         'Vehicle photo upload failed. Try again.');
     expect(DriverStrings.addManualRideTitle, 'Add passenger');
@@ -107,37 +109,36 @@ void main() {
     expect(DriverStrings.selectRatingPrompt, 'Select a rating.');
     expect(DriverStrings.thanksForRating, 'Thanks for your rating!');
     expect(DriverStrings.actionFailedPrefix, 'Failed:');
-    expect(DriverStrings.returnTrips, 'Return rides');
-    expect(DriverStrings.returnMode, 'Return Mode');
+    expect(DriverStrings.returnTrips, 'Taxi Terug');
+    expect(DriverStrings.returnMode, 'Taxi Terug');
     expect(DriverStrings.returnModeOff, 'Off');
     expect(
       DriverStrings.returnModeOffBody,
-      'Heading home? View rides that move toward your home area.',
+      'Heading home? Earn on the way with Taxi Terug.',
     );
     expect(
       DriverStrings.returnModeAvailableCount(3),
-      '3 suitable return rides available',
+      '3 Taxi Terug rides available',
     );
     expect(
         DriverStrings.returnModeHeadingTo('Rotterdam'), 'Heading to Rotterdam');
     expect(
       DriverStrings.returnModeActiveBody(
         pickupRadiusKm: 10,
-        discountPct: 15,
       ),
-      '10 km pickup range · 15% discount',
+      'Pickup radius 10 km',
     );
     expect(
       DriverStrings.returnModeNoMatchesYet,
-      "No return rides yet. We'll keep looking while you drive.",
+      "No Taxi Terug rides yet. We'll keep looking while you drive.",
     );
     expect(DriverStrings.returnModeActivate, 'Activate');
     expect(DriverStrings.returnModeManage, 'Manage');
     expect(DriverStrings.returnModeDisable, 'Disable');
-    expect(DriverStrings.returnModeHeadingHomeTitle, 'Heading home?');
+    expect(DriverStrings.returnModeHeadingHomeTitle, 'Taxi Terug?');
     expect(
       DriverStrings.returnModeHeadingHomeBody('Rotterdam'),
-      'We can find rides that move you toward Rotterdam.',
+      'We can find rides toward Rotterdam while you drive.',
     );
     expect(DriverStrings.notNow, 'Not now');
     expect(DriverStrings.returnTripsEmpty, 'No return rides available.');
@@ -295,8 +296,8 @@ void main() {
     expect(DriverStrings.selectRatingPrompt, 'Selecciona una valoración.');
     expect(DriverStrings.thanksForRating, '¡Gracias por tu valoración!');
     expect(DriverStrings.actionFailedPrefix, 'Error:');
-    expect(DriverStrings.returnTrips, 'Viajes de vuelta');
-    expect(DriverStrings.returnMode, 'Modo de vuelta');
+    expect(DriverStrings.returnTrips, 'Taxi Terug');
+    expect(DriverStrings.returnMode, 'Taxi Terug');
     expect(
       DriverStrings.returnTripsEmpty,
       'No hay viajes de vuelta disponibles.',
@@ -347,7 +348,7 @@ void main() {
     );
     expect(
       DriverStrings.acceptRideFailedMessage,
-      'No se pudo aceptar el viaje. Es posible que la solicitud haya caducado.',
+      'No se pudo aceptar el viaje. Inténtalo de nuevo o revisa tu conexión.',
     );
     expect(
       DriverStrings.preferencesPlayPreviewTooltip,
@@ -446,8 +447,8 @@ void main() {
     expect(DriverStrings.selectRatingPrompt, 'اختر تقييما.');
     expect(DriverStrings.thanksForRating, 'شكرا على تقييمك!');
     expect(DriverStrings.actionFailedPrefix, 'فشل:');
-    expect(DriverStrings.returnTrips, 'رحلات العودة');
-    expect(DriverStrings.returnMode, 'وضع العودة');
+    expect(DriverStrings.returnTrips, 'Taxi Terug');
+    expect(DriverStrings.returnMode, 'Taxi Terug');
     expect(DriverStrings.returnTripsEmpty, 'لا توجد رحلات عودة متاحة.');
     expect(DriverStrings.ridesThisWeek, 'رحلات هذا الأسبوع');
     expect(DriverStrings.vehicleRdwTitle, 'مركبتك');
@@ -494,7 +495,7 @@ void main() {
     );
     expect(
       DriverStrings.acceptRideFailedMessage,
-      'تعذر قبول الرحلة. ربما انتهت صلاحية الطلب.',
+      'تعذر قبول الرحلة. حاول مرة أخرى أو تحقق من اتصالك.',
     );
     expect(DriverStrings.preferencesPlayPreviewTooltip, 'تشغيل معاينة 10 ثوان');
     expect(DriverStrings.insuranceProviderLabel, 'شركة التأمين');

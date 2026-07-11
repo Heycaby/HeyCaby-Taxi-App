@@ -10,7 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/favorites_provider.dart';
 import '../services/rider_notification_lifecycle_service.dart';
 
-Future<bool> showEmailModal(BuildContext context, WidgetRef ref) async {
+Future<bool> showEmailModal(BuildContext context, [WidgetRef? ref]) async {
   final result = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
@@ -333,33 +333,8 @@ class _EmailModalState extends ConsumerState<_EmailModal> {
         return;
       }
 
-      var exists = false;
-      try {
-        final existsRaw = await supabase.rpc(
-          'fn_rider_email_has_identity',
-          params: {'p_email': email},
-        );
-        exists = existsRaw == true;
-      } catch (_) {
-        exists = false;
-      }
-
-      if (exists) {
-        final result = await supabase.rpc(
-          'fn_create_rider_session',
-          params: {'p_email': email, 'p_display_name': null},
-        );
-        if (result == null || result is! Map || result['success'] != true) {
-          setState(() => _isLoading = false);
-          _showError(l10n.failedToSaveEmail);
-          return;
-        }
-        final map = Map<String, dynamic>.from(result);
-        setState(() => _isLoading = false);
-        await _finishSession(map, email);
-        return;
-      }
-
+      // Existing and new addresses follow the same verified OTP path. Merely
+      // knowing that an identity exists must never authenticate its owner.
       await supabase.auth.signInWithOtp(
         email: email,
         shouldCreateUser: true,

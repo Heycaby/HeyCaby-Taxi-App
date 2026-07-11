@@ -16,7 +16,8 @@ class RideSwapScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
-    final typography = DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final typography =
+        DriverTypography.fromTheme(ref.watch(typographyProvider));
     final themeColors = ref.watch(colorsProvider);
     final themeTypo = ref.watch(typographyProvider);
 

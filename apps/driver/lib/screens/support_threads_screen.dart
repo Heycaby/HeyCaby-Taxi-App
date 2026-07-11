@@ -69,10 +69,9 @@ class _SupportThreadsScreenState extends ConsumerState<SupportThreadsScreen> {
       final category = ticket['category'] as String? ?? DriverStrings.overige;
       final lastMsg =
           messages.isEmpty ? '' : _supportMessagePreview(messages.last);
-      final updatedAt = DateTime.tryParse(
-          ticket['updated_at'] as String? ??
-              ticket['created_at'] as String? ??
-              '');
+      final updatedAt = DateTime.tryParse(ticket['updated_at'] as String? ??
+          ticket['created_at'] as String? ??
+          '');
       final timeStr = updatedAt != null
           ? DateFormat('dd MMM HH:mm').format(updatedAt.toLocal())
           : null;

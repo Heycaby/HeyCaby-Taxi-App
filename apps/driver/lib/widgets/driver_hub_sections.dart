@@ -123,7 +123,7 @@ class DriverHubEarningsTargetSection extends ConsumerWidget {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text(DriverStrings.setGoalButton),
+              child: Text(DriverStrings.setGoalButton),
             ),
           ),
         ],

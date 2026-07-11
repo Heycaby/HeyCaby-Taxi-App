@@ -126,7 +126,8 @@ class DriverGateActionColumn extends StatelessWidget {
             onPressed: onTertiary,
             child: Text(
               tertiaryLabel!,
-              style: typography.labelLarge.copyWith(color: colors.textSecondary),
+              style:
+                  typography.labelLarge.copyWith(color: colors.textSecondary),
             ),
           ),
         ],

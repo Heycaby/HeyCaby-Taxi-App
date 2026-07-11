@@ -10,6 +10,7 @@ import {
 } from './config.ts'
 import type { RiderNotificationRow } from './notify_types.ts'
 import { deliverNotification } from './notify_deliver.ts'
+import { resolveRiderFcmTokens } from './resolve_fcm_tokens.ts'
 import { json, ok, safeCompare } from './util.ts'
 
 Deno.serve(async (req) => {
@@ -55,17 +56,13 @@ Deno.serve(async (req) => {
           }
 
           // Send FCM push and update push_sent_at
-          const { data: pushRows } = await supabase
-            .from('push_devices')
-            .select('fcm_token')
-            .eq('rider_identity_id', notification.user_id)
-            .eq('app_role', 'rider')
+          const fcmTokens = await resolveRiderFcmTokens(supabase, {
+            user_id: notification.user_id as string,
+            data: notification.data as Record<string, unknown>,
+          })
 
           let pushed = 0
-          for (const row of pushRows ?? []) {
-            const token = row?.fcm_token as string | null
-            if (!token || token.length < 10) continue
-
+          for (const token of fcmTokens) {
             // Import sendFcmNotification dynamically to avoid circular dependency
             const { sendFcmNotification } = await import('./notify_push.ts')
             await sendFcmNotification(token, {
@@ -124,17 +121,13 @@ Deno.serve(async (req) => {
         channel: notification.channel as string,
       }
 
-      const { data: pushRows } = await supabase
-        .from('push_devices')
-        .select('fcm_token')
-        .eq('rider_identity_id', notification.user_id)
-        .eq('app_role', 'rider')
+      const fcmTokens = await resolveRiderFcmTokens(supabase, {
+        user_id: notification.user_id as string,
+        data: notification.data as Record<string, unknown>,
+      })
 
       let pushed = 0
-      for (const row of pushRows ?? []) {
-        const token = row?.fcm_token as string | null
-        if (!token || token.length < 10) continue
-
+      for (const token of fcmTokens) {
         const { sendFcmNotification } = await import('./notify_push.ts')
         await sendFcmNotification(token, {
           title: notification.title as string,

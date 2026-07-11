@@ -57,8 +57,7 @@ Future<void> showDriverGoOnlineGuidanceSheet(
             colors: colors,
             typography: typo,
             padding: EdgeInsets.zero,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(22)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
             tintColor: colors.card,
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -193,7 +192,7 @@ Future<void> showDriverGoOnlineGuidanceSheet(
                                       alignment: Alignment.centerRight,
                                       child: FilledButton.tonal(
                                         onPressed: () => openRoute(route),
-                                        child: const Text(DriverStrings
+                                        child: Text(DriverStrings
                                             .goOnlineGuidanceOpenAction),
                                       ),
                                     ),
@@ -229,14 +228,13 @@ Future<void> showDriverGoOnlineGuidanceSheet(
                               }
                             });
                           },
-                          child:
-                              const Text(DriverStrings.goOnlineGuidanceViewAll),
+                          child: Text(DriverStrings.goOnlineGuidanceViewAll),
                         ),
                       ),
                       const SizedBox(width: 10),
                       TextButton(
                         onPressed: () => Navigator.of(ctx).pop(),
-                        child: const Text(DriverStrings.goOnlineGuidanceClose),
+                        child: Text(DriverStrings.goOnlineGuidanceClose),
                       ),
                     ],
                   ),

@@ -1,6 +1,9 @@
 import type { SupabaseClient } from "jsr:@supabase/supabase-js";
 
-import { sendFcmV1ToToken } from "./fcm_v1.ts";
+import {
+  type FcmSendResult,
+  sendFcmV1ToToken,
+} from "./fcm_v1.ts";
 
 export async function getDriverIdForRideRequest(
   supabase: SupabaseClient,
@@ -23,12 +26,18 @@ export async function sendFcmNotification(
     priority?: string;
     androidChannelId?: string;
   },
-): Promise<void> {
-  if (!fcmToken || fcmToken.length < 10) return;
+): Promise<FcmSendResult> {
+  if (!fcmToken || fcmToken.length < 10) {
+    return {
+      ok: false,
+      permanentFailure: true,
+      errorCode: "invalid_local_token",
+    };
+  }
   const channelFromData = notification.data?.android_channel_id as
     | string
     | undefined;
-  await sendFcmV1ToToken(fcmToken, {
+  return await sendFcmV1ToToken(fcmToken, {
     ...notification,
     androidChannelId: notification.androidChannelId ?? channelFromData,
   });
