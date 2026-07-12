@@ -7024,6 +7024,113 @@ class DriverStrings {
         es: 'Otro',
         ar: 'أخرى',
       );
+  static String get cancelRideReasonChangedMind =>
+      _t('Ik ben van gedachten veranderd',
+          en: 'I changed my mind', es: 'Cambié de opinión', ar: 'غيرت رأيي');
+  static String get cancelRideReasonVehicleProblem =>
+      _t('Voertuigprobleem of schade',
+          en: 'Vehicle problem or damage',
+          es: 'Problema o daño del vehículo',
+          ar: 'مشكلة أو ضرر في المركبة');
+  static String get cancelRideReasonRiderRequested =>
+      _t('Reiziger vroeg om annulering',
+          en: 'Rider asked to cancel',
+          es: 'El pasajero pidió cancelar',
+          ar: 'طلب الراكب الإلغاء');
+  static String get cancelRideReasonRouteIssue =>
+      _t('Probleem met route of bestemming',
+          en: 'Route or destination issue',
+          es: 'Problema de ruta o destino',
+          ar: 'مشكلة في المسار أو الوجهة');
+  static String get leaveRideTitle => _t('Wil je echt deze rit stoppen?',
+      en: 'Do you really want to stop this ride?',
+      es: '¿Realmente quieres detener este viaje?',
+      ar: 'هل تريد حقا إيقاف هذه الرحلة؟');
+  static String get leaveRideBody => _t(
+      'Als je alleen geen nieuwe rit meer wilt, pauzeer dan na deze rit.',
+      en: 'If you only want to stop receiving new rides, pause after this ride instead.',
+      es: 'Si solo no quieres más viajes, pausa después de este viaje.',
+      ar: 'إذا كنت لا تريد رحلات جديدة فقط، فتوقف مؤقتا بعد هذه الرحلة.');
+  static String get continueCurrentRide => _t('Deze rit voortzetten',
+      en: 'Continue this ride',
+      es: 'Continuar este viaje',
+      ar: 'متابعة هذه الرحلة');
+  static String get continueCurrentRideBody =>
+      _t('Navigeer verder naar de bestemming.',
+          en: 'Keep navigating to the destination.',
+          es: 'Sigue navegando al destino.',
+          ar: 'تابع الملاحة إلى الوجهة.');
+  static String get stopAfterThisRide => _t('Stoppen na deze rit',
+      en: 'Stop after this ride',
+      es: 'Parar después de este viaje',
+      ar: 'التوقف بعد هذه الرحلة');
+  static String get stopAfterThisRideBody =>
+      _t('Je blijft deze rit afmaken en ontvangt daarna geen nieuwe aanvragen.',
+          en: 'Finish this ride and receive no new requests afterwards.',
+          es: 'Termina este viaje y no recibas nuevas solicitudes después.',
+          ar: 'أكمل هذه الرحلة ولن تتلقى طلبات جديدة بعدها.');
+  static String get stillCancelRide => _t('Toch rit annuleren',
+      en: 'Cancel the ride anyway',
+      es: 'Cancelar el viaje de todos modos',
+      ar: 'إلغاء الرحلة على أي حال');
+  static String get stopAfterRideConfirmed =>
+      _t('Nieuwe aanvragen stoppen na deze rit.',
+          en: 'New requests will stop after this ride.',
+          es: 'Las nuevas solicitudes se detendrán después de este viaje.',
+          ar: 'ستتوقف الطلبات الجديدة بعد هذه الرحلة.');
+  static String get cancelSettlementTitle => _t('Geld en beschikbaarheid',
+      en: 'Payment and availability',
+      es: 'Pago y disponibilidad',
+      ar: 'الدفع والتوفر');
+  static String get cancelSettlementBody => _t(
+      'Leg vast wat al is betaald en wat je met het resterende bedrag wilt doen.',
+      en: 'Record what was already paid and what should happen to the remaining amount.',
+      es: 'Registra lo ya pagado y qué hacer con el resto.',
+      ar: 'سجل ما تم دفعه وما يجب فعله بالمبلغ المتبقي.');
+  static String get amountAlreadyPaid => _t('Bedrag al betaald',
+      en: 'Amount already paid',
+      es: 'Importe ya pagado',
+      ar: 'المبلغ المدفوع بالفعل');
+  static String get waiveRemainingFee => _t('Resterend bedrag kwijtschelden',
+      en: 'Waive the remaining amount',
+      es: 'Renunciar al importe restante',
+      ar: 'التنازل عن المبلغ المتبقي');
+  static String get waiveRemainingFeeBody =>
+      _t('De reiziger hoeft niets meer te betalen.',
+          en: 'The rider will not owe anything else.',
+          es: 'El pasajero no deberá nada más.',
+          ar: 'لن يدين الراكب بأي مبلغ إضافي.');
+  static String get pauseNewRequestsAfterCancel =>
+      _t('Nieuwe aanvragen pauzeren',
+          en: 'Pause new ride requests',
+          es: 'Pausar nuevas solicitudes',
+          ar: 'إيقاف طلبات الرحلات الجديدة');
+  static String get noCommissionReminder => _t(
+      'HeyCaby rekent geen commissie op deze rit. Controleer het betaalde bedrag zorgvuldig: jouw ritopbrengst blijft van jou.',
+      en: 'HeyCaby charges no commission on this ride. Check the collected amount carefully—your ride earnings remain yours.',
+      es: 'HeyCaby no cobra comisión en este viaje. Revisa bien el importe cobrado.',
+      ar: 'لا تفرض HeyCaby عمولة على هذه الرحلة. تحقق من المبلغ المحصل بعناية.');
+  static String get cancelRideFinalTitle => _t('Annulering bevestigen',
+      en: 'Confirm cancellation',
+      es: 'Confirmar cancelación',
+      ar: 'تأكيد الإلغاء');
+  static String get cancelRideFinalBody => _t(
+      'De rit stopt voor beide personen. Daarna kun je de ervaring beoordelen.',
+      en: 'The ride will end for both people. You can rate the experience afterwards.',
+      es: 'El viaje terminará para ambos. Después podrás valorar la experiencia.',
+      ar: 'ستنتهي الرحلة لكلا الطرفين ويمكنك تقييم التجربة بعدها.');
+  static String get continueLabel =>
+      _t('Doorgaan', en: 'Continue', es: 'Continuar', ar: 'متابعة');
+  static String distanceFromDropoff(String distance) => _t(
+      'Je bent $distance van de bestemming. Rijd dichterbij om de rit af te ronden.',
+      en: 'You are $distance from the drop-off. Move closer to complete the ride.',
+      es: 'Estás a $distance del destino. Acércate para completar el viaje.',
+      ar: 'أنت على بعد $distance من الوجهة. اقترب لإكمال الرحلة.');
+  static String distanceFromPickup(String distance) => _t(
+      'Je bent $distance van het ophaalpunt. Rijd dichterbij om je aankomst te bevestigen.',
+      en: 'You are $distance from the pickup. Move closer to confirm arrival.',
+      es: 'Estás a $distance del punto de recogida. Acércate para confirmar la llegada.',
+      ar: 'أنت على بعد $distance من نقطة الالتقاط. اقترب لتأكيد الوصول.');
   static String get cancelRideReasonDetailsHint => _t(
         'Voeg details toe als dat helpt',
         en: 'Add details if helpful',
