@@ -44,7 +44,9 @@ class DriverFcmPayload {
   }) {
     final category = (data['category'] as String?)?.trim();
     final rideId = (data['ride_request_id'] as String?)?.trim();
-    final inviteId = (data['ride_invite_id'] as String?)?.trim();
+    final inviteId = ((data['ride_invite_id'] as String?) ??
+            (data['invite_id'] as String?))
+        ?.trim();
     final expiresAt = DateTime.tryParse(data['expires_at']?.toString() ?? '');
     final screen = (data['screen'] as String?)?.trim();
     final notificationId = (data['notification_id'] as String?)?.trim();
@@ -71,7 +73,7 @@ class DriverFcmPayload {
   }
 
   static String? _inferCategory({String? screen, required String title}) {
-    if (screen == 'incoming') return 'incoming_ride';
+    if (screen == 'incoming' || screen == 'incoming_ride') return 'incoming_ride';
     final lower = title.toLowerCase();
     if (lower.contains('cancelled') || lower.contains('geannuleerd')) {
       return 'ride_phase';

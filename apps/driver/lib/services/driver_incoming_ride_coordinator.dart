@@ -8,12 +8,31 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
+import 'driver_incoming_ride_prefetch.dart';
 import 'sound_service.dart';
 
 /// One presentation gate for FCM, Realtime, notification rows, and restore.
 /// Supabase owns availability; local Flutter lifecycle state never rejects an invite.
 class DriverIncomingRideCoordinator {
   DriverIncomingRideCoordinator._();
+
+  /// Canonical entry for foreground FCM, notification tap, cold start, and Realtime.
+  static Future<void> openIncomingRide({
+    required BuildContext context,
+    required WidgetRef ref,
+    required String rideRequestId,
+    String? rideInviteId,
+    bool foreground = false,
+    bool urgent = true,
+  }) =>
+      present(
+        context: context,
+        ref: ref,
+        rideRequestId: rideRequestId,
+        rideInviteId: rideInviteId,
+        foreground: foreground,
+        urgent: urgent,
+      );
 
   static final Set<String> _presenting = <String>{};
   static final Map<String, DateTime> _recent = <String, DateTime>{};
@@ -36,7 +55,9 @@ class DriverIncomingRideCoordinator {
 
       dynamic query = HeyCabySupabase.client
           .from('ride_request_invites')
-          .select('id, ride_request_id, driver_id, status, expires_at')
+          .select(
+            'id, ride_request_id, driver_id, status, expires_at, distance_km, eta_minutes',
+          )
           .eq('driver_id', driverId)
           .eq('ride_request_id', rideRequestId);
       if (rideInviteId != null && rideInviteId.isNotEmpty) {
@@ -97,12 +118,15 @@ class DriverIncomingRideCoordinator {
 
       if (!context.mounted) return;
       unawaited(_trace(resolvedInviteId, 'viewed'));
+      final prefetch = DriverIncomingRidePrefetch(
+        inviteId: resolvedInviteId,
+        expiresAt: expiresAt,
+        distanceKm: (invite['distance_km'] as num?)?.toDouble(),
+        etaMinutes: (invite['eta_minutes'] as num?)?.toDouble(),
+      );
       await context.push(
         '/driver/ride/new/$rideRequestId',
-        extra: {
-          'urgent': urgent,
-          if (resolvedInviteId != null) 'inviteId': resolvedInviteId,
-        },
+        extra: prefetch.toRouteExtra(urgent: urgent),
       );
     } catch (_) {
       if (context.mounted) {

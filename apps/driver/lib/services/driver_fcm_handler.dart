@@ -145,7 +145,7 @@ class DriverFcmHandler {
     final rideId = payload.rideRequestId;
     if (rideId == null || rideId.isEmpty) return;
 
-    await DriverIncomingRideCoordinator.present(
+    await DriverIncomingRideCoordinator.openIncomingRide(
       context: context,
       ref: ref,
       rideRequestId: rideId,

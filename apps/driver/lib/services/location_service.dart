@@ -68,6 +68,7 @@ class DriverLocationService {
   DriverLocationService._internal();
 
   Timer? _locationTimer;
+  StreamSubscription<Position>? _positionSubscription;
   bool _isTracking = false;
   bool _uploadInFlight = false;
   String? _cachedDriverId; // drivers.id FK, resolved once and cached
@@ -103,8 +104,29 @@ class DriverLocationService {
     }
 
     _isTracking = true;
+    await _positionSubscription?.cancel();
+    final settings = defaultTargetPlatform == TargetPlatform.iOS
+        ? AppleSettings(
+            accuracy: LocationAccuracy.high,
+            activityType: ActivityType.automotiveNavigation,
+            distanceFilter: 25,
+            pauseLocationUpdatesAutomatically: false,
+            allowBackgroundLocationUpdates: true,
+            showBackgroundLocationIndicator: true,
+          )
+        : const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 25,
+          );
+    _positionSubscription = Geolocator.getPositionStream(
+      locationSettings: settings,
+    ).listen(
+      (position) => unawaited(_uploadLocation(position: position)),
+      onError: (_) => _markGpsFailure(),
+    );
     _locationTimer?.cancel();
-    _locationTimer = Timer.periodic(kDriverLocationUploadInterval, (_) {
+    // Watchdog fallback; movement-driven stream is the primary background path.
+    _locationTimer = Timer.periodic(const Duration(minutes: 2), (_) {
       unawaited(_uploadLocation());
     });
 
@@ -115,6 +137,8 @@ class DriverLocationService {
   /// Stop tracking driver location
   void stopTracking() {
     _locationTimer?.cancel();
+    unawaited(_positionSubscription?.cancel());
+    _positionSubscription = null;
     _locationTimer = null;
     _isTracking = false;
     _uploadInFlight = false;
@@ -166,12 +190,12 @@ class DriverLocationService {
     }
   }
 
-  Future<void> _uploadLocation() async {
+  Future<void> _uploadLocation({Position? position}) async {
     if (_uploadInFlight) return;
     _uploadInFlight = true;
     try {
-      final position = await _readPosition();
-      if (position == null) {
+      final resolvedPosition = position ?? await _readPosition();
+      if (resolvedPosition == null) {
         _markGpsFailure();
         return;
       }
@@ -181,16 +205,17 @@ class DriverLocationService {
       if (authUid == null) return;
 
       final driverId = await _resolveDriverId();
-      final heading = position.heading.isFinite && position.heading >= 0
-          ? position.heading.round()
-          : null;
+      final heading =
+          resolvedPosition.heading.isFinite && resolvedPosition.heading >= 0
+              ? resolvedPosition.heading.round()
+              : null;
 
       await HeyCabySupabase.client.from('driver_locations').upsert(
         {
           'user_id': authUid,
           'driver_id': driverId,
-          'latitude': position.latitude,
-          'longitude': position.longitude,
+          'latitude': resolvedPosition.latitude,
+          'longitude': resolvedPosition.longitude,
           'heading': heading,
           'updated_at': DateTime.now().toUtc().toIso8601String(),
         },
@@ -199,7 +224,7 @@ class DriverLocationService {
 
       if (kDebugMode) {
         debugPrint(
-            'DriverLocationService: Updated location (${position.latitude}, ${position.longitude})');
+            'DriverLocationService: Updated location (${resolvedPosition.latitude}, ${resolvedPosition.longitude})');
       }
     } catch (e) {
       if (kDebugMode) {

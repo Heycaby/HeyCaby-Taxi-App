@@ -10,7 +10,6 @@ import '../providers/driver_locale_provider.dart';
 import '../providers/driver_nav_app_pref_provider.dart';
 import '../services/driver_data_service.dart';
 import '../services/driver_nav_app_pref.dart';
-import '../services/sound_service.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_preferences_body.dart';
@@ -62,7 +61,6 @@ class DriverPreferencesScreen extends ConsumerWidget {
               _updatePref(ref, isWheelchairAccessible: v);
             },
             navigationContent: const _NavAppPreferenceSection(),
-            soundsContent: const _RideRingtonePreferenceRow(),
           );
         },
         loading: () => Center(
@@ -301,124 +299,6 @@ class _NavAppPreferenceSection extends ConsumerWidget {
           ],
         );
       },
-    );
-  }
-}
-
-class _RideRingtonePreferenceRow extends ConsumerStatefulWidget {
-  const _RideRingtonePreferenceRow();
-
-  @override
-  ConsumerState<_RideRingtonePreferenceRow> createState() =>
-      _RideRingtonePreferenceRowState();
-}
-
-class _RideRingtonePreferenceRowState
-    extends ConsumerState<_RideRingtonePreferenceRow> {
-  String _selectedKey = 'classic';
-  bool _loading = true;
-
-  static const Map<String, String> _labels = {
-    'classic': 'Classic (current)',
-    'option_1': 'Pulse Sweep',
-    'option_2': 'Soft Marimba',
-    'option_3': 'Tri Chime',
-    'option_4': 'Taxi Beep',
-  };
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    final key = await SoundService().getSelectedRideRequestRingtoneKey();
-    if (!mounted) return;
-    setState(() {
-      _selectedKey = key;
-      _loading = false;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = ref.watch(colorsProvider);
-    final typo = ref.watch(typographyProvider);
-    if (_loading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 18),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    return Column(
-      children: _labels.entries.map((entry) {
-        final isSelected = entry.key == _selectedKey;
-        return Column(
-          children: [
-            InkWell(
-              onTap: () async {
-                await SoundService().setRideRequestRingtoneByKey(entry.key);
-                await SoundService().playRideRequestPreviewByKey(entry.key);
-                if (!mounted) return;
-                setState(() => _selectedKey = entry.key);
-              },
-              child: Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 14, 12),
-                child: Row(
-                  children: [
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: colors.accent.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: Icon(
-                          isSelected
-                              ? Icons.radio_button_checked
-                              : Icons.radio_button_off,
-                          size: 22,
-                          color: colors.accent,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Text(
-                        entry.value,
-                        style: typo.bodyLarge.copyWith(
-                          color: colors.text,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon:
-                          Icon(Icons.play_arrow_rounded, color: colors.accent),
-                      tooltip: DriverStrings.preferencesPlayPreviewTooltip,
-                      onPressed: () async {
-                        await SoundService()
-                            .playRideRequestPreviewByKey(entry.key);
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (entry.key != _labels.keys.last)
-              Padding(
-                padding: const EdgeInsetsDirectional.only(start: 72),
-                child: Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: colors.border.withValues(alpha: 0.5),
-                ),
-              ),
-          ],
-        );
-      }).toList(),
     );
   }
 }

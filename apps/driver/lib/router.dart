@@ -8,6 +8,7 @@ import 'screens/login_screen.dart';
 import 'screens/driver_home_screen.dart';
 import 'screens/go_online_screen.dart';
 import 'screens/new_ride_request_screen.dart';
+import 'services/driver_incoming_ride_prefetch.dart';
 import 'screens/active_ride_screen.dart';
 import 'screens/at_pickup_screen.dart';
 import 'screens/ride_in_progress_screen.dart';
@@ -450,12 +451,14 @@ final appRouter = GoRouter(
                 : true;
             final inviteId =
                 extra is Map ? extra['inviteId']?.toString() : null;
+            final prefetch = DriverIncomingRidePrefetch.fromRouteExtra(extra);
             return _page(
               state,
               NewRideRequestScreen(
                 rideId: rideId,
-                inviteId: inviteId,
+                inviteId: inviteId ?? prefetch?.inviteId,
                 urgent: urgent,
+                prefetch: prefetch,
               ),
             );
           },

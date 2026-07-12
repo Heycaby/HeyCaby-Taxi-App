@@ -37,6 +37,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '486543076754',
     projectId: 'heycaby-2457a',
     storageBucket: 'heycaby-2457a.firebasestorage.app',
-    iosBundleId: 'nl.heycaby.driver',
+    iosBundleId: 'nl.heycaby.driver.app',
   );
 }

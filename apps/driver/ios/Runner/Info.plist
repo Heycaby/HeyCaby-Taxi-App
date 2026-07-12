@@ -66,7 +66,7 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>HeyCaby gebruikt Face ID om een veilige dienstwissel (Secure Shift Handover) te bevestigen.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>HeyCaby needs access to your photo library to select profile photos and upload documents.</string>
+	<string>HeyCaby needs access to your photo library to select profile photos, taxi photos, and upload documents.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -95,6 +95,7 @@
 		<string>location</string>
 		<string>fetch</string>
 		<string>processing</string>
+		<string>remote-notification</string>
 	</array>
 	<key>UIDeviceFamily</key>
 	<array>
