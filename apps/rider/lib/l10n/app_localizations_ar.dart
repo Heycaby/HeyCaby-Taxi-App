@@ -3889,4 +3889,27 @@ class AppLocalizationsAr extends AppLocalizations {
   String taxiTerugTrackerCurrentOffer(Object amount) {
     return 'العرض الحالي: €$amount';
   }
+
+  @override
+  String get activeRouteEditTitle => 'تعديل مسارك';
+
+  @override
+  String get activeRouteEditBody =>
+      'سيرى السائق التغييرات فورًا. قد تتغير الأجرة النهائية حسب المسار.';
+
+  @override
+  String get activeRouteChangeDestination => 'تغيير الوجهة';
+
+  @override
+  String get activeRouteAddStop => 'إضافة توقف';
+
+  @override
+  String get activeRouteStopAdded => 'تمت إضافة التوقف';
+
+  @override
+  String get activeRouteUpdated => 'تم تحديث المسار';
+
+  @override
+  String get activeRouteUpdateFailed =>
+      'تعذر تحديث المسار. مسارك الأصلي لم يتغير.';
 }

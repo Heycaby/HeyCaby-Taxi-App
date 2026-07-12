@@ -6850,6 +6850,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Current offer: €{amount}'**
   String taxiTerugTrackerCurrentOffer(Object amount);
+
+  /// No description provided for @activeRouteEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit your route'**
+  String get activeRouteEditTitle;
+
+  /// No description provided for @activeRouteEditBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your driver will see changes instantly. The final fare may change with the route.'**
+  String get activeRouteEditBody;
+
+  /// No description provided for @activeRouteChangeDestination.
+  ///
+  /// In en, this message translates to:
+  /// **'Change destination'**
+  String get activeRouteChangeDestination;
+
+  /// No description provided for @activeRouteAddStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a stop'**
+  String get activeRouteAddStop;
+
+  /// No description provided for @activeRouteStopAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop added'**
+  String get activeRouteStopAdded;
+
+  /// No description provided for @activeRouteUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Route updated'**
+  String get activeRouteUpdated;
+
+  /// No description provided for @activeRouteUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn’t update the route. Your original route is unchanged.'**
+  String get activeRouteUpdateFailed;
 }
 
 class _AppLocalizationsDelegate

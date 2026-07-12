@@ -1731,5 +1731,12 @@
   "taxiTerugTrackerBoostSubtitle": "زيادة عرضك بحيث يراه المزيد من السائقين ويقبلونه بشكل أسرع.",
   "taxiTerugTrackerBoostSuccess": "تم زيادة العرض إلى €{amount}! يمكن للسائقين رؤيته فورًا.",
   "taxiTerugTrackerBoostFailed": "تعذر زيادة العرض. يرجى المحاولة مرة أخرى.",
-  "taxiTerugTrackerCurrentOffer": "العرض الحالي: €{amount}"
+  "taxiTerugTrackerCurrentOffer": "العرض الحالي: €{amount}",
+  "activeRouteEditTitle": "تعديل مسارك",
+  "activeRouteEditBody": "سيرى السائق التغييرات فورًا. قد تتغير الأجرة النهائية حسب المسار.",
+  "activeRouteChangeDestination": "تغيير الوجهة",
+  "activeRouteAddStop": "إضافة توقف",
+  "activeRouteStopAdded": "تمت إضافة التوقف",
+  "activeRouteUpdated": "تم تحديث المسار",
+  "activeRouteUpdateFailed": "تعذر تحديث المسار. مسارك الأصلي لم يتغير."
 }

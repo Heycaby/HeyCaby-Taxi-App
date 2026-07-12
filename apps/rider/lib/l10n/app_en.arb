@@ -1754,5 +1754,12 @@
   "taxiTerugTrackerBoostSubtitle": "Increase your offer so more drivers can see it and accept faster.",
   "taxiTerugTrackerBoostSuccess": "Offer boosted to €{amount}! Drivers can see it instantly.",
   "taxiTerugTrackerBoostFailed": "Could not boost offer. Please try again.",
-  "taxiTerugTrackerCurrentOffer": "Current offer: €{amount}"
+  "taxiTerugTrackerCurrentOffer": "Current offer: €{amount}",
+  "activeRouteEditTitle": "Edit your route",
+  "activeRouteEditBody": "Your driver will see changes instantly. The final fare may change with the route.",
+  "activeRouteChangeDestination": "Change destination",
+  "activeRouteAddStop": "Add a stop",
+  "activeRouteStopAdded": "Stop added",
+  "activeRouteUpdated": "Route updated",
+  "activeRouteUpdateFailed": "We couldn’t update the route. Your original route is unchanged."
 }

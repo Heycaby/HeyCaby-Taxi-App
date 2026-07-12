@@ -1660,5 +1660,12 @@
   "taxiTerugTrackerBoostSubtitle": "Verhoog je aanbod zodat meer chauffeurs het kunnen zien en sneller kunnen accepteren.",
   "taxiTerugTrackerBoostSuccess": "Aanbod verhoogd naar €{amount}! Chauffeurs kunnen het direct zien.",
   "taxiTerugTrackerBoostFailed": "Kon aanbod niet verhogen. Probeer het opnieuw.",
-  "taxiTerugTrackerCurrentOffer": "Huidig aanbod: €{amount}"
+  "taxiTerugTrackerCurrentOffer": "Huidig aanbod: €{amount}",
+  "activeRouteEditTitle": "Je route bewerken",
+  "activeRouteEditBody": "Je chauffeur ziet wijzigingen direct. De uiteindelijke ritprijs kan door de route veranderen.",
+  "activeRouteChangeDestination": "Bestemming wijzigen",
+  "activeRouteAddStop": "Stop toevoegen",
+  "activeRouteStopAdded": "Stop toegevoegd",
+  "activeRouteUpdated": "Route bijgewerkt",
+  "activeRouteUpdateFailed": "We konden de route niet bijwerken. Je oorspronkelijke route is ongewijzigd."
 }

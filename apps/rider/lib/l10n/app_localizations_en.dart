@@ -3935,4 +3935,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String taxiTerugTrackerCurrentOffer(Object amount) {
     return 'Current offer: €$amount';
   }
+
+  @override
+  String get activeRouteEditTitle => 'Edit your route';
+
+  @override
+  String get activeRouteEditBody =>
+      'Your driver will see changes instantly. The final fare may change with the route.';
+
+  @override
+  String get activeRouteChangeDestination => 'Change destination';
+
+  @override
+  String get activeRouteAddStop => 'Add a stop';
+
+  @override
+  String get activeRouteStopAdded => 'Stop added';
+
+  @override
+  String get activeRouteUpdated => 'Route updated';
+
+  @override
+  String get activeRouteUpdateFailed =>
+      'We couldn’t update the route. Your original route is unchanged.';
 }
