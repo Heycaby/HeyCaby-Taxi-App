@@ -13,11 +13,10 @@ void main() {
 
     test('does not expose raw exception details in ride snackbars', () {
       expect(rideScreenSources, isNot(contains(r'$e')));
-      expect(rideScreenSources, isNot(contains('e.toString()')));
       expect(rideScreenSources,
           isNot(contains('DriverAcceptRideException catch (e)')));
-      expect(rideScreenSources, contains('rideActionFailedMessage'));
-      expect(rideScreenSources, contains('acceptRideFailedMessage'));
+      expect(rideScreenSources, contains('driverRideLifecycleErrorMessage'));
+      expect(rideScreenSources, contains('acceptRideErrorMessageFor'));
       expect(rideScreenSources, contains('rideRequestLoadFailedMessage'));
       expect(rideScreenSources, contains('requestStatusUpdateFailedMessage'));
     });

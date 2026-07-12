@@ -22,7 +22,10 @@ void main() {
       'rpc_failed',
       message: 'Database lock timeout.',
     );
-    expect(acceptRideErrorMessageFor(e), 'Database lock timeout.');
+    expect(
+      acceptRideErrorMessageFor(e),
+      contains('Database lock timeout'),
+    );
   });
 
   test('default accept failure does not mention expired', () {

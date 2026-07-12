@@ -7228,7 +7228,7 @@ class DriverStrings {
         ar: 'فشل الإجراء. تحقق من اتصالك وحاول مرة أخرى.',
       );
 
-  static String rideLifecycleErrorMessage(String code) {
+  static String rideLifecycleErrorMessage(String code, {String? detail}) {
     final normalized = code.split(':').first.trim();
     switch (normalized) {
       case 'too_far_from_pickup':
@@ -7252,10 +7252,232 @@ class DriverStrings {
           es: 'No se encontró tu perfil de conductor. Inicia sesión de nuevo.',
           ar: 'تعذر العثور على ملف السائق. سجّل الدخول مرة أخرى.',
         );
+      case 'driver_location_unavailable':
+        return _t(
+          'Je locatie is tijdelijk niet beschikbaar. Wacht even tot GPS is bijgewerkt en probeer opnieuw.',
+          en: 'Your location is temporarily unavailable. Wait for GPS to update, then try again.',
+          es: 'Tu ubicación no está disponible temporalmente. Espera a que se actualice el GPS e inténtalo de nuevo.',
+          ar: 'موقعك غير متاح مؤقتاً. انتظر حتى يتحدّث GPS ثم حاول مرة أخرى.',
+        );
+      case 'too_far_from_dropoff':
+        return _t(
+          'Je bent te ver van de bestemming (max. 750 m). Rijd dichterbij of bevestig verdergaan.',
+          en: 'You\'re too far from the destination (max 750 m). Move closer or confirm to continue.',
+          es: 'Estás demasiado lejos del destino (máx. 750 m). Acércate o confirma para continuar.',
+          ar: 'أنت بعيد جداً عن الوجهة (750 م كحد أقصى). اقترب أو أكّد للمتابعة.',
+        );
+      case 'target_location_unavailable':
+        return _t(
+          'De bestemming van deze rit ontbreekt. Vernieuw het scherm of neem contact op met support.',
+          en: 'This ride is missing a destination. Refresh the screen or contact support.',
+          es: 'A este viaje le falta el destino. Actualiza la pantalla o contacta con soporte.',
+          ar: 'هذه الرحلة تفتقد الوجهة. حدّث الشاشة أو تواصل مع الدعم.',
+        );
+      case 'driver_business_account_not_found':
+        return _t(
+          'Je chauffeursaccount is nog niet volledig ingesteld. Probeer opnieuw of neem contact op met support.',
+          en: 'Your driver account setup is incomplete. Try again or contact support.',
+          es: 'La configuración de tu cuenta de conductor está incompleta. Inténtalo de nuevo o contacta con soporte.',
+          ar: 'إعداد حساب السائق غير مكتمل. حاول مرة أخرى أو تواصل مع الدعم.',
+        );
+      case 'proximity_unavailable':
+        return _t(
+          'Afstand tot ophaalpunt of bestemming kon niet worden gecontroleerd. Probeer opnieuw.',
+          en: 'Could not verify distance to pickup or destination. Try again.',
+          es: 'No se pudo verificar la distancia al punto de recogida o destino. Inténtalo de nuevo.',
+          ar: 'تعذر التحقق من المسافة إلى نقطة الالتقاط أو الوجهة. حاول مرة أخرى.',
+        );
+      case 'ride_not_found':
+        return _t(
+          'Deze rit bestaat niet meer.',
+          en: 'This ride no longer exists.',
+          es: 'Este viaje ya no existe.',
+          ar: 'هذه الرحلة لم تعد موجودة.',
+        );
+      case 'ride_not_completed':
+        return _t(
+          'Deze actie is alleen mogelijk nadat de rit is voltooid.',
+          en: 'This action is only available after the ride is completed.',
+          es: 'Esta acción solo está disponible después de completar el viaje.',
+          ar: 'هذا الإجراء متاح فقط بعد اكتمال الرحلة.',
+        );
+      case 'missing_ride_request_id':
+      case 'missing_ride_id':
+        return _t(
+          'Rit-ID ontbreekt. Vernieuw het scherm en probeer opnieuw.',
+          en: 'Ride ID is missing. Refresh the screen and try again.',
+          es: 'Falta el ID del viaje. Actualiza la pantalla e inténtalo de nuevo.',
+          ar: 'معرّف الرحلة مفقود. حدّث الشاشة وحاول مرة أخرى.',
+        );
+      case 'invalid_rating':
+        return _t(
+          'Ongeldige beoordeling. Kies een score tussen 1 en 5 sterren.',
+          en: 'Invalid rating. Choose a score between 1 and 5 stars.',
+          es: 'Valoración no válida. Elige una puntuación entre 1 y 5 estrellas.',
+          ar: 'تقييم غير صالح. اختر درجة بين 1 و5 نجوم.',
+        );
+      case 'missing_rider_token':
+        return _t(
+          'Passagiergegevens ontbreken voor deze rit. Vernieuw het scherm of neem contact op met support.',
+          en: 'Rider details are missing for this ride. Refresh the screen or contact support.',
+          es: 'Faltan los datos del pasajero para este viaje. Actualiza la pantalla o contacta con soporte.',
+          ar: 'بيانات الراكب مفقودة لهذه الرحلة. حدّث الشاشة أو تواصل مع الدعم.',
+        );
+      case 'invalid_action':
+        return _t(
+          'Deze actie wordt niet ondersteund voor deze rit.',
+          en: 'This action is not supported for this ride.',
+          es: 'Esta acción no es compatible con este viaje.',
+          ar: 'هذا الإجراء غير مدعوم لهذه الرحلة.',
+        );
+      case 'invalid_cancel_reason':
+        return _t(
+          'Ongeldige annuleringsreden. Kies een geldige optie en probeer opnieuw.',
+          en: 'Invalid cancellation reason. Choose a valid option and try again.',
+          es: 'Motivo de cancelación no válido. Elige una opción válida e inténtalo de nuevo.',
+          ar: 'سبب الإلغاء غير صالح. اختر خياراً صالحاً وحاول مرة أخرى.',
+        );
+      case 'invalid_paid_amount':
+      case 'invalid_amount':
+        return _t(
+          'Ongeldig betaald bedrag. Controleer het bedrag en probeer opnieuw.',
+          en: 'Invalid paid amount. Check the amount and try again.',
+          es: 'Importe pagado no válido. Revisa el importe e inténtalo de nuevo.',
+          ar: 'مبلغ مدفوع غير صالح. تحقق من المبلغ وحاول مرة أخرى.',
+        );
+      case 'not_authorized':
+        return _t(
+          'Je bent niet gemachtigd voor deze actie op deze rit.',
+          en: 'You are not authorized for this action on this ride.',
+          es: 'No estás autorizado para esta acción en este viaje.',
+          ar: 'غير مصرح لك بهذا الإجراء على هذه الرحلة.',
+        );
+      case 'terminal_ride':
+        return _t(
+          'Deze rit is al afgerond of geannuleerd.',
+          en: 'This ride is already finished or cancelled.',
+          es: 'Este viaje ya finalizó o fue cancelado.',
+          ar: 'هذه الرحلة انتهت أو أُلغيت بالفعل.',
+        );
+      case 'ride_cancelled':
+        return _t(
+          'De rit is geannuleerd door de passagier.',
+          en: 'The rider cancelled this trip.',
+          es: 'El pasajero canceló este viaje.',
+          ar: 'ألغى الراكب هذه الرحلة.',
+        );
+      case 'network_unreachable':
+        return _t(
+          'Geen internetverbinding. Controleer wifi of mobiele data en probeer opnieuw.',
+          en: 'No internet connection. Check Wi‑Fi or mobile data and try again.',
+          es: 'Sin conexión a internet. Revisa el Wi‑Fi o los datos móviles e inténtalo de nuevo.',
+          ar: 'لا يوجد اتصال بالإنترنت. تحقق من Wi‑Fi أو بيانات الجوال وحاول مرة أخرى.',
+        );
+      case 'request_timeout':
+        return _t(
+          'Het verzoek duurde te lang. Probeer opnieuw.',
+          en: 'The request took too long. Try again.',
+          es: 'La solicitud tardó demasiado. Inténtalo de nuevo.',
+          ar: 'استغرق الطلب وقتاً طويلاً. حاول مرة أخرى.',
+        );
+      case 'server_unreachable':
+        return _t(
+          'De server reageerde niet. Probeer het over een moment opnieuw.',
+          en: 'The server did not respond. Try again in a moment.',
+          es: 'El servidor no respondió. Inténtalo de nuevo en un momento.',
+          ar: 'الخادم لم يستجب. حاول مرة أخرى بعد قليل.',
+        );
+      case 'rpc_failed':
+        return _t(
+          'De server kon de actie niet verwerken. Probeer opnieuw.',
+          en: 'The server could not process this action. Try again.',
+          es: 'El servidor no pudo procesar esta acción. Inténtalo de nuevo.',
+          ar: 'تعذر على الخادم معالجة هذا الإجراء. حاول مرة أخرى.',
+        );
+      case 'rpc_error':
+        return _t(
+          'Serverfout bij deze actie. Probeer opnieuw of neem contact op met support.',
+          en: 'Server error for this action. Try again or contact support.',
+          es: 'Error del servidor en esta acción. Inténtalo de nuevo o contacta con soporte.',
+          ar: 'خطأ في الخادم لهذا الإجراء. حاول مرة أخرى أو تواصل مع الدعم.',
+        );
       case 'rpc_unavailable':
-        return rideActionFailedMessage;
+        final trimmedDetail = detail?.trim();
+        if (trimmedDetail != null && trimmedDetail.isNotEmpty) {
+          return rideLifecycleErrorExplicit(
+            'rpc_unavailable',
+            detail: trimmedDetail,
+          );
+        }
+        return _t(
+          'De app kon geen contact maken met de server. Probeer opnieuw.',
+          en: 'The app could not reach the server. Try again.',
+          es: 'La app no pudo contactar con el servidor. Inténtalo de nuevo.',
+          ar: 'تعذر على التطبيق الوصول إلى الخادم. حاول مرة أخرى.',
+        );
       default:
-        return rideActionFailedMessage;
+        return rideLifecycleErrorExplicit(normalized);
+    }
+  }
+
+  /// Last-resort copy that still names the backend reason (never generic).
+  static String rideLifecycleErrorExplicit(String code, {String? detail}) {
+    final normalized = code.split(':').first.trim();
+    final trimmedDetail = detail?.trim();
+    if (trimmedDetail != null &&
+        trimmedDetail.isNotEmpty &&
+        !_looksLikeTechnicalDump(trimmedDetail)) {
+      return _t(
+        'Actie mislukt: $trimmedDetail',
+        en: 'Action failed: $trimmedDetail',
+        es: 'Acción fallida: $trimmedDetail',
+        ar: 'فشل الإجراء: $trimmedDetail',
+      );
+    }
+    if (normalized.isEmpty) {
+      return _t(
+        'Actie mislukt door een onbekende fout.',
+        en: 'Action failed due to an unknown error.',
+        es: 'La acción falló por un error desconocido.',
+        ar: 'فشل الإجراء بسبب خطأ غير معروف.',
+      );
+    }
+    final readable = _readableErrorCode(normalized);
+    return _t(
+      'Actie mislukt: $readable.',
+      en: 'Action failed: $readable.',
+      es: 'Acción fallida: $readable.',
+      ar: 'فشل الإجراء: $readable.',
+    );
+  }
+
+  static bool _looksLikeTechnicalDump(String value) {
+    final lower = value.toLowerCase();
+    return lower.contains('postgrestexception') ||
+        lower.contains('socketexception') ||
+        lower.contains('clientexception') ||
+        lower.contains('stacktrace') ||
+        lower.contains('exception(');
+  }
+
+  static String _readableErrorCode(String code) {
+    switch (code) {
+      case 'rpc_unavailable':
+        return _t(
+          'server niet bereikbaar',
+          en: 'server unreachable',
+          es: 'servidor no alcanzable',
+          ar: 'الخادم غير متاح',
+        );
+      case 'unknown_error':
+        return _t(
+          'onbekende fout',
+          en: 'unknown error',
+          es: 'error desconocido',
+          ar: 'خطأ غير معروف',
+        );
+      default:
+        return code.replaceAll('_', ' ');
     }
   }
 
@@ -7270,6 +7492,20 @@ class DriverStrings {
         en: 'Could not accept the ride. Try again or check your connection.',
         es: 'No se pudo aceptar el viaje. Inténtalo de nuevo o revisa tu conexión.',
         ar: 'تعذر قبول الرحلة. حاول مرة أخرى أو تحقق من اتصالك.',
+      );
+
+  static String get acceptRideCouldNotCompleteTitle => _t(
+        'Rit niet geaccepteerd',
+        en: 'Ride not accepted',
+        es: 'Viaje no aceptado',
+        ar: 'لم يتم قبول الرحلة',
+      );
+
+  static String acceptRideUnexpectedError(String reference) => _t(
+        'De app kon het antwoord niet verwerken. De rit is niet geaccepteerd. Probeer het volgende aanbod. Referentie: $reference.',
+        en: 'The app could not process the response. The ride was not accepted. Try the next offer. Reference: $reference.',
+        es: 'La aplicación no pudo procesar la respuesta. El viaje no fue aceptado. Prueba la siguiente oferta. Referencia: $reference.',
+        ar: 'تعذر على التطبيق معالجة الاستجابة. لم يتم قبول الرحلة. جرّب العرض التالي. المرجع: $reference.',
       );
 
   static String get rideAlertsTitle => _t(
@@ -7327,10 +7563,10 @@ class DriverStrings {
       case 'no_valid_invite':
       case 'invite_missing':
         return _t(
-          'Je bent nog niet uitgenodigd voor deze rit. Zet je status op Online, controleer GPS, en probeer opnieuw.',
-          en: 'You were not invited to this ride yet. Set your status to Online, check GPS, and try again.',
-          es: 'Aún no fuiste invitado a este viaje. Pon tu estado en En línea, activa el GPS e inténtalo de nuevo.',
-          ar: 'لم تتم دعوتك لهذه الرحلة بعد. اجعل حالتك متصلة، فعّل GPS، ثم حاول مرة أخرى.',
+          'Deze rit was niet voor jou beschikbaar. Wacht op de volgende nieuwe rit.',
+          en: 'This ride was not available to you. Wait for the next new request.',
+          es: 'Este viaje no estaba disponible para ti. Espera la siguiente solicitud nueva.',
+          ar: 'لم تكن هذه الرحلة متاحة لك. انتظر الطلب الجديد التالي.',
         );
       case 'invite_expired':
       case 'invite_not_pending':
@@ -7416,10 +7652,15 @@ class DriverStrings {
         );
       case 'rpc_failed':
       case 'rpc_error':
+        return rideLifecycleErrorMessage('rpc_failed');
       case 'rpc_unavailable':
-        return rideActionFailedMessage;
+        return rideLifecycleErrorMessage('rpc_unavailable');
+      case 'network_unreachable':
+        return rideLifecycleErrorMessage('network_unreachable');
+      case 'request_timeout':
+        return rideLifecycleErrorMessage('request_timeout');
       default:
-        return acceptRideFailedMessage;
+        return rideLifecycleErrorExplicit(normalized);
     }
   }
 
