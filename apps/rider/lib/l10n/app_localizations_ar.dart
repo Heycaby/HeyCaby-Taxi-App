@@ -3706,6 +3706,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get rideReceiptShareFailed => 'تعذر مشاركة الإيصال';
 
   @override
+  String get rideReceiptPrint => 'طباعة الإيصال';
+
+  @override
   String get rideReceiptFareBreakdown => 'تفصيل الأجرة';
 
   @override

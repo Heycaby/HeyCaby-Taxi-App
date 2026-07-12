@@ -1572,6 +1572,7 @@
   "rideReceiptShareWhatsapp": "مشاركة عبر واتساب",
   "rideReceiptShareEmail": "إرسال عبر البريد",
   "rideReceiptShareFailed": "تعذر مشاركة الإيصال",
+  "rideReceiptPrint": "طباعة الإيصال",
   "rideReceiptFareBreakdown": "تفصيل الأجرة",
   "rideReceiptBaseFare": "أجرة الرحلة",
   "rideReceiptWaitingFee": "وقت الانتظار",

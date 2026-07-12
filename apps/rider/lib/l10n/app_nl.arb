@@ -1593,6 +1593,7 @@
   "rideReceiptShareWhatsapp": "Delen via WhatsApp",
   "rideReceiptShareEmail": "Verstuur via e-mail",
   "rideReceiptShareFailed": "Kon bon niet delen",
+  "rideReceiptPrint": "Bon afdrukken",
   "rideReceiptFareBreakdown": "Prijsopbouw",
   "rideReceiptBaseFare": "Ritprijs",
   "rideReceiptWaitingFee": "Wachttijd",

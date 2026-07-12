@@ -1687,6 +1687,7 @@
   "rideReceiptShareWhatsapp": "Share via WhatsApp",
   "rideReceiptShareEmail": "Send via email",
   "rideReceiptShareFailed": "Could not share receipt",
+  "rideReceiptPrint": "Print receipt",
   "rideReceiptFareBreakdown": "Fare breakdown",
   "rideReceiptBaseFare": "Ride fare",
   "rideReceiptWaitingFee": "Waiting time",

@@ -3751,6 +3751,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rideReceiptShareFailed => 'Could not share receipt';
 
   @override
+  String get rideReceiptPrint => 'Print receipt';
+
+  @override
   String get rideReceiptFareBreakdown => 'Fare breakdown';
 
   @override

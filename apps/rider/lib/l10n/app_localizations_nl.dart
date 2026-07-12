@@ -3776,6 +3776,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get rideReceiptShareFailed => 'Kon bon niet delen';
 
   @override
+  String get rideReceiptPrint => 'Bon afdrukken';
+
+  @override
   String get rideReceiptFareBreakdown => 'Prijsopbouw';
 
   @override

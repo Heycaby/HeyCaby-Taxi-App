@@ -6521,6 +6521,12 @@ abstract class AppLocalizations {
   /// **'Could not share receipt'**
   String get rideReceiptShareFailed;
 
+  /// No description provided for @rideReceiptPrint.
+  ///
+  /// In en, this message translates to:
+  /// **'Print receipt'**
+  String get rideReceiptPrint;
+
   /// No description provided for @rideReceiptFareBreakdown.
   ///
   /// In en, this message translates to:
