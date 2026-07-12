@@ -878,6 +878,17 @@ class AppLocalizationsAr extends AppLocalizations {
   String get driverRemoved => 'تمت إزالة السائق من المفضلين';
 
   @override
+  String get favoritesLoadFailed =>
+      'تعذر تحميل سائقيك المفضلين. لم يتم تغيير قائمتك المحفوظة.';
+
+  @override
+  String get favoritesRemoveFailed => 'تعذرت إزالة هذا السائق. حاول مرة أخرى.';
+
+  @override
+  String get favoriteDriversRequired =>
+      'احفظ سائقًا مفضلاً واحدًا على الأقل قبل اختيار هذه الفئة.';
+
+  @override
   String get driverOffline => 'غير متصل';
 
   @override

@@ -1577,6 +1577,24 @@ abstract class AppLocalizations {
   /// **'Driver removed from favourites'**
   String get driverRemoved;
 
+  /// No description provided for @favoritesLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn’t load your favourite drivers. Your saved list has not been changed.'**
+  String get favoritesLoadFailed;
+
+  /// No description provided for @favoritesRemoveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'This driver could not be removed. Try again.'**
+  String get favoritesRemoveFailed;
+
+  /// No description provided for @favoriteDriversRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Save at least one favourite driver before choosing this audience.'**
+  String get favoriteDriversRequired;
+
   /// No description provided for @driverOffline.
   ///
   /// In en, this message translates to:

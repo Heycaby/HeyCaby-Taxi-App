@@ -894,6 +894,18 @@ class AppLocalizationsNl extends AppLocalizations {
   String get driverRemoved => 'Chauffeur verwijderd uit favorieten';
 
   @override
+  String get favoritesLoadFailed =>
+      'We konden je favoriete chauffeurs niet laden. Je opgeslagen lijst is niet gewijzigd.';
+
+  @override
+  String get favoritesRemoveFailed =>
+      'Deze chauffeur kon niet worden verwijderd. Probeer het opnieuw.';
+
+  @override
+  String get favoriteDriversRequired =>
+      'Sla eerst minimaal één favoriete chauffeur op voordat je deze doelgroep kiest.';
+
+  @override
   String get driverOffline => 'Offline';
 
   @override

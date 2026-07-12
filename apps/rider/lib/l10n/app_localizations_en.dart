@@ -888,6 +888,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get driverRemoved => 'Driver removed from favourites';
 
   @override
+  String get favoritesLoadFailed =>
+      'We couldn’t load your favourite drivers. Your saved list has not been changed.';
+
+  @override
+  String get favoritesRemoveFailed =>
+      'This driver could not be removed. Try again.';
+
+  @override
+  String get favoriteDriversRequired =>
+      'Save at least one favourite driver before choosing this audience.';
+
+  @override
   String get driverOffline => 'Offline';
 
   @override
