@@ -1014,6 +1014,7 @@
   "linkCopied": "Link gekopieerd naar klembord",
   "cancelRide": "Rit annuleren",
   "cancelRideConfirm": "Weet je zeker dat je deze rit wilt annuleren?",
+  "cancelRideFailed": "We konden deze rit nog niet annuleren. De rit is nog actief. Probeer het opnieuw.",
   "noDriverFound": "Geen chauffeur gevonden",
   "noDriverFoundMessage": "We konden geen chauffeur vinden voor je rit.",
   "retrySearch": "Opnieuw proberen",

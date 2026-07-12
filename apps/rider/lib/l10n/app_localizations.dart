@@ -4337,6 +4337,12 @@ abstract class AppLocalizations {
   /// **'Are you sure you want to cancel this ride?'**
   String get cancelRideConfirm;
 
+  /// No description provided for @cancelRideFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t cancel this ride yet. It is still active. Please try again.'**
+  String get cancelRideFailed;
+
   /// No description provided for @noDriverFound.
   ///
   /// In en, this message translates to:

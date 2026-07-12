@@ -2424,6 +2424,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cancelRideConfirm => 'هل أنت متأكد من إلغاء هذه الرحلة؟';
 
   @override
+  String get cancelRideFailed =>
+      'لم نتمكن من إلغاء هذه الرحلة بعد. لا تزال الرحلة نشطة. حاول مرة أخرى.';
+
+  @override
   String get noDriverFound => 'لم يتم العثور على سائق';
 
   @override

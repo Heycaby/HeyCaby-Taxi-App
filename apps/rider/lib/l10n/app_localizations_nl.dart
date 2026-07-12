@@ -2467,6 +2467,10 @@ class AppLocalizationsNl extends AppLocalizations {
       'Weet je zeker dat je deze rit wilt annuleren?';
 
   @override
+  String get cancelRideFailed =>
+      'We konden deze rit nog niet annuleren. De rit is nog actief. Probeer het opnieuw.';
+
+  @override
   String get noDriverFound => 'Geen chauffeur gevonden';
 
   @override

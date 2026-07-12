@@ -2448,6 +2448,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancelRideConfirm => 'Are you sure you want to cancel this ride?';
 
   @override
+  String get cancelRideFailed =>
+      'We couldn\'t cancel this ride yet. It is still active. Please try again.';
+
+  @override
   String get noDriverFound => 'No driver found';
 
   @override

@@ -1081,6 +1081,7 @@
   "linkCopied": "Link copied to clipboard",
   "cancelRide": "Cancel ride",
   "cancelRideConfirm": "Are you sure you want to cancel this ride?",
+  "cancelRideFailed": "We couldn't cancel this ride yet. It is still active. Please try again.",
   "noDriverFound": "No driver found",
   "noDriverFoundMessage": "We could not find a driver for your ride.",
   "retrySearch": "Try again",
