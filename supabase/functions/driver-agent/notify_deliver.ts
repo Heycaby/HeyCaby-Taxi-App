@@ -200,6 +200,7 @@ export async function deliverNotification(
       : "manual_preride_request",
     input: payloadForLog,
     output: {
+      category: n.category,
       notification_id: inserted?.id,
       push_attempted: pushAttempted,
       push_device_count: pushDeviceCount,

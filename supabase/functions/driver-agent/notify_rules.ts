@@ -224,11 +224,12 @@ export function buildAgentNotification(
       agent: "driver_agent",
       category: "incoming_ride",
       title: "New ride request",
-      body: "Pickup nearby · Open HeyCaby to review",
+      body: "A rider nearby is looking for a taxi",
       data: {
         ride_request_id: rideRequestId,
         ride_invite_id: rideInviteId,
-        screen: "incoming",
+        invite_id: rideInviteId,
+        screen: "incoming_ride",
         expires_at: record?.expires_at ?? null,
         android_channel_id: "incoming_ride_channel",
         notification_type: "incoming_ride",
@@ -258,9 +259,15 @@ export function buildAgentNotification(
         user_id: "",
         agent: "driver_agent",
         category: "chat",
-        title: "💬 [Rider]: " + preview,
+        title: "Rider message",
         body: preview,
-        data: { ride_request_id: rideRequestId },
+        data: {
+          ride_request_id: rideRequestId,
+          screen: "chat",
+          notification_type: "ride_signal",
+          signal_kind: "rider_message",
+          message_id: record?.id ?? null,
+        },
         priority: "medium",
         channel: "both",
       };
@@ -279,9 +286,15 @@ export function buildAgentNotification(
           user_id: oldRiderIdentityId,
           agent: "driver_agent",
           category: "chat",
-          title: "💬 [Driver]: " + preview,
+          title: "Driver message",
           body: preview,
-          data: { ride_request_id: rideRequestId, screen: "chat" },
+          data: {
+            ride_request_id: rideRequestId,
+            screen: "chat",
+            notification_type: "ride_signal",
+            signal_kind: "driver_message",
+            message_id: record?.id ?? null,
+          },
           priority: "medium",
           channel: "both",
         };
@@ -304,23 +317,50 @@ export function buildAgentNotification(
     return null;
   }
 
-  if (table === "ride_ratings" && type === "UPDATE") {
-    const riderRating = record?.rider_rating_of_driver;
-    if (riderRating == null) return null;
+  if (table === "ride_ratings" && (type === "UPDATE" || type === "INSERT")) {
     const rideRequestId = record?.ride_request_id as string | undefined;
     if (!rideRequestId) return null;
-    return {
-      target: "driver",
-      user_type: "driver",
-      user_id: "",
-      agent: "driver_agent",
-      category: "rating",
-      title: "⭐ You received a new rating",
-      body: null,
-      data: { ride_request_id: rideRequestId },
-      priority: "low",
-      channel: "both",
-    };
+
+    const oldRiderRating = old_record?.rider_rating_of_driver;
+    const newRiderRating = record?.rider_rating_of_driver;
+    const oldDriverRating = old_record?.driver_rating_of_rider;
+    const newDriverRating = record?.driver_rating_of_rider;
+
+    if (
+      newRiderRating != null &&
+      newRiderRating !== oldRiderRating
+    ) {
+      return {
+        target: "driver",
+        user_type: "driver",
+        user_id: "",
+        agent: "driver_agent",
+        category: "rating",
+        title: "⭐ You received a new rating",
+        body: "A rider left feedback on your trip.",
+        data: { ride_request_id: rideRequestId, screen: "score" },
+        priority: "low",
+        channel: "both",
+      };
+    }
+
+    if (
+      newDriverRating != null &&
+      newDriverRating !== oldDriverRating
+    ) {
+      return {
+        target: "rider",
+        user_type: "rider",
+        user_id: "",
+        agent: "driver_agent",
+        category: "rating",
+        title: "⭐ You received a new rating",
+        body: "Your driver left feedback about your trip.",
+        data: { ride_request_id: rideRequestId, screen: "account" },
+        priority: "low",
+        channel: "both",
+      };
+    }
   }
 
   return null;

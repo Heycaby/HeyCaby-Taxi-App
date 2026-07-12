@@ -134,6 +134,7 @@ export async function sendFcmV1ToToken(
       },
       payload: {
         aps: {
+          badge: incoming ? 1 : undefined,
           sound: incoming ? "heycaby_ride_request.wav" : "default",
           ...(incoming ? { category: "HEYCABY_INCOMING_RIDE" } : {}),
           ...(rideRequestId ? { "thread-id": rideRequestId } : {}),

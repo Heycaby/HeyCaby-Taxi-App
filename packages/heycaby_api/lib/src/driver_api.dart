@@ -26,10 +26,13 @@ class DriverAcceptRideException implements Exception {
 
 /// Supabase ride lifecycle RPC returned a business error.
 class DriverRideLifecycleException implements Exception {
-  const DriverRideLifecycleException(this.code);
+  const DriverRideLifecycleException(this.code, {this.message});
+
   final String code;
+  final String? message;
+
   @override
-  String toString() => code;
+  String toString() => message ?? code;
 }
 
 /// Supabase-first driver API.
@@ -276,20 +279,24 @@ class DriverApi {
         if (r['ok'] == true) return;
         final details = r['details'];
         throw DriverAcceptRideException(
-          r['error']?.toString() ??
-              r['reason']?.toString() ??
-              'rpc_failed',
+          r['error']?.toString() ?? r['reason']?.toString() ?? 'rpc_failed',
           message: r['message']?.toString(),
           reason: r['reason']?.toString(),
-          details: details is Map
-              ? Map<String, dynamic>.from(details)
-              : null,
+          details: details is Map ? Map<String, dynamic>.from(details) : null,
         );
       }
       throw const DriverAcceptRideException('rpc_failed');
     } on DriverAcceptRideException {
       rethrow;
     } on PostgrestException catch (e) {
+      final lowerMessage = e.message.toLowerCase();
+      if (lowerMessage.contains('ride_invite_expired') ||
+          lowerMessage.contains('ride_request_expired')) {
+        throw const DriverAcceptRideException(
+          'invite_expired',
+          reason: 'invite_expired',
+        );
+      }
       throw DriverAcceptRideException(
         e.code ?? 'rpc_error',
         message: e.message,
@@ -315,14 +322,62 @@ class DriverApi {
     try {
       final r = await HeyCabySupabase.client.rpc(rpcName, params: params);
       if (r is Map && r['ok'] == true) return;
-      final err =
-          r is Map ? r['error']?.toString() ?? 'rpc_failed' : 'rpc_failed';
-      throw DriverRideLifecycleException(err);
+      if (r is Map) {
+        final err =
+            r['error']?.toString() ?? r['reason']?.toString() ?? 'rpc_failed';
+        throw DriverRideLifecycleException(
+          err,
+          message: r['message']?.toString(),
+        );
+      }
+      throw const DriverRideLifecycleException('rpc_failed');
     } on DriverRideLifecycleException {
       rethrow;
+    } on PostgrestException catch (e) {
+      throw DriverRideLifecycleException(
+        _postgresLifecycleErrorCode(e),
+        message: e.message,
+      );
     } catch (e) {
-      throw DriverRideLifecycleException('rpc_unavailable:${e.toString()}');
+      throw DriverRideLifecycleException(
+        _clientLifecycleErrorCode(e),
+        message: e.toString(),
+      );
     }
+  }
+
+  static String _postgresLifecycleErrorCode(PostgrestException e) {
+    final message = e.message.toLowerCase();
+    const known = [
+      'driver_business_account_not_found',
+      'ride_invite_expired',
+      'ride_request_expired',
+      'not_a_driver',
+      'invalid_transition',
+      'ride_not_found',
+      'ride_not_completed',
+      'driver_location_unavailable',
+      'target_location_unavailable',
+      'missing_rider_token',
+    ];
+    for (final code in known) {
+      if (message.contains(code)) return code;
+    }
+    return e.code?.trim().isNotEmpty == true ? e.code!.trim() : 'rpc_error';
+  }
+
+  static String _clientLifecycleErrorCode(Object e) {
+    final raw = e.toString().toLowerCase();
+    if (raw.contains('socketexception') ||
+        raw.contains('failed host lookup') ||
+        raw.contains('network is unreachable') ||
+        raw.contains('connection refused')) {
+      return 'network_unreachable';
+    }
+    if (raw.contains('timeout') || raw.contains('timed out')) {
+      return 'request_timeout';
+    }
+    return 'rpc_unavailable';
   }
 
   /// Supabase RPC `fn_driver_ride_arrived` — no Go fallback (Phase B).
@@ -372,6 +427,36 @@ class DriverApi {
     );
   }
 
+  /// Backend-truthful distance check before arrival/completion actions.
+  Future<Map<String, dynamic>> checkRideActionProximity({
+    required String rideRequestId,
+    required String action,
+  }) async {
+    try {
+      final raw = await HeyCabySupabase.client.rpc(
+        'fn_driver_ride_action_proximity',
+        params: {
+          'p_ride_request_id': rideRequestId,
+          'p_action': action,
+        },
+      );
+      if (raw is Map) return Map<String, dynamic>.from(raw);
+      throw const DriverRideLifecycleException('proximity_unavailable');
+    } on DriverRideLifecycleException {
+      rethrow;
+    } on PostgrestException catch (e) {
+      throw DriverRideLifecycleException(
+        _postgresLifecycleErrorCode(e),
+        message: e.message,
+      );
+    } catch (error) {
+      throw DriverRideLifecycleException(
+        _clientLifecycleErrorCode(error),
+        message: error.toString(),
+      );
+    }
+  }
+
   /// Supabase RPC `fn_driver_ride_cancel` — no Go fallback (Phase B).
   Future<void> cancelRide({
     required String rideRequestId,
@@ -383,6 +468,29 @@ class DriverApi {
         'p_ride_request_id': rideRequestId,
         if (reason != null && reason.trim().isNotEmpty)
           'p_reason': reason.trim(),
+      },
+    );
+  }
+
+  /// Structured mid-ride cancellation including settlement and availability.
+  Future<void> cancelRideV2({
+    required String rideRequestId,
+    required String reasonCode,
+    String? details,
+    int riderPaidCents = 0,
+    bool waiveRemaining = false,
+    bool pauseNewRequests = false,
+  }) async {
+    await _invokeDriverRideRpc(
+      'fn_driver_ride_cancel_v2',
+      {
+        'p_ride_request_id': rideRequestId,
+        'p_reason_code': reasonCode,
+        if (details != null && details.trim().isNotEmpty)
+          'p_details': details.trim(),
+        'p_rider_paid_cents': riderPaidCents,
+        'p_waive_remaining': waiveRemaining,
+        'p_pause_new_requests': pauseNewRequests,
       },
     );
   }

@@ -40,11 +40,13 @@ Deno.serve(async (req: Request) => {
 
   const { data: row, error: e1 } = await supabase
     .from("ride_shares")
-    .select("ride_request_id, is_active, driver_snapshot")
+    .select("ride_request_id, is_active, expires_at, driver_snapshot")
     .eq("share_token", token)
     .maybeSingle();
 
-  if (e1 || !row || !row.is_active) {
+  const expired = row?.expires_at &&
+    new Date(row.expires_at as string).getTime() <= Date.now();
+  if (e1 || !row || !row.is_active || expired) {
     return new Response(JSON.stringify({ error: "not_found" }), {
       status: 404,
       headers: {
@@ -59,7 +61,7 @@ Deno.serve(async (req: Request) => {
   const { data: ride, error: e2 } = await supabase
     .from("ride_requests")
     .select(
-      "id, status, pickup_address, destination_address, driver_id, scheduled_pickup_at",
+      "id, status, pickup_address, destination_address, pickup_lat, pickup_lng, destination_lat, destination_lng, route_stops, route_revision, driver_id, scheduled_pickup_at",
     )
     .eq("id", rideId)
     .maybeSingle();
@@ -122,6 +124,14 @@ Deno.serve(async (req: Request) => {
     status: ride.status,
     pickup_address: ride.pickup_address,
     destination_address: ride.destination_address,
+    pickup: ride.pickup_lat != null && ride.pickup_lng != null
+      ? { lat: ride.pickup_lat, lng: ride.pickup_lng }
+      : null,
+    destination: ride.destination_lat != null && ride.destination_lng != null
+      ? { lat: ride.destination_lat, lng: ride.destination_lng }
+      : null,
+    stops: ride.route_stops ?? [],
+    route_revision: ride.route_revision ?? 0,
     scheduled_pickup_at: ride.scheduled_pickup_at,
     driver: driver
       ? {

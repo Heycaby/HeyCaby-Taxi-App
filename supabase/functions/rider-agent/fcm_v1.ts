@@ -135,3 +135,59 @@ export async function sendFcmV1ToToken(
   }
   return true
 }
+
+export type LiveActivityPushInput = {
+  fcmToken: string
+  activityToken: string
+  event: "update" | "end"
+  contentState: Record<string, unknown>
+  title?: string
+  body?: string
+  staleDate?: number
+  dismissalDate?: number
+}
+
+/** Update ActivityKit even while the Flutter process is suspended or terminated. */
+export async function sendFcmLiveActivityUpdate(
+  input: LiveActivityPushInput,
+): Promise<{ ok: boolean; error?: string }> {
+  const access = await getFirebaseAccessToken()
+  const projectId = getFirebaseProjectId()
+  if (!access || !projectId) return { ok: false, error: "firebase_unavailable" }
+
+  const aps: Record<string, unknown> = {
+    timestamp: Math.floor(Date.now() / 1000),
+    event: input.event,
+    "content-state": input.contentState,
+  }
+  if (input.staleDate) aps["stale-date"] = input.staleDate
+  if (input.dismissalDate) aps["dismissal-date"] = input.dismissalDate
+  if (input.title || input.body) {
+    aps.alert = { title: input.title ?? "HeyCaby", body: input.body ?? "" }
+  }
+
+  const res = await fetch(
+    `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${access}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: {
+          token: input.fcmToken,
+          apns: {
+            live_activity_token: input.activityToken,
+            headers: { "apns-priority": "10" },
+            payload: { aps },
+          },
+        },
+      }),
+    },
+  )
+  if (res.ok) return { ok: true }
+  const error = `${res.status}:${await res.text()}`
+  console.error("FCM Live Activity update failed:", error)
+  return { ok: false, error }
+}

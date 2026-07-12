@@ -2,7 +2,7 @@ export interface RiderNotificationRow {
   target: "rider";
   user_type: "rider";
   user_id: string;
-  agent: "rider_agent";
+  agent: "rider_agent" | "ride_lifecycle";
   category: string;
   title: string;
   body: string;

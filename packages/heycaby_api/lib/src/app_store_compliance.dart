@@ -12,17 +12,21 @@ class HeyCabyAccountDeletionException implements Exception {
   String toString() => 'HeyCabyAccountDeletionException: $message';
 }
 
-/// App Store Guideline 5.1.1(v) — delete the signed-in Supabase Auth user.
-///
-/// Requires the project to allow user self-deletion (Supabase Dashboard → Authentication).
-/// Call [deleteDriverOwnedData] first so application rows are removed.
+/// App Store Guideline 5.1.1(v) account-deletion entry points.
 class HeyCabyAccountDeletion {
   HeyCabyAccountDeletion._();
 
-  /// Removes the `drivers` row for `auth.uid()` before deleting the Auth user.
+  /// Requests the server-owned driver deletion workflow.
+  ///
+  /// The backend immediately deactivates access and owns all later
+  /// anonymization/retention work. Kept under the legacy method name so older
+  /// application builds remain source-compatible.
   static Future<Map<String, dynamic>> deleteDriverOwnedData() async {
     try {
-      final res = await HeyCabySupabase.client.rpc('fn_delete_driver_owned_data');
+      final res = await HeyCabySupabase.client.rpc(
+        'fn_request_driver_account_deletion',
+        params: const {'p_reason': 'driver_requested_in_app'},
+      );
       if (res is Map<String, dynamic>) return res;
       if (res is Map) return Map<String, dynamic>.from(res);
       return {'success': false, 'error': 'unexpected_response'};
@@ -81,7 +85,8 @@ class HeyCabyAccountDeletion {
 
   static Future<bool> _deleteCurrentAuthUserViaRpc() async {
     try {
-      final res = await HeyCabySupabase.client.rpc('fn_delete_current_auth_user');
+      final res =
+          await HeyCabySupabase.client.rpc('fn_delete_current_auth_user');
       if (res is Map<String, dynamic>) {
         return res['success'] == true;
       }
@@ -223,9 +228,8 @@ class HeyCabyRideChatReports {
         'p_reporter_type': reporterType,
         'p_reported_id': reportedId,
         'p_reported_type': reportedType,
-        'p_reason': (reason == null || reason.trim().isEmpty)
-            ? null
-            : reason.trim(),
+        'p_reason':
+            (reason == null || reason.trim().isEmpty) ? null : reason.trim(),
       },
     );
     if (res is Map && res['success'] == true) return true;
