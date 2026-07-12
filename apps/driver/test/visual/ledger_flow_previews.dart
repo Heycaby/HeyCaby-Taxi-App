@@ -53,7 +53,7 @@ class DriverRideHistoryPreview extends StatelessWidget {
   final DriverColors colors;
   final DriverTypography typography;
 
-  static const _items = [
+  static final _items = [
     DriverLedgerHistoryItem(
       dateLabel: '18 mei 2026, 14:32',
       pickupLabel: 'Centraal Station, Amsterdam',
@@ -96,7 +96,7 @@ class DriverTripReceiptPreview extends StatelessWidget {
   final DriverColors colors;
   final DriverTypography typography;
 
-  static const _details = [
+  static final _details = [
     DriverLedgerDetailItem(
       label: DriverStrings.type,
       value: DriverStrings.standardRideTag,

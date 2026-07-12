@@ -18,7 +18,7 @@ class DriverHelpHubPreview extends StatelessWidget {
   final DriverColors colors;
   final DriverTypography typography;
 
-  static const _tickets = [
+  static final _tickets = [
     DriverHelpHubTicketPreview(
       category: 'Rit probleem',
       statusLabel: DriverStrings.ticketStatusInProgress,
@@ -80,7 +80,7 @@ class DriverSupportInboxPreview extends StatelessWidget {
   final DriverColors colors;
   final DriverTypography typography;
 
-  static const _items = [
+  static final _items = [
     DriverSupportInboxItem(
       category: 'Rit probleem',
       statusLabel: DriverStrings.open,
