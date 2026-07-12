@@ -9485,6 +9485,18 @@ class DriverStrings {
         es: 'contador@ejemplo.com',
         ar: 'accountant@example.com',
       );
+  static String get financeAccountantSheetHint => _t(
+        'Wordt gebruikt als Aan: wanneer je je financieel rapport deelt.',
+        en: 'Used as the To: address when you email your finance report.',
+        es: 'Se usa como Para: al enviar tu informe financiero.',
+        ar: 'يُستخدم كعنوان To: عند إرسال تقريرك المالي.',
+      );
+  static String get financeAccountantDialogInvalid => _t(
+        'Voer een geldig e-mailadres in.',
+        en: 'Enter a valid email address.',
+        es: 'Introduce un correo válido.',
+        ar: 'أدخل بريدا إلكترونيا صالحا.',
+      );
   static String get financeAccountantDialogCancel => _t(
         'Annuleren',
         en: 'Cancel',
