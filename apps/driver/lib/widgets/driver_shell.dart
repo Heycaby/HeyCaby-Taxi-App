@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
 import '../providers/driver_runtime_providers.dart';
+import '../widgets/driver_ride_alert_readiness_card.dart';
 import '../theme/app_icons.dart';
 import 'driver_profile_realtime_listener.dart';
 import 'ride_invite_realtime_listener.dart';
@@ -57,6 +59,8 @@ class _DriverShellState extends ConsumerState<DriverShell>
       ref.invalidate(driverBillingStatusProvider);
       ref.invalidate(driverPaymentLedgerProvider);
       ref.invalidate(driverRuntimeSnapshotProvider);
+      ref.invalidate(driverRideAlertReadinessProvider);
+      unawaited(HeyCabyFcmRegistration.sync(appRole: 'driver'));
       unawaited(_refreshBalanceState());
     }
   }
@@ -95,7 +99,18 @@ class _DriverShellState extends ConsumerState<DriverShell>
     } else if (location.startsWith('/driver/my-rides')) {
       currentIndex = 2;
     } else if (location.startsWith('/driver/me') ||
-        location.startsWith('/driver/settings')) {
+        location.startsWith('/driver/settings') ||
+        location.startsWith('/driver/documents') ||
+        location.startsWith('/driver/vehicle') ||
+        location.startsWith('/driver/preferences') ||
+        location.startsWith('/driver/finance') ||
+        location.startsWith('/driver/billing') ||
+        location.startsWith('/driver/support') ||
+        location.startsWith('/driver/faq') ||
+        location.startsWith('/driver/privacy') ||
+        location.startsWith('/driver/terms') ||
+        location.startsWith('/driver/indemnification') ||
+        location.startsWith('/driver/veriff')) {
       currentIndex = 3;
     }
 
@@ -164,7 +179,7 @@ class _DriverShellState extends ConsumerState<DriverShell>
                     Expanded(
                       child: _NavItem(
                         icon: AppIcons.navProfile,
-                        label: DriverStrings.me,
+                        label: DriverStrings.profile,
                         isActive: currentIndex == 3,
                         colors: colors,
                         typo: typo,

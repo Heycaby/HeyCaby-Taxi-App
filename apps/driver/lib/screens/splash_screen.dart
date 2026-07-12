@@ -39,6 +39,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late final String _languageCode;
   bool _canContinue = false;
   bool _navigating = false;
+  Future<void>? _forwardFuture;
 
   @override
   void initState() {
@@ -80,7 +81,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       curve: const Interval(0.84, 1.00, curve: Curves.easeIn),
     );
 
-    _ctrl.forward().then((_) => _onIntroFinished());
+    _forwardFuture = _ctrl.forward().then((_) => _onIntroFinished());
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(appPublicLinks.refresh(force: true));
@@ -92,6 +93,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   void dispose() {
+    _ctrl.stop();
+    _forwardFuture?.ignore();
     _ctrl.dispose();
     super.dispose();
   }

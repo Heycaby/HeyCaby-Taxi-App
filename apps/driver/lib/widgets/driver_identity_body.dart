@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../l10n/driver_strings.dart';
 import '../theme/driver_colors.dart';
@@ -149,6 +150,113 @@ class DriverIdentityBody extends StatelessWidget {
                         onTapItem: onOpenRequirement,
                       ).driverFadeSlideIn(staggerIndex: 3),
                       const SizedBox(height: DriverSpacing.xl),
+                      DriverSettingsSectionLabel(
+                        label: DriverStrings.work,
+                        colors: colors,
+                        typography: typography,
+                      ),
+                      DriverSettingsGroupCard(
+                        colors: colors,
+                        children: [
+                          DriverSettingsNavRow(
+                            icon: Icons.tune_rounded,
+                            title: DriverStrings.preferences,
+                            colors: colors,
+                            typography: typography,
+                            onTap: () => context.push('/driver/preferences'),
+                          ),
+                          DriverSettingsNavRow(
+                            icon: Icons.bar_chart_rounded,
+                            title: DriverStrings.financeAndTax,
+                            colors: colors,
+                            typography: typography,
+                            onTap: () => context.push('/driver/finance'),
+                          ),
+                          DriverSettingsNavRow(
+                            icon: Icons.folder_open_rounded,
+                            title: DriverStrings.documents,
+                            colors: colors,
+                            typography: typography,
+                            onTap: () => context.push('/driver/documents'),
+                          ),
+                          DriverSettingsNavRow(
+                            icon: Icons.receipt_long_rounded,
+                            title: DriverStrings.billing,
+                            colors: colors,
+                            typography: typography,
+                            showDivider: false,
+                            onTap: () => context.push('/driver/billing'),
+                          ),
+                        ],
+                      ).driverFadeSlideIn(staggerIndex: 4),
+                      const SizedBox(height: DriverSpacing.xl),
+                      DriverSettingsSectionLabel(
+                        label: DriverStrings.support,
+                        colors: colors,
+                        typography: typography,
+                      ),
+                      DriverSettingsGroupCard(
+                        colors: colors,
+                        children: [
+                          DriverSettingsNavRow(
+                            icon: Icons.support_agent_rounded,
+                            title: DriverStrings.support,
+                            colors: colors,
+                            typography: typography,
+                            onTap: () => context.push('/driver/support'),
+                          ),
+                          DriverSettingsNavRow(
+                            icon: Icons.help_center_rounded,
+                            title: DriverStrings.faq,
+                            colors: colors,
+                            typography: typography,
+                            onTap: () => context.push('/driver/faq'),
+                          ),
+                          DriverSettingsNavRow(
+                            icon: Icons.group_add_rounded,
+                            title: DriverStrings.congratsInvite,
+                            colors: colors,
+                            typography: typography,
+                            showDivider: false,
+                            onTap: () => context.push('/driver/tell-friend'),
+                          ),
+                        ],
+                      ).driverFadeSlideIn(staggerIndex: 5),
+                      const SizedBox(height: DriverSpacing.xl),
+                      DriverSettingsSectionLabel(
+                        label: DriverStrings.drawerSectionLegal,
+                        colors: colors,
+                        typography: typography,
+                      ),
+                      DriverSettingsGroupCard(
+                        colors: colors,
+                        children: [
+                          DriverSettingsNavRow(
+                            icon: Icons.privacy_tip_outlined,
+                            title: DriverStrings.privacyPolicy,
+                            colors: colors,
+                            typography: typography,
+                            onTap: () => context.push('/driver/privacy'),
+                          ),
+                          DriverSettingsNavRow(
+                            icon: Icons.gavel_rounded,
+                            title: DriverStrings.termsOfService,
+                            colors: colors,
+                            typography: typography,
+                            onTap: () => context.push('/driver/terms'),
+                          ),
+                          DriverSettingsNavRow(
+                            icon: Icons.verified_user_outlined,
+                            title: DriverStrings.indemnification,
+                            colors: colors,
+                            typography: typography,
+                            showDivider: false,
+                            onTap: () =>
+                                context.push('/driver/indemnification'),
+                          ),
+                        ],
+                      ).driverFadeSlideIn(staggerIndex: 6),
+                      const SizedBox(height: DriverSpacing.xl),
                       DriverSettingsGroupCard(
                         colors: colors,
                         children: [
@@ -162,7 +270,7 @@ class DriverIdentityBody extends StatelessWidget {
                             onTap: onOpenSettings,
                           ),
                         ],
-                      ).driverFadeSlideIn(staggerIndex: 4),
+                      ).driverFadeSlideIn(staggerIndex: 7),
                       SizedBox(
                         height: MediaQuery.paddingOf(context).bottom + 88,
                       ),
@@ -630,30 +738,14 @@ class _VehicleSummaryCard extends StatelessWidget {
                   fit: StackFit.expand,
                   children: [
                     if (hasPhoto)
-                      Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Image.network(
-                            photoUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _VehiclePhotoFallback(
-                              colors: colors,
-                              typography: typography,
-                              onAddPhoto: onAddPhoto,
-                            ),
-                          ),
-                          PositionedDirectional(
-                            end: DriverSpacing.lg,
-                            top: DriverSpacing.lg,
-                            child: _VehiclePhotoActionChip(
-                              colors: colors,
-                              typography: typography,
-                              label: DriverStrings.replaceVehiclePhoto,
-                              icon: Icons.photo_camera_rounded,
-                              onTap: onAddPhoto,
-                            ),
-                          ),
-                        ],
+                      Image.network(
+                        photoUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _VehiclePhotoFallback(
+                          colors: colors,
+                          typography: typography,
+                          onAddPhoto: onAddPhoto,
+                        ),
                       )
                     else
                       _VehiclePhotoFallback(
@@ -671,50 +763,6 @@ class _VehicleSummaryCard extends StatelessWidget {
                             colors.text.withValues(alpha: 0.08),
                           ],
                         ),
-                      ),
-                    ),
-                    PositionedDirectional(
-                      start: DriverSpacing.lg,
-                      top: DriverSpacing.lg,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: DriverSpacing.md,
-                          vertical: DriverSpacing.sm,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colors.card.withValues(alpha: 0.92),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(
-                            color: colors.border.withValues(alpha: 0.72),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.directions_car_rounded,
-                              color: colors.primary,
-                              size: 18,
-                            ),
-                            const SizedBox(width: DriverSpacing.xs),
-                            Text(
-                              DriverStrings.vehicle,
-                              style: typography.labelMedium.copyWith(
-                                color: colors.text,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    PositionedDirectional(
-                      end: DriverSpacing.lg,
-                      bottom: DriverSpacing.lg,
-                      child: _VehiclePhotoStatusPill(
-                        colors: colors,
-                        typography: typography,
-                        complete: hasPhoto,
                       ),
                     ),
                   ],
@@ -794,29 +842,60 @@ class _VehicleSummaryCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: DriverSpacing.lg),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: onAddPhoto,
-                            icon: const Icon(Icons.add_a_photo_rounded),
-                            label: Text(
-                              hasPhoto
-                                  ? DriverStrings.replaceVehiclePhoto
-                                  : DriverStrings.addVehiclePhoto,
+                    FilledButton.icon(
+                      onPressed: onAddPhoto,
+                      icon: Icon(
+                        hasPhoto
+                            ? Icons.camera_alt_rounded
+                            : Icons.add_a_photo_rounded,
+                      ),
+                      label: Text(
+                        hasPhoto
+                            ? DriverStrings.replaceVehiclePhoto
+                            : DriverStrings.addVehiclePhoto,
+                      ),
+                    ),
+                    const SizedBox(height: DriverSpacing.sm),
+                    Text(
+                      DriverStrings.vehiclePhotoRiderPreviewHint,
+                      textAlign: TextAlign.center,
+                      style: typography.bodySmall.copyWith(
+                        color: colors.textMuted,
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: DriverSpacing.md),
+                    InkWell(
+                      onTap: onTap,
+                      borderRadius: BorderRadius.circular(16),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: DriverSpacing.sm,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.directions_car_rounded,
+                              color: colors.textMuted,
+                              size: 20,
                             ),
-                          ),
+                            const SizedBox(width: DriverSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                DriverStrings.vehicleDetails,
+                                style: typography.labelLarge.copyWith(
+                                  color: colors.text,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              color: colors.textMuted,
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: DriverSpacing.sm),
-                        IconButton(
-                          tooltip: DriverStrings.vehicleDetails,
-                          onPressed: onTap,
-                          icon: Icon(
-                            Icons.chevron_right_rounded,
-                            color: colors.textMuted,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -824,61 +903,6 @@ class _VehicleSummaryCard extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _VehiclePhotoStatusPill extends StatelessWidget {
-  const _VehiclePhotoStatusPill({
-    required this.colors,
-    required this.typography,
-    required this.complete,
-  });
-
-  final DriverColors colors;
-  final DriverTypography typography;
-  final bool complete;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: DriverSpacing.md,
-        vertical: DriverSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: colors.card.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: colors.border.withValues(alpha: 0.78)),
-        boxShadow: [
-          BoxShadow(
-            color: colors.text.withValues(alpha: 0.10),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            complete ? Icons.check_circle_rounded : Icons.error_outline_rounded,
-            color: complete ? colors.primary : colors.warning,
-            size: 16,
-          ),
-          const SizedBox(width: DriverSpacing.xs),
-          Text(
-            complete
-                ? DriverStrings.vehiclePhotoUploadedStatus
-                : DriverStrings.vehiclePhotoMissingStatus,
-            style: typography.labelSmall.copyWith(
-              color: colors.text,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -991,67 +1015,18 @@ class _VehiclePhotoFallback extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: DriverSpacing.md),
-                    _VehiclePhotoActionChip(
-                      colors: colors,
-                      typography: typography,
-                      label: DriverStrings.vehiclePhotoMissingCta,
-                      icon: Icons.add_a_photo_rounded,
-                      onTap: onAddPhoto,
+                    Text(
+                      DriverStrings.vehiclePhotoMissingStatus,
+                      style: typography.labelLarge.copyWith(
+                        color: colors.textSecondary,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _VehiclePhotoActionChip extends StatelessWidget {
-  const _VehiclePhotoActionChip({
-    required this.colors,
-    required this.typography,
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
-
-  final DriverColors colors;
-  final DriverTypography typography;
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: colors.primary,
-      borderRadius: BorderRadius.circular(999),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: DriverSpacing.md,
-            vertical: DriverSpacing.sm,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 18, color: colors.card),
-              const SizedBox(width: DriverSpacing.xs),
-              Text(
-                label,
-                style: typography.labelMedium.copyWith(
-                  color: colors.card,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

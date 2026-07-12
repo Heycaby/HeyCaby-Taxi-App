@@ -21,6 +21,7 @@ import '../providers/driver_data_providers.dart';
 import '../services/driver_data_service.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
+import '../widgets/driver_accountant_email_sheet.dart';
 import '../widgets/driver_earnings_hub_body.dart';
 import '../widgets/driver_money_flow_common.dart';
 
@@ -679,6 +680,10 @@ class _DriverFinanceScreenState extends ConsumerState<DriverFinanceScreen> {
       final subject =
           '$namePrefix${DriverStrings.financeEmailSubject} — ${_rangeLabelNl()}';
 
+      if (recipient.isNotEmpty) {
+        await Clipboard.setData(ClipboardData(text: recipient));
+      }
+
       final mailtoUri = recipient.isEmpty
           ? Uri(
               scheme: 'mailto',
@@ -727,6 +732,12 @@ class _DriverFinanceScreenState extends ConsumerState<DriverFinanceScreen> {
           messenger.showSnackBar(
             SnackBar(
               content: Text(DriverStrings.financeEmailNoRecipientHint),
+            ),
+          );
+        } else {
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(DriverStrings.financeEmailRecipientCopied),
             ),
           );
         }
@@ -783,16 +794,11 @@ class _DriverFinanceScreenState extends ConsumerState<DriverFinanceScreen> {
   Future<void> _promptAccountantEmail() async {
     final colors = DriverColors.fromTheme(ref.read(colorsProvider));
     final typography = DriverTypography.fromTheme(ref.read(typographyProvider));
-    final controller = TextEditingController(text: _accountantEmail ?? '');
-    final value = await showDialog<String>(
+    final value = await showDriverAccountantEmailSheet(
       context: context,
-      builder: (ctx) => DriverAccountantEmailDialog(
-        colors: colors,
-        typography: typography,
-        controller: controller,
-        onCancel: () => Navigator.pop(ctx),
-        onSave: () => Navigator.pop(ctx, controller.text.trim()),
-      ),
+      colors: colors,
+      typography: typography,
+      initialEmail: _accountantEmail,
     );
     if (value == null) return;
     final prefs = await SharedPreferences.getInstance();

@@ -33,6 +33,7 @@ class DriverComplianceVaultBody extends StatelessWidget {
     required this.onBack,
     required this.onRefreshChecklist,
     required this.content,
+    this.focusedGoOnline = false,
   });
 
   final DriverColors colors;
@@ -43,11 +44,14 @@ class DriverComplianceVaultBody extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onRefreshChecklist;
   final Widget content;
+  final bool focusedGoOnline;
 
   @override
   Widget build(BuildContext context) {
     return DriverSettingsFlowScaffold(
-      title: DriverStrings.complianceAndDocuments,
+      title: focusedGoOnline
+          ? DriverStrings.goOnlineTitle
+          : DriverStrings.complianceAndDocuments,
       colors: colors,
       typography: typography,
       onBack: onBack,
@@ -55,13 +59,17 @@ class DriverComplianceVaultBody extends StatelessWidget {
         slivers: [
           SliverToBoxAdapter(
             child: DriverSettingsHeader(
-              title: DriverStrings.complianceAndDocuments,
-              subtitle: DriverStrings.complianceSubtitleV2,
+              title: focusedGoOnline
+                  ? DriverStrings.goOnlineLegalStepTitle
+                  : DriverStrings.complianceAndDocuments,
+              subtitle: focusedGoOnline
+                  ? DriverStrings.goOnlineLegalStepSubtitle
+                  : DriverStrings.complianceSubtitleV2,
               colors: colors,
               typography: typography,
             ),
           ),
-          if (items.isNotEmpty)
+          if (items.isNotEmpty && !focusedGoOnline)
             SliverPadding(
               padding: const EdgeInsets.symmetric(
                 horizontal: DriverSpacing.screenEdge,

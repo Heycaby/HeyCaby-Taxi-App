@@ -16,7 +16,6 @@ import '../ui/driver_card.dart';
 import '../ui/driver_chip.dart';
 import '../ui/driver_skeleton.dart';
 import '../ui/driver_statistic_card.dart';
-import '../ui/driver_text_field.dart';
 import 'driver_money_flow_common.dart';
 
 /// Date range filter for the Earnings Hub.
@@ -578,42 +577,64 @@ class _AccountantCard extends StatelessWidget {
 
     return DriverCard(
       colors: colors,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.person_outline_rounded,
-                  color: colors.primary, size: 20),
-              const SizedBox(width: DriverSpacing.sm),
-              Text(
-                DriverStrings.financeAccountantTitle,
-                style: typography.labelMedium.copyWith(
-                  color: colors.primary,
-                  fontWeight: FontWeight.w700,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onEdit,
+          borderRadius: DriverRadius.mdAll,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: DriverSpacing.xs),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.1),
+                    borderRadius: DriverRadius.smAll,
+                  ),
+                  child: Icon(
+                    Icons.mail_outline_rounded,
+                    color: colors.primary,
+                    size: 20,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: DriverSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        DriverStrings.financeAccountantTitle,
+                        style: typography.labelMedium.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        empty
+                            ? DriverStrings.financeAccountantEmptyHint
+                            : accountantEmail!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: typography.bodySmall.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: DriverSpacing.sm),
+                Icon(
+                  empty ? Icons.add_rounded : Icons.edit_outlined,
+                  color: colors.primary,
+                  size: 20,
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: DriverSpacing.md),
-          Text(
-            empty
-                ? DriverStrings.financeAccountantEmptyHint
-                : '${DriverStrings.financeAccountantCurrentPrefix} $accountantEmail',
-            style: typography.bodySmall.copyWith(color: colors.textSecondary),
-          ),
-          const SizedBox(height: DriverSpacing.lg),
-          DriverButton(
-            label: empty
-                ? DriverStrings.financeAccountantAdd
-                : DriverStrings.financeAccountantEdit,
-            icon: empty ? Icons.add_rounded : Icons.edit_outlined,
-            onPressed: onEdit,
-            variant: DriverButtonVariant.outline,
-            colors: colors,
-            typography: typography,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -1375,50 +1396,6 @@ class _LoadingSkeleton extends StatelessWidget {
         DriverSkeleton(colors: colors, height: 120),
         const SizedBox(height: DriverSpacing.lg),
         DriverSkeleton(colors: colors, height: 200),
-      ],
-    );
-  }
-}
-
-/// Accountant email dialog content — keeps TextField styling in the kit.
-class DriverAccountantEmailDialog extends StatelessWidget {
-  const DriverAccountantEmailDialog({
-    super.key,
-    required this.colors,
-    required this.typography,
-    required this.controller,
-    required this.onCancel,
-    required this.onSave,
-  });
-
-  final DriverColors colors;
-  final DriverTypography typography;
-  final TextEditingController controller;
-  final VoidCallback onCancel;
-  final VoidCallback onSave;
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: colors.card,
-      title: Text(
-        DriverStrings.financeAccountantDialogTitle,
-        style: typography.titleMedium.copyWith(color: colors.text),
-      ),
-      content: DriverTextField(
-        controller: controller,
-        colors: colors,
-        typography: typography,
-        label: DriverStrings.financeAccountantDialogHint,
-        keyboardType: TextInputType.emailAddress,
-      ),
-      actions: [
-        TextButton(
-            onPressed: onCancel,
-            child: Text(DriverStrings.financeAccountantDialogCancel)),
-        FilledButton(
-            onPressed: onSave,
-            child: Text(DriverStrings.financeAccountantDialogSave)),
       ],
     );
   }

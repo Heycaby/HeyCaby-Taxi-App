@@ -31,9 +31,12 @@ class DriverStatisticCard extends StatelessWidget {
       colors: colors,
       onTap: onTap,
       padding: const EdgeInsets.all(DriverSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
           Row(
             children: [
               Expanded(
@@ -58,7 +61,8 @@ class DriverStatisticCard extends StatelessWidget {
               style: typography.bodySmall.copyWith(color: colors.textMuted),
             ),
           ],
-        ],
+          ],
+        ),
       ),
     );
   }

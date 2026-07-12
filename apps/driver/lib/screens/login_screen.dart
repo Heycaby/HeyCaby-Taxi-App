@@ -135,7 +135,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await HeyCabySupabase.client.auth.signInWithOtp(
         email: email,
         emailRedirectTo: null,
-        shouldCreateUser: false,
+        shouldCreateUser: true,
       );
       if (!mounted) return;
       setState(() {
@@ -168,7 +168,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await HeyCabySupabase.client.auth.signInWithOtp(
         email: email,
         emailRedirectTo: null,
-        shouldCreateUser: false,
+        shouldCreateUser: true,
       );
       if (!mounted) return;
       setState(() {

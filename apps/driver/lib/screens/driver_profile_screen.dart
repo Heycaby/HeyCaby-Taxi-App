@@ -45,6 +45,54 @@ class DriverProfileScreen extends ConsumerStatefulWidget {
       _DriverProfileScreenState();
 }
 
+class _VehiclePhotoTip extends StatelessWidget {
+  const _VehiclePhotoTip({
+    required this.colors,
+    required this.typography,
+    required this.text,
+  });
+
+  final DriverColors colors;
+  final DriverTypography typography;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 26,
+          height: 26,
+          decoration: BoxDecoration(
+            color: colors.primary.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.check_rounded,
+            size: 17,
+            color: colors.primary,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              text,
+              style: typography.bodyMedium.copyWith(
+                color: colors.textSecondary,
+                fontWeight: FontWeight.w700,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
   bool _busy = false;
   bool _initialActionStarted = false;
@@ -397,18 +445,24 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
     }
   }
 
-  Future<ImageSource?> _chooseVehiclePhotoSource() {
+  Future<ImageSource?> _chooseVehiclePhotoSource({String? currentPhotoUrl}) {
     final colors = DriverColors.fromTheme(ref.read(colorsProvider));
     final typography = DriverTypography.fromTheme(ref.read(typographyProvider));
 
     return showModalBottomSheet<ImageSource>(
       context: context,
       showDragHandle: true,
+      isScrollControlled: true,
       backgroundColor: colors.card,
       builder: (ctx) {
         return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              8,
+              20,
+              20 + MediaQuery.viewInsetsOf(ctx).bottom,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -428,7 +482,83 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                     height: 1.35,
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 16),
+                if (currentPhotoUrl?.startsWith('http') == true) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.network(
+                            currentPhotoUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => ColoredBox(
+                              color: colors.surface,
+                              child: Icon(
+                                Icons.local_taxi_rounded,
+                                color: colors.primary,
+                                size: 48,
+                              ),
+                            ),
+                          ),
+                          PositionedDirectional(
+                            start: 12,
+                            bottom: 12,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: colors.card.withValues(alpha: 0.94),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.check_circle_rounded,
+                                    color: colors.primary,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    DriverStrings.vehiclePhotoGoodExample,
+                                    style: typography.labelSmall.copyWith(
+                                      color: colors.text,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                _VehiclePhotoTip(
+                  colors: colors,
+                  typography: typography,
+                  text: DriverStrings.vehiclePhotoTipWholeCar,
+                ),
+                const SizedBox(height: 10),
+                _VehiclePhotoTip(
+                  colors: colors,
+                  typography: typography,
+                  text: DriverStrings.vehiclePhotoTipPlate,
+                ),
+                const SizedBox(height: 10),
+                _VehiclePhotoTip(
+                  colors: colors,
+                  typography: typography,
+                  text: DriverStrings.vehiclePhotoTipLighting,
+                ),
+                const SizedBox(height: 20),
                 FilledButton.icon(
                   onPressed: () => Navigator.pop(ctx, ImageSource.camera),
                   icon: const Icon(Icons.photo_camera_rounded),
@@ -565,7 +695,12 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
     final id = await _ensureDriverIdOrExplain();
     if (id == null || !mounted) return;
 
-    final source = await _chooseVehiclePhotoSource();
+    final currentPhotoUrl = profile?.vehiclePhotoUrls
+        .where((url) => url.trim().startsWith('http'))
+        .firstOrNull;
+    final source = await _chooseVehiclePhotoSource(
+      currentPhotoUrl: currentPhotoUrl,
+    );
     if (source == null || !mounted) return;
 
     final picker = ImagePicker();

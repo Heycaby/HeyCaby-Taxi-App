@@ -858,6 +858,8 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
     final complianceAsync = ref.watch(driverComplianceProvider);
     final profileAsync = ref.watch(driverProfileProvider);
     final readinessAsync = ref.watch(driverReadinessProvider);
+    final focusedGoOnline =
+        driverGoOnlineResumeRequested(GoRouterState.of(context));
 
     return complianceAsync.when(
       loading: () =>
@@ -899,6 +901,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
           items: checklistItems,
           onBack: () => context.pop(),
           onRefreshChecklist: () => unawaited(refreshDriverRuntime(ref)),
+          focusedGoOnline: focusedGoOnline,
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: _complianceDocumentSections(
@@ -914,6 +917,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
               insLocked: insLocked,
               insurancePhotoReady: insurancePhotoReady,
               insurancePreviewUrl: insurancePreviewUrl,
+              focusedLegal: focusedGoOnline,
             ),
           ),
         );
@@ -1020,9 +1024,45 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
     required bool insLocked,
     required bool insurancePhotoReady,
     required String insurancePreviewUrl,
+    required bool focusedLegal,
   }) {
-    return [
-      if (snap != null)
+    final sections = <Widget>[
+      if (focusedLegal)
+        PremiumSettingsCard(
+          colors: colors,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: colors.success.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Icon(
+                      Icons.check_rounded,
+                      color: colors.success,
+                      size: 22,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    DriverStrings.goOnlinePlateVerified,
+                    style: typo.bodyMedium.copyWith(
+                      color: colors.text,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      if (!focusedLegal && snap != null)
         DriverComplianceOverallBanner(
           snap: snap,
           profilePhotoUrl: profile?.profilePhotoUrl,
@@ -1198,6 +1238,9 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
           ),
         ),
       ),
+    ];
+    if (focusedLegal) return sections;
+    sections.addAll([
       const SizedBox(height: 20),
       PremiumSettingsSectionLabel(
         text: DriverStrings.complianceRecommendedNextLabel,
@@ -1695,6 +1738,7 @@ class _DriverDocumentsScreenState extends ConsumerState<DriverDocumentsScreen> {
         ),
         textAlign: TextAlign.center,
       ),
-    ];
+    ]);
+    return sections;
   }
 }
