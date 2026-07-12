@@ -910,10 +910,34 @@ class DriverStrings {
         ar: 'اختر أفضل صورة للتاكسي',
       );
   static String get vehiclePhotoGuidanceBody => _t(
-        'Gebruik een duidelijke voor- of zijkantfoto met zichtbaar kenteken. Dit helpt passagiers je auto snel herkennen.',
-        en: 'Use a clear front or side photo with the plate visible. This helps riders recognize your car quickly.',
-        es: 'Usa una foto clara frontal o lateral con la matrícula visible. Ayuda a los pasajeros a reconocer tu coche rápido.',
-        ar: 'استخدم صورة واضحة من الأمام أو الجانب مع ظهور اللوحة. هذا يساعد الركاب على التعرف على سيارتك بسرعة.',
+        'Gebruik je huidige foto als voorbeeld: fotografeer de taxi schuin van voren of achteren, zodat passagiers hem snel herkennen.',
+        en: 'Use your current photo as a reference: photograph the taxi from a front or rear angle so riders can recognize it quickly.',
+        es: 'Usa tu foto actual como referencia: fotografía el taxi en ángulo frontal o trasero para que sea fácil reconocerlo.',
+        ar: 'استخدم صورتك الحالية كمرجع: صوّر سيارة الأجرة بزاوية أمامية أو خلفية ليسهل على الركاب التعرف عليها.',
+      );
+  static String get vehiclePhotoGoodExample => _t(
+        'Goed voorbeeld',
+        en: 'Good example',
+        es: 'Buen ejemplo',
+        ar: 'مثال جيد',
+      );
+  static String get vehiclePhotoTipWholeCar => _t(
+        'Zorg dat de hele taxi in beeld staat.',
+        en: 'Keep the whole taxi inside the frame.',
+        es: 'Mantén todo el taxi dentro del encuadre.',
+        ar: 'اجعل سيارة الأجرة كاملة داخل الإطار.',
+      );
+  static String get vehiclePhotoTipPlate => _t(
+        'Laat het kenteken duidelijk en leesbaar zien.',
+        en: 'Make the licence plate clear and readable.',
+        es: 'Haz que la matrícula se vea clara y legible.',
+        ar: 'اجعل لوحة المركبة واضحة وسهلة القراءة.',
+      );
+  static String get vehiclePhotoTipLighting => _t(
+        'Gebruik daglicht, houd de lens stil en zorg dat niemand de auto bedekt.',
+        en: 'Use daylight, hold steady, and keep people from blocking the car.',
+        es: 'Usa luz natural, mantén el móvil firme y evita que alguien tape el coche.',
+        ar: 'استخدم ضوء النهار وثبّت الهاتف ولا تدع أحدًا يحجب السيارة.',
       );
   static String get vehiclePhotoTakePhoto => _t(
         'Foto maken',
