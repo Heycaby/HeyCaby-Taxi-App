@@ -111,7 +111,6 @@ class DriverHomeSheet extends ConsumerWidget {
                   ],
                   const DriverRideAlertReadinessCard()
                       .driverFadeSlideIn(staggerIndex: 1),
-                  const SizedBox(height: DriverSpacing.lg),
                   if (driver.activeRideId == null) ...[
                     _ReturnModeCard(
                       colors: colors,
@@ -122,45 +121,62 @@ class DriverHomeSheet extends ConsumerWidget {
                       returnTripsCount: returnTripsCount,
                       onManage: () {
                         HapticService.selectionClick();
-                        context.push('/driver/return-trips');
+                        context.push('/driver/journey-intent');
                       },
                       onActivate: () async {
                         HapticService.mediumTap();
-                        final result = await ref
-                            .read(driverDataServiceProvider)
-                            .activateReturnMode(
-                              destinationLabel: returnMode?.destinationLabel,
-                              destinationZoneId: returnMode?.destinationZoneId,
-                              destinationLat: returnMode?.destinationLat,
-                              destinationLng: returnMode?.destinationLng,
-                              pickupRadiusKm: returnMode?.pickupRadiusKm,
-                              returnDiscountPct:
-                                  (returnMode?.returnDiscountPct ?? 0) > 0
-                                      ? returnMode?.returnDiscountPct
-                                      : 15,
-                            );
-                        ref.invalidate(driverReturnModeProvider);
-                        ref.invalidate(driverProfileProvider);
-                        ref.invalidate(driverRateProfilesProvider);
-                        ref.invalidate(activeRateProfileProvider);
-                        ref.invalidate(filteredReturnTripsProvider);
-                        if (!context.mounted || result.ok) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(result.activationErrorMessage),
-                          ),
-                        );
+                        context.push('/driver/journey-intent');
                       },
                       onDisable: () async {
                         HapticService.selectionClick();
-                        await ref
+                        final confirmed = await showModalBottomSheet<bool>(
+                          context: context,
+                          showDragHandle: true,
+                          builder: (sheetContext) => SafeArea(
+                            child: Padding(
+                              padding: const EdgeInsets.all(DriverSpacing.lg),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Text(
+                                    DriverStrings.returnModeDisableTitle,
+                                    style: typo.titleLarge.copyWith(
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  const SizedBox(height: DriverSpacing.sm),
+                                  Text(DriverStrings.returnModeDisableBody),
+                                  const SizedBox(height: DriverSpacing.lg),
+                                  FilledButton(
+                                    onPressed: () =>
+                                        Navigator.pop(sheetContext, true),
+                                    child: Text(
+                                      DriverStrings.returnModeDisableConfirm,
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(sheetContext, false),
+                                    child: Text(DriverStrings.notNow),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                        if (confirmed != true) return;
+                        final result = await ref
                             .read(driverDataServiceProvider)
                             .disableReturnMode();
                         ref.invalidate(driverReturnModeProvider);
-                      },
-                      onPlanTrip: () {
-                        HapticService.selectionClick();
-                        context.push('/driver/journey-intent');
+                        if (context.mounted && !result.ok) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(result.activationErrorMessage),
+                            ),
+                          );
+                        }
                       },
                     ).driverFadeSlideIn(staggerIndex: 1),
                     const SizedBox(height: DriverSpacing.md),
@@ -340,7 +356,6 @@ class _ReturnModeCard extends StatelessWidget {
     required this.onActivate,
     required this.onManage,
     required this.onDisable,
-    required this.onPlanTrip,
   });
 
   final HeyCabyColorTokens colors;
@@ -352,7 +367,6 @@ class _ReturnModeCard extends StatelessWidget {
   final Future<void> Function() onActivate;
   final VoidCallback onManage;
   final Future<void> Function() onDisable;
-  final VoidCallback onPlanTrip;
 
   @override
   Widget build(BuildContext context) {
@@ -505,51 +519,23 @@ class _ReturnModeCard extends StatelessWidget {
                       ],
                     )
                   else
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        SizedBox(
-                          width: double.infinity,
-                          child: FilledButton.icon(
-                            onPressed: loading ? null : onActivate,
-                            icon: const Icon(Icons.route_rounded, size: 20),
-                            label: Text(DriverStrings.returnModeActivateFull),
-                            style: FilledButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: DriverSpacing.md,
-                                vertical: 14,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(DriverRadius.md),
-                              ),
-                            ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: loading ? null : onActivate,
+                        icon: const Icon(Icons.route_rounded, size: 20),
+                        label: Text(DriverStrings.returnModeActivateFull),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: DriverSpacing.md,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(DriverRadius.md),
                           ),
                         ),
-                        const SizedBox(height: DriverSpacing.sm),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: onPlanTrip,
-                            icon: const Icon(Icons.edit_location_alt_rounded,
-                                size: 18),
-                            label: Text(DriverStrings.journeyIntentPlanTrip),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: DriverSpacing.md,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(DriverRadius.md),
-                              ),
-                              side: BorderSide(
-                                color: colors.accent.withValues(alpha: 0.4),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                 ],
               ),

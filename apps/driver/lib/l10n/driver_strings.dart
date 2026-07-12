@@ -6227,6 +6227,30 @@ class DriverStrings {
         es: 'Desactivar',
         ar: 'إيقاف',
       );
+  static String get returnModeDisableTitle => _t(
+        'Taxi Terug uitschakelen?',
+        en: 'Turn off Taxi Terug?',
+        es: '¿Desactivar Taxi Terug?',
+        ar: 'إيقاف Taxi Terug؟',
+      );
+  static String get returnModeDisableBody => _t(
+        'U ontvangt geen nieuwe Taxi Terug-matches meer voor deze reis. Bevestigde ritten blijven staan.',
+        en: 'You will stop receiving new Taxi Terug matches for this journey. Confirmed rides stay in place.',
+        es: 'Dejarás de recibir nuevas coincidencias de Taxi Terug para este viaje. Los viajes confirmados se mantienen.',
+        ar: 'ستتوقف عن تلقي مطابقات Taxi Terug الجديدة لهذه الرحلة. تبقى الرحلات المؤكدة كما هي.',
+      );
+  static String get returnModeDisableConfirm => _t(
+        'Uitschakelen',
+        en: 'Turn off',
+        es: 'Desactivar',
+        ar: 'إيقاف',
+      );
+  static String get journeyIntentDeparturePassed => _t(
+        'Kies een vertrektijd in de toekomst.',
+        en: 'Choose a departure time in the future.',
+        es: 'Elige una hora de salida futura.',
+        ar: 'اختر وقت مغادرة في المستقبل.',
+      );
   static String get returnModeActivationFailed => _t(
         'Taxi Terug kon niet worden geactiveerd.',
         en: 'Taxi Terug could not be activated.',

@@ -35,7 +35,7 @@ class _DriverJourneyIntentScreenState
   AddressResult? _destination;
   double _pickupRadiusKm = 10;
   double _destinationRadiusKm = 5;
-  double _discountPct = 15;
+  double _discountPct = 0;
   DateTime? _customDepartureTime;
   bool _isActivating = false;
   bool _isSearching = false;
@@ -61,7 +61,7 @@ class _DriverJourneyIntentScreenState
     }
     _pickupRadiusKm = status.pickupRadiusKm;
     _destinationRadiusKm = status.destinationRadiusKm;
-    _discountPct = status.returnDiscountPct > 0 ? status.returnDiscountPct : 15;
+    _discountPct = status.returnDiscountPct;
     if (status.destinationLat != null && status.destinationLng != null) {
       _destination = AddressResult(
         lat: status.destinationLat!,
@@ -153,18 +153,28 @@ class _DriverJourneyIntentScreenState
       case _IntentType.home:
         return 'home';
       case _IntentType.airport:
-        return 'airport';
+        return 'planned_direction';
       case _IntentType.city:
-        return 'city';
+        return 'planned_direction';
       case _IntentType.custom:
-        return 'custom';
+        return 'planned_direction';
     }
   }
 
   Future<void> _activate() async {
-    if (_destination == null) {
+    if (_destination == null ||
+        _destination!.lat.abs() > 90 ||
+        _destination!.lng.abs() > 180 ||
+        (_destination!.lat == 0 && _destination!.lng == 0)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(DriverStrings.journeyIntentPickDestination)),
+      );
+      return;
+    }
+    final departure = _resolvedDepartureTime;
+    if (departure != null && !departure.isAfter(DateTime.now())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(DriverStrings.journeyIntentDeparturePassed)),
       );
       return;
     }
@@ -180,7 +190,7 @@ class _DriverJourneyIntentScreenState
           pickupRadiusKm: _pickupRadiusKm,
           returnDiscountPct: _discountPct,
           intentType: _intentTypeString,
-          departureTime: _resolvedDepartureTime,
+          departureTime: departure,
           destinationRadiusKm: _destinationRadiusKm,
         );
 
