@@ -42,10 +42,15 @@ class _NearTermRideHomeBannerState
     );
     if (!mounted || !stop) return;
 
-    await RiderMatchingRecoveryActions.cancelOpenRideAndClearLocalState(
+    final cancelled =
+        await RiderMatchingRecoveryActions.cancelOpenRideAndClearLocalState(
       ref,
       rideId: snap.id,
       cancellationReason: 'rider_stopped_home_banner_search',
+    );
+    if (!mounted || cancelled) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.cancelRideFailed)),
     );
   }
 

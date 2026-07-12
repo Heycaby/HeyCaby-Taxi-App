@@ -143,7 +143,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   Future<void> _onNotifySearchWindowEnded() async {
     if (!mounted) return;
-    await ref.read(activeSearchProvider.notifier).clear();
+    final cancelled =
+        await ref.read(activeSearchProvider.notifier).stopSearchAndCancelRide();
+    if (!cancelled) return;
     unawaited(SoundService().playRideCancelled());
     if (!mounted) return;
     if (await ref
@@ -182,8 +184,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         final created = DateTime.tryParse((m['created_at'] ?? '').toString());
         if (created == null) continue;
         if (now.difference(created) <= kRiderDriverSearchWindow) continue;
-        await cancelExpiredRiderOpenRide(rideId: id, riderToken: token);
-        cancelledAny = true;
+        final cancelled =
+            await cancelExpiredRiderOpenRide(rideId: id, riderToken: token);
+        cancelledAny = cancelledAny || cancelled;
       }
     } catch (_) {
       return;
@@ -398,7 +401,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       });
     });
 
-    ref.listen<FavoriteSaveFeedback?>(favoriteSaveFeedbackProvider, (prev, next) {
+    ref.listen<FavoriteSaveFeedback?>(favoriteSaveFeedbackProvider,
+        (prev, next) {
       if (next == null) return;
       ref.read(favoriteSaveFeedbackProvider.notifier).state = null;
       final messenger = ScaffoldMessenger.of(context);

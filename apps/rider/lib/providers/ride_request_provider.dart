@@ -21,6 +21,7 @@ import '../services/rider_permission_backend_sync.dart';
 import '../services/stale_ride_cleanup.dart';
 import '../utils/wkt_point.dart';
 import 'booking_provider.dart';
+import 'favorites_provider.dart';
 
 class RideRequestState {
   final bool isLoading;
@@ -228,15 +229,18 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
   }
 
   /// Cancels a pending/bidding ride that exceeded the search window, then clears local state.
-  Future<void> cancelStaleOpenRequest() async {
+  Future<bool> cancelStaleOpenRequest() async {
     final id = state.rideRequestId;
     final identity = await ref.read(riderIdentityProvider.future);
     final token = identity.riderToken;
     if (id != null && token != null) {
-      await cancelExpiredRiderOpenRide(rideId: id, riderToken: token);
+      final cancelled =
+          await cancelExpiredRiderOpenRide(rideId: id, riderToken: token);
+      if (!cancelled) return false;
       unawaited(SoundService().playRideCancelled());
     }
     reset();
+    return true;
   }
 
   // Ride creation ONLY happens here — triggered from [SearchingScreen] after navigation.
@@ -269,6 +273,20 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
     if (state.isLoading) {
       if (kDebugMode) debugPrint('CreateRide failed: already loading');
       return false;
+    }
+
+    if (booking.selectedDriverId == null &&
+        (booking.favoritesFirst || booking.favoritesOnly)) {
+      try {
+        final favorites = await ref.read(favoritesProvider.future);
+        if (favorites.isEmpty) {
+          state = state.copyWith(error: 'favorite_drivers_required');
+          return false;
+        }
+      } catch (_) {
+        state = state.copyWith(error: 'favorite_drivers_unavailable');
+        return false;
+      }
     }
 
     state = state.copyWith(isLoading: true, error: null);

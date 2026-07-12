@@ -342,12 +342,12 @@ class _BadgeChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: earned
-              ? colors.accentL.withValues(alpha: 0.35)
-              : colors.surface,
+          color:
+              earned ? colors.accentL.withValues(alpha: 0.35) : colors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: earned ? colors.accent.withValues(alpha: 0.5) : colors.border,
+            color:
+                earned ? colors.accent.withValues(alpha: 0.5) : colors.border,
           ),
         ),
         child: Row(
@@ -502,7 +502,7 @@ class RiderStreakChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('🔥', style: const TextStyle(fontSize: 16)),
+          const Text('🔥', style: TextStyle(fontSize: 16)),
           const SizedBox(width: 6),
           Text(
             l10n.growCityStreakWeeks(weekCount),

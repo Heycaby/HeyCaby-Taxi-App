@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:heycaby_api/heycaby_api.dart';
 import 'package:live_activities/live_activities.dart';
 
 import '../constants/heycaby_widget_config.dart';
@@ -26,6 +28,8 @@ class RiderNotifyLiveActivity {
   static int? _lastGraceSeconds;
   static int? _lastWaitFeeCents;
   static DateTime? _lastPaidWaitPushAt;
+  static String? _currentRideRequestId;
+  static bool _tokenStreamWired = false;
 
   static Future<void> init() async {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.iOS) return;
@@ -35,8 +39,57 @@ class RiderNotifyLiveActivity {
         urlScheme: kHeyCabyWidgetUrlScheme,
         requireNotificationPermission: false,
       );
+      _wireActivityTokenUpdates();
     } catch (e) {
       if (kDebugMode) debugPrint('RiderNotifyLiveActivity.init: $e');
+    }
+  }
+
+  static void _wireActivityTokenUpdates() {
+    if (_tokenStreamWired) return;
+    _tokenStreamWired = true;
+    _live.activityUpdateStream.listen((event) {
+      event.mapOrNull(active: (active) {
+        final rideId = _currentRideRequestId;
+        if (rideId != null) {
+          _registerRemoteUpdates(
+            rideRequestId: rideId,
+            activityId: active.activityId,
+            activityPushToken: active.activityToken,
+          );
+        }
+      });
+    }, onError: (Object error) {
+      if (kDebugMode) debugPrint('Live Activity token stream: $error');
+    });
+  }
+
+  static Future<void> _registerRemoteUpdates({
+    required String rideRequestId,
+    required String activityId,
+    String? activityPushToken,
+  }) async {
+    try {
+      final pushToken =
+          activityPushToken ?? await _live.getPushToken(activityId);
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      if (pushToken == null ||
+          pushToken.length < 32 ||
+          fcmToken == null ||
+          fcmToken.length < 10) {
+        return;
+      }
+      await HeyCabySupabase.client.rpc(
+        'fn_register_rider_live_activity',
+        params: {
+          'p_ride_request_id': rideRequestId,
+          'p_activity_id': activityId,
+          'p_activity_push_token': pushToken,
+          'p_fcm_token': fcmToken,
+        },
+      );
+    } catch (error) {
+      if (kDebugMode) debugPrint('Live Activity remote registration: $error');
     }
   }
 
@@ -65,6 +118,7 @@ class RiderNotifyLiveActivity {
   }
 
   static Future<void> syncNotifySearch({
+    required String rideRequestId,
     required String pickupSummary,
     required String destinationSummary,
     required DateTime startedAt,
@@ -87,10 +141,15 @@ class RiderNotifyLiveActivity {
     );
 
     try {
-      await _live.createOrUpdateActivity(
+      _currentRideRequestId = rideRequestId;
+      final activityId = await _live.createOrUpdateActivity(
         kRideLiveActivityId,
         _withVersion(payload.toActivityMap(), rideVersion),
         staleIn: kRiderDriverSearchWindow,
+      );
+      await _registerRemoteUpdates(
+        rideRequestId: rideRequestId,
+        activityId: activityId,
       );
     } catch (e) {
       if (kDebugMode) debugPrint('RiderNotifyLiveActivity.sync: $e');
@@ -98,6 +157,7 @@ class RiderNotifyLiveActivity {
   }
 
   static Future<void> syncActiveRide({
+    required String rideRequestId,
     required String status,
     required String driverName,
     required String vehicleLabel,
@@ -113,10 +173,13 @@ class RiderNotifyLiveActivity {
   }) async {
     if (!await _available()) return;
 
-    if (status == 'completed' || status == 'cancelled' || status == 'canceled') {
+    if (status == 'completed' ||
+        status == 'cancelled' ||
+        status == 'canceled') {
       _resetThrottle();
       if (paymentComplete) {
         await _pushActiveRidePayload(
+          rideRequestId,
           LiveRideActivityPayload.activeRide(
             rideStatus: status,
             driverName: driverName,
@@ -159,7 +222,11 @@ class RiderNotifyLiveActivity {
       paymentMethodLabel: paymentMethodLabel,
     );
 
-    await _pushActiveRidePayload(payload, rideVersion: rideVersion);
+    await _pushActiveRidePayload(
+      rideRequestId,
+      payload,
+      rideVersion: rideVersion,
+    );
   }
 
   static Map<String, dynamic> _withVersion(
@@ -173,6 +240,7 @@ class RiderNotifyLiveActivity {
   }
 
   static Future<void> _pushActiveRidePayload(
+    String rideRequestId,
     LiveRideActivityPayload payload, {
     int rideVersion = 0,
   }) async {
@@ -188,10 +256,15 @@ class RiderNotifyLiveActivity {
         phase: payload.phase.wireValue,
         rideVersion: rideVersion,
       );
-      await _live.createOrUpdateActivity(
+      _currentRideRequestId = rideRequestId;
+      final activityId = await _live.createOrUpdateActivity(
         kRideLiveActivityId,
         _withVersion(payload.toActivityMap(), rideVersion),
         staleIn: const Duration(hours: 3),
+      );
+      await _registerRemoteUpdates(
+        rideRequestId: rideRequestId,
+        activityId: activityId,
       );
     } catch (e) {
       if (kDebugMode) debugPrint('RiderNotifyLiveActivity.syncActiveRide: $e');
@@ -216,8 +289,7 @@ class RiderNotifyLiveActivity {
       if (_lastPhase == phase &&
           _lastWaitFeeCents == fee &&
           _lastPaidWaitPushAt != null &&
-          now.difference(_lastPaidWaitPushAt!) <
-              const Duration(seconds: 30)) {
+          now.difference(_lastPaidWaitPushAt!) < const Duration(seconds: 30)) {
         return true;
       }
       _lastWaitFeeCents = fee;
@@ -249,6 +321,7 @@ class RiderNotifyLiveActivity {
     _resetThrottle();
     try {
       await _live.endActivity(kRideLiveActivityId);
+      _currentRideRequestId = null;
     } catch (e) {
       if (kDebugMode) debugPrint('RiderNotifyLiveActivity.endActiveRide: $e');
     }
@@ -258,6 +331,7 @@ class RiderNotifyLiveActivity {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.iOS) return;
     try {
       await _live.endActivity(kRideLiveActivityId);
+      _currentRideRequestId = null;
     } catch (e) {
       if (kDebugMode) debugPrint('RiderNotifyLiveActivity.end: $e');
     }

@@ -22,6 +22,62 @@ import '../widgets/rider_rating_sheet.dart';
 
 enum AccountScreenMode { profile, settings }
 
+class _PassportIdentityStatus extends StatelessWidget {
+  const _PassportIdentityStatus({
+    required this.label,
+    required this.complete,
+    required this.colors,
+    required this.typo,
+  });
+
+  final String label;
+  final bool complete;
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+
+  @override
+  Widget build(BuildContext context) {
+    final tone = complete ? colors.success : colors.accent;
+    return Semantics(
+      label: label,
+      checked: complete,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 48),
+        padding: const EdgeInsetsDirectional.fromSTEB(11, 9, 10, 9),
+        decoration: BoxDecoration(
+          color: tone.withValues(alpha: 0.09),
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: tone.withValues(alpha: 0.16)),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              complete
+                  ? Icons.check_circle_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              color: tone,
+              size: 19,
+            ),
+            const SizedBox(width: 7),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: typo.labelSmall.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w800,
+                  height: 1.15,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class AccountScreen extends ConsumerStatefulWidget {
   const AccountScreen({
     super.key,
@@ -451,15 +507,17 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
                 const SizedBox(height: 12),
                 _buildOnboardingBanner(colors, typo, l10n),
               ],
-              if (!ref.watch(riderProfileCompletenessProvider).isComplete) ...[
-                const SizedBox(height: 14),
-                _buildCompletionChecklist(colors, typo, l10n),
-              ],
               const SizedBox(height: 24),
               _buildProfileSection(colors, typo, l10n,
                   fromOnboarding: fromOnboarding),
               const SizedBox(height: 24),
-              _buildOpenSettingsSection(colors, typo, l10n),
+              _buildSettingsSection(colors, typo, l10n),
+              const SizedBox(height: 24),
+              _buildBookingToolsSection(colors, typo, l10n),
+              const SizedBox(height: 24),
+              _buildHelpSafetySection(colors, typo, l10n),
+              const SizedBox(height: 24),
+              _buildLegalAccountSection(colors, typo, l10n),
             ] else ...[
               const SizedBox(height: 16),
               _buildSettingsSection(colors, typo, l10n),
@@ -540,20 +598,6 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
           icon: const Icon(Icons.close_rounded, size: 22),
         ),
       ],
-    );
-  }
-
-  Widget _buildOpenSettingsSection(
-    HeyCabyColorTokens colors,
-    HeyCabyTypography typo,
-    AppLocalizations l10n,
-  ) {
-    return _buildNavRow(
-      Icons.settings_rounded,
-      l10n.settings,
-      colors,
-      typo,
-      () => context.push('/settings'),
     );
   }
 
@@ -754,190 +798,300 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
     final name =
         profile.displayName.isNotEmpty ? profile.displayName : l10n.account;
     final email = profile.email;
-    final percent = completeness.percent / 100;
+    const passportGreen = Color(0xFF143C2E);
+    const passportGreenDeep = Color(0xFF0B291F);
 
-    return Container(
-      padding: const EdgeInsetsDirectional.all(20),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: colors.border.withValues(alpha: 0.7)),
-        boxShadow: [
-          BoxShadow(
-            color: colors.text.withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: colors.accentL,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: colors.accent.withValues(alpha: 0.24),
-                    width: 1.2,
-                  ),
-                ),
-                child: Text(
-                  profile.nameInitial,
-                  style: typo.headingMedium.copyWith(
-                    color: colors.accent,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: typo.headingSmall.copyWith(
-                        color: colors.text,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      email?.isNotEmpty == true ? email! : l10n.addYourEmail,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: typo.bodyMedium.copyWith(
-                        color: colors.textMid,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(
-                width: 56,
-                height: 56,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      value: percent,
-                      strokeWidth: 5,
-                      backgroundColor: colors.border.withValues(alpha: 0.55),
-                      color: completeness.isComplete
-                          ? colors.success
-                          : colors.accent,
-                    ),
-                    Text(
-                      '${completeness.percent}%',
-                      style: typo.labelMedium.copyWith(
-                        color: colors.text,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsetsDirectional.fromSTEB(12, 10, 12, 10),
-            decoration: BoxDecoration(
-              color: completeness.isComplete
-                  ? colors.success.withValues(alpha: 0.12)
-                  : colors.accent.withValues(alpha: 0.11),
-              borderRadius: BorderRadius.circular(14),
+    return Semantics(
+      button: !completeness.isComplete,
+      label: l10n.riderPassportTitle,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: passportGreenDeep.withValues(alpha: 0.22),
+              blurRadius: 26,
+              offset: const Offset(0, 14),
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  completeness.isComplete
-                      ? Icons.verified_rounded
-                      : Icons.auto_awesome_outlined,
-                  color:
-                      completeness.isComplete ? colors.success : colors.accent,
-                  size: 20,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        completeness.isComplete
-                            ? l10n.riderPassportReady
-                            : l10n.riderPassportNeedsWork,
-                        style: typo.labelLarge.copyWith(
-                          color: colors.text,
-                          fontWeight: FontWeight.w800,
-                        ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          clipBehavior: Clip.antiAlias,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: completeness.isComplete
+                  ? null
+                  : () {
+                      final target = _profileSectionKey.currentContext;
+                      if (target != null) {
+                        Scrollable.ensureVisible(
+                          target,
+                          alignment: 0.08,
+                          duration: const Duration(milliseconds: 240),
+                          curve: Curves.easeOutCubic,
+                        );
+                      }
+                    },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsetsDirectional.fromSTEB(
+                      20,
+                      18,
+                      20,
+                      17,
+                    ),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [passportGreen, passportGreenDeep],
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _passportStatusBody(l10n, completeness),
-                        style: typo.bodySmall.copyWith(
-                          color: colors.textMid,
-                          height: 1.35,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.18),
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.public_rounded,
+                            color: Color(0xFFE9C978),
+                            size: 25,
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 13),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l10n.riderPassportTitle.toUpperCase(),
+                                style: typo.titleMedium.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.1,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                l10n.riderPassportSubtitle,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: typo.bodySmall.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.72),
+                                  height: 1.25,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          completeness.isComplete
+                              ? Icons.verified_rounded
+                              : Icons.edit_rounded,
+                          color: completeness.isComplete
+                              ? const Color(0xFFE9C978)
+                              : Colors.white.withValues(alpha: 0.78),
+                          size: 22,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  Container(
+                    color: colors.card,
+                    padding: const EdgeInsetsDirectional.fromSTEB(
+                      20,
+                      20,
+                      20,
+                      18,
+                    ),
+                    child: Stack(
+                      children: [
+                        PositionedDirectional(
+                          end: -10,
+                          top: -18,
+                          child: IgnorePointer(
+                            child: Icon(
+                              Icons.public_rounded,
+                              size: 124,
+                              color: passportGreen.withValues(alpha: 0.035),
+                            ),
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 76,
+                                  height: 92,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: colors.accentL,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color:
+                                          colors.accent.withValues(alpha: 0.22),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    profile.nameInitial,
+                                    style: typo.displaySmall.copyWith(
+                                      color: colors.accent,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        l10n.accountChecklistName.toUpperCase(),
+                                        style: typo.labelSmall.copyWith(
+                                          color: colors.textMid,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.8,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        name,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: typo.headingSmall.copyWith(
+                                          color: colors.text,
+                                          fontWeight: FontWeight.w900,
+                                          height: 1.05,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        l10n.email.toUpperCase(),
+                                        style: typo.labelSmall.copyWith(
+                                          color: colors.textMid,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.8,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        email?.isNotEmpty == true
+                                            ? email!
+                                            : l10n.addYourEmail,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: typo.bodyMedium.copyWith(
+                                          color: colors.text,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 18),
+                            Divider(
+                              height: 1,
+                              color: colors.border.withValues(alpha: 0.75),
+                            ),
+                            const SizedBox(height: 15),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _PassportIdentityStatus(
+                                    label: l10n.accountChecklistName,
+                                    complete: completeness.hasName,
+                                    colors: colors,
+                                    typo: typo,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: _PassportIdentityStatus(
+                                    label: l10n.accountChecklistEmail,
+                                    complete: completeness.hasEmail,
+                                    colors: colors,
+                                    typo: typo,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  completeness.isComplete
+                                      ? Icons.check_circle_rounded
+                                      : Icons.info_outline_rounded,
+                                  color: completeness.isComplete
+                                      ? colors.success
+                                      : colors.accent,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 9),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        completeness.isComplete
+                                            ? l10n.riderPassportReady
+                                            : l10n.riderPassportNeedsWork,
+                                        style: typo.labelLarge.copyWith(
+                                          color: colors.text,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        _passportStatusBody(
+                                          l10n,
+                                          completeness,
+                                        ),
+                                        style: typo.bodySmall.copyWith(
+                                          color: colors.textMid,
+                                          height: 1.35,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (!completeness.isComplete)
+                                  Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: colors.textMid,
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCompletionChecklist(
-    HeyCabyColorTokens colors,
-    HeyCabyTypography typo,
-    AppLocalizations l10n,
-  ) {
-    final completeness = ref.watch(riderProfileCompletenessProvider);
-    return _buildSectionCard(
-      colors: colors,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle(
-            l10n.accountCompleteProfileHeading,
-            colors,
-            typo,
-            icon: Icons.fact_check_outlined,
-          ),
-          const SizedBox(height: 14),
-          _buildChecklistRow(
-            icon: Icons.badge_outlined,
-            title: l10n.accountChecklistName,
-            done: completeness.hasName,
-            colors: colors,
-            typo: typo,
-            l10n: l10n,
-          ),
-          const SizedBox(height: 10),
-          _buildChecklistRow(
-            icon: Icons.alternate_email_rounded,
-            title: l10n.accountChecklistEmail,
-            done: completeness.hasEmail,
-            colors: colors,
-            typo: typo,
-            l10n: l10n,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -962,7 +1116,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
   }) {
     final profile = ref.watch(riderProfileDisplayProvider);
     return Container(
-      key: fromOnboarding ? _profileSectionKey : null,
+      key: _profileSectionKey,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: colors.card,
@@ -1388,54 +1542,6 @@ class _AccountScreenState extends ConsumerState<AccountScreen>
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildChecklistRow({
-    required IconData icon,
-    required String title,
-    required bool done,
-    required HeyCabyColorTokens colors,
-    required HeyCabyTypography typo,
-    required AppLocalizations l10n,
-  }) {
-    final tone = done ? colors.success : colors.warning;
-    return Container(
-      padding: const EdgeInsetsDirectional.fromSTEB(12, 11, 12, 11),
-      decoration: BoxDecoration(
-        color: colors.bgAlt,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colors.border.withValues(alpha: 0.65)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: tone, size: 21),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: typo.bodyLarge.copyWith(
-                color: colors.text,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsetsDirectional.fromSTEB(9, 5, 9, 5),
-            decoration: BoxDecoration(
-              color: tone.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Text(
-              done ? l10n.accountChecklistDone : l10n.accountChecklistMissing,
-              style: typo.labelMedium.copyWith(
-                color: tone,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 

@@ -100,16 +100,22 @@ class _ActiveBookingCardState extends ConsumerState<ActiveBookingCard> {
     );
     if (!mounted || !stop) return;
 
-    setState(() => _dismissedRideId = snap.id);
-    _setHomeExpanded(false);
-
-    await RiderMatchingRecoveryActions.cancelOpenRideAndClearLocalState(
+    final cancelled =
+        await RiderMatchingRecoveryActions.cancelOpenRideAndClearLocalState(
       ref,
       rideId: snap.id,
       cancellationReason: 'rider_cancelled_from_active_booking_card',
     );
 
     if (!mounted) return;
+    if (!cancelled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.cancelRideFailed)),
+      );
+      return;
+    }
+    setState(() => _dismissedRideId = snap.id);
+    _setHomeExpanded(false);
     final stillOpen = ref.read(nearTermRideRequestProvider).valueOrNull;
     if (stillOpen?.id != snap.id) {
       setState(() => _dismissedRideId = null);
@@ -311,7 +317,8 @@ class _ActiveBookingCardState extends ConsumerState<ActiveBookingCard> {
               showBoost: namedPriceMode,
               onCollapse: () => _setHomeExpanded(false),
               onOpenFlow: () => unawaited(_openRideFlow(snap)),
-              onBoost: () => context.go(RideMatchingVariant.marketplace.routePath),
+              onBoost: () =>
+                  context.go(RideMatchingVariant.marketplace.routePath),
               onCancel: () => unawaited(
                 _cancelOpenRide(
                   snap: snap,

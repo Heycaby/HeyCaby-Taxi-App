@@ -107,9 +107,12 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
             ScaffoldMessenger.maybeOf(context)?.showSnackBar(
               SnackBar(
                 content: Text(
-                  rideError == 'location_required'
-                      ? l10n.locationPermissionRequired
-                      : l10n.rideBookingFailed,
+                  switch (rideError) {
+                    'location_required' => l10n.locationPermissionRequired,
+                    'favorite_drivers_required' => l10n.favoriteDriversRequired,
+                    'favorite_drivers_unavailable' => l10n.favoritesLoadFailed,
+                    _ => l10n.rideBookingFailed,
+                  },
                 ),
               ),
             );
@@ -277,7 +280,9 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
     if (!mounted) return;
     _searchWindowTimer?.cancel();
     _channel?.unsubscribe();
-    await ref.read(rideRequestProvider.notifier).cancelStaleOpenRequest();
+    final cancelled =
+        await ref.read(rideRequestProvider.notifier).cancelStaleOpenRequest();
+    if (!cancelled) return;
     if (!mounted) return;
     setState(() => _searchExpired = true);
   }
@@ -699,20 +704,26 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
       confirmDestructive: true,
     );
     if (!confirmed || !mounted) return;
-    await _cancelRideGloballyFromSearching();
+    final cancelled = await _cancelRideGloballyFromSearching();
     if (!mounted || !context.mounted) return;
+    if (!cancelled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.cancelRideFailed)),
+      );
+      return;
+    }
     context.go('/home');
   }
 
-  Future<void> _cancelRideGloballyFromSearching() async {
+  Future<bool> _cancelRideGloballyFromSearching() async {
     final ride = ref.read(rideRequestProvider);
     final rideId = ride.rideRequestId;
     if (rideId == null) {
       await RiderMatchingRecoveryActions.clearLocalMatchingState(ref);
-      return;
+      return true;
     }
 
-    await RiderMatchingRecoveryActions.cancelOpenRideAndClearLocalState(
+    return RiderMatchingRecoveryActions.cancelOpenRideAndClearLocalState(
       ref,
       rideId: rideId,
       riderToken: ride.riderToken,

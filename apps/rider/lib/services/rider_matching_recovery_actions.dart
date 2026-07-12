@@ -110,31 +110,32 @@ class RiderMatchingRecoveryActions {
 
   /// Cancels an open ride on the server, then clears all local matching state
   /// so home / searching UI cannot stay stuck on "finding driver".
-  static Future<void> cancelOpenRideAndClearLocalState(
+  static Future<bool> cancelOpenRideAndClearLocalState(
     WidgetRef ref, {
     required String rideId,
     String? riderToken,
     required String cancellationReason,
     bool skipServerCancel = false,
   }) async {
+    var cancelled = skipServerCancel;
     if (!skipServerCancel) {
       try {
         final identity = await ref.read(riderIdentityProvider.future);
         final token = riderToken ?? identity.riderToken;
         if (token != null && token.isNotEmpty) {
-          await cancelExpiredRiderOpenRide(
+          cancelled = await cancelExpiredRiderOpenRide(
             rideId: rideId,
             riderToken: token,
             cancellationReason: cancellationReason,
           );
         }
-      } catch (_) {
-        // Still clear local state so UI is never stuck on an active search banner.
-      }
+      } catch (_) {}
+      if (!cancelled) return false;
       unawaited(SoundService().playRideCancelled());
     }
 
     await clearLocalMatchingState(ref);
+    return true;
   }
 
   /// Drops in-memory matching/search UI state after a ride is no longer open.

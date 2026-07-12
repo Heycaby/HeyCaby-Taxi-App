@@ -17,5 +17,7 @@ final tripCategoryEstimatesProvider =
     pickupLat: pu.lat,
     destLng: de.lng,
     destLat: de.lat,
+    distanceKm: booking.routeDistanceKm,
+    durationMin: booking.routeDurationMin?.toDouble(),
   );
 });

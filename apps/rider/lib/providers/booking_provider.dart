@@ -230,8 +230,14 @@ class BookingNotifier extends Notifier<BookingState> {
         routeDurationMin: null,
       );
 
-  void setFavoritesFirst(bool value) =>
-      state = state.copyWith(favoritesFirst: value);
+  void setFavoritesFirst(bool value) => state = state.copyWith(
+        favoritesFirst: value,
+        favoritesOnly: false,
+        marketplaceDriverAudience: value
+            ? MarketplaceDriverAudience.myDriversFirst
+            : MarketplaceDriverAudience.everyone,
+        selectedDriverId: null,
+      );
 
   void setMarketplaceDriverAudience(MarketplaceDriverAudience audience) {
     state = state.copyWith(
@@ -239,6 +245,7 @@ class BookingNotifier extends Notifier<BookingState> {
       favoritesFirst: audience == MarketplaceDriverAudience.myDriversFirst ||
           audience == MarketplaceDriverAudience.myDriversOnly,
       favoritesOnly: audience == MarketplaceDriverAudience.myDriversOnly,
+      selectedDriverId: null,
     );
   }
 
@@ -293,6 +300,9 @@ class BookingNotifier extends Notifier<BookingState> {
   /// Select a specific driver without forcing a €0 fare into the booking.
   void setPreferredDriver(String driverId) => state = state.copyWith(
         selectedDriverId: driverId,
+        favoritesFirst: false,
+        favoritesOnly: false,
+        marketplaceDriverAudience: MarketplaceDriverAudience.everyone,
       );
 
   /// Select a specific driver and store their estimated fare.
@@ -300,6 +310,9 @@ class BookingNotifier extends Notifier<BookingState> {
       state = state.copyWith(
         selectedDriverId: driverId,
         estimatedFareEuro: fare > 0 ? fare : null,
+        favoritesFirst: false,
+        favoritesOnly: false,
+        marketplaceDriverAudience: MarketplaceDriverAudience.everyone,
       );
 
   /// Clear specific-driver selection — ride will be posted to all nearby drivers.

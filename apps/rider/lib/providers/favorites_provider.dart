@@ -99,23 +99,25 @@ class FavoritesNotifier extends AsyncNotifier<List<FavoriteDriver>> {
   }
 
   Future<List<FavoriteDriver>> _loadFavorites(String riderIdentityId) async {
-    try {
-      final response = await HeyCabySupabase.client.rpc(
-        'fn_rider_favorite_drivers',
-        params: {'p_rider_identity_id': riderIdentityId},
+    final response = await HeyCabySupabase.client.rpc(
+      'fn_rider_favorite_drivers',
+      params: {'p_rider_identity_id': riderIdentityId},
+    );
+
+    final data = Map<String, dynamic>.from(response as Map);
+    if (data['success'] != true) {
+      throw StateError(
+        'Favorite drivers could not be loaded: ${data['reason'] ?? 'unknown'}',
       );
-
-      final data = response as Map<String, dynamic>;
-      if (data['success'] != true) return [];
-
-      final drivers = data['drivers'] as List? ?? [];
-      return drivers
-          .map((item) => FavoriteDriver.fromJson(item as Map<String, dynamic>))
-          .where((d) => d.name.isNotEmpty)
-          .toList();
-    } catch (e) {
-      return [];
     }
+
+    final drivers = data['drivers'] as List? ?? [];
+    return drivers
+        .map((item) => FavoriteDriver.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ))
+        .where((d) => d.name.isNotEmpty)
+        .toList();
   }
 
   Future<AddFavoriteResult> addFavorite({

@@ -43,6 +43,20 @@ struct LiveActivitiesAppAttributes: ActivityAttributes, Identifiable {
 
     public struct ContentState: Codable, Hashable {
         var appGroupId: String
+        var phase: String?
+        var title: String?
+        var subtitle: String?
+        var status: String?
+        var nextAction: String?
+        var eta: String?
+        var progressPercent: Int?
+        var graceRemaining: String?
+        var graceEndsAtEpoch: Int?
+        var waitFee: String?
+        var heroMetric: String?
+        var compactTrailing: String?
+        var waitPhase: String?
+        var rideVersion: Int?
     }
 
     var id = UUID()
@@ -105,29 +119,36 @@ private struct LiveRidePayload {
     let heroMetric: String
     let compactTrailing: String
     let waitPhase: LiveWaitPhase
+    let graceEndsAt: Date?
 
     static func load(from context: ActivityViewContext<LiveActivitiesAppAttributes>) -> LiveRidePayload {
         let defaults = UserDefaults(suiteName: kLiveActivityAppGroup)!
         func str(_ key: String) -> String {
             defaults.string(forKey: context.attributes.prefixedKey(key)) ?? ""
         }
-        let percentRaw = Int(str("progressPercent")) ?? 0
+        func remoteOrLocal(_ remote: String?, _ key: String) -> String {
+            guard let remote, !remote.isEmpty else { return str(key) }
+            return remote
+        }
+        let state = context.state
+        let percentRaw = state.progressPercent ?? Int(str("progressPercent")) ?? 0
         let timelineStep = min(max(Int(str("timelineStep")) ?? 0, 0), 4)
-        let phaseRaw = str("phase")
+        let phaseRaw = remoteOrLocal(state.phase, "phase")
         let inferredPercent = percentRaw > 0 ? percentRaw : legacyPercent(for: timelineStep)
         return LiveRidePayload(
             phase: phaseRaw.isEmpty ? legacyPhase(for: timelineStep) : LiveRidePhase(raw: phaseRaw),
-            title: str("title"),
-            subtitle: str("subtitle"),
-            status: str("status"),
-            nextAction: str("nextAction"),
-            eta: str("eta"),
+            title: remoteOrLocal(state.title, "title"),
+            subtitle: remoteOrLocal(state.subtitle, "subtitle"),
+            status: remoteOrLocal(state.status, "status"),
+            nextAction: remoteOrLocal(state.nextAction, "nextAction"),
+            eta: remoteOrLocal(state.eta, "eta"),
             progressPercent: min(max(inferredPercent, 0), 100),
-            graceRemaining: str("graceRemaining"),
-            waitFee: str("waitFee"),
-            heroMetric: str("heroMetric"),
-            compactTrailing: str("compactTrailing"),
-            waitPhase: LiveWaitPhase(raw: str("waitPhase"))
+            graceRemaining: remoteOrLocal(state.graceRemaining, "graceRemaining"),
+            waitFee: remoteOrLocal(state.waitFee, "waitFee"),
+            heroMetric: remoteOrLocal(state.heroMetric, "heroMetric"),
+            compactTrailing: remoteOrLocal(state.compactTrailing, "compactTrailing"),
+            waitPhase: LiveWaitPhase(raw: remoteOrLocal(state.waitPhase, "waitPhase")),
+            graceEndsAt: state.graceEndsAtEpoch.map { Date(timeIntervalSince1970: TimeInterval($0)) }
         )
     }
 
@@ -200,7 +221,8 @@ private struct LiveRidePayload {
         waitFee: "",
         heroMetric: "1 min",
         compactTrailing: "5",
-        waitPhase: .none
+        waitPhase: .none,
+        graceEndsAt: nil
     )
 
     static let previewOnTheWay = LiveRidePayload(
@@ -215,7 +237,8 @@ private struct LiveRidePayload {
         waitFee: "",
         heroMetric: "6 min",
         compactTrailing: "6 min",
-        waitPhase: .none
+        waitPhase: .none,
+        graceEndsAt: nil
     )
 
     static let previewFreeWait = LiveRidePayload(
@@ -230,7 +253,8 @@ private struct LiveRidePayload {
         waitFee: "",
         heroMetric: "1:42",
         compactTrailing: "1:42 free",
-        waitPhase: .free
+        waitPhase: .free,
+        graceEndsAt: Date().addingTimeInterval(102)
     )
 
     static let previewPaidWait = LiveRidePayload(
@@ -245,7 +269,8 @@ private struct LiveRidePayload {
         waitFee: "€0.80 added",
         heroMetric: "€0.80 added",
         compactTrailing: "€0.80",
-        waitPhase: .paid
+        waitPhase: .paid,
+        graceEndsAt: nil
     )
 
     static let previewOnTrip = LiveRidePayload(
@@ -260,7 +285,8 @@ private struct LiveRidePayload {
         waitFee: "",
         heroMetric: "18 min",
         compactTrailing: "18 min",
-        waitPhase: .none
+        waitPhase: .none,
+        graceEndsAt: nil
     )
 }
 
@@ -356,16 +382,24 @@ private struct HeroMetricView: View {
     let data: LiveRidePayload
 
     var body: some View {
-        if data.waitPhase == .free, !data.graceRemaining.isEmpty {
+        if data.waitPhase == .free,
+           data.graceEndsAt != nil || !data.graceRemaining.isEmpty {
             VStack(alignment: .leading, spacing: 2) {
                 Text("FREE WAIT")
                     .font(.system(size: 10, weight: .bold, design: .rounded))
                     .foregroundStyle(HeyCabyLivePalette.accentBright.opacity(0.9))
                     .tracking(0.6)
-                Text(data.graceRemaining)
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(HeyCabyLivePalette.textPrimary)
+                if let end = data.graceEndsAt, end > Date() {
+                    Text(timerInterval: Date()...end, countsDown: true)
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundStyle(HeyCabyLivePalette.textPrimary)
+                } else {
+                    Text(data.graceRemaining)
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundStyle(HeyCabyLivePalette.textPrimary)
+                }
             }
         } else if data.waitPhase == .paid, !data.waitFee.isEmpty {
             VStack(alignment: .leading, spacing: 2) {

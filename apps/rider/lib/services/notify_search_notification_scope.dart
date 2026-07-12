@@ -58,13 +58,15 @@ class _NotifySearchNotificationScopeState
                   startedAt: s.startedAt,
                 ),
               );
-              unawaited(
-                RiderNotifyLiveActivity.syncNotifySearch(
+              final rideRequestId = s.rideRequestId;
+              if (rideRequestId != null && rideRequestId.isNotEmpty) {
+                unawaited(RiderNotifyLiveActivity.syncNotifySearch(
+                  rideRequestId: rideRequestId,
                   pickupSummary: s.pickupSummary ?? '',
                   destinationSummary: s.destinationSummary ?? '',
                   startedAt: s.startedAt,
-                ),
-              );
+                ));
+              }
             }
           },
           loading: () {},

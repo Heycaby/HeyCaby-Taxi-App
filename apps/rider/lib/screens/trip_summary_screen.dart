@@ -12,6 +12,7 @@ import '../providers/booking_provider.dart';
 import '../providers/recent_destinations_provider.dart';
 import '../providers/ride_request_provider.dart';
 import '../providers/saved_trips_provider.dart';
+import '../providers/trip_category_estimates_provider.dart';
 import '../services/booking_draft_storage.dart';
 import '../services/booking_flow_navigation.dart';
 import 'location_required_screen.dart';
@@ -59,6 +60,15 @@ class _TripSummaryScreenState extends ConsumerState<TripSummaryScreen> {
     final typo = ref.watch(typographyProvider);
     final l10n = AppLocalizations.of(context);
     final booking = ref.watch(bookingProvider);
+    final livePrices = ref.watch(tripCategoryEstimatesProvider);
+    final priceLabel = livePrices.maybeWhen(
+      data: (items) {
+        if (items.isEmpty) return null;
+        final prices = items.map((e) => e.priceEuro).toList()..sort();
+        return _formatLivePriceBand(prices.first, prices.last);
+      },
+      orElse: () => null,
+    );
     final screenH = MediaQuery.sizeOf(context).height;
 
     final hours = _etaMinutes ~/ 60;
@@ -124,6 +134,8 @@ class _TripSummaryScreenState extends ConsumerState<TripSummaryScreen> {
               distanceKm: _distanceKm,
               etaText: etaText,
               isLoading: false,
+              livePriceLabel: priceLabel,
+              isLivePriceLoading: livePrices.isLoading,
               onEditAddress: _editAddress,
               onEditPassengerAndRide: () => context.push(
                 '/vehicle-category',
@@ -206,4 +218,12 @@ class _TripSummaryScreenState extends ConsumerState<TripSummaryScreen> {
       ),
     );
   }
+}
+
+String _formatLivePriceBand(double min, double max) {
+  String euro(double value) => value == value.roundToDouble()
+      ? value.toStringAsFixed(0)
+      : value.toStringAsFixed(2);
+  if ((min - max).abs() < 0.01) return '€${euro(min)}';
+  return '€${euro(min)}–${euro(max)}';
 }

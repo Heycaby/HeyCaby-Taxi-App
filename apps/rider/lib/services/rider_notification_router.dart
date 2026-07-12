@@ -24,6 +24,7 @@ enum RiderNotificationBehavior {
   tripStarted,
   tripCompleted,
   payment,
+  rating,
   generic,
 }
 
@@ -44,7 +45,9 @@ RiderNotificationBehavior behaviorForCategory(String? category) {
     if (c.contains('arrived')) {
       return RiderNotificationBehavior.driverPingArrived;
     }
-    if (c.contains('on_my_way') || c.contains('nearby') || c.contains('near_pickup')) {
+    if (c.contains('on_my_way') ||
+        c.contains('nearby') ||
+        c.contains('near_pickup')) {
       return RiderNotificationBehavior.driverPingOnMyWay;
     }
     return RiderNotificationBehavior.driverPingOther;
@@ -55,6 +58,7 @@ RiderNotificationBehavior behaviorForCategory(String? category) {
     return RiderNotificationBehavior.tripCompleted;
   }
   if (c.contains('payment')) return RiderNotificationBehavior.payment;
+  if (c.contains('rating')) return RiderNotificationBehavior.rating;
   if (c.contains('trip_start') ||
       c.contains('ride_start') ||
       c.contains('in_progress')) {
@@ -104,6 +108,9 @@ Future<void> playRiderNotificationFeedback(
     case RiderNotificationBehavior.payment:
       await HapticService.lightTap();
       await sound.playPaymentSuccess();
+    case RiderNotificationBehavior.rating:
+      await HapticService.lightTap();
+      await sound.playNotification();
     case RiderNotificationBehavior.generic:
       await HapticService.lightTap();
       await sound.playNotification();
@@ -116,6 +123,8 @@ String riderDeepLinkForBehavior(RiderNotificationBehavior behavior) {
       return '/chat';
     case RiderNotificationBehavior.payment:
       return '/active';
+    case RiderNotificationBehavior.rating:
+      return '/account';
     case RiderNotificationBehavior.rideOffer:
       return '/home';
     default:
@@ -134,6 +143,8 @@ Future<void> dispatchRiderNotification({
   Future<void> Function()? onOpen,
 }) async {
   final behavior = behaviorForCategory(category);
+  if (!await _rideNotificationIsCurrent(category, data)) return;
+  if (!context.mounted) return;
   final pingType = DriverPingType.tryParse(
     data?['ping_kind']?.toString() ?? category,
   );
@@ -153,6 +164,22 @@ Future<void> dispatchRiderNotification({
   }
 
   unawaited(playRiderNotificationFeedback(behavior));
+
+  if (behavior == RiderNotificationBehavior.rating) {
+    _showRiderRatingPill(
+      context: context,
+      title: title,
+      body: body,
+      onOpen: () {
+        if (onOpen != null) {
+          unawaited(onOpen());
+        } else if (context.mounted) {
+          context.go(riderDeepLinkForBehavior(behavior));
+        }
+      },
+    );
+    return;
+  }
 
   final messenger = ScaffoldMessenger.maybeOf(context);
   if (messenger == null) return;
@@ -178,6 +205,142 @@ Future<void> dispatchRiderNotification({
       ),
     ),
   );
+}
+
+Future<bool> _rideNotificationIsCurrent(
+  String? category,
+  Map<String, dynamic>? data,
+) async {
+  final rideId = data?['ride_request_id']?.toString();
+  if (rideId == null || rideId.isEmpty) return true;
+  final normalized = (category ?? '').toLowerCase();
+  if (normalized.contains('cancel')) return true;
+  if (normalized.contains('rating')) return true;
+  try {
+    final row = await HeyCabySupabase.client
+        .from('ride_requests')
+        .select('status')
+        .eq('id', rideId)
+        .maybeSingle();
+    final status = row?['status']?.toString().toLowerCase();
+    return const {
+      'pending',
+      'bidding',
+      'assigned',
+      'accepted',
+      'driver_found',
+      'driver_en_route',
+      'driver_arrived',
+      'arrived',
+      'in_progress',
+    }.contains(status);
+  } catch (_) {
+    // During a disconnect, suppress unverifiable ride-state overlays. The
+    // notifications center can recover them after backend truth is restored.
+    return false;
+  }
+}
+
+void _showRiderRatingPill({
+  required BuildContext context,
+  required String title,
+  required String body,
+  required VoidCallback onOpen,
+}) {
+  final overlay = Overlay.maybeOf(context, rootOverlay: true);
+  if (overlay == null) return;
+  final displayTitle = title.trim().isNotEmpty
+      ? title.trim()
+      : AppLocalizations.of(context).rateYourDriver;
+  final displayBody = body.trim();
+
+  late final OverlayEntry entry;
+  var removed = false;
+  void remove() {
+    if (removed) return;
+    removed = true;
+    entry.remove();
+  }
+
+  entry = OverlayEntry(
+    builder: (overlayContext) => PositionedDirectional(
+      bottom: MediaQuery.paddingOf(overlayContext).bottom + 16,
+      start: 16,
+      end: 16,
+      child: SafeArea(
+        top: false,
+        child: Material(
+          color: Colors.transparent,
+          child: Semantics(
+            button: true,
+            label: displayBody.isEmpty ? displayTitle : '$displayTitle. $displayBody',
+            child: InkWell(
+              onTap: () {
+                remove();
+                onOpen();
+              },
+              borderRadius: BorderRadius.circular(14),
+              child: Ink(
+                padding: const EdgeInsetsDirectional.fromSTEB(14, 12, 14, 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF101828).withValues(alpha: 0.96),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 18,
+                      offset: Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.star_rounded,
+                      color: Color(0xFFFDB022),
+                      size: 22,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            displayTitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          if (displayBody.isNotEmpty)
+                            Text(
+                              displayBody,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color(0xFFD0D5DD),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  overlay.insert(entry);
+  Timer(const Duration(seconds: 3), remove);
 }
 
 Future<void> _markPingOpened(

@@ -123,7 +123,8 @@ class _TripSummaryMapViewState extends ConsumerState<TripSummaryMapView> {
   }
 
   /// Wider neighborhood frame during driver search — street labels, not field/water fill.
-  Future<void> _flyToPickupSearchCamera(MapboxMap map, AddressResult pickup) async {
+  Future<void> _flyToPickupSearchCamera(
+      MapboxMap map, AddressResult pickup) async {
     const latPad = 0.014;
     const lngPad = 0.020;
     final camera = await map.cameraForCoordinateBounds(
@@ -317,15 +318,10 @@ class _TripSummaryMapViewState extends ConsumerState<TripSummaryMapView> {
 
     final colors = ref.read(colorsProvider);
     final lineColor = colors.success.toARGB32();
-    List<Position> geometry = [
-      Position(pickup.lng, pickup.lat),
-      Position(destination.lng, destination.lat),
-    ];
-
-    if (route != null) {
-      geometry = route.coordinates.map((c) => Position(c[0], c[1])).toList();
-      widget.onRouteMetricsChanged(route.distanceKm, route.durationMinutes);
-    }
+    if (route == null || route.coordinates.length < 2) return const [];
+    final geometry =
+        route.coordinates.map((c) => Position(c[0], c[1])).toList();
+    widget.onRouteMetricsChanged(route.distanceKm, route.durationMinutes);
 
     await _lineManager!.create(
       PolylineAnnotationOptions(
@@ -407,10 +403,8 @@ class _TripSummaryMapViewState extends ConsumerState<TripSummaryMapView> {
             mapboxMap: _mapboxMap,
             pickupLat: pickup?.lat,
             pickupLng: pickup?.lng,
-            destinationLat:
-                widget.pickupFocused ? null : destination?.lat,
-            destinationLng:
-                widget.pickupFocused ? null : destination?.lng,
+            destinationLat: widget.pickupFocused ? null : destination?.lat,
+            destinationLng: widget.pickupFocused ? null : destination?.lng,
             pickupColor: colors.warning,
             dropoffColor: colors.success,
             cameraTick: _cameraTick,

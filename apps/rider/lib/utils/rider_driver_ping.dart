@@ -7,7 +7,8 @@ import 'package:heycaby_rider/l10n/app_localizations.dart';
 
 import '../services/rider_notification_router.dart';
 
-/// Rich in-app ping alert (vehicle + plate, green urgent styling).
+/// Compact foreground ride signal. It stays above content and never covers
+/// the bottom ride CTA; the active ride screen remains the permanent center.
 Future<void> showRiderDriverPingAlert({
   required BuildContext context,
   required String title,
@@ -17,8 +18,7 @@ Future<void> showRiderDriverPingAlert({
   Map<String, dynamic>? data,
   DriverPingType? pingType,
 }) async {
-  final type = pingType ??
-      DriverPingType.tryParse(pingKind ?? category);
+  final type = pingType ?? DriverPingType.tryParse(pingKind ?? category);
   final behavior = behaviorForCategory(
     type?.notificationCategory ?? category,
   );
@@ -27,86 +27,110 @@ Future<void> showRiderDriverPingAlert({
   final vehicleLabel = data?['vehicle_label']?.toString().trim() ?? '';
   final plate = data?['vehicle_plate']?.toString().trim() ?? '';
 
-  final urgent = type == DriverPingType.outside ||
-      type == DriverPingType.cantFindRider ||
-      type == DriverPingType.arrived;
-
-  final messenger = ScaffoldMessenger.maybeOf(context);
-  if (messenger == null) return;
+  final overlay = Overlay.maybeOf(context, rootOverlay: true);
+  if (overlay == null) return;
   final l10n = AppLocalizations.of(context);
+  late final OverlayEntry entry;
+  var removed = false;
+  void remove() {
+    if (removed) return;
+    removed = true;
+    entry.remove();
+  }
 
-  messenger.clearSnackBars();
-  messenger.showSnackBar(
-    SnackBar(
-      behavior: SnackBarBehavior.floating,
-      margin: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 16),
-      duration: const Duration(seconds: 10),
-      showCloseIcon: true,
-      backgroundColor: urgent ? const Color(0xFF1B5E20) : null,
-      content: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            _iconFor(type),
-            color: urgent ? Colors.white : null,
-            size: 32,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+  entry = OverlayEntry(
+    builder: (overlayContext) => PositionedDirectional(
+      top: MediaQuery.paddingOf(overlayContext).top + 10,
+      start: 16,
+      end: 16,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            remove();
+            if (context.mounted) context.go('/active');
+          },
+          borderRadius: BorderRadius.circular(22),
+          child: Ink(
+            padding: const EdgeInsetsDirectional.fromSTEB(13, 11, 9, 11),
+            decoration: BoxDecoration(
+              color: const Color(0xFF101828).withValues(alpha: 0.96),
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x33000000),
+                  blurRadius: 22,
+                  offset: Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (title.isNotEmpty)
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: urgent ? Colors.white : null,
-                    ),
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF12B76A),
+                    shape: BoxShape.circle,
                   ),
-                if (body.isNotEmpty)
-                  Text(
-                    body,
-                    maxLines: 6,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: urgent ? Colors.white70 : null),
+                  child: Icon(_iconFor(type), color: Colors.white, size: 21),
+                ),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.activeRidePingDriver,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      if (title.isNotEmpty || body.isNotEmpty)
+                        Text(
+                          body.isNotEmpty ? body : title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFFD0D5DD),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      if (vehicleLabel.isNotEmpty || plate.isNotEmpty) ...[
+                        Text(
+                          [vehicleLabel, plate]
+                              .where((v) => v.isNotEmpty)
+                              .join(' · '),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF98A2B3),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                if (vehicleLabel.isNotEmpty || plate.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  if (vehicleLabel.isNotEmpty)
-                    Text(
-                      vehicleLabel,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: urgent ? Colors.white : null,
-                      ),
-                    ),
-                  if (plate.isNotEmpty)
-                    Text(
-                      plate,
-                      style: TextStyle(
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                        letterSpacing: 1.2,
-                        fontWeight: FontWeight.w800,
-                        color: urgent ? Colors.white : null,
-                      ),
-                    ),
-                ],
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Color(0xFF98A2B3),
+                ),
               ],
             ),
           ),
-        ],
-      ),
-      action: SnackBarAction(
-        label: l10n.openAction,
-        textColor: urgent ? Colors.white : null,
-        onPressed: () {
-          if (context.mounted) context.go('/active');
-        },
+        ),
       ),
     ),
   );
+  overlay.insert(entry);
+  Timer(const Duration(seconds: 4), remove);
 }
 
 IconData _iconFor(DriverPingType? type) {

@@ -26,11 +26,10 @@ Future<bool> _expireStaleInstantRideIfNeeded({
 }) async {
   if (_isFutureScheduledRide(scheduledPickupAt, now)) return false;
   if (now.difference(createdAt) <= kRiderDriverSearchWindow) return false;
-  await cancelExpiredRiderOpenRide(
+  return cancelExpiredRiderOpenRide(
     rideId: rideId,
     riderToken: riderToken,
   );
-  return true;
 }
 
 /// Open `ride_requests` row worth highlighting on Home (matching soon or scheduled soon).

@@ -45,85 +45,98 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
             ),
             Expanded(
               child: favoritesAsync.when(
-              data: (drivers) {
-                if (drivers.isEmpty) {
-                  return _EmptyState(colors: colors, typo: typo, l10n: l10n);
-                }
-                return _FavoritesList(
-                  drivers: drivers,
-                  selectedDrivers: _selectedDrivers,
-                  selectAll: _selectAll,
+                data: (drivers) {
+                  if (drivers.isEmpty) {
+                    return _EmptyState(colors: colors, typo: typo, l10n: l10n);
+                  }
+                  return _FavoritesList(
+                    drivers: drivers,
+                    selectedDrivers: _selectedDrivers,
+                    selectAll: _selectAll,
+                    colors: colors,
+                    typo: typo,
+                    l10n: l10n,
+                    onSelectAllChanged: (v) {
+                      setState(() {
+                        _selectAll = v;
+                        if (v) {
+                          _selectedDrivers.addAll(drivers.map((d) => d.id));
+                        } else {
+                          _selectedDrivers.clear();
+                        }
+                      });
+                    },
+                    onDriverTap: (driver) {
+                      setState(() {
+                        if (_selectedDrivers.contains(driver.id)) {
+                          _selectedDrivers.remove(driver.id);
+                        } else {
+                          // The backend supports one exact driver or the rider's
+                          // complete favorite network. Do not imply that an
+                          // arbitrary partial group can be targeted.
+                          _selectedDrivers.clear();
+                          _selectedDrivers.add(driver.id);
+                        }
+                        _selectAll = false;
+                      });
+                    },
+                    onPostRide: () async {
+                      final ok = await ensureLocationForBooking(
+                          context: context, ref: ref);
+                      if (!ok) return;
+                      final bookingNotifier =
+                          ref.read(bookingProvider.notifier);
+                      bookingNotifier.setInstant();
+                      if (_selectedDrivers.length == 1) {
+                        final favId = _selectedDrivers.first;
+                        final driver =
+                            drivers.where((d) => d.id == favId).firstOrNull;
+                        if (driver != null) {
+                          bookingNotifier.setPreferredDriver(driver.driverId);
+                        }
+                      } else {
+                        bookingNotifier.setMarketplaceDriverAudience(
+                          MarketplaceDriverAudience.myDriversOnly,
+                        );
+                      }
+                      await fillPickupFromCurrentLocation(ref);
+                      if (context.mounted) context.go('/search');
+                    },
+                    onRemoveDriver: (driver) async {
+                      final removed = await ref
+                          .read(favoritesProvider.notifier)
+                          .removeFavorite(driver.driverId);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              removed
+                                  ? l10n.driverRemoved
+                                  : l10n.favoritesRemoveFailed,
+                            ),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                        if (removed) {
+                          setState(() {
+                            _selectedDrivers.remove(driver.id);
+                            _selectAll = false;
+                          });
+                        }
+                      }
+                    },
+                  );
+                },
+                loading: () => Center(
+                  child: CircularProgressIndicator(color: colors.accent),
+                ),
+                error: (_, __) => _FavoritesErrorState(
                   colors: colors,
                   typo: typo,
                   l10n: l10n,
-                  onSelectAllChanged: (v) {
-                    setState(() {
-                      _selectAll = v;
-                      if (v) {
-                        _selectedDrivers.addAll(drivers.map((d) => d.id));
-                      } else {
-                        _selectedDrivers.clear();
-                      }
-                    });
-                  },
-                  onDriverTap: (driver) {
-                    setState(() {
-                      if (_selectedDrivers.contains(driver.id)) {
-                        _selectedDrivers.remove(driver.id);
-                        _selectAll = false;
-                      } else {
-                        _selectedDrivers.add(driver.id);
-                        if (_selectedDrivers.length == drivers.length) {
-                          _selectAll = true;
-                        }
-                      }
-                    });
-                  },
-                  onPostRide: () async {
-                    final ok = await ensureLocationForBooking(
-                        context: context, ref: ref);
-                    if (!ok) return;
-                    final bookingNotifier =
-                        ref.read(bookingProvider.notifier);
-                    bookingNotifier.setInstant();
-                    if (_selectedDrivers.length == 1) {
-                      final favId = _selectedDrivers.first;
-                      final driver = drivers
-                          .where((d) => d.id == favId)
-                          .firstOrNull;
-                      if (driver != null) {
-                        bookingNotifier
-                            .setPreferredDriver(driver.driverId);
-                      }
-                    } else {
-                      bookingNotifier.setFavoritesFirst(true);
-                    }
-                    await fillPickupFromCurrentLocation(ref);
-                    if (context.mounted) context.go('/search');
-                  },
-                  onRemoveDriver: (driver) async {
-                    await ref
-                        .read(favoritesProvider.notifier)
-                        .removeFavorite(driver.driverId);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(l10n.driverRemoved),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                      setState(() {
-                        _selectedDrivers.remove(driver.id);
-                      });
-                    }
-                  },
-                );
-              },
-              loading: () => Center(
-                child: CircularProgressIndicator(color: colors.accent),
+                  onRetry: () => ref.read(favoritesProvider.notifier).refresh(),
+                ),
               ),
-              error: (_, __) => _EmptyState(colors: colors, typo: typo, l10n: l10n),
-            ),
             ),
           ],
         ),
@@ -161,60 +174,60 @@ class _FavoritesList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-          _SelectAllBar(
-            selectAll: selectAll,
+        _SelectAllBar(
+          selectAll: selectAll,
+          selectedCount: selectedDrivers.length,
+          totalCount: drivers.length,
+          colors: colors,
+          typo: typo,
+          l10n: l10n,
+          onChanged: onSelectAllChanged,
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsetsDirectional.fromSTEB(20, 12, 20, 0),
+            itemCount: drivers.length,
+            itemBuilder: (context, index) {
+              final driver = drivers[index];
+              final isSelected = selectedDrivers.contains(driver.id);
+              return Dismissible(
+                key: ValueKey(driver.id),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsetsDirectional.only(end: 20),
+                  margin: const EdgeInsetsDirectional.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: colors.error,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(Icons.delete_rounded, color: colors.onAccent),
+                ),
+                confirmDismiss: (_) async {
+                  onRemoveDriver(driver);
+                  return false;
+                },
+                child: _DriverCard(
+                  driver: driver,
+                  isSelected: isSelected,
+                  colors: colors,
+                  typo: typo,
+                  l10n: l10n,
+                  onTap: () => onDriverTap(driver),
+                ),
+              );
+            },
+          ),
+        ),
+        if (selectedDrivers.isNotEmpty)
+          _PostRideButton(
             selectedCount: selectedDrivers.length,
-            totalCount: drivers.length,
             colors: colors,
             typo: typo,
             l10n: l10n,
-            onChanged: onSelectAllChanged,
+            onTap: onPostRide,
           ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsetsDirectional.fromSTEB(20, 12, 20, 0),
-              itemCount: drivers.length,
-              itemBuilder: (context, index) {
-                final driver = drivers[index];
-                final isSelected = selectedDrivers.contains(driver.id);
-                return Dismissible(
-                  key: ValueKey(driver.id),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsetsDirectional.only(end: 20),
-                    margin: const EdgeInsetsDirectional.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: colors.error,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(Icons.delete_rounded, color: colors.onAccent),
-                  ),
-                  confirmDismiss: (_) async {
-                    onRemoveDriver(driver);
-                    return false;
-                  },
-                  child: _DriverCard(
-                    driver: driver,
-                    isSelected: isSelected,
-                    colors: colors,
-                    typo: typo,
-                    l10n: l10n,
-                    onTap: () => onDriverTap(driver),
-                  ),
-                );
-              },
-            ),
-          ),
-          if (selectedDrivers.isNotEmpty)
-            _PostRideButton(
-              selectedCount: selectedDrivers.length,
-              colors: colors,
-              typo: typo,
-              l10n: l10n,
-              onTap: onPostRide,
-            ),
-        ],
+      ],
     );
   }
 }
@@ -272,6 +285,50 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
+class _FavoritesErrorState extends StatelessWidget {
+  const _FavoritesErrorState({
+    required this.colors,
+    required this.typo,
+    required this.l10n,
+    required this.onRetry,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final AppLocalizations l10n;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsetsDirectional.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud_off_rounded, color: colors.textMid, size: 42),
+            const SizedBox(height: 16),
+            Text(
+              l10n.favoritesLoadFailed,
+              textAlign: TextAlign.center,
+              style: typo.titleMedium.copyWith(
+                color: colors.text,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(l10n.tryAgain),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _SelectAllBar extends StatelessWidget {
   final bool selectAll;
   final int selectedCount;
@@ -318,7 +375,8 @@ class _SelectAllBar extends StatelessWidget {
           ),
           if (selectedCount > 0)
             Container(
-              padding: const EdgeInsetsDirectional.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: colors.accent,
                 borderRadius: BorderRadius.circular(16),
@@ -455,8 +513,7 @@ class _DriverCard extends StatelessWidget {
                               driver.vehicleDescription,
                               driver.vehiclePlate,
                             ]
-                                .where((s) =>
-                                    s != null && s.isNotEmpty)
+                                .where((s) => s != null && s.isNotEmpty)
                                 .join(' · '),
                             style: typo.bodySmall.copyWith(
                               color: colors.textSoft,
@@ -511,8 +568,9 @@ class _PostRideButton extends StatelessWidget {
         child: ElevatedButton(
           onPressed: onTap,
           style: ElevatedButton.styleFrom(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            ),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

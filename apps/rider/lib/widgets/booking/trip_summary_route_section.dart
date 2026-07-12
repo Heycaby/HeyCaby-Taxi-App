@@ -63,6 +63,7 @@ class TripSummaryRouteCard extends StatelessWidget {
     this.distanceKm,
     this.etaText,
     this.priceLabel,
+    this.isPriceLoading = false,
   });
 
   final BookingState booking;
@@ -73,6 +74,7 @@ class TripSummaryRouteCard extends StatelessWidget {
   final double? distanceKm;
   final String? etaText;
   final String? priceLabel;
+  final bool isPriceLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -83,8 +85,10 @@ class TripSummaryRouteCard extends StatelessWidget {
         etaText != null && etaText!.trim().isNotEmpty && etaText != '—'
             ? etaText
             : null;
-    final showMetrics =
-        distanceLabel != null || durationLabel != null || priceLabel != null;
+    final showMetrics = distanceLabel != null ||
+        durationLabel != null ||
+        priceLabel != null ||
+        isPriceLoading;
 
     final pickupFull = booking.pickup?.fullAddress ?? l10n.pickup;
     final dropoffFull = booking.destination?.fullAddress ?? l10n.destination;
@@ -150,6 +154,11 @@ class TripSummaryRouteCard extends StatelessWidget {
                       colors: colors,
                       typo: typo,
                     ),
+                  if (isPriceLoading && priceLabel == null) ...[
+                    if (distanceLabel != null || durationLabel != null)
+                      _MetricDot(colors: colors),
+                    _LivePriceRadar(colors: colors),
+                  ],
                 ],
               ),
             ),
@@ -323,6 +332,89 @@ class _TripMetric extends StatelessWidget {
       ],
     );
   }
+}
+
+/// A restrained live-rate signal shown only while Supabase resolves tariffs.
+class _LivePriceRadar extends StatefulWidget {
+  const _LivePriceRadar({required this.colors});
+
+  final HeyCabyColorTokens colors;
+
+  @override
+  State<_LivePriceRadar> createState() => _LivePriceRadarState();
+}
+
+class _LivePriceRadarState extends State<_LivePriceRadar>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1400),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller.stop();
+      _controller.value = 0.45;
+    } else if (!_controller.isAnimating) {
+      _controller.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Live fare estimate loading',
+      child: SizedBox(
+        width: 28,
+        height: 20,
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) => CustomPaint(
+            painter: _LivePriceRadarPainter(
+              progress: _controller.value,
+              color: widget.colors.accent,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LivePriceRadarPainter extends CustomPainter {
+  const _LivePriceRadarPainter({required this.progress, required this.color});
+
+  final double progress;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    for (var index = 0; index < 2; index++) {
+      final phase = (progress + index * 0.5) % 1;
+      canvas.drawCircle(
+        center,
+        3 + phase * 7,
+        Paint()
+          ..color = color.withValues(alpha: (1 - phase) * 0.32)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.4,
+      );
+    }
+    canvas.drawCircle(center, 2.8, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_LivePriceRadarPainter oldDelegate) =>
+      oldDelegate.progress != progress || oldDelegate.color != color;
 }
 
 class _RouteStopRow extends StatelessWidget {

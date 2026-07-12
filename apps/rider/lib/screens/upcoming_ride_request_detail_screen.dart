@@ -143,11 +143,19 @@ class _UpcomingRideRequestDetailScreenState
     final identity = await ref.read(riderIdentityProvider.future);
     final token = identity.riderToken;
     if (token == null) return;
-    await cancelExpiredRiderOpenRide(
+    final cancelled = await cancelExpiredRiderOpenRide(
       rideId: _rideId,
       riderToken: token,
       cancellationReason: 'rider_cancelled_from_rides',
     );
+    if (!cancelled) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.cancelRideFailed)),
+        );
+      }
+      return;
+    }
     final rr = ref.read(rideRequestProvider);
     if (rr.rideRequestId == _rideId) {
       ref.read(rideRequestProvider.notifier).reset();

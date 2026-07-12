@@ -107,24 +107,24 @@ class ActiveSearchNotifier extends AsyncNotifier<ActiveNotifySearch?> {
   /// Cancels on the server and refreshes [nearTermRideRequestProvider] before
   /// clearing prefs so the home sheet does not briefly show the near-term ride
   /// banner for the same ride (stale cache) right after the notify card disappears.
-  Future<void> stopSearchAndCancelRide() async {
+  Future<bool> stopSearchAndCancelRide() async {
     final current = state.valueOrNull;
     final id = current?.rideRequestId;
+    var cancelled = id == null;
     try {
       if (id != null) {
         final identity = await ref.read(riderIdentityProvider.future);
         final token = identity.riderToken;
         if (token != null) {
-          await cancelExpiredRiderOpenRide(
+          cancelled = await cancelExpiredRiderOpenRide(
             rideId: id,
             riderToken: token,
             cancellationReason: 'rider_stopped_background_search',
           );
         }
       }
-    } catch (_) {
-      // Still clear chip and refresh lists so UI recovers.
-    }
+    } catch (_) {}
+    if (!cancelled) return false;
     await SoundService().playRideCancelled();
     ref.read(rideRequestProvider.notifier).reset();
     ref.invalidate(nearTermRideRequestProvider);
@@ -133,12 +133,14 @@ class ActiveSearchNotifier extends AsyncNotifier<ActiveNotifySearch?> {
     } catch (_) {}
     await clear();
     ref.invalidate(ridesTabUpcomingRequestsProvider);
+    return true;
   }
 
   Future<void> expireIfStale() async {
     final current = state.valueOrNull;
     if (current == null) return;
-    if (DateTime.now().difference(current.startedAt) > kRiderDriverSearchWindow) {
+    if (DateTime.now().difference(current.startedAt) >
+        kRiderDriverSearchWindow) {
       await clear();
     }
   }

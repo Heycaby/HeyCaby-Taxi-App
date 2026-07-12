@@ -168,6 +168,7 @@ abstract final class RiderRideStateRefresh {
 
     if (RiderRideStatuses.isTerminal(status)) {
       await RiderNotifyLiveActivity.syncActiveRide(
+        rideRequestId: snapshot.rideRequestId,
         status: status,
         driverName: presentation.driverName,
         vehicleLabel: presentation.vehicleLabel,
@@ -185,6 +186,7 @@ abstract final class RiderRideStateRefresh {
 
     if (RiderRideStatuses.isSearch(status)) {
       await RiderNotifyLiveActivity.syncNotifySearch(
+        rideRequestId: snapshot.rideRequestId,
         pickupSummary: presentation.pickupSummary,
         destinationSummary: presentation.destinationSummary,
         startedAt: presentation.rideCreatedAt ?? DateTime.now(),
@@ -199,9 +201,9 @@ abstract final class RiderRideStateRefresh {
       return;
     }
 
-    if (RiderRideStatuses.isActive(status) ||
-        status == 'payment_confirmed') {
+    if (RiderRideStatuses.isActive(status) || status == 'payment_confirmed') {
       await RiderNotifyLiveActivity.syncActiveRide(
+        rideRequestId: snapshot.rideRequestId,
         status: status,
         driverName: presentation.driverName,
         vehicleLabel: presentation.vehicleLabel,
@@ -266,6 +268,7 @@ bool isRideLifecyclePushCategory(String? category) {
       return true;
     case RiderNotificationBehavior.rideOffer:
     case RiderNotificationBehavior.chat:
+    case RiderNotificationBehavior.rating:
     case RiderNotificationBehavior.generic:
       return false;
   }

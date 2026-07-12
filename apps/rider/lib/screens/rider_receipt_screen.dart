@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -887,32 +889,53 @@ class _ReceiptShareBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: SizedBox(
-            height: 48,
-            child: FilledButton.icon(
-              onPressed: () => _shareViaWhatsApp(context),
-              icon: const Icon(Icons.share_outlined, size: 20),
-              label: Text(l10n.rideReceiptShareWhatsapp),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: SizedBox(
-            height: 48,
-            child: OutlinedButton.icon(
-              onPressed: () => _shareViaEmail(context),
-              icon: const Icon(Icons.mail_outline, size: 20),
-              label: Text(l10n.rideReceiptShareEmail),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: colors.text,
-                side: BorderSide(color: colors.border),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 48,
+                child: FilledButton.icon(
+                  onPressed: () => _shareViaWhatsApp(context),
+                  icon: const Icon(Icons.share_outlined, size: 20),
+                  label: Text(l10n.rideReceiptShareWhatsapp),
                 ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: () => _shareViaEmail(context),
+                  icon: const Icon(Icons.mail_outline, size: 20),
+                  label: Text(l10n.rideReceiptShareEmail),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: colors.text,
+                    side: BorderSide(color: colors.border),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: OutlinedButton.icon(
+            onPressed: () => _printReceipt(context),
+            icon: const Icon(Icons.print_outlined, size: 20),
+            label: Text(l10n.rideReceiptPrint),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: colors.text,
+              side: BorderSide(color: colors.border),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
           ),
@@ -969,6 +992,20 @@ class _ReceiptShareBar extends StatelessWidget {
           text: text,
         );
       }
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.rideReceiptShareFailed)),
+      );
+    }
+  }
+
+  Future<void> _printReceipt(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await Printing.layoutPdf(
+        name: 'HeyCaby Receipt ${rideRequestId.substring(0, 8)}',
+        onLayout: (_) async => Uint8List.fromList(await _buildReceiptPdfBytes(receipt, rideRequestId)),
+      );
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.rideReceiptShareFailed)),

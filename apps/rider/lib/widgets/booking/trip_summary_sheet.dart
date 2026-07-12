@@ -17,6 +17,8 @@ class TripSummarySheet extends StatelessWidget {
   final double distanceKm;
   final String etaText;
   final bool isLoading;
+  final String? livePriceLabel;
+  final bool isLivePriceLoading;
   final void Function(bool isPickup) onEditAddress;
   final VoidCallback onEditPassengerAndRide;
   final VoidCallback onEditPayment;
@@ -35,6 +37,8 @@ class TripSummarySheet extends StatelessWidget {
     required this.distanceKm,
     required this.etaText,
     required this.isLoading,
+    this.livePriceLabel,
+    this.isLivePriceLoading = false,
     required this.onEditAddress,
     required this.onEditPassengerAndRide,
     required this.onEditPayment,
@@ -121,7 +125,8 @@ class TripSummarySheet extends StatelessWidget {
                     l10n: l10n,
                     distanceKm: distanceKm,
                     etaText: etaText,
-                    priceLabel: _priceLabel(booking),
+                    priceLabel: livePriceLabel ?? _priceLabel(booking),
+                    isPriceLoading: isLivePriceLoading,
                     onEditAddress: onEditAddress,
                   )
                       .animate(delay: 60.ms)
@@ -144,7 +149,10 @@ class TripSummarySheet extends StatelessWidget {
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsetsDirectional.fromSTEB(
-                        14, 12, 14, 12,
+                        14,
+                        12,
+                        14,
+                        12,
                       ),
                       decoration: BoxDecoration(
                         color: colors.card,
@@ -164,7 +172,10 @@ class TripSummarySheet extends StatelessWidget {
                   if (onSaveTripForNextTimeChanged != null) ...[
                     Container(
                       padding: const EdgeInsetsDirectional.fromSTEB(
-                        14, 12, 10, 12,
+                        14,
+                        12,
+                        10,
+                        12,
                       ),
                       decoration: BoxDecoration(
                         color: colors.card,
@@ -198,9 +209,8 @@ class TripSummarySheet extends StatelessWidget {
                           ),
                           Switch.adaptive(
                             value: saveTripForNextTime,
-                            onChanged: isLoading
-                                ? null
-                                : onSaveTripForNextTimeChanged,
+                            onChanged:
+                                isLoading ? null : onSaveTripForNextTimeChanged,
                             activeTrackColor: colors.accent,
                           ),
                         ],

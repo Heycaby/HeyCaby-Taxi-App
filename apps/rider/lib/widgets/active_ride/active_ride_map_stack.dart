@@ -100,10 +100,12 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
   @override
   void didUpdateWidget(covariant ActiveRideMapStack oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final driverMoved = oldWidget.driverLocation?.lat != widget.driverLocation?.lat ||
-        oldWidget.driverLocation?.lng != widget.driverLocation?.lng;
+    final driverMoved =
+        oldWidget.driverLocation?.lat != widget.driverLocation?.lat ||
+            oldWidget.driverLocation?.lng != widget.driverLocation?.lng;
     final statusChanged = oldWidget.status != widget.status;
-    final bookingChanged = oldWidget.booking.pickup?.lat != widget.booking.pickup?.lat ||
+    final bookingChanged = oldWidget.booking.pickup?.lat !=
+            widget.booking.pickup?.lat ||
         oldWidget.booking.pickup?.lng != widget.booking.pickup?.lng ||
         oldWidget.booking.destination?.lat != widget.booking.destination?.lat ||
         oldWidget.booking.destination?.lng != widget.booking.destination?.lng;
@@ -287,10 +289,9 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
   }) async {
     final movedKm = _liveLegAnchorLat == null
         ? double.infinity
-        : _haversineKm(_liveLegAnchorLat!, _liveLegAnchorLng!, fromLat, fromLng);
-    if (_liveLegGeometry != null &&
-        _liveLegKey == legKey &&
-        movedKm < 0.2) {
+        : _haversineKm(
+            _liveLegAnchorLat!, _liveLegAnchorLng!, fromLat, fromLng);
+    if (_liveLegGeometry != null && _liveLegKey == legKey && movedKm < 0.2) {
       return _liveLegGeometry!;
     }
 
@@ -306,10 +307,7 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
 
     final geometry = route != null && route.coordinates.length >= 2
         ? route.coordinates.map((c) => Position(c[0], c[1])).toList()
-        : <Position>[
-            Position(fromLng, fromLat),
-            Position(toLng, toLat),
-          ];
+        : <Position>[];
 
     _liveLegGeometry = geometry;
     _liveLegAnchorLat = fromLat;
@@ -484,7 +482,8 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
           ),
         ),
         zoom: _minZoomForTripKm(
-          _haversineKm(pickup.lat, pickup.lng, destination.lat, destination.lng),
+          _haversineKm(
+              pickup.lat, pickup.lng, destination.lat, destination.lng),
         ),
       );
     }
@@ -577,7 +576,8 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
             pulse: _driverPulseController,
             cameraTick: _cameraTick,
           ),
-          if (chipHeadline != null || (chipDistanceKm != null && chipDurationMin != null))
+          if (chipHeadline != null ||
+              (chipDistanceKm != null && chipDurationMin != null))
             Positioned(
               top: topPad + 10,
               left: 16,
@@ -761,7 +761,8 @@ class _ActiveRideDriverMapMarkerState extends State<ActiveRideDriverMapMarker> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
-                  border: Border.all(color: widget.color.withValues(alpha: 0.2)),
+                  border:
+                      Border.all(color: widget.color.withValues(alpha: 0.2)),
                   boxShadow: [
                     BoxShadow(
                       color: widget.color.withValues(alpha: 0.18),

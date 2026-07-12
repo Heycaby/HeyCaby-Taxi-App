@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:heycaby_api/heycaby_api.dart';
+import 'package:heycaby_models/heycaby_models.dart';
 import 'package:heycaby_utils/heycaby_utils.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -31,6 +32,7 @@ import '../services/rider_ride_lifecycle_engine.dart';
 import '../services/stale_ride_cleanup.dart';
 import '../widgets/active_ride/active_ride_map_stack.dart';
 import '../widgets/active_ride/active_ride_status_dock.dart';
+import '../widgets/address_search_modal.dart';
 import '../widgets/rider_driver_info_card.dart';
 import '../widgets/taxi_terug_queue_banner.dart';
 import '../widgets/ride_pay_driver_sheet.dart';
@@ -56,6 +58,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
   int _lastStaleStatusMinuteTracked = -1;
   String? _lastRiderPing;
   int? _liveFareCents;
+  final List<AddressResult> _routeStops = [];
   bool _rideCompletedCheckoutHandled = false;
   double _sheetExtent = 0.38;
   bool _driverOnMyWay = false;
@@ -663,6 +666,14 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
   Future<void> _shareRide(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
     final colors = ref.read(colorsProvider);
+    final shareBox = context.findRenderObject();
+    final shareOrigin = shareBox is RenderBox && shareBox.hasSize
+        ? shareBox.localToGlobal(Offset.zero) & shareBox.size
+        : Rect.fromCenter(
+            center: MediaQuery.sizeOf(context).center(Offset.zero),
+            width: 1,
+            height: 1,
+          );
     final rideId = ref.read(rideRequestProvider).rideRequestId;
     if (rideId == null) {
       if (!context.mounted) return;
@@ -696,7 +707,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
       }
       final shareUrl = '$kAppPublicWebOrigin/track/$shareToken';
 
-      await Share.share(shareUrl);
+      await Share.share(shareUrl, sharePositionOrigin: shareOrigin);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -707,15 +718,105 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
           ),
         );
       }
-    } catch (e) {
+    } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${l10n.activeRideShareError}: $e',
+          content: Text(l10n.activeRideShareError,
               style: TextStyle(color: colors.text)),
           backgroundColor: colors.surface,
           behavior: SnackBarBehavior.floating,
         ),
+      );
+    }
+  }
+
+  Future<void> _editActiveRoute(BuildContext context) async {
+    final rideId = ref.read(rideRequestProvider).rideRequestId;
+    if (rideId == null) return;
+    final l10n = AppLocalizations.of(context);
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.activeRouteEditTitle,
+                  style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(height: 6),
+              Text(l10n.activeRouteEditBody),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.flag_rounded),
+                title: Text(l10n.activeRouteChangeDestination),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => Navigator.pop(sheetContext, 'destination'),
+              ),
+              ListTile(
+                enabled: _routeStops.length < 3,
+                leading: const Icon(Icons.add_location_alt_rounded),
+                title: Text(l10n.activeRouteAddStop),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => Navigator.pop(sheetContext, 'stop'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (action == null || !context.mounted) return;
+    final selected = await showAddressSearchModal(
+      context,
+      ref,
+      AddressType.destination,
+    );
+    if (selected == null || !context.mounted) return;
+    final currentDestination = ref.read(bookingProvider).destination;
+    final destination = action == 'destination' ? selected : currentDestination;
+    if (destination == null) return;
+    final nextStops = List<AddressResult>.from(_routeStops);
+    if (action == 'stop') nextStops.add(selected);
+    try {
+      final result = await HeyCabySupabase.client.rpc(
+        'fn_rider_update_active_route',
+        params: {
+          'p_ride_request_id': rideId,
+          'p_destination_address': destination.fullAddress,
+          'p_destination_lat': destination.lat,
+          'p_destination_lng': destination.lng,
+          'p_stops': nextStops
+              .map((stop) => {
+                    'address': stop.fullAddress,
+                    'lat': stop.lat,
+                    'lng': stop.lng,
+                  })
+              .toList(growable: false),
+        },
+      );
+      if (result is! Map || result['ok'] != true) {
+        throw StateError(
+            result is Map ? '${result['error']}' : 'route_update_failed');
+      }
+      ref.read(bookingProvider.notifier).setDestination(destination);
+      setState(() {
+        _routeStops
+          ..clear()
+          ..addAll(nextStops);
+      });
+      await _refreshRideStatus(reason: 'route_updated');
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.activeRouteUpdated)),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.activeRouteUpdateFailed)),
       );
     }
   }
@@ -988,6 +1089,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                   scrollController: scrollController,
                   onComplete: () => context.go('/home'),
                   onShare: () => _shareRide(context),
+                  onEditRoute: () => _editActiveRoute(context),
+                  routeStops: _routeStops,
                   onSafety: () => _openSafetySheet(context),
                   onPingDriver: () => _openPingDriverSheet(context),
                   onPickupNote: () => context.push('/chat'),
@@ -1160,24 +1263,29 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
       confirmDestructive: true,
     );
     if (confirmed != true || !context.mounted) return;
-    await _cancelRideFromActive(reason);
+    final cancelled = await _cancelRideFromActive(reason);
     if (!context.mounted) return;
-    context.go('/home');
+    if (cancelled) {
+      context.go('/home');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.cancelRideFailed)),
+      );
+    }
   }
 
-  Future<void> _cancelRideFromActive(String reason) async {
+  Future<bool> _cancelRideFromActive(String reason) async {
     final rideId = ref.read(rideRequestProvider).rideRequestId;
-    if (rideId == null) return;
+    if (rideId == null) return false;
     try {
       final identity = await ref.read(riderIdentityProvider.future);
       final token = identity.riderToken;
-      if (token != null && token.isNotEmpty) {
-        await cancelExpiredRiderOpenRide(
-          rideId: rideId,
-          riderToken: token,
-          cancellationReason: 'rider_cancelled_from_active:$reason',
-        );
-      }
+      final cancelled = await cancelExpiredRiderOpenRide(
+        rideId: rideId,
+        riderToken: token,
+        cancellationReason: 'rider_cancelled_from_active:$reason',
+      );
+      if (!cancelled) return false;
       await RiderNotificationLifecycleService.trackEvent(
         'active_ride_cancelled_by_rider',
         payload: <String, dynamic>{
@@ -1185,10 +1293,10 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
           'reason': reason,
         },
       );
-    } catch (_) {
-      // Keep UI responsive even if cancellation API fails.
-    } finally {
       ref.read(rideRequestProvider.notifier).reset();
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 }
@@ -1202,6 +1310,8 @@ class _ActiveRideSheet extends StatelessWidget {
   final ScrollController scrollController;
   final VoidCallback onComplete;
   final VoidCallback onShare;
+  final VoidCallback onEditRoute;
+  final List<AddressResult> routeStops;
   final VoidCallback onSafety;
   final VoidCallback onPingDriver;
   final VoidCallback onPickupNote;
@@ -1224,6 +1334,8 @@ class _ActiveRideSheet extends StatelessWidget {
     required this.scrollController,
     required this.onComplete,
     required this.onShare,
+    required this.onEditRoute,
+    required this.routeStops,
     required this.onSafety,
     required this.onPingDriver,
     required this.onPickupNote,
@@ -1447,6 +1559,7 @@ class _ActiveRideSheet extends StatelessWidget {
             _SectionCard(
               title: l10n.yourRoute,
               rightActionLabel: l10n.tripSummaryEdit,
+              onRightAction: onEditRoute,
               colors: colors,
               typo: typo,
               child: Column(
@@ -1461,6 +1574,16 @@ class _ActiveRideSheet extends StatelessWidget {
                     colors: colors,
                   ),
                   const SizedBox(height: 10),
+                  for (final stop in routeStops) ...[
+                    _RouteRow(
+                      icon: Icons.more_horiz_rounded,
+                      iconColor: colors.accent,
+                      text: stop.fullAddress,
+                      typo: typo,
+                      colors: colors,
+                    ),
+                    const SizedBox(height: 10),
+                  ],
                   _RouteRow(
                     icon: Icons.flag_rounded,
                     iconColor: colors.success,
@@ -1577,6 +1700,7 @@ class _ActiveRideSheet extends StatelessWidget {
 class _SectionCard extends StatelessWidget {
   final String title;
   final String? rightActionLabel;
+  final VoidCallback? onRightAction;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
   final Widget child;
@@ -1584,6 +1708,7 @@ class _SectionCard extends StatelessWidget {
   const _SectionCard({
     required this.title,
     this.rightActionLabel,
+    this.onRightAction,
     required this.colors,
     required this.typo,
     required this.child,
@@ -1621,11 +1746,24 @@ class _SectionCard extends StatelessWidget {
                 ),
               ),
               if (rightActionLabel != null)
-                Text(
-                  rightActionLabel!,
-                  style: typo.labelMedium.copyWith(
-                    color: colors.accent,
-                    fontWeight: FontWeight.w700,
+                Semantics(
+                  button: true,
+                  child: InkWell(
+                    onTap: onRightAction,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 8,
+                      ),
+                      child: Text(
+                        rightActionLabel!,
+                        style: typo.labelMedium.copyWith(
+                          color: colors.accent,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
             ],

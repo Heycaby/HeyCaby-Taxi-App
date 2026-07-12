@@ -101,11 +101,14 @@ class _TaxiTerugMatchingTrackerState
           ),
           callback: (payload) {
             final newStatus = payload.newRecord['status'] as String?;
-            final newFare = payload.newRecord['marketplace_offered_fare'] as num?;
+            final newFare =
+                payload.newRecord['marketplace_offered_fare'] as num?;
             if (newStatus == null) return;
             ref.read(rideRequestProvider.notifier).updateStatus(newStatus);
             if (newFare != null) {
-              ref.read(bookingProvider.notifier).setMarketplaceBidEuro(newFare.toInt());
+              ref
+                  .read(bookingProvider.notifier)
+                  .setMarketplaceBidEuro(newFare.toInt());
             }
             if (newStatus == 'assigned' ||
                 newStatus == 'accepted' ||
@@ -126,9 +129,8 @@ class _TaxiTerugMatchingTrackerState
     if (createdAt == null) return;
     _countdownTimer?.cancel();
     void tick() {
-      final left = createdAt
-          .add(_kTaxiTerugMatchWindow)
-          .difference(DateTime.now());
+      final left =
+          createdAt.add(_kTaxiTerugMatchWindow).difference(DateTime.now());
       if (mounted) {
         setState(() {
           _remaining = left.isNegative ? Duration.zero : left;
@@ -193,9 +195,7 @@ class _TaxiTerugMatchingTrackerState
       final created = rideState.rideCreatedAt;
       final expiryEpoch = created == null
           ? DateTime.now().millisecondsSinceEpoch ~/ 1000
-          : created
-              .add(_kTaxiTerugMatchWindow)
-              .millisecondsSinceEpoch ~/ 1000;
+          : created.add(_kTaxiTerugMatchWindow).millisecondsSinceEpoch ~/ 1000;
       final bidEuro = booking.marketplaceBidEuro ?? 0;
 
       unawaited(HeycabyWidgetSync.syncMarketplace(
@@ -215,15 +215,19 @@ class _TaxiTerugMatchingTrackerState
     }
 
     push();
-    _widgetSyncTimer = Timer.periodic(const Duration(seconds: 30), (_) => push());
+    _widgetSyncTimer =
+        Timer.periodic(const Duration(seconds: 30), (_) => push());
   }
 
   void _startLiveActivity(DateTime? createdAt) {
     if (createdAt == null) return;
+    final rideRequestId = ref.read(rideRequestProvider).rideRequestId;
+    if (rideRequestId == null || rideRequestId.isEmpty) return;
     final booking = ref.read(bookingProvider);
     final pickup = booking.pickup?.displayName ?? '';
     final dest = booking.destination?.displayName ?? '';
     unawaited(RiderNotifyLiveActivity.syncNotifySearch(
+      rideRequestId: rideRequestId,
       pickupSummary: pickup,
       destinationSummary: dest,
       startedAt: createdAt,
@@ -307,9 +311,7 @@ class _TaxiTerugMatchingTrackerState
     final created = rideState.rideCreatedAt;
     final expiryEpoch = created == null
         ? DateTime.now().millisecondsSinceEpoch ~/ 1000
-        : created
-            .add(_kTaxiTerugMatchWindow)
-            .millisecondsSinceEpoch ~/ 1000;
+        : created.add(_kTaxiTerugMatchWindow).millisecondsSinceEpoch ~/ 1000;
     final bidEuro = booking.marketplaceBidEuro ?? 0;
 
     unawaited(HeycabyWidgetSync.syncMarketplace(
@@ -511,7 +513,7 @@ class _TaxiTerugMatchingTrackerState
                     const SizedBox(width: 6),
                     Text(
                       l10n.taxiTerugTrackerCurrentOffer(
-                        ref.watch(bookingProvider).marketplaceBidEuro ?? 0),
+                          ref.watch(bookingProvider).marketplaceBidEuro ?? 0),
                       style: typo.labelMedium.copyWith(
                         fontWeight: FontWeight.w700,
                         color: colors.text,

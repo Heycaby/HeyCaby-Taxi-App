@@ -14,6 +14,8 @@ class TripCategoryPricingService {
     required double pickupLat,
     required double destLng,
     required double destLat,
+    double? distanceKm,
+    double? durationMin,
   }) async {
     dynamic raw = await HeyCabySupabase.client.rpc(
       'fn_estimate_trip_category_prices',
@@ -22,6 +24,8 @@ class TripCategoryPricingService {
         'p_pickup_lat': pickupLat,
         'p_dest_lng': destLng,
         'p_dest_lat': destLat,
+        'p_distance_km': distanceKm,
+        'p_duration_min': durationMin,
       },
     );
 
