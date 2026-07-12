@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Regenerate rider + driver launcher icons from HeyCaby wordmarks.
-# Rider: white background, green HeyCaby text.
-# Driver: dark green background, white HeyCaby text.
+# Regenerate rider + driver launcher icons from AI/design masters.
+# Rider: white background, chunky stacked green Hey / Caby.
+# Driver: dark green background, chunky stacked white Hey / Caby.
+# Place or update masters at apps/<app>/assets/branding/heycaby_app_icon_source.png
 # Usage: ./scripts/generate_app_icons.sh [rider|driver|all]
 set -euo pipefail
 

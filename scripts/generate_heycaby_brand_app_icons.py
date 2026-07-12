@@ -1,31 +1,31 @@
 #!/usr/bin/env python3
 """
-Generate HeyCaby rider/driver app icons from brand wordmarks.
+Export HeyCaby rider/driver app icons for iOS + Android.
+
+Default mode reads AI/design masters from:
+  apps/<app>/assets/branding/heycaby_app_icon_source.png
 
 Apple HIG / App Store:
-  • 1024×1024 master, opaque RGB PNG (no alpha on marketing icon)
-  • Square artwork — iOS applies the mask; do not bake corner radius
-  • Bold, centered mark with safe margins for home-screen clipping
-  • All required iPhone icon sizes in AppIcon.appiconset
+  • 1024×1024 marketing icon — opaque RGB (no alpha)
+  • Square artwork (iOS applies the mask)
+  • All required AppIcon.appiconset sizes
 
-Rider: white background, HeyCaby green wordmark (#1A5C45)
-Driver: dark green background (#1A5C45), white HeyCaby wordmark
+Rider master: white background, green stacked Hey / Caby (#1A5C45)
+Driver master: dark green background (#1A5C45), white stacked Hey / Caby
 """
 from __future__ import annotations
 
 import argparse
 import sys
+from collections import deque
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 
 REPO = Path(__file__).resolve().parent.parent
 
-# Taxi theme accent from packages/heycaby_ui (matches generate_app_icons.sh driver bg).
 HEYCABY_GREEN = (26, 92, 69)  # #1A5C45
 WHITE = (255, 255, 255)
-
-WORDMARK = "HeyCaby"
 
 IOS_SIZES = {
     "Icon-App-20x20@1x.png": 20,
@@ -54,47 +54,48 @@ ANDROID_SIZES = {
 }
 
 
-def _pick_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-    candidates = [
-        "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
-        "/Library/Fonts/Arial Bold.ttf",
-        "/System/Library/Fonts/SFNS.ttf",
-        "/System/Library/Fonts/Helvetica.ttc",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-    ]
-    for path in candidates:
-        p = Path(path)
-        if not p.is_file():
+def prepare_square_icon(src: Path, bg: tuple[int, int, int], size: int = 1024) -> Image.Image:
+    """Flatten AI previews onto a full square, opaque App Store icon."""
+    img = Image.open(src).convert("RGBA").resize((size, size), Image.Resampling.LANCZOS)
+    px = img.load()
+    outer = set()
+    q = deque([(0, 0), (0, size - 1), (size - 1, 0), (size - 1, size - 1)])
+
+    def is_corner_artifact(x: int, y: int) -> bool:
+        r, g, b, a = px[x, y]
+        if a < 20:
+            return True
+        if sum(bg) > 600:
+            return r < 20 and g < 20 and b < 20
+        return r > 235 and g > 235 and b > 235
+
+    while q:
+        x, y = q.popleft()
+        if (x, y) in outer or not (0 <= x < size and 0 <= y < size):
             continue
-        try:
-            return ImageFont.truetype(str(p), size=size)
-        except OSError:
+        if not is_corner_artifact(x, y):
             continue
-    return ImageFont.load_default()
+        outer.add((x, y))
+        q.extend([(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)])
 
-
-def render_wordmark_icon(
-    *,
-    background: tuple[int, int, int],
-    foreground: tuple[int, int, int],
-    size: int = 1024,
-) -> Image.Image:
-    """Opaque square icon with centered HeyCaby wordmark."""
-    img = Image.new("RGB", (size, size), background)
-    draw = ImageDraw.Draw(img)
-
-    # Large centered wordmark stays legible on 60pt home-screen icons.
-    font_size = int(size * 0.21)
-    font = _pick_font(font_size)
-
-    bbox = draw.textbbox((0, 0), WORDMARK, font=font)
-    text_w = bbox[2] - bbox[0]
-    text_h = bbox[3] - bbox[1]
-    x = (size - text_w) // 2 - bbox[0]
-    y = (size - text_h) // 2 - bbox[1]
-
-    draw.text((x, y), WORDMARK, fill=foreground, font=font)
-    return img
+    out = Image.new("RGB", (size, size), bg)
+    out_px = out.load()
+    for y in range(size):
+        for x in range(size):
+            if (x, y) in outer:
+                out_px[x, y] = bg
+                continue
+            r, g, b, a = px[x, y]
+            if a < 255:
+                ar = a / 255.0
+                out_px[x, y] = (
+                    int(r * ar + bg[0] * (1 - ar)),
+                    int(g * ar + bg[1] * (1 - ar)),
+                    int(b * ar + bg[2] * (1 - ar)),
+                )
+            else:
+                out_px[x, y] = (r, g, b)
+    return out
 
 
 def write_icon_set(app_dir: Path, canvas: Image.Image, label: str) -> None:
@@ -106,10 +107,8 @@ def write_icon_set(app_dir: Path, canvas: Image.Image, label: str) -> None:
     ios_dir.mkdir(parents=True, exist_ok=True)
     for name, px in IOS_SIZES.items():
         out = canvas.resize((px, px), Image.Resampling.LANCZOS)
-        if name == "Icon-App-1024x1024@1x.png":
-            # App Store Connect rejects alpha on the marketing icon.
-            if out.mode != "RGB":
-                out = out.convert("RGB")
+        if out.mode != "RGB":
+            out = out.convert("RGB")
         out.save(ios_dir / name, "PNG", optimize=True)
 
     android_res = app_dir / "android" / "app" / "src" / "main" / "res"
@@ -146,31 +145,21 @@ def main() -> int:
     parser.add_argument("--target", choices=("rider", "driver", "all"), default="all")
     args = parser.parse_args()
 
-    targets: list[tuple[str, Path, tuple[int, int, int], tuple[int, int, int]]] = []
+    targets: list[tuple[str, Path, tuple[int, int, int]]] = []
     if args.target in ("rider", "all"):
-        targets.append(
-            (
-                "Rider",
-                REPO / "apps" / "rider",
-                WHITE,
-                HEYCABY_GREEN,
-            )
-        )
+        targets.append(("Rider", REPO / "apps" / "rider", WHITE))
     if args.target in ("driver", "all"):
-        targets.append(
-            (
-                "Driver",
-                REPO / "apps" / "driver",
-                HEYCABY_GREEN,
-                WHITE,
-            )
-        )
+        targets.append(("Driver", REPO / "apps" / "driver", HEYCABY_GREEN))
 
-    for label, app_dir, bg, fg in targets:
-        canvas = render_wordmark_icon(background=bg, foreground=fg)
+    for label, app_dir, bg in targets:
+        src = app_dir / "assets" / "branding" / "heycaby_app_icon_source.png"
+        if not src.is_file():
+            print(f"Missing icon master: {src}", file=sys.stderr)
+            return 1
+        canvas = prepare_square_icon(src, bg)
         write_icon_set(app_dir, canvas, label)
 
-    print("\nDone. Icons follow Apple square opaque 1024 marketing spec.")
+    print("\nDone. Exported stacked Hey/Caby masters to all launcher sizes.")
     return 0
 
 
