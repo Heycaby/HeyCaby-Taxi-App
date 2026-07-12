@@ -25,6 +25,18 @@ bool shouldHandleRiderCancel({
   return path.contains(rideId);
 }
 
+bool shouldOfferRatingAfterRiderCancellation({
+  required String rideId,
+  required DriverData state,
+  required String path,
+}) {
+  return state.activeRideId == rideId ||
+      path.contains('/ride/active/$rideId') ||
+      path.contains('/ride/pickup/$rideId') ||
+      path.contains('/ride/progress/$rideId') ||
+      path.contains('/ride/rate/$rideId');
+}
+
 /// L1-3 — full-screen modal, clear ride, return home.
 /// Stops incoming-ride ringtone immediately (safe to call repeatedly).
 void stopDriverIncomingRideRinging() {
@@ -46,6 +58,11 @@ Future<void> handleDriverRiderCancelled({
     return;
   }
   if (!markRiderCancelHandled(rideId)) return;
+  final shouldOfferRating = shouldOfferRatingAfterRiderCancellation(
+    rideId: rideId,
+    state: state,
+    path: path,
+  );
   unawaited(SoundService().playRiderCancelled());
   HapticService.heavyTap();
 
@@ -54,9 +71,16 @@ Future<void> handleDriverRiderCancelled({
   ref.invalidate(driverEarningsProvider);
 
   if (!context.mounted) return;
+  // Never stack lifecycle surfaces. Move off any rate/ride sheet first, give
+  // the cancellation acknowledgement its turn, then offer feedback.
+  context.go('/driver');
+  await Future<void>.delayed(Duration.zero);
+  if (!context.mounted) return;
   await showDriverRiderCancelledModal(context, ref);
   if (!context.mounted) return;
-  context.go('/driver');
+  context.go(
+    shouldOfferRating ? '/driver/ride/rate/$rideId' : '/driver',
+  );
 }
 
 Future<void> showDriverRiderCancelledModal(

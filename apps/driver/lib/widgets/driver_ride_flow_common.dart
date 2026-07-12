@@ -246,14 +246,25 @@ class _DriverRideMapBackdropState extends State<_DriverRideMapBackdrop> {
     );
     await _mapboxMap!.setCamera(camera);
 
-    // Draw straight-line route (backdrop is non-interactive, no Directions API)
-    if (_lineManager != null) {
+    final route = await RoutingService(
+      accessToken: const String.fromEnvironment('MAPBOX_ACCESS_TOKEN'),
+    ).fetchRoute(
+      fromLat: pLat,
+      fromLng: pLng,
+      toLat: dLat,
+      toLng: dLng,
+    );
+    if (!mounted) return;
+    final routeGeometry = route?.coordinates
+            .map((point) => Position(point[0], point[1]))
+            .toList(growable: false) ??
+        const <Position>[];
+
+    // Never present a geometric shortcut as a real road route.
+    if (_lineManager != null && routeGeometry.length >= 2) {
       await _lineManager!.deleteAll();
       await _lineManager!.create(PolylineAnnotationOptions(
-        geometry: LineString(coordinates: [
-          Position(pLng, pLat),
-          Position(dLng, dLat),
-        ]),
+        geometry: LineString(coordinates: routeGeometry),
         lineColor: (widget.accentColor ?? Colors.blue).toARGB32(),
         lineWidth: 3,
       ));
@@ -285,7 +296,7 @@ class _DriverRideMapBackdropState extends State<_DriverRideMapBackdrop> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          MapWidget(
+          MapWidgetOrPlaceholder(
             key: ValueKey('driver-ride-map-$themeId'),
             styleUri: mapboxStyleUriForTheme(themeId),
             cameraOptions: hasCoords

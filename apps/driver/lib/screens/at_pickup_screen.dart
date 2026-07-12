@@ -20,6 +20,7 @@ import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_ride_bolt_layout.dart';
 import '../widgets/driver_pickup_arrival_body.dart';
+import '../utils/driver_ride_lifecycle_error_message.dart';
 
 /// **Pickup Arrival** — confirm arrival; start trip friction-free.
 class AtPickupScreen extends ConsumerStatefulWidget {
@@ -140,10 +141,10 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
       await _openNavigationApp();
       if (!mounted) return;
       context.go('/driver/ride/progress/${widget.rideId}');
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.rideActionFailedMessage)),
+        SnackBar(content: Text(driverRideLifecycleErrorMessage(error))),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -178,10 +179,10 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(DriverStrings.noShowReported)),
       );
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.rideActionFailedMessage)),
+        SnackBar(content: Text(driverRideLifecycleErrorMessage(error))),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -201,10 +202,10 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(DriverStrings.waitingFeeWaivedNotice)),
       );
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.rideActionFailedMessage)),
+        SnackBar(content: Text(driverRideLifecycleErrorMessage(error))),
       );
     } finally {
       if (mounted) setState(() => _waivingWaitingFee = false);

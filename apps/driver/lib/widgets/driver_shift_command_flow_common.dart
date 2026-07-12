@@ -129,11 +129,14 @@ class DriverShiftCommandEarningsPreview extends StatelessWidget {
                 Icon(Icons.trending_up_rounded,
                     color: colors.success, size: 18),
                 const SizedBox(width: DriverSpacing.sm),
-                Text(
-                  '$avgPerRideLabel: ${snapshot.avgPerRide}',
-                  style: typography.bodySmall.copyWith(
-                    color: colors.textSecondary,
-                    fontWeight: FontWeight.w700,
+                Flexible(
+                  child: Text(
+                    '$avgPerRideLabel: ${snapshot.avgPerRide}',
+                    style: typography.bodySmall.copyWith(
+                      color: colors.textSecondary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

@@ -16,6 +16,8 @@ import '../services/sound_service.dart';
 import '../utils/driver_cancel_ride_flow.dart';
 import '../utils/driver_navigation_launch.dart';
 import '../utils/driver_ride_coord_utils.dart';
+import '../utils/driver_ride_lifecycle_error_message.dart';
+import '../utils/driver_ride_proximity_gate.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_ride_communication_sheet.dart';
@@ -84,6 +86,17 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
   Future<void> _completeRide() async {
     setState(() => _loading = true);
     try {
+      final allowed = await checkDriverRideProximity(
+        context: context,
+        ref: ref,
+        rideId: widget.rideId,
+        action: 'complete_dropoff',
+        onExitRide: () async {
+          if (mounted) setState(() => _loading = false);
+          await _cancelRide();
+        },
+      );
+      if (!allowed) return;
       await ref
           .read(driverApiProvider)
           .completeRide(rideRequestId: widget.rideId);
@@ -93,10 +106,10 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
       SoundService().playTripComplete();
       if (!mounted) return;
       context.go('/driver/ride/complete/${widget.rideId}');
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(DriverStrings.rideActionFailedMessage)),
+        SnackBar(content: Text(driverRideLifecycleErrorMessage(error))),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -125,6 +138,7 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
       context: context,
       ref: ref,
       rideId: widget.rideId,
+      rideInProgress: true,
     );
     if (mounted) setState(() => _loading = false);
   }

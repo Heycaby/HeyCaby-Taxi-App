@@ -218,12 +218,9 @@ Future<void> performDriverAccountDeletion(
         rpc['error']?.toString() ?? 'rpc_failed',
       );
     }
-    try {
-      await HeyCabyFcmRegistration.unregisterAll(appRole: 'driver');
-    } catch (_) {}
-    await HeyCabyAccountDeletion.deleteCurrentSupabaseAuthUser(
-      signOutLocally: false,
-    );
+    // Device tokens and server sessions are revoked atomically by the RPC.
+    // Local sign-out happens after the confirmation so this route can finish
+    // its accessibility announcement and navigation cleanly.
   } on HeyCabyAccountDeletionException catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -255,7 +252,12 @@ Future<void> performDriverAccountDeletion(
     );
   }
   if (context.mounted) {
-    await HeyCabySupabase.client.auth.signOut();
+    try {
+      await HeyCabySupabase.client.auth.signOut();
+    } catch (_) {
+      // The server already revoked this session; local app state still has to
+      // leave the authenticated shell even when remote sign-out returns 401.
+    }
     if (!context.mounted) return;
     ref.read(driverStateProvider.notifier).logout();
     ref.read(foundingDriverPostClaimProvider.notifier).state = null;

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
@@ -17,10 +19,48 @@ class DriverActiveRideRealtimeListener extends ConsumerStatefulWidget {
 }
 
 class _DriverActiveRideRealtimeListenerState
-    extends ConsumerState<DriverActiveRideRealtimeListener> {
+    extends ConsumerState<DriverActiveRideRealtimeListener>
+    with WidgetsBindingObserver {
   RealtimeChannel? _channel;
+  Timer? _reconcileTimer;
   String? _boundRideId;
   int? _resyncGen;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _reconcileTimer = Timer.periodic(
+      const Duration(seconds: 8),
+      (_) => unawaited(_reconcile()),
+    );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) unawaited(_reconcile());
+  }
+
+  Future<void> _reconcile() async {
+    final rideId = _boundRideId;
+    if (rideId == null || rideId.isEmpty || !mounted) return;
+    try {
+      final row = await HeyCabySupabase.client
+          .from('ride_requests')
+          .select('status')
+          .eq('id', rideId)
+          .maybeSingle();
+      if (row?['status'] == 'cancelled' && mounted) {
+        await handleDriverRiderCancelled(
+          ref: ref,
+          context: context,
+          rideId: rideId,
+        );
+      }
+    } catch (_) {
+      // Realtime remains primary; the next reconciliation retries safely.
+    }
+  }
 
   void _applyResync(int gen) {
     if (_resyncGen == gen) return;
@@ -67,6 +107,8 @@ class _DriverActiveRideRealtimeListenerState
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _reconcileTimer?.cancel();
     _channel?.unsubscribe();
     super.dispose();
   }

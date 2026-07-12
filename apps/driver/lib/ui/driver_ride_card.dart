@@ -67,10 +67,13 @@ class DriverRideCard extends StatelessWidget {
                     ),
                   const Spacer(),
                   if (fareLabel != null)
-                    Text(
-                      fareLabel!,
-                      style: typography.numberMedium(colors),
-                      textAlign: TextAlign.right,
+                    Flexible(
+                      child: Text(
+                        fareLabel!,
+                        style: typography.numberMedium(colors),
+                        textAlign: TextAlign.right,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   if (trailing != null) ...[
                     const SizedBox(width: DriverSpacing.sm),

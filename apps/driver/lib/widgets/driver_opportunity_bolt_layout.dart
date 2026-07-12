@@ -617,24 +617,47 @@ class _OpportunityMapLayerState extends State<_OpportunityMapLayer> {
     }
     await _mapboxMap!.setCamera(camera);
 
+    final routing = RoutingService(
+      accessToken: const String.fromEnvironment('MAPBOX_ACCESS_TOKEN'),
+    );
+    final driverLeg = showDriverLeg
+        ? await routing.fetchRoute(
+            fromLat: drvLat,
+            fromLng: drvLng,
+            toLat: pLat,
+            toLng: pLng,
+          )
+        : null;
+    final tripLeg = hasPickup && hasDest
+        ? await routing.fetchRoute(
+            fromLat: pLat!,
+            fromLng: pLng!,
+            toLat: dLat!,
+            toLng: dLng!,
+          )
+        : null;
+    if (!mounted) return;
+
     if (_lineManager != null) {
       await _lineManager!.deleteAll();
-      if (showDriverLeg) {
+      if (showDriverLeg && driverLeg != null) {
         await _lineManager!.create(PolylineAnnotationOptions(
-          geometry: LineString(coordinates: [
-            Position(drvLng, drvLat),
-            Position(pLng, pLat),
-          ]),
+          geometry: LineString(
+            coordinates: driverLeg.coordinates
+                .map((point) => Position(point[0], point[1]))
+                .toList(growable: false),
+          ),
           lineColor: colors.textMuted.withValues(alpha: 0.45).toARGB32(),
           lineWidth: 2.5,
         ));
       }
-      if (hasPickup && hasDest) {
+      if (hasPickup && hasDest && tripLeg != null) {
         await _lineManager!.create(PolylineAnnotationOptions(
-          geometry: LineString(coordinates: [
-            Position(pLng!, pLat!),
-            Position(dLng!, dLat!),
-          ]),
+          geometry: LineString(
+            coordinates: tripLeg.coordinates
+                .map((point) => Position(point[0], point[1]))
+                .toList(growable: false),
+          ),
           lineColor: colors.primary.toARGB32(),
           lineWidth: 4,
         ));
@@ -685,7 +708,7 @@ class _OpportunityMapLayerState extends State<_OpportunityMapLayer> {
         fit: StackFit.expand,
         children: [
           if (widget.renderMap)
-            MapWidget(
+            MapWidgetOrPlaceholder(
               key: ValueKey(
                 'driver-opportunity-map-$themeId-'
                 '${offer.pickupLat}-${offer.destLat}',
@@ -725,6 +748,8 @@ class _OpportunityMapLayerState extends State<_OpportunityMapLayer> {
               pickupLng: offer.pickupLng,
               destinationLat: offer.destLat,
               destinationLng: offer.destLng,
+              driverLat: offer.driverLat,
+              driverLng: offer.driverLng,
               pickupColor: colors.success,
               dropoffColor: colors.error,
               cameraTick: _cameraTick,

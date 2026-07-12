@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../l10n/driver_strings.dart';
 import '../providers/driver_state_provider.dart';
+import '../providers/driver_ride_unread_messages_provider.dart';
 import '../services/sound_service.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
@@ -257,8 +258,12 @@ class _DriverChatScreenState extends ConsumerState<DriverChatScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() =>
-        ref.read(driverChatProvider.notifier).loadMessages(widget.rideId));
+    Future.microtask(() async {
+      await ref.read(driverChatProvider.notifier).loadMessages(widget.rideId);
+      await ref
+          .read(driverRideUnreadMessageCountProvider(widget.rideId).notifier)
+          .markAllRead();
+    });
   }
 
   @override

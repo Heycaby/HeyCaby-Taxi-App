@@ -16,6 +16,7 @@ import '../services/driver_pickup_wait_service.dart';
 import '../utils/driver_cancel_ride_flow.dart';
 import '../utils/driver_communication_distance.dart';
 import '../utils/driver_ride_lifecycle_error_message.dart';
+import '../utils/driver_ride_proximity_gate.dart';
 import '../widgets/driver_ride_communication_sheet.dart';
 import '../utils/driver_navigation_launch.dart';
 import '../utils/driver_nav_app_helpers.dart';
@@ -109,6 +110,13 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
   Future<void> _markArrived() async {
     setState(() => _loading = true);
     try {
+      final allowed = await checkDriverRideProximity(
+        context: context,
+        ref: ref,
+        rideId: widget.rideId,
+        action: 'arrive_pickup',
+      );
+      if (!allowed) return;
       await ref
           .read(driverApiProvider)
           .markArrived(rideRequestId: widget.rideId);

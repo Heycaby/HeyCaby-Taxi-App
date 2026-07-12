@@ -47,6 +47,7 @@ class DriverRideBoltScaffold extends StatelessWidget {
     this.onSafety,
     this.onChat,
     this.onNavigate,
+    this.chatUnreadCount = 0,
     this.requestsPaused = false,
     this.statusBusy = false,
     this.showWaitHereHint = false,
@@ -70,6 +71,7 @@ class DriverRideBoltScaffold extends StatelessWidget {
   final VoidCallback? onSafety;
   final VoidCallback? onChat;
   final VoidCallback? onNavigate;
+  final int chatUnreadCount;
   final bool requestsPaused;
   final bool statusBusy;
   final bool showWaitHereHint;
@@ -149,6 +151,7 @@ class DriverRideBoltScaffold extends StatelessWidget {
                 colors: colors,
                 icon: Icons.chat_bubble_outline_rounded,
                 onTap: onChat,
+                badgeCount: chatUnreadCount,
               ),
             ),
           if (onNavigate != null)
@@ -733,16 +736,18 @@ class _DriverRideBoltMapFab extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.highlighted = false,
+    this.badgeCount = 0,
   });
 
   final DriverColors colors;
   final IconData icon;
   final VoidCallback? onTap;
   final bool highlighted;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
+    final button = Material(
       color: highlighted
           ? colors.primary.withValues(alpha: 0.92)
           : colors.card.withValues(alpha: 0.94),
@@ -762,6 +767,35 @@ class _DriverRideBoltMapFab extends StatelessWidget {
           ),
         ),
       ),
+    );
+
+    if (badgeCount <= 0) return button;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        button,
+        Positioned(
+          top: -2,
+          right: -2,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: colors.error,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: colors.card, width: 1.5),
+            ),
+            child: Text(
+              badgeCount > 99 ? '99+' : '$badgeCount',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -917,32 +951,61 @@ class _DriverRideBoltMapState extends State<_DriverRideBoltMap> {
           pickupLng: pLng!,
         );
 
+    final routing = RoutingService(
+      accessToken: const String.fromEnvironment('MAPBOX_ACCESS_TOKEN'),
+    );
+    final driverTargetLat =
+        widget.phase == DriverRideBoltPhase.inProgress ? dLat : pLat;
+    final driverTargetLng =
+        widget.phase == DriverRideBoltPhase.inProgress ? dLng : pLng;
+    final driverLeg =
+        showDriverLeg && driverTargetLat != null && driverTargetLng != null
+            ? await routing.fetchRoute(
+                fromLat: drvLat,
+                fromLng: drvLng,
+                toLat: driverTargetLat,
+                toLng: driverTargetLng,
+              )
+            : null;
+    final tripLeg = hasPickup && hasDest
+        ? await routing.fetchRoute(
+            fromLat: pLat!,
+            fromLng: pLng!,
+            toLat: dLat!,
+            toLng: dLng!,
+          )
+        : null;
+    if (!mounted) return;
+
     if (_lineManager != null) {
       await _lineManager!.deleteAll();
-      if (showDriverLeg && widget.phase != DriverRideBoltPhase.inProgress) {
+      if (showDriverLeg &&
+          widget.phase != DriverRideBoltPhase.inProgress &&
+          driverLeg != null) {
         await _lineManager!.create(PolylineAnnotationOptions(
-          geometry: LineString(coordinates: [
-            Position(drvLng, drvLat),
-            Position(pLng, pLat),
-          ]),
+          geometry: LineString(
+            coordinates: driverLeg.coordinates
+                .map((point) => Position(point[0], point[1]))
+                .toList(growable: false),
+          ),
           lineColor: widget.colors.textMuted.withValues(alpha: 0.45).toARGB32(),
           lineWidth: 2.5,
         ));
       }
       if (hasDest) {
-        final fromLng =
-            widget.phase == DriverRideBoltPhase.inProgress && showDriverLeg
-                ? drvLng
-                : (hasPickup ? pLng! : dLng!);
-        final fromLat =
-            widget.phase == DriverRideBoltPhase.inProgress && showDriverLeg
-                ? drvLat
-                : (hasPickup ? pLat! : dLat!);
+        final routeGeometry = widget.phase == DriverRideBoltPhase.inProgress
+            ? driverLeg?.coordinates
+            : tripLeg?.coordinates;
+        if (routeGeometry == null || routeGeometry.length < 2) {
+          if (mounted) setState(() => _cameraTick++);
+          return;
+        }
         await _lineManager!.create(PolylineAnnotationOptions(
-          geometry: LineString(coordinates: [
-            Position(fromLng, fromLat),
-            Position(dLng!, dLat!),
-          ]),
+          geometry: LineString(
+            coordinates: routeGeometry
+                .map((point) => Position(point[0], point[1]))
+                .toList(growable: false),
+          ),
           lineColor: isCompleted
               ? widget.colors.success.toARGB32()
               : widget.colors.primary.toARGB32(),
@@ -973,7 +1036,7 @@ class _DriverRideBoltMapState extends State<_DriverRideBoltMap> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          MapWidget(
+          MapWidgetOrPlaceholder(
             key: ValueKey(
               'driver-ride-bolt-map-$themeId-${widget.phase.name}-'
               '${widget.pickupLat}-${widget.destLat}',
@@ -996,6 +1059,8 @@ class _DriverRideBoltMapState extends State<_DriverRideBoltMap> {
               pickupLng: widget.pickupLng,
               destinationLat: widget.destLat,
               destinationLng: widget.destLng,
+              driverLat: widget.driverLat,
+              driverLng: widget.driverLng,
               pickupColor: widget.colors.warning,
               dropoffColor: widget.colors.error,
               cameraTick: _cameraTick,

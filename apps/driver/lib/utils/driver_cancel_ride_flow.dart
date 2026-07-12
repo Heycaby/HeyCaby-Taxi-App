@@ -10,6 +10,7 @@ import '../theme/driver_colors.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_ride_premium_style.dart';
+import 'driver_ride_lifecycle_error_message.dart';
 
 /// Confirms, calls cancel API, clears active ride, returns home.
 Future<bool> confirmAndCancelDriverRide({
@@ -17,8 +18,14 @@ Future<bool> confirmAndCancelDriverRide({
   required WidgetRef ref,
   required String rideId,
   Future<void> Function()? afterCancel,
+  bool rideInProgress = false,
 }) async {
-  final reason = await showModalBottomSheet<String>(
+  if (rideInProgress) {
+    final intent = await _showRideExitIntentSheet(context, ref);
+    if (intent != _RideExitIntent.cancel || !context.mounted) return false;
+  }
+
+  final reason = await showModalBottomSheet<_CancelReason>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
@@ -27,19 +34,41 @@ Future<bool> confirmAndCancelDriverRide({
       typography: DriverTypography.fromTheme(ref.read(typographyProvider)),
     ),
   );
-  if (reason == null || reason.trim().isEmpty || !context.mounted) {
+  if (reason == null || !context.mounted) {
     return false;
   }
 
+  final settlement = await _showCancellationSettlementSheet(context, ref);
+  if (settlement == null || !context.mounted) return false;
+
+  final confirmed = await showHeyCabyConfirmSheet(
+    context,
+    colors: ref.read(colorsProvider),
+    typography: ref.read(typographyProvider),
+    title: DriverStrings.cancelRideFinalTitle,
+    message: DriverStrings.cancelRideFinalBody,
+    dismissLabel: DriverStrings.back,
+    confirmLabel: DriverStrings.cancelRide,
+    icon: Icons.warning_amber_rounded,
+    confirmDestructive: true,
+  );
+  if (confirmed != true || !context.mounted) return false;
+
   try {
-    await ref.read(driverApiProvider).cancelRide(
+    await ref.read(driverApiProvider).cancelRideV2(
           rideRequestId: rideId,
-          reason: reason.trim(),
+          reasonCode: reason.code,
+          details: reason.details,
+          riderPaidCents: settlement.paidCents,
+          waiveRemaining: settlement.waiveRemaining,
+          pauseNewRequests: settlement.pauseNewRequests,
         );
     if (afterCancel != null) await afterCancel();
-    ref.read(driverStateProvider.notifier).clearActiveRide();
+    if (settlement.pauseNewRequests) {
+      ref.read(driverStateProvider.notifier).setPendingBreak(true);
+    }
     if (!context.mounted) return true;
-    context.go('/driver');
+    context.go('/driver/ride/rate/$rideId');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(DriverStrings.rideCancelled)),
     );
@@ -47,10 +76,162 @@ Future<bool> confirmAndCancelDriverRide({
   } catch (e) {
     if (!context.mounted) return false;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${DriverStrings.rideCancelFailed} $e')),
+      SnackBar(content: Text(driverRideLifecycleErrorMessage(e))),
     );
     return false;
   } finally {}
+}
+
+enum _RideExitIntent { continueRide, pauseAfterRide, cancel }
+
+Future<_RideExitIntent?> _showRideExitIntentSheet(
+  BuildContext context,
+  WidgetRef ref,
+) {
+  final colors = DriverColors.fromTheme(ref.read(colorsProvider));
+  final typography = DriverTypography.fromTheme(ref.read(typographyProvider));
+  return showModalBottomSheet<_RideExitIntent>(
+    context: context,
+    backgroundColor: colors.surface,
+    showDragHandle: true,
+    builder: (context) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(DriverStrings.leaveRideTitle, style: typography.titleLarge),
+          const SizedBox(height: 8),
+          Text(DriverStrings.leaveRideBody,
+              style:
+                  typography.bodyMedium.copyWith(color: colors.textSecondary)),
+          const SizedBox(height: 16),
+          ListTile(
+            leading: const Icon(Icons.route_rounded),
+            title: Text(DriverStrings.continueCurrentRide),
+            subtitle: Text(DriverStrings.continueCurrentRideBody),
+            onTap: () => Navigator.pop(context, _RideExitIntent.continueRide),
+          ),
+          ListTile(
+            leading: const Icon(Icons.pause_circle_outline_rounded),
+            title: Text(DriverStrings.stopAfterThisRide),
+            subtitle: Text(DriverStrings.stopAfterThisRideBody),
+            onTap: () => Navigator.pop(context, _RideExitIntent.pauseAfterRide),
+          ),
+          ListTile(
+            leading: Icon(Icons.cancel_outlined, color: colors.error),
+            title: Text(DriverStrings.stillCancelRide,
+                style: TextStyle(color: colors.error)),
+            onTap: () => Navigator.pop(context, _RideExitIntent.cancel),
+          ),
+        ]),
+      ),
+    ),
+  ).then((value) {
+    if (value == _RideExitIntent.pauseAfterRide) {
+      ref.read(driverStateProvider.notifier).setPendingBreak(true);
+      if (!context.mounted) return value;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(DriverStrings.stopAfterRideConfirmed)),
+      );
+    }
+    return value;
+  });
+}
+
+class _CancellationSettlement {
+  const _CancellationSettlement({
+    required this.paidCents,
+    required this.waiveRemaining,
+    required this.pauseNewRequests,
+  });
+  final int paidCents;
+  final bool waiveRemaining;
+  final bool pauseNewRequests;
+}
+
+Future<_CancellationSettlement?> _showCancellationSettlementSheet(
+  BuildContext context,
+  WidgetRef ref,
+) {
+  final amount = TextEditingController();
+  var waived = false;
+  var pause = false;
+  final colors = DriverColors.fromTheme(ref.read(colorsProvider));
+  return showModalBottomSheet<_CancellationSettlement>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: colors.surface,
+    showDragHandle: true,
+    builder: (context) => StatefulBuilder(builder: (context, setModalState) {
+      return SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            4,
+            20,
+            20 + MediaQuery.viewInsetsOf(context).bottom,
+          ),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text(DriverStrings.cancelSettlementTitle,
+                style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(DriverStrings.cancelSettlementBody),
+            const SizedBox(height: 16),
+            TextField(
+              controller: amount,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                labelText: DriverStrings.amountAlreadyPaid,
+                prefixText: '€ ',
+              ),
+            ),
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              value: waived,
+              title: Text(DriverStrings.waiveRemainingFee),
+              subtitle: Text(DriverStrings.waiveRemainingFeeBody),
+              onChanged: (v) => setModalState(() => waived = v),
+            ),
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              value: pause,
+              title: Text(DriverStrings.pauseNewRequestsAfterCancel),
+              onChanged: (v) => setModalState(() => pause = v),
+            ),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: colors.primary.withValues(alpha: .08),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Text(DriverStrings.noCommissionReminder),
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: () {
+                final normalized = amount.text.trim().replaceAll(',', '.');
+                final euros = double.tryParse(normalized) ?? 0;
+                Navigator.pop(
+                    context,
+                    _CancellationSettlement(
+                      paidCents: (euros * 100).round().clamp(0, 10000000),
+                      waiveRemaining: waived,
+                      pauseNewRequests: pause,
+                    ));
+              },
+              child: Text(DriverStrings.continueLabel),
+            ),
+          ]),
+        ),
+      );
+    }),
+  ).whenComplete(amount.dispose);
+}
+
+class _CancelReason {
+  const _CancelReason(this.code, this.details);
+  final String code;
+  final String? details;
 }
 
 class _CancelRideReasonSheet extends StatefulWidget {
@@ -70,25 +251,25 @@ class _CancelRideReasonSheetState extends State<_CancelRideReasonSheet> {
   final TextEditingController _detailsCtrl = TextEditingController();
   String? _selectedReason;
 
-  List<String> get _reasons => [
-        DriverStrings.cancelRideReasonRiderUnavailable,
-        DriverStrings.cancelRideReasonPickupIssue,
-        DriverStrings.cancelRideReasonWrongDetails,
-        DriverStrings.cancelRideReasonSafetyConcern,
-        DriverStrings.cancelRideReasonOther,
+  List<(String, String)> get _reasons => [
+        ('changed_mind', DriverStrings.cancelRideReasonChangedMind),
+        ('vehicle_problem', DriverStrings.cancelRideReasonVehicleProblem),
+        ('safety_concern', DriverStrings.cancelRideReasonSafetyConcern),
+        ('rider_requested', DriverStrings.cancelRideReasonRiderRequested),
+        (
+          'route_or_destination_issue',
+          DriverStrings.cancelRideReasonRouteIssue
+        ),
+        ('other', DriverStrings.cancelRideReasonOther),
       ];
 
   bool get _canCancel =>
       _selectedReason != null || _detailsCtrl.text.trim().isNotEmpty;
 
-  String get _reasonPayload {
+  _CancelReason get _reasonPayload {
     final details = _detailsCtrl.text.trim();
     final selected = _selectedReason;
-    if (selected == null || selected == DriverStrings.cancelRideReasonOther) {
-      return details.isEmpty ? selected ?? '' : details;
-    }
-    if (details.isEmpty) return selected;
-    return '$selected - $details';
+    return _CancelReason(selected ?? 'other', details.isEmpty ? null : details);
   }
 
   @override
@@ -183,14 +364,15 @@ class _CancelRideReasonSheetState extends State<_CancelRideReasonSheet> {
                     children: [
                       for (final reason in _reasons)
                         _ReasonPill(
-                          label: reason,
-                          selected: _selectedReason == reason,
+                          label: reason.$2,
+                          selected: _selectedReason == reason.$1,
                           colors: colors,
                           typography: typography,
                           onTap: () {
                             setState(() {
-                              _selectedReason =
-                                  _selectedReason == reason ? null : reason;
+                              _selectedReason = _selectedReason == reason.$1
+                                  ? null
+                                  : reason.$1;
                             });
                           },
                         ),

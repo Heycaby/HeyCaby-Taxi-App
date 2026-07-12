@@ -8,14 +8,21 @@ String acceptRideErrorMessageFor(DriverAcceptRideException e) {
   final reason = e.reason?.split(':').first.trim();
   if (reason != null && reason.isNotEmpty) {
     final byReason = DriverStrings.acceptRideErrorMessage(reason);
-    if (byReason != DriverStrings.acceptRideFailedMessage) return byReason;
+    if (byReason != DriverStrings.acceptRideFailedMessage &&
+        byReason != DriverStrings.rideActionFailedMessage) {
+      return byReason;
+    }
+  }
+  if (serverMessage != null && serverMessage.isNotEmpty) {
+    return DriverStrings.rideLifecycleErrorExplicit(
+      e.code,
+      detail: serverMessage,
+    );
   }
   final byCode = DriverStrings.acceptRideErrorMessage(e.code);
   if (byCode != DriverStrings.acceptRideFailedMessage &&
       byCode != DriverStrings.rideActionFailedMessage) {
     return byCode;
   }
-  if (serverMessage != null && serverMessage.isNotEmpty) return serverMessage;
-  if (byCode == DriverStrings.rideActionFailedMessage) return byCode;
-  return DriverStrings.acceptRideFailedMessage;
+  return DriverStrings.rideLifecycleErrorExplicit(e.code);
 }

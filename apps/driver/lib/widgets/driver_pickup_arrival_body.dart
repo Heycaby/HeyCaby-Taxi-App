@@ -6,6 +6,7 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 import '../utils/driver_address_clipboard.dart';
 import '../l10n/driver_strings.dart';
 import '../utils/driver_nav_app_helpers.dart';
+import '../providers/driver_ride_unread_messages_provider.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../ui/driver_button.dart';
@@ -124,6 +125,8 @@ class DriverPickupArrivalBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final unreadMessages =
+        ref.watch(driverRideUnreadMessageCountProvider(rideId));
     return DriverRideBoltScaffold(
       colors: colors,
       typography: typography,
@@ -140,6 +143,7 @@ class DriverPickupArrivalBody extends ConsumerWidget {
           : () => _handleToggleRequests(context),
       onSafety: onSafety,
       onChat: onOpenCommunication,
+      chatUnreadCount: unreadMessages,
       requestsPaused: requestsPaused,
       statusBusy: statusBusy,
       headerBanner: DriverTaxiTerugQueuedBannerSlot(

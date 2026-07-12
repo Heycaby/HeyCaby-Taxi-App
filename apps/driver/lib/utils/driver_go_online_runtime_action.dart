@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
@@ -11,6 +12,7 @@ import '../providers/driver_runtime_providers.dart';
 import '../screens/driver_runtime_gate_screen.dart';
 import '../services/location_service.dart';
 import '../theme/driver_colors.dart';
+import '../widgets/driver_ride_alert_readiness_card.dart';
 import '../widgets/driver_ride_premium_style.dart';
 import '../utils/driver_network_guard.dart';
 import '../utils/driver_go_online_onboarding.dart';
@@ -116,6 +118,8 @@ Future<DriverGoOnlineAttemptResult> attemptDriverGoOnline({
     unawaited(maybePromptDriverBatteryOptimization(context, ref));
   }
   unawaited(DriverLocationService().startTracking());
+  unawaited(HeyCabyFcmRegistration.sync(appRole: 'driver'));
+  ref.invalidate(driverRideAlertReadinessProvider);
   unawaited(refreshDriverRuntime(ref));
   return const DriverGoOnlineAttemptResult.succeeded();
 }
