@@ -1445,10 +1445,10 @@ class DriverStrings {
         ar: 'حذف الحساب نهائيا؟',
       );
   static String get deleteAccountConfirmBody => _t(
-        'Hiermee worden je chauffeursprofiel en inlog bij HeyCaby verwijderd. Dit kan niet ongedaan worden gemaakt.',
-        en: 'This deletes your driver profile and HeyCaby login. This cannot be undone.',
-        es: 'Esto elimina tu perfil de conductor e inicio de sesión en HeyCaby. No se puede deshacer.',
-        ar: 'هذا يحذف ملف السائق الخاص بك وتسجيل الدخول إلى HeyCaby. لا يمكن التراجع عن ذلك.',
+        'Je account wordt direct gedeactiveerd. Persoonsgegevens die we niet wettelijk hoeven te bewaren worden verwijderd. Bepaalde transactie-, veiligheids-, fraudepreventie- en boekhoudgegevens kunnen gedurende de vereiste periode worden bewaard.',
+        en: 'Your account will be deactivated immediately. Personal information that we are not legally required to retain will be deleted. Certain transaction, safety, fraud-prevention and accounting records may be retained for the required period.',
+        es: 'Tu cuenta se desactivará de inmediato. Se eliminará la información personal que no estemos legalmente obligados a conservar. Determinados registros de transacciones, seguridad, prevención del fraude y contabilidad podrán conservarse durante el período requerido.',
+        ar: 'سيتم تعطيل حسابك فورًا. ستحذف المعلومات الشخصية التي لا يلزمنا القانون بالاحتفاظ بها. وقد يتم الاحتفاظ ببعض سجلات المعاملات والسلامة ومنع الاحتيال والمحاسبة للمدة المطلوبة.',
       );
   static String get deleteAccountTypeDeleteHint => _t(
         'Typ DELETE om te bevestigen',
@@ -1469,16 +1469,16 @@ class DriverStrings {
         ar: 'فشل حذف الحساب. حاول مرة أخرى أو تواصل مع الدعم.',
       );
   static String get deleteAccountSuccessModalTitle => _t(
-        'Account verwijderd',
-        en: 'Account deleted',
-        es: 'Cuenta eliminada',
-        ar: 'تم حذف الحساب',
+        'Verwijdering aangevraagd',
+        en: 'Deletion requested',
+        es: 'Eliminación solicitada',
+        ar: 'تم طلب الحذف',
       );
   static String get deleteAccountSuccessModalBody => _t(
-        'Je account is verwijderd. Je kunt de app nu van je telefoon verwijderen als je wilt.',
-        en: 'Your account has been deleted. You can remove the app from your phone now if you want.',
-        es: 'Tu cuenta ha sido eliminada. Puedes eliminar la app de tu teléfono ahora si quieres.',
-        ar: 'تم حذف حسابك. يمكنك إزالة التطبيق من هاتفك الآن إذا أردت.',
+        'Je account is gedeactiveerd en je verwijderingsverzoek wordt verwerkt volgens de toepasselijke bewaartermijnen. Je kunt niet meer online gaan of ritten ontvangen.',
+        en: 'Your account is deactivated and your deletion request will be processed according to the applicable retention periods. You can no longer go online or receive rides.',
+        es: 'Tu cuenta está desactivada y tu solicitud de eliminación se procesará conforme a los períodos de conservación aplicables. Ya no puedes conectarte ni recibir viajes.',
+        ar: 'تم تعطيل حسابك وستتم معالجة طلب الحذف وفق فترات الاحتفاظ المعمول بها. لم يعد بإمكانك الاتصال أو تلقي الرحلات.',
       );
   static String get deleteAccountSuccessModalCta => _t(
         'Verder',
@@ -3080,6 +3080,24 @@ class DriverStrings {
         en: 'Plate and terms are ready. Swipe again to go online.',
         es: 'Matrícula y términos listos. Desliza de nuevo para conectarte.',
         ar: 'لوحة الأرقام والشروط جاهزة. اسحب مرة أخرى للاتصال.',
+      );
+  static String get goOnlineLegalStepTitle => _t(
+        'Nog één stap',
+        en: 'One more step',
+        es: 'Un paso más',
+        ar: 'خطوة واحدة أخرى',
+      );
+  static String get goOnlineLegalStepSubtitle => _t(
+        'Lees en bevestig de voorwaarden en vrijwaringsverklaring. Daarna controleren we direct of je online kunt gaan.',
+        en: 'Read and confirm the terms and indemnification statement. Then we immediately check whether you can go online.',
+        es: 'Lee y confirma los términos y la declaración de indemnización. Después comprobaremos inmediatamente si puedes conectarte.',
+        ar: 'اقرأ وأكد الشروط وبيان التعويض. بعد ذلك نتحقق فورًا مما إذا كان بإمكانك الاتصال.',
+      );
+  static String get goOnlinePlateVerified => _t(
+        'Taxikenteken geverifieerd via RDW',
+        en: 'Taxi plate verified with RDW',
+        es: 'Matrícula de taxi verificada con RDW',
+        ar: 'تم التحقق من لوحة سيارة الأجرة عبر RDW',
       );
   static String get onboardingPlateSaveFailed => _t(
         'Voertuig opslaan mislukt. Probeer opnieuw of neem contact op met de ondersteuning.',
