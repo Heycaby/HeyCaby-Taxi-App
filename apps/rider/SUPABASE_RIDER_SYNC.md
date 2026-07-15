@@ -1,5 +1,12 @@
 # HeyCaby Rider App — Supabase Schema Sync
 
+> **Consumer inventory, not business-rule authority.** The canonical domain
+> ownership and source-of-truth map is
+> [`docs/HEYCABY_DOMAIN_SOURCE_OF_TRUTH_AUDIT.md`](../../docs/HEYCABY_DOMAIN_SOURCE_OF_TRUTH_AUDIT.md),
+> with machine-readable contracts in
+> [`docs/domains/registry.yaml`](../../docs/domains/registry.yaml). If this file
+> conflicts with either source, the domain registry and audit win.
+
 This document lists every Supabase table and column the **rider app** reads or writes. Keep backend schema and RLS in sync with this.
 
 **Client:** All rider code uses `HeyCabySupabase.client` (from `heycaby_api`). Never use `Supabase.instance.client` in rider lib.
@@ -14,7 +21,8 @@ This document lists every Supabase table and column the **rider app** reads or w
 
 ### 1. `ride_requests`
 
-**Used in:** `ride_request_provider.dart` (insert, select after insert)
+**Used in:** `ride_request_provider.dart` through the canonical
+`fn_rider_create_ride(jsonb)` command, plus authorized read projections.
 
 | Column / usage | Type / notes |
 |----------------|---------------|
@@ -22,7 +30,7 @@ This document lists every Supabase table and column the **rider app** reads or w
 | `destination_coords` | PostGIS geography — `POINT(lng lat)` |
 | `pickup_address` | text |
 | `destination_address` | text |
-| `status` | text — rider sends `'pending'` only |
+| `status` | text — backend command owns initial `'pending'` state |
 | `rider_token` | text, optional |
 | `rider_identity_id` | uuid, optional |
 | `pickup_contact_name` | text, optional |
@@ -32,7 +40,11 @@ This document lists every Supabase table and column the **rider app** reads or w
 | `pet_friendly` | boolean — matching filter vs `drivers.accepts_pets` |
 | `payment_methods` | array of text — rider payment screen ids: `cash`, `pin`, `tikkie` (omit if column missing in your project) |
 
-**Flow:** "Find my driver" → insert one row. DB trigger `ride_request_start_matching` seeds the first driver batch (see migration `20260329180000_ride_matching_cascade.sql`). Realtime on this table (by `id`) for status updates (`assigned` or `accepted` → navigate to active ride). While status stays `pending`, `searching_screen.dart` periodically calls RPC `fn_seed_ride_matching_batch` to invite the next ring after prior invites expire.
+**Flow:** "Find my driver" → `fn_rider_create_ride` validates actor/session,
+input fields, route estimates, audience and fare snapshot, then inserts one
+idempotent row. Database triggers start canonical matching. One app-global
+`RiderLiveActivityScope` channel delivers lifecycle invalidation and
+`fn_rider_ride_snapshot` rehydrates authoritative state.
 
 ### RPCs (matching)
 
@@ -202,9 +214,9 @@ Drivers receive **Realtime** `INSERT` events (enable replication for this table 
 
 | Channel | Table | Filter | Used in |
 |---------|--------|--------|--------|
-| `ride_request:$id` | ride_requests | id | searching_screen — status → assigned → go to active |
-| `chat:$rideId` | chat_messages | ride_id | chat_provider — new messages |
-| `driver_location:$rideId` | driver_locations | ride_id | driver_tracking_provider — driver position updates |
+| `rider_ride_lifecycle_engine:$id` | ride_requests | id | app-global lifecycle engine; Searching, Marketplace, Taxi Terug and Active Ride consume its projection |
+| `messages:$rideId` | messages | ride_request_id | canonical chat provider; unread state derives from this projection |
+| driver tracking scope | driver_locations | authorized ride projection | driver position updates |
 
 ---
 
@@ -217,9 +229,14 @@ Drivers receive **Realtime** `INSERT` events (enable replication for this table 
 
 ## Frontend–backend sync (wiring)
 
-- **Ride flow:** `RideRequestNotifier.createRide()` inserts into `ride_requests`; `SearchingScreen` subscribes to `ride_requests` (id) via Realtime; on status `assigned` → navigate to `/active`. Driver position comes from `driver_locations` (Realtime) in `DriverTrackingNotifier`.
+- **Ride flow:** `RideRequestNotifier.createRide()` calls
+  `fn_rider_create_ride`; `RiderLiveActivityScope` owns the single
+  `ride_requests` lifecycle subscription and refreshes
+  `fn_rider_ride_snapshot`. Screens render the shared engine projection.
 - **Identity:** All rider code uses `HeyCabySupabase.client` (from `heycaby_api`). Rider identity comes from secure storage (`rider_identity_provider`); `saveBookingName` / `saveEmail` update both storage and `rider_identities` in Supabase. Home address is read/updated in `rider_identities` from `HomeScreen` / `HomeAddressModal`.
-- **Chat:** `ChatNotifier` uses table **`messages`** (select/insert/Realtime on `ride_id`). `sender_id` = `rider_identity_id` or `auth.currentUser?.id`. **Blocks:** RPCs `fn_ride_chat_list_blocks`, `fn_ride_chat_block_participant` and table `ride_chat_blocks` (see migration `20260330140000_account_deletion_ride_chat_blocks.sql`).
+- **Chat:** `ChatNotifier` reads **`messages`** and sends through the
+  actor-bound, idempotent `fn_send_ride_message` command. Realtime is delivery
+  only; reconnect always re-fetches canonical ordered history.
 - **Account deletion (App Store):** RPC `fn_delete_rider_account(p_session_token)` — token is the same value stored as `rider_token` in secure storage. Requires `rider_sessions.session_token` → `rider_identity_id` on the backend.
 - **Recent destinations:** Use `saved_addresses` by `rider_identity_id`. Identity is resolved from auth (`user_id` → `rider_identities.id`) or, when not logged in, from `riderIdentityProvider` (progressive identity).
 - **Ride history / favorites:** Use `rides` and `favorite_drivers` with `rider_id` = `auth.currentUser?.id`. Favorites join to `drivers` (alias `driver` or `drivers` supported).

@@ -8,7 +8,7 @@ import 'package:heycaby_utils/heycaby_utils.dart';
 import '../../models/ride_waiting_info.dart';
 import '../../utils/rider_journey_progress.dart';
 
-/// Status-driven journey timeline — floats above the sheet, never buried inside it.
+/// Status-driven journey timeline — map overlay or embedded inside the sheet.
 class ActiveRideStatusDock extends StatelessWidget {
   const ActiveRideStatusDock({
     super.key,
@@ -16,6 +16,7 @@ class ActiveRideStatusDock extends StatelessWidget {
     required this.colors,
     required this.typo,
     required this.l10n,
+    this.embeddedInSheet = false,
     this.etaMinutes,
     this.waitingInfo,
     this.quotedFareEuro,
@@ -42,6 +43,9 @@ class ActiveRideStatusDock extends StatelessWidget {
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
   final AppLocalizations l10n;
+
+  /// When true, renders only the timeline block for use inside the ride sheet.
+  final bool embeddedInSheet;
   final int? etaMinutes;
   final RideWaitingInfo? waitingInfo;
   final double? quotedFareEuro;
@@ -210,6 +214,163 @@ class ActiveRideStatusDock extends StatelessWidget {
     final contextLine = _contextLine(currentIndex);
     final showTimeline = journey.showLiveTrack;
 
+    final content = AnimatedSwitcher(
+      duration: const Duration(milliseconds: 280),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      child: Column(
+        key: ValueKey<String>('${status}_$embeddedInSheet'),
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (!embeddedInSheet)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.rideTimeline,
+                        style: typo.labelSmall.copyWith(
+                          color: colors.textSoft,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _headline(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: typo.titleMedium.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      if (contextLine != null) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          contextLine,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: typo.bodySmall.copyWith(
+                            color: colors.textMid,
+                            fontWeight: FontWeight.w600,
+                            height: 1.25,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (tripTotal != null && _isArrived) ...[
+                  const SizedBox(width: 10),
+                  _EtaChip(
+                    colors: colors,
+                    typo: typo,
+                    label: l10n.activeRideWaitingTripTotal,
+                    value: tripTotal,
+                    emphasizeValue: true,
+                  ),
+                ] else if (_etaLabel() != null) ...[
+                  const SizedBox(width: 10),
+                  _EtaChip(
+                    colors: colors,
+                    typo: typo,
+                    label: _isInProgress
+                        ? l10n.activeRideTimelineDestination
+                        : l10n.activeRideTimelinePickup,
+                    value: _etaLabel()!,
+                  ),
+                ],
+              ],
+            ),
+          if (embeddedInSheet) ...[
+            Text(
+              l10n.rideTimeline,
+              style: typo.titleMedium.copyWith(
+                color: colors.text,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          AnimatedSize(
+            duration: const Duration(milliseconds: 360),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: showTimeline
+                ? Column(
+                    key: const ValueKey('journey-timeline'),
+                    children: [
+                      if (!embeddedInSheet) const SizedBox(height: 12),
+                      _JourneyTimeline(
+                        steps: _timelineSteps(),
+                        currentIndex: currentIndex,
+                        trackProgress: journey.trackProgress,
+                        colors: colors,
+                        typo: typo,
+                      ),
+                      if (_isInProgress && journey.remainingKm != null) ...[
+                        const SizedBox(height: 12),
+                        _TripProgressBar(
+                          progress: journey.liveSegmentFraction ?? 0.0,
+                          remainingKm: journey.remainingKm!,
+                          etaMinutes: journey.etaMinutes,
+                          colors: colors,
+                          typo: typo,
+                          l10n: l10n,
+                          destinationLabel: destinationLabel,
+                        ),
+                      ],
+                    ],
+                  )
+                : const SizedBox.shrink(
+                    key: ValueKey('journey-timeline-hidden'),
+                  ),
+          ),
+          if (_isArrived && waitingInfo != null) ...[
+            const SizedBox(height: 10),
+            _WaitingActionStrip(
+              colors: colors,
+              typo: typo,
+              l10n: l10n,
+              info: waitingInfo!,
+              quotedFareEuro: quotedFareEuro,
+              liveFareCents: liveFareCents,
+            ),
+          ],
+          if (_isArrived && !plateVerified && onVerifyPlate != null) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              height: 40,
+              child: FilledButton.tonal(
+                onPressed: onVerifyPlate,
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  visualDensity: VisualDensity.compact,
+                ),
+                child: Text(
+                  l10n.activeRideVerifyPlateButton,
+                  style: typo.labelLarge.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+
+    if (embeddedInSheet) {
+      return content;
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
@@ -240,147 +401,7 @@ class ActiveRideStatusDock extends StatelessWidget {
               ),
             ],
           ),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 280),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            child: Column(
-              key: ValueKey<String>(status),
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.rideTimeline,
-                            style: typo.labelSmall.copyWith(
-                              color: colors.textSoft,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            _headline(),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: typo.titleMedium.copyWith(
-                              color: colors.text,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -0.3,
-                            ),
-                          ),
-                          if (contextLine != null) ...[
-                            const SizedBox(height: 3),
-                            Text(
-                              contextLine,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: typo.bodySmall.copyWith(
-                                color: colors.textMid,
-                                fontWeight: FontWeight.w600,
-                                height: 1.25,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    if (tripTotal != null && _isArrived) ...[
-                      const SizedBox(width: 10),
-                      _EtaChip(
-                        colors: colors,
-                        typo: typo,
-                        label: l10n.activeRideWaitingTripTotal,
-                        value: tripTotal,
-                        emphasizeValue: true,
-                      ),
-                    ] else if (_etaLabel() != null) ...[
-                      const SizedBox(width: 10),
-                      _EtaChip(
-                        colors: colors,
-                        typo: typo,
-                        label: _isInProgress
-                            ? l10n.activeRideTimelineDestination
-                            : l10n.activeRideTimelinePickup,
-                        value: _etaLabel()!,
-                      ),
-                    ],
-                  ],
-                ),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 360),
-                  curve: Curves.easeOutCubic,
-                  alignment: Alignment.topCenter,
-                  child: showTimeline
-                      ? Column(
-                          key: const ValueKey('journey-timeline'),
-                          children: [
-                            const SizedBox(height: 12),
-                            _JourneyTimeline(
-                              steps: _timelineSteps(),
-                              currentIndex: currentIndex,
-                              trackProgress: journey.trackProgress,
-                              colors: colors,
-                              typo: typo,
-                            ),
-                            if (_isInProgress && journey.remainingKm != null) ...[
-                              const SizedBox(height: 12),
-                              _TripProgressBar(
-                                progress: journey.liveSegmentFraction ?? 0.0,
-                                remainingKm: journey.remainingKm!,
-                                etaMinutes: journey.etaMinutes,
-                                colors: colors,
-                                typo: typo,
-                                l10n: l10n,
-                                destinationLabel: destinationLabel,
-                              ),
-                            ],
-                          ],
-                        )
-                      : const SizedBox.shrink(
-                          key: ValueKey('journey-timeline-hidden'),
-                        ),
-                ),
-                if (_isArrived && waitingInfo != null) ...[
-                  const SizedBox(height: 10),
-                  _WaitingActionStrip(
-                    colors: colors,
-                    typo: typo,
-                    l10n: l10n,
-                    info: waitingInfo!,
-                    quotedFareEuro: quotedFareEuro,
-                    liveFareCents: liveFareCents,
-                  ),
-                ],
-                if (_isArrived && !plateVerified && onVerifyPlate != null) ...[
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 40,
-                    child: FilledButton.tonal(
-                      onPressed: onVerifyPlate,
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                      child: Text(
-                        l10n.activeRideVerifyPlateButton,
-                        style: typo.labelLarge.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
+          child: content,
         ),
       ),
     );

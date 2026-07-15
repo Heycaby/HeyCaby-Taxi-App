@@ -15,6 +15,33 @@ export function buildAgentNotification(
 
     if (type === "UPDATE" && rideRequestId) {
       if (
+        status === "assigned" &&
+        oldStatus !== "assigned" &&
+        oldStatus !== "accepted" &&
+        oldStatus !== "driver_found"
+      ) {
+        const riderIdentityId = record?.rider_identity_id as string | undefined;
+        if (riderIdentityId) {
+          return {
+            target: "rider",
+            user_type: "rider",
+            user_id: riderIdentityId,
+            agent: "driver_agent",
+            category: "driver_found",
+            title: "Driver found",
+            body: "Your driver has been assigned.",
+            data: {
+              ride_request_id: rideRequestId,
+              screen: "active",
+              notification_type: "driver_assigned",
+            },
+            priority: "high",
+            channel: "both",
+          };
+        }
+      }
+
+      if (
         status === "accepted" &&
         oldStatus !== "accepted"
       ) {
@@ -108,6 +135,57 @@ export function buildAgentNotification(
               ride_request_id: rideRequestId,
               screen: "active",
               notification_type: "trip_started",
+            },
+            priority: "medium",
+            channel: "both",
+          };
+        }
+      }
+
+      if (
+        status === "completed" &&
+        oldStatus !== "completed" &&
+        oldStatus !== "payment_confirmed"
+      ) {
+        const riderIdentityId = record?.rider_identity_id as string | undefined;
+        if (riderIdentityId) {
+          return {
+            target: "rider",
+            user_type: "rider",
+            user_id: riderIdentityId,
+            agent: "driver_agent",
+            category: "trip_completed",
+            title: "Trip completed",
+            body: "You've arrived. Please confirm payment with your driver.",
+            data: {
+              ride_request_id: rideRequestId,
+              screen: "active",
+              notification_type: "trip_completed",
+            },
+            priority: "high",
+            channel: "both",
+          };
+        }
+      }
+
+      if (
+        status === "payment_confirmed" &&
+        oldStatus !== "payment_confirmed"
+      ) {
+        const riderIdentityId = record?.rider_identity_id as string | undefined;
+        if (riderIdentityId) {
+          return {
+            target: "rider",
+            user_type: "rider",
+            user_id: riderIdentityId,
+            agent: "driver_agent",
+            category: "payment_confirmed",
+            title: "Payment received",
+            body: "Thank you for riding with HeyCaby.",
+            data: {
+              ride_request_id: rideRequestId,
+              screen: "home",
+              notification_type: "payment_confirmed",
             },
             priority: "medium",
             channel: "both",
@@ -267,6 +345,7 @@ export function buildAgentNotification(
           notification_type: "ride_signal",
           signal_kind: "rider_message",
           message_id: record?.id ?? null,
+          source_event_id: record?.id ?? null,
         },
         priority: "medium",
         channel: "both",
@@ -294,6 +373,7 @@ export function buildAgentNotification(
             notification_type: "ride_signal",
             signal_kind: "driver_message",
             message_id: record?.id ?? null,
+            source_event_id: record?.id ?? null,
           },
           priority: "medium",
           channel: "both",
@@ -308,7 +388,14 @@ export function buildAgentNotification(
         category: "chat",
         title: "💬 [Driver]: " + preview,
         body: preview,
-        data: { ride_request_id: rideRequestId, screen: "chat" },
+        data: {
+          ride_request_id: rideRequestId,
+          screen: "chat",
+          notification_type: "ride_signal",
+          signal_kind: "driver_message",
+          message_id: record?.id ?? null,
+          source_event_id: record?.id ?? null,
+        },
         priority: "medium",
         channel: "both",
       };

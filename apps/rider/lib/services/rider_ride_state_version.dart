@@ -128,9 +128,11 @@ class RideStatePresentation {
 
 /// DB status for in-app providers — never synthetic LA-only phases like `driver_nearby`.
 String inferRideProviderStatus(RiderRideLifecycleSnapshot snapshot) {
+  final backend = (snapshot.providerStatus ?? '').trim().toLowerCase();
+  if (backend.isNotEmpty) return backend;
   final raw = (snapshot.status ?? '').trim().toLowerCase();
   final ps = (snapshot.paymentStatus ?? '').trim().toLowerCase();
-  if (ps == 'paid') return 'completed';
+  if (ps == 'paid' || ps == 'confirmed') return 'completed';
   if (raw == 'completed' || snapshot.completedAt != null) return 'completed';
   if (raw == 'in_progress' || snapshot.startedAt != null) return 'in_progress';
   if (snapshot.driverArrivedAt != null ||

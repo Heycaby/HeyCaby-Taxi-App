@@ -378,6 +378,14 @@ class DriverOpportunityOfferData {
   }
 
   static String? _resolveFareSubline(Map<String, dynamic> data) {
+    final feeCents = (data['service_fee_cents'] as num?)?.toInt();
+    final netCents = (data['estimated_driver_net_cents'] as num?)?.toInt();
+    if (feeCents != null && feeCents > 0 && netCents != null) {
+      return DriverStrings.incomingRideNetAfterServiceFee(
+        '€${(netCents / 100).toStringAsFixed(2)}',
+        '€${(feeCents / 100).toStringAsFixed(2)}',
+      );
+    }
     final source = data['fare_source'] as String?;
     final marketplace = (data['marketplace_offered_fare'] as num?)?.toDouble();
     if (marketplace != null && marketplace > 0) {

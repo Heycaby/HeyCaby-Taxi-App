@@ -1,7 +1,9 @@
 # HeyCaby Flutter — Technical Documentation
 
 **Living technical reference for the HeyCaby mobile monorepo** (shared Dart packages: `heycaby_*`).  
-*Last updated: April 2026* (scan: codebase + recent `main` history)
+*Last updated: July 2026.* Domain authority is defined in
+[the domain registry](./domains/registry.yaml); that registry supersedes any
+older architecture statement in this document.
 
 ---
 
@@ -27,11 +29,16 @@ HeyCaby is a **ride-hailing taxi platform** serving the Netherlands, comprising:
 |-----------|------------|---------|
 | **Rider App** | Flutter (Dart 3.3+) | Consumer booking, maps, ride tracking |
 | **Driver App** | Flutter (Dart 3.3+) | Chauffeur registration, ride acceptance, earnings |
-| **Backend API** | Next.js (external repo) | Driver status, ride lifecycle, auction/bidding |
-| **Database & Auth** | Supabase (Postgres) | Auth, Realtime, RLS, ride data |
+| **Business backend** | Supabase Postgres RPCs, triggers, RLS | Authoritative commands, state, invariants, audit |
+| **Integration workers** | Supabase Edge Functions | Provider orchestration and notification delivery; never a competing state owner |
+| **Database & Auth** | Supabase (Postgres/Auth) | Auth, Realtime, business state |
 | **Maps** | Mapbox | Geocoding, directions, map display |
 
-The Flutter monorepo contains both apps and shared packages. The **HeyCaby web** backend (Next.js, separate repository) is **not** modified by Flutter work.
+The Flutter monorepo contains both apps and shared packages. Flutter is a
+presentation/client-command layer. Ownership, money, eligibility, lifecycle,
+verification, and broadcast audiences change only through the domain command
+listed in [the registry](./domains/registry.yaml). Any separate web/admin
+repository must consume the same contracts.
 
 ### 1.2 Monorepo Structure
 
@@ -72,12 +79,14 @@ HEYCABY-FLUTTER/
 | Service | Location | Role |
 |---------|----------|------|
 | **Supabase** | `fvrprxguoternoxnyhoj.supabase.co` | Auth, Postgres, Realtime, Edge Functions |
-| **Next.js API** | `https://heycaby.nl` / `https://www.heycaby.nl` | Driver status, ride lifecycle, auction |
+| **HeyCaby web/admin** | Separate consumers | Marketing/admin presentation; must use canonical Supabase contracts |
 | **Mapbox** | Mapbox APIs | Geocoding, directions |
 
-- **Riders** create rides via **direct Supabase inserts** into `ride_requests`.
-- **Drivers** use the **Next.js API** with Supabase JWT (`Authorization: Bearer`) for status, location, accept/arrive/start/complete.
-- Edge Functions: `create-driver-veriff-session`, `driver-support-chat`, `rider-support-chat` (OpenRouter; see `docs/supabase/AI_CHAT_AGENT_BACKEND_SPEC.md`).
+- Low-risk creation and telemetry may use narrowly validated direct writes.
+- Ownership, dispatch acceptance, lifecycle, payment, receipt, readiness, and
+  administrative changes use auth-bound Postgres commands.
+- Edge Function source and gateway configuration are registered in
+  `supabase/functions/manifest.json`; production dashboard-only edits are prohibited.
 
 ### 1.5 Databases & Data Models
 

@@ -179,8 +179,9 @@ String subtitleRijbewijs(DriverComplianceSnapshot? d) {
 String subtitleVog(DriverComplianceSnapshot? d) {
   if (d == null) return DriverStrings.statusNotSet;
   if (d.vogImpliedByChauffeurspas == true) return DriverStrings.statusImplied;
-  if (d.vogExpiresAt != null)
+  if (d.vogExpiresAt != null) {
     return '${DriverStrings.expiresOn} ${fmtNlDate(d.vogExpiresAt!)}';
+  }
   return DriverStrings.complianceUploadPortal;
 }
 

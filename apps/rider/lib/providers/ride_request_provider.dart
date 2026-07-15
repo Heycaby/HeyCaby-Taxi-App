@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -14,6 +15,7 @@ import '../models/ride_matching_variant.dart';
 import '../services/booking_draft_storage.dart';
 import '../services/sound_service.dart';
 import '../services/heycaby_widget_sync.dart';
+import '../services/rider_notify_live_activity.dart';
 import '../services/nearby_supply_service.dart';
 import '../services/rider_device_permission_snapshot.dart';
 import '../services/rider_notification_lifecycle_service.dart';
@@ -103,6 +105,9 @@ String _rideRequestVehicleCategory(String? riderKey) {
 }
 
 class RideRequestNotifier extends Notifier<RideRequestState> {
+  String? _pendingCreateRequestId;
+  String? _pendingCreatePayloadSignature;
+
   @override
   RideRequestState build() => const RideRequestState();
 
@@ -444,16 +449,16 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
       final favoritesFirst = favoritesOnly || booking.favoritesFirst;
 
       final body = <String, dynamic>{
-        // PostGIS geography coordinates - POINT(lng lat)
-        'pickup_coords': 'POINT($pickupLng $pickupLat)',
-        'destination_coords': 'POINT($destLng $destLat)',
+        // The backend command owns PostGIS construction and writes both the
+        // geography and scalar coordinate projections atomically.
+        'pickup_lat': pickupLat,
+        'pickup_lng': pickupLng,
+        'destination_lat': destLat,
+        'destination_lng': destLng,
 
         // Address strings
         'pickup_address': booking.pickup!.fullAddress,
         'destination_address': booking.destination!.fullAddress,
-
-        // Status must be a valid enum value
-        'status': 'pending',
 
         // Matching (see supabase/migrations/20260329180000_ride_matching_cascade.sql)
         'booking_mode': bookingModeStorageString(booking.effectiveRideMode),
@@ -481,14 +486,11 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
         // Named-price rides: DB constraint requires marketplace_offered_fare.
         if (requiresNamedPrice) ...<String, dynamic>{
           'marketplace_offered_fare': booking.marketplaceBidEuro!,
-          ...HeyCabyRideFare.fareSnapshotForInsert(
-            booking.marketplaceBidEuro!.toDouble(),
-          ),
         },
         if (!requiresNamedPrice &&
             booking.quotedFareEuro != null &&
             booking.quotedFareEuro! > 0)
-          ...HeyCabyRideFare.fareSnapshotForInsert(booking.quotedFareEuro!),
+          'quoted_fare': booking.quotedFareEuro!,
 
         // Direct dispatch: target a specific driver (1 driver per job enforced by DB)
         if (booking.selectedDriverId != null)
@@ -506,11 +508,28 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
             .saveBookingName(pickupContactName);
       }
 
-      final response = await supabase
-          .from('ride_requests')
-          .insert(body)
-          .select('id, status, created_at, booking_mode')
-          .single();
+      final payloadSignature = jsonEncode(body);
+      if (_pendingCreatePayloadSignature != payloadSignature) {
+        _pendingCreatePayloadSignature = payloadSignature;
+        _pendingCreateRequestId = _generateGuestRiderToken();
+      }
+      body['request_id'] = _pendingCreateRequestId;
+
+      final rawResponse = await supabase.rpc(
+        'fn_rider_create_ride',
+        params: {'p_payload': body},
+      );
+      if (rawResponse is! Map) {
+        throw const FormatException('invalid_create_ride_response');
+      }
+      final response = Map<String, dynamic>.from(rawResponse);
+      if (response['ok'] != true) {
+        state = state.copyWith(
+          isLoading: false,
+          error: (response['error'] as String?) ?? 'ride_creation_failed',
+        );
+        return false;
+      }
 
       state = state.copyWith(
         isLoading: false,
@@ -522,6 +541,8 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
             bookingModeStorageString(booking.effectiveRideMode),
         riderToken: riderToken,
       );
+      _pendingCreateRequestId = null;
+      _pendingCreatePayloadSignature = null;
 
       // Confirm booking with sound + haptic
       SoundService().playBookingCreated();
@@ -729,6 +750,7 @@ class RideRequestNotifier extends Notifier<RideRequestState> {
 
   void reset() {
     unawaited(HeycabyWidgetSync.clearAll());
+    unawaited(RiderNotifyLiveActivity.end());
     state = const RideRequestState();
   }
 

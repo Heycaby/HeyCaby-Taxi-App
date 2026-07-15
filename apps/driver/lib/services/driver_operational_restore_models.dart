@@ -1,5 +1,6 @@
 import '../providers/driver_state_provider.dart';
 import '../utils/driver_ride_coord_utils.dart';
+import 'package:heycaby_utils/heycaby_utils.dart';
 
 /// Maps server `drivers.status` to client availability (no active ride).
 DriverAppState driverAvailabilityFromServerStatus(String? status) {
@@ -75,6 +76,11 @@ class DriverActiveRideSnapshot {
     required this.destinationAddress,
     required this.destinationLat,
     required this.destinationLng,
+    this.bookedDestinationAddress,
+    this.bookedDestinationLat,
+    this.bookedDestinationLng,
+    this.routeStops = const [],
+    this.routeRevision = 0,
     required this.bookingMode,
     required this.paymentMethod,
     required this.riderContactName,
@@ -88,6 +94,11 @@ class DriverActiveRideSnapshot {
   final String? destinationAddress;
   final double? destinationLat;
   final double? destinationLng;
+  final String? bookedDestinationAddress;
+  final double? bookedDestinationLat;
+  final double? bookedDestinationLng;
+  final List<ActiveRideRouteStop> routeStops;
+  final int routeRevision;
   final String? bookingMode;
   final String? paymentMethod;
   final String? riderContactName;
@@ -97,15 +108,21 @@ class DriverActiveRideSnapshot {
     enrichDriverRideRequestCoords(map);
     final rideId = map['id'] as String;
     final status = map['status'] as String?;
+    final route = ActiveRideRouteState.fromRideRow(map);
     return DriverActiveRideSnapshot(
       rideId: rideId,
       appState: driverAppStateFromRideStatus(status),
       pickupAddress: map['pickup_address'] as String?,
       pickupLat: (map['pickup_lat'] as num?)?.toDouble(),
       pickupLng: (map['pickup_lng'] as num?)?.toDouble(),
-      destinationAddress: map['destination_address'] as String?,
-      destinationLat: (map['destination_lat'] as num?)?.toDouble(),
-      destinationLng: (map['destination_lng'] as num?)?.toDouble(),
+      destinationAddress: route.destinationAddress,
+      destinationLat: route.destinationLat,
+      destinationLng: route.destinationLng,
+      bookedDestinationAddress: route.bookedDestinationAddress,
+      bookedDestinationLat: route.bookedDestinationLat,
+      bookedDestinationLng: route.bookedDestinationLng,
+      routeStops: route.stops,
+      routeRevision: route.routeRevision,
       bookingMode: map['booking_mode'] as String?,
       paymentMethod: _paymentMethodFromRow(map),
       riderContactName: map['pickup_contact_name'] as String?,

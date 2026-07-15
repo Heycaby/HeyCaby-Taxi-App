@@ -234,6 +234,15 @@ class _DriverBankTransferSheet extends StatelessWidget {
                     height: 1.4,
                   ),
                 ),
+                const SizedBox(height: DriverSpacing.lg),
+                Text(
+                  DriverStrings.platformBalanceSettlementFooter,
+                  style: typography.bodySmall.copyWith(
+                    color: colors.textMuted,
+                    height: 1.4,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
                 if (allowOnlineFallback) ...[
                   const SizedBox(height: DriverSpacing.xl),
                   TextButton.icon(

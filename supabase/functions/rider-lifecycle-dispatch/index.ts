@@ -1,5 +1,10 @@
 import { GoogleAuth } from "npm:google-auth-library@9.15.1";
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import {
+  createClient,
+  type SupabaseClient,
+} from "jsr:@supabase/supabase-js@2";
+
+import { resolveLifecycleDispatchSecret } from "./auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -89,7 +94,7 @@ async function sendFcmToToken(
   return res.ok;
 }
 
-async function dispatchJob(supabase: ReturnType<typeof createClient>, job: LifecycleJob) {
+async function dispatchJob(supabase: SupabaseClient<any>, job: LifecycleJob) {
   const { data: profile } = await supabase
     .from("rider_notification_profiles")
     .select("notifications_enabled")
@@ -185,23 +190,30 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const dispatchSecret = Deno.env.get("LIFECYCLE_DISPATCH_SECRET");
-    const incomingSecret = req.headers.get("x-webhook-secret");
-    if (!dispatchSecret || incomingSecret !== dispatchSecret) {
-      return jsonResponse({ success: false, error: "unauthorized" }, 401);
-    }
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!supabaseUrl || !serviceRoleKey) {
       return jsonResponse({ success: false, error: "missing_supabase_env" }, 500);
     }
 
-    const body = await req.json().catch(() => ({}));
-    const limit = Math.min(Math.max(Number(body?.limit ?? 50), 1), 200);
     const supabase = createClient(supabaseUrl, serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
+    const { data: vaultSecret } = await supabase.rpc(
+      "fn_rider_agent_webhook_secret",
+    );
+    const dispatchSecret = resolveLifecycleDispatchSecret(vaultSecret);
+    const incomingSecret = req.headers.get("x-webhook-secret");
+    if (!dispatchSecret || incomingSecret !== dispatchSecret) {
+      return jsonResponse({ success: false, error: "unauthorized" }, 401);
+    }
+
+    const body = await req.json().catch(() => ({}));
+    if (body?.dry_run === true) {
+      return jsonResponse({ success: true, mode: "dry_run" });
+    }
+
+    const limit = Math.min(Math.max(Number(body?.limit ?? 50), 1), 200);
 
     const { data: jobs, error: claimError } = await supabase
       .rpc("fn_claim_due_rider_lifecycle_jobs", { p_limit: limit });

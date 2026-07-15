@@ -19,6 +19,7 @@ import '../services/heycaby_widget_sync.dart';
 import '../services/nearby_supply_service.dart';
 import '../services/rider_dispatch_status_service.dart';
 import '../services/rider_matching_recovery_actions.dart';
+import '../services/rider_ride_lifecycle_engine.dart';
 import '../widgets/booking/matching_search_map_view.dart';
 import '../widgets/booking/matching_search_sheet.dart';
 import '../widgets/booking/trip_summary_map_view.dart';
@@ -48,7 +49,6 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
   late final List<AnimationController> _radarControllers;
   late final AnimationController _radarSweepController;
 
-  RealtimeChannel? _channel;
   RealtimeChannel? _bidsChannel;
   Timer? _clockTimer;
   Timer? _widgetTimer;
@@ -156,7 +156,7 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
     }
 
     _startTimersAndFacts();
-    _subscribeToRide();
+    _startDispatchRecovery();
     _subscribeMarketplaceBids();
     _scheduleSearchWindowExpiry();
     _pushScheduledWidgetIfNeeded();
@@ -279,7 +279,6 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
   Future<void> _onForegroundSearchExpired() async {
     if (!mounted) return;
     _searchWindowTimer?.cancel();
-    _channel?.unsubscribe();
     final cancelled =
         await ref.read(rideRequestProvider.notifier).cancelStaleOpenRequest();
     if (!cancelled) return;
@@ -381,7 +380,6 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
       c.dispose();
     }
     _radarSweepController.dispose();
-    _channel?.unsubscribe();
     _bidsChannel?.unsubscribe();
     _clockTimer?.cancel();
     _widgetTimer?.cancel();
@@ -394,62 +392,9 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
     super.dispose();
   }
 
-  void _subscribeToRide() {
+  void _startDispatchRecovery() {
     final rideId = ref.read(rideRequestProvider).rideRequestId;
     if (rideId == null) return;
-
-    _channel = HeyCabySupabase.client
-        .channel('ride_request:$rideId')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.update,
-          schema: 'public',
-          table: 'ride_requests',
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'id',
-            value: rideId,
-          ),
-          callback: (payload) async {
-            final newStatus = payload.newRecord['status'] as String?;
-            if (newStatus == null) return;
-            ref.read(rideRequestProvider.notifier).updateStatus(newStatus);
-            if (newStatus == 'assigned' ||
-                newStatus == 'accepted' ||
-                newStatus == 'driver_found' ||
-                newStatus == 'driver_en_route') {
-              final id = ref.read(rideRequestProvider).rideRequestId;
-              final pickup =
-                  ref.read(bookingProvider).pickup?.displayName ?? '';
-              if (id != null) {
-                await HeycabyWidgetSync.refreshInstantDriverFromRide(
-                  rideId: id,
-                  pickup: pickup,
-                );
-              }
-              if (mounted) context.go('/active');
-              return;
-            }
-            const terminalNoMatch = {
-              'cancelled',
-              'canceled',
-              'rejected',
-              'declined',
-              'missed',
-              'expired',
-            };
-            if (terminalNoMatch.contains(newStatus) && mounted) {
-              await RiderMatchingRecoveryActions.clearLocalMatchingState(ref);
-              if (!mounted) return;
-              ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                SnackBar(
-                    content: Text(
-                        AppLocalizations.of(context).noDriverFoundMessage)),
-              );
-              context.go('/home');
-            }
-          },
-        )
-        .subscribe();
 
     _matchingExpandTimer?.cancel();
     _matchingExpandTimer =
@@ -471,6 +416,49 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
     _dispatchPollTimer = Timer.periodic(
         const Duration(seconds: 2), (_) => _pollDispatchStatus(rideId));
     unawaited(_pollDispatchStatus(rideId));
+  }
+
+  Future<void> _handleLifecycleRecord(
+    RiderRideBackendRecord projection,
+  ) async {
+    if (!mounted) return;
+    final rideId = ref.read(rideRequestProvider).rideRequestId;
+    if (rideId == null || projection.rideRequestId != rideId) return;
+    final newStatus =
+        (projection.record['provider_status'] ?? projection.record['status'])
+            ?.toString()
+            .toLowerCase();
+    if (newStatus == null || newStatus.isEmpty) return;
+
+    if (newStatus == 'assigned' ||
+        newStatus == 'accepted' ||
+        newStatus == 'driver_found' ||
+        newStatus == 'driver_en_route') {
+      await HeycabyWidgetSync.refreshInstantDriverFromRide(
+        rideId: rideId,
+        pickup: ref.read(bookingProvider).pickup?.displayName ?? '',
+      );
+      if (mounted) context.go('/active');
+      return;
+    }
+
+    const terminalNoMatch = {
+      'cancelled',
+      'canceled',
+      'rejected',
+      'declined',
+      'missed',
+      'expired',
+    };
+    if (!terminalNoMatch.contains(newStatus)) return;
+    await RiderMatchingRecoveryActions.clearLocalMatchingState(ref);
+    if (!mounted) return;
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text(AppLocalizations.of(context).noDriverFoundMessage),
+      ),
+    );
+    context.go('/home');
   }
 
   Future<void> _pollDispatchStatus(String rideId) async {
@@ -740,6 +728,12 @@ class _SearchingScreenState extends ConsumerState<SearchingScreen>
     final screenH = MediaQuery.sizeOf(context).height;
     final sheetInitialSize = _searchExpired ? 0.34 : 0.31;
     final topInset = MediaQuery.paddingOf(context).top;
+    ref.listen<RiderRideBackendRecord?>(
+      riderRideBackendRecordProvider,
+      (previous, next) {
+        if (next != null) unawaited(_handleLifecycleRecord(next));
+      },
+    );
 
     void onEditRoute(bool isPickup) => context.push(
           '/search',

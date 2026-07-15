@@ -11,6 +11,8 @@ import 'package:supabase_flutter/supabase_flutter.dart'
 import '../l10n/driver_strings.dart';
 import '../models/driver_taxi_terug_queued_status.dart';
 import '../models/driver_taxi_terug_stats.dart';
+import '../models/driver_ride_line_board.dart';
+import '../utils/taxi_terug_wizard_contract.dart';
 import '../models/driver_taxi_thru_rider_post.dart';
 
 /// Thrown when profile photo upload fails due to TLS/network (e.g. SSLV3_ALERT_BAD_RECORD_MAC).
@@ -316,9 +318,10 @@ class DriverDataService {
       final res = await _client.rpc(
         'get_driver_earnings_summary',
         params: {'p_driver_id': driverId},
-      ) as Map<String, dynamic>?;
-      if (res != null) {
-        return DriverEarningsSummary.fromJson(res);
+      );
+      final row = _firstRpcRow(res);
+      if (row != null) {
+        return DriverEarningsSummary.fromJson(row);
       }
     } catch (_) {
       // RPC can be absent on older DB schemas; fallback below.
@@ -328,6 +331,7 @@ class DriverDataService {
       final todayStart = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
       final weekStart =
           todayStart.subtract(Duration(days: todayStart.weekday - 1));
+      final biweeklyStart = todayStart.subtract(const Duration(days: 13));
       final monthStart = DateTime(nowLocal.year, nowLocal.month, 1);
       final monthTrips = await _loadCompletedTripEarningsSince(
         driverId: driverId,
@@ -337,6 +341,8 @@ class DriverDataService {
       int todayRides = 0;
       double weekEuros = 0;
       int weekRides = 0;
+      double biweeklyEuros = 0;
+      int biweeklyRides = 0;
       double monthEuros = 0;
       int monthRides = 0;
       for (final trip in monthTrips) {
@@ -345,6 +351,10 @@ class DriverDataService {
         if (localTime.isBefore(monthStart)) continue;
         monthEuros += fare;
         monthRides += 1;
+        if (!localTime.isBefore(biweeklyStart)) {
+          biweeklyEuros += fare;
+          biweeklyRides += 1;
+        }
         if (!localTime.isBefore(weekStart)) {
           weekEuros += fare;
           weekRides += 1;
@@ -359,12 +369,25 @@ class DriverDataService {
         todayRides: todayRides,
         weekEuros: weekEuros,
         weekRides: weekRides,
+        biweeklyEuros: biweeklyEuros,
+        biweeklyRides: biweeklyRides,
         monthEuros: monthEuros,
         monthRides: monthRides,
       );
     } catch (_) {
       return null;
     }
+  }
+
+  Map<String, dynamic>? _firstRpcRow(dynamic res) {
+    if (res is List && res.isNotEmpty) {
+      final first = res.first;
+      if (first is Map<String, dynamic>) return first;
+      if (first is Map) return Map<String, dynamic>.from(first);
+    }
+    if (res is Map<String, dynamic>) return res;
+    if (res is Map) return Map<String, dynamic>.from(res);
+    return null;
   }
 
   /// zone_demand_live view — poll every 30s for map circles.
@@ -628,6 +651,7 @@ class DriverDataService {
 
       addIfMissing(profileName: 'Morning', sortOrder: 10, multiplier: 1.0);
       addIfMissing(profileName: 'Evening', sortOrder: 20, multiplier: 1.1);
+      addIfMissing(profileName: 'Weekend', sortOrder: 25, multiplier: 1.15);
       addIfMissing(profileName: 'Late Night', sortOrder: 30, multiplier: 1.25);
 
       if (inserts.isNotEmpty) {
@@ -696,6 +720,17 @@ class DriverDataService {
       'target_type': targetType,
       'target_amount': targetAmount,
     }, onConflict: 'driver_id,target_type');
+  }
+
+  Future<void> deleteEarningsTarget(
+    String driverId,
+    String targetType,
+  ) async {
+    await _client
+        .from('driver_earnings_targets')
+        .delete()
+        .eq('driver_id', driverId)
+        .eq('target_type', targetType);
   }
 
   /// Recent tickets for Driver Hub help section.
@@ -817,6 +852,20 @@ class DriverDataService {
     }
   }
 
+  /// Pending scheduled ride count from [scheduled_rides_available] (Supabase view).
+  Future<int> getScheduledRidesAvailableCount({String? zoneId}) async {
+    try {
+      var query = _client.from('scheduled_rides_available').select('id');
+      if (zoneId != null && zoneId.isNotEmpty) {
+        query = query.eq('zone_id', zoneId);
+      }
+      final res = await query.limit(500);
+      return (res as List).length;
+    } catch (_) {
+      return 0;
+    }
+  }
+
   /// scheduled_rides_available view — for home card count and scheduled screen.
   /// tab: 'requests' = pending, 'confirmed' = driver accepted.
   /// [zoneId] filters by pickup zone so drivers only see rides in their area.
@@ -832,7 +881,7 @@ class DriverDataService {
       }
       var query = _client.from('scheduled_rides_available').select();
       if (zoneId != null && zoneId.isNotEmpty) {
-        query = query.eq('pickup_zone_id', zoneId);
+        query = query.eq('zone_id', zoneId);
       }
       final res = await query
           .order('scheduled_pickup_at', ascending: true)
@@ -854,6 +903,8 @@ class DriverDataService {
           .select(
             'id, status, pickup_address, pickup_lat, pickup_lng, '
             'destination_address, destination_lat, destination_lng, '
+            'booked_destination_address, booked_destination_lat, booked_destination_lng, '
+            'route_stops, route_revision, pending_route_change, '
             'pickup_coords, destination_coords, dispatch_state, '
             'booking_mode, payment_method, payment_methods, pickup_contact_name',
           )
@@ -891,6 +942,123 @@ class DriverDataService {
     try {
       final res = await _client.rpc('fn_driver_taxi_terug_queue_status');
       return DriverTaxiTerugQueuedStatus.parseRpc(res);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Next ride queued until the current trip completes (all booking modes).
+  Future<Map<String, dynamic>?> fetchNextRideQueue({
+    String? activeRideId,
+  }) async {
+    try {
+      final res = await _client.rpc(
+        'fn_driver_next_ride_queue',
+        params: {
+          if (activeRideId != null && activeRideId.isNotEmpty)
+            'p_active_ride_id': activeRideId,
+        },
+      );
+      final map = _mapFromRpc(res);
+      if (map['has_queued'] != true) return null;
+      return map;
+    } catch (_) {
+      // Fallback to legacy Terug-only RPC when migration is not applied yet.
+      final terug = await fetchTaxiTerugQueueStatus();
+      if (terug == null || !terug.hasQueued || terug.rideId == null) {
+        return null;
+      }
+      return {
+        'has_queued': true,
+        'ride_id': terug.rideId,
+        'pickup_address': terug.pickupAddress,
+        'destination_address': terug.destinationAddress,
+        'pickup_zone_name': null,
+        'destination_zone_name': terug.destinationLabel,
+        'offered_fare': null,
+        'booking_mode': 'terug',
+        'queued_after_ride_id': terug.queuedAfterRideId,
+        'estimated_pickup_minutes': terug.estimatedPickupMinutes,
+        'pickup_available_min': terug.pickupAvailableMin,
+        'pickup_available_max': terug.pickupAvailableMax,
+      };
+    }
+  }
+
+  Future<DriverMissedOpportunitySummary> fetchMissedOpportunitiesSummary() async {
+    try {
+      final res = await _client.rpc('fn_driver_missed_opportunities_summary');
+      final map = _mapFromRpc(res);
+      if (map['ok'] != true) return const DriverMissedOpportunitySummary();
+      return DriverMissedOpportunitySummary(
+        countToday: (map['count_today'] as num?)?.toInt() ?? 0,
+        fareTotalToday: (map['fare_total_today'] as num?)?.toDouble() ?? 0,
+      );
+    } catch (_) {
+      return const DriverMissedOpportunitySummary();
+    }
+  }
+
+  Future<List<DriverMissedOpportunity>> fetchMissedOpportunities({
+    int limit = 50,
+  }) async {
+    try {
+      final res = await _client.rpc(
+        'fn_driver_missed_opportunities_list',
+        params: {'p_limit': limit},
+      );
+      final map = _mapFromRpc(res);
+      if (map['ok'] != true) return const [];
+      final items = map['items'];
+      if (items is! List) return const [];
+      return items
+          .whereType<Map>()
+          .map((e) => DriverMissedOpportunity.fromJson(
+                Map<String, dynamic>.from(e),
+              ))
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<void> recordMissedOpportunity({
+    required String rideRequestId,
+    String? pickupZoneName,
+    String? destinationZoneName,
+    double? offeredFare,
+  }) async {
+    try {
+      await _client.rpc(
+        'fn_driver_record_missed_opportunity',
+        params: {
+          'p_ride_request_id': rideRequestId,
+          'p_pickup_zone_name': pickupZoneName,
+          'p_destination_zone_name': destinationZoneName,
+          'p_offered_fare': offeredFare,
+        },
+      );
+    } catch (_) {
+      // Best-effort; ride line still works without missed ledger.
+    }
+  }
+
+  /// Zone names + fare for a ride request (ride line display).
+  Future<Map<String, dynamic>?> fetchRideLineRideRow(String rideId) async {
+    if (rideId.trim().isEmpty) return null;
+    try {
+      final row = await _client
+          .from('ride_requests')
+          .select(
+            'id, status, pickup_address, destination_address, booking_mode, '
+            'offered_fare, marketplace_offered_fare, estimated_fare, quoted_fare, '
+            'pickup_zone:bubble_zones!pickup_zone_id(name_display), '
+            'destination_zone:bubble_zones!destination_zone_id(name_display)',
+          )
+          .eq('id', rideId)
+          .maybeSingle();
+      if (row == null) return null;
+      return Map<String, dynamic>.from(row);
     } catch (_) {
       return null;
     }
@@ -1170,49 +1338,83 @@ class DriverDataService {
   }
 
   /// Full ride history for current driver, including manual rides.
+  static const _myRideSelect =
+      'id, created_at, completed_at, scheduled_pickup_at, status, pickup_address, destination_address, '
+      'final_fare, quoted_fare, offered_fare, estimated_fare, '
+      'marketplace_offered_fare, manual_fare_cents, manual_entry, currency, '
+      'waiting_fee_cents, waiting_fee_waived, booking_mode, payment_status, '
+      'driver_payment_confirmed_at, dispatch_state';
+
+  List<MyRideSummary> _parseMyRideRows(dynamic res) {
+    final rows = (res as List).whereType<Map>().toList();
+    final rides = <MyRideSummary>[];
+    for (final raw in rows) {
+      try {
+        rides.add(MyRideSummary.fromJson(Map<String, dynamic>.from(raw)));
+      } catch (_) {
+        // Skip malformed rows; do not fail the whole ledger.
+      }
+    }
+    return rides;
+  }
+
+  /// Rolling 24-hour window start (UTC) for the Today board.
+  String _rolling24HourStartIso() {
+    return DateTime.now()
+        .toUtc()
+        .subtract(const Duration(hours: 24))
+        .toIso8601String();
+  }
+
+  DateTime? _rideActivityAt(MyRideSummary ride) =>
+      ride.completedAt ?? ride.scheduledPickupAt ?? ride.createdAt;
+
+  void _sortRidesNewestFirst(List<MyRideSummary> rides) {
+    rides.sort((a, b) {
+      final aWhen = _rideActivityAt(a);
+      final bWhen = _rideActivityAt(b);
+      if (aWhen == null && bWhen == null) return 0;
+      if (aWhen == null) return 1;
+      if (bWhen == null) return -1;
+      return bWhen.compareTo(aWhen);
+    });
+  }
+
   Future<List<MyRideSummary>> getMyRides(String driverId) async {
     try {
       final res = await _client
           .from('ride_requests')
-          .select(
-            'id, created_at, status, pickup_address, destination_address, '
-            'final_fare, quoted_fare, offered_fare, estimated_fare, '
-            'marketplace_offered_fare, manual_fare_cents, manual_entry, currency, '
-            'waiting_fee_cents, waiting_fee_waived',
-          )
+          .select(_myRideSelect)
           .eq('driver_id', driverId)
           .order('created_at', ascending: false)
           .limit(200);
-      final rows = (res as List).whereType<Map>().toList();
-      return rows
-          .map((raw) => MyRideSummary.fromJson(Map<String, dynamic>.from(raw)))
-          .toList();
+      final rides = _parseMyRideRows(res);
+      _sortRidesNewestFirst(rides);
+      return rides;
     } catch (_) {
       return const [];
     }
   }
 
-  /// Today's rides for current driver — all statuses (completed, upcoming, cancelled).
+  /// Rides in the last 24 hours — all statuses and booking modes.
+  ///
+  /// Single source: [ride_requests]. Includes instant, scheduled, Taxi Terug,
+  /// and manual rides created, completed, or scheduled within the rolling day.
   Future<List<MyRideSummary>> getTodayMyRides(String driverId) async {
     try {
-      final todayStart =
-          DateTime.now().toUtc().toIso8601String().substring(0, 10);
+      final since = _rolling24HourStartIso();
       final res = await _client
           .from('ride_requests')
-          .select(
-            'id, created_at, status, pickup_address, destination_address, '
-            'final_fare, quoted_fare, offered_fare, estimated_fare, '
-            'marketplace_offered_fare, manual_fare_cents, manual_entry, currency, '
-            'waiting_fee_cents, waiting_fee_waived',
-          )
+          .select(_myRideSelect)
           .eq('driver_id', driverId)
-          .gte('created_at', todayStart)
+          .or(
+            'created_at.gte.$since,completed_at.gte.$since,scheduled_pickup_at.gte.$since',
+          )
           .order('created_at', ascending: false)
           .limit(100);
-      final rows = (res as List).whereType<Map>().toList();
-      return rows
-          .map((raw) => MyRideSummary.fromJson(Map<String, dynamic>.from(raw)))
-          .toList();
+      final rides = _parseMyRideRows(res);
+      _sortRidesNewestFirst(rides);
+      return rides;
     } catch (_) {
       return const [];
     }
@@ -1232,7 +1434,8 @@ class DriverDataService {
             'marketplace_offered_fare, manual_fare_cents, manual_entry, currency, '
             'payment_method, manual_payment_method, platform_fee_cents, '
             'driver_earnings_cents, estimated_distance_km, waiting_fee_cents, '
-            'waiting_fee_waived',
+            'waiting_fee_waived, booking_mode, payment_status, '
+            'driver_payment_confirmed_at, dispatch_state',
           )
           .eq('id', rideId);
       if (driverId != null && driverId.isNotEmpty) {
@@ -1868,34 +2071,104 @@ class DriverDataService {
     DateTime? departureTime,
     double? destinationRadiusKm,
   }) {
-    final params = <String, dynamic>{
+    final intent = intentType?.trim();
+    return {
       'p_destination_label': destinationLabel,
       'p_destination_zone_id': destinationZoneId,
       'p_destination_lat': destinationLat,
       'p_destination_lng': destinationLng,
-      'p_pickup_radius_km': pickupRadiusKm,
-      'p_return_discount_pct': returnDiscountPct,
+      'p_pickup_radius_km': pickupRadiusKm == null
+          ? null
+          : TaxiTerugWizardContract.clampPickupRadiusKm(pickupRadiusKm),
+      'p_return_discount_pct': returnDiscountPct == null
+          ? null
+          : TaxiTerugWizardContract.clampDiscountPct(returnDiscountPct),
+      // Always send the 9-arg RPC shape so PostgREST does not fail to resolve
+      // overloaded fn_driver_return_mode_activate signatures on the server.
+      'p_intent_type':
+          intent != null && intent.isNotEmpty ? intent : null,
+      'p_departure_time': departureTime?.toUtc().toIso8601String(),
+      'p_destination_radius_km': destinationRadiusKm == null
+          ? null
+          : TaxiTerugWizardContract.clampDropDistanceKm(destinationRadiusKm),
     };
-    final intent = intentType?.trim();
-    if (intent != null && intent.isNotEmpty) {
-      params['p_intent_type'] = intent;
-    }
-    if (departureTime != null) {
-      params['p_departure_time'] = departureTime.toUtc().toIso8601String();
-    }
-    if (destinationRadiusKm != null) {
-      params['p_destination_radius_km'] = destinationRadiusKm;
-    }
-    return params;
   }
 
   String _returnModeRpcErrorCode(PostgrestException e) {
+    if (kDebugMode) {
+      debugPrint(
+        'Return mode RPC failed (${e.code}): ${e.message}',
+      );
+    }
     final message = e.message.toLowerCase();
+    // Only map PostgREST function-resolution failures — not generic SQL
+    // "does not exist" errors from inside the RPC body.
     if (message.contains('could not find the function') ||
-        message.contains('does not exist')) {
+        message.contains('could not choose a function') ||
+        message.contains('multiple functions')) {
       return 'rpc_not_deployed';
     }
     return 'rpc_error';
+  }
+
+  /// Persists the driver's home area for Taxi Terug (profile + last known coords).
+  /// Returns [zoneId] when [get_zone_at_point] resolves a bubble zone.
+  Future<({bool ok, String? zoneId})> saveDriverHomeLocation({
+    required String homeCity,
+    double? lat,
+    double? lng,
+  }) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return (ok: false, zoneId: null);
+    final label = homeCity.trim();
+    if (label.isEmpty) return (ok: false, zoneId: null);
+
+    String? zoneId;
+    if (lat != null && lng != null) {
+      zoneId = await resolveZoneIdAtPoint(lat: lat, lng: lng);
+    }
+
+    try {
+      final updates = <String, dynamic>{
+        'home_city': label,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      };
+      if (lat != null && lng != null) {
+        updates['return_mode_destination_lat'] = lat;
+        updates['return_mode_destination_lng'] = lng;
+        updates['return_mode_destination_label'] = label;
+      }
+      if (zoneId != null && zoneId.isNotEmpty) {
+        updates['heading_home_zone_id'] = zoneId;
+      }
+      await _client.from('drivers').update(updates).eq('user_id', uid);
+      return (ok: true, zoneId: zoneId);
+    } catch (e) {
+      if (kDebugMode) debugPrint('saveDriverHomeLocation: $e');
+      return (ok: false, zoneId: zoneId);
+    }
+  }
+
+  /// Bubble zone at a lat/lng (for Taxi Terug home + marketplace filters).
+  Future<String?> resolveZoneIdAtPoint({
+    required double lat,
+    required double lng,
+  }) async {
+    try {
+      final res = await _client.rpc(
+        'get_zone_at_point',
+        params: {'p_lat': lat, 'p_lng': lng},
+      );
+      if (res is List && res.isNotEmpty) {
+        final row = res.first;
+        if (row is Map) {
+          return row['zone_id'] as String?;
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('resolveZoneIdAtPoint: $e');
+    }
+    return null;
   }
 
   Future<DriverReturnModeStatus> activateReturnMode({
@@ -3628,6 +3901,8 @@ class DriverEarningsSummary {
   final int todayRides;
   final double weekEuros;
   final int weekRides;
+  final double biweeklyEuros;
+  final int biweeklyRides;
   final double monthEuros;
   final int monthRides;
 
@@ -3636,18 +3911,38 @@ class DriverEarningsSummary {
     this.todayRides = 0,
     this.weekEuros = 0,
     this.weekRides = 0,
+    this.biweeklyEuros = 0,
+    this.biweeklyRides = 0,
     this.monthEuros = 0,
     this.monthRides = 0,
   });
 
+  static double _amount(Map<String, dynamic> j, List<String> keys) {
+    for (final key in keys) {
+      final v = j[key];
+      if (v is num) return v.toDouble();
+    }
+    return 0;
+  }
+
+  static int _count(Map<String, dynamic> j, List<String> keys) {
+    for (final key in keys) {
+      final v = j[key];
+      if (v is num) return v.toInt();
+    }
+    return 0;
+  }
+
   static DriverEarningsSummary fromJson(Map<String, dynamic> j) {
     return DriverEarningsSummary(
-      todayEuros: (j['today_euros'] as num?)?.toDouble() ?? 0,
-      todayRides: (j['today_rides'] as num?)?.toInt() ?? 0,
-      weekEuros: (j['week_euros'] as num?)?.toDouble() ?? 0,
-      weekRides: (j['week_rides'] as num?)?.toInt() ?? 0,
-      monthEuros: (j['month_euros'] as num?)?.toDouble() ?? 0,
-      monthRides: (j['month_rides'] as num?)?.toInt() ?? 0,
+      todayEuros: _amount(j, ['today_euros', 'today_earnings']),
+      todayRides: _count(j, ['today_rides']),
+      weekEuros: _amount(j, ['week_euros', 'week_earnings']),
+      weekRides: _count(j, ['week_rides']),
+      biweeklyEuros: _amount(j, ['biweekly_euros', 'biweekly_earnings']),
+      biweeklyRides: _count(j, ['biweekly_rides']),
+      monthEuros: _amount(j, ['month_euros', 'month_earnings']),
+      monthRides: _count(j, ['month_rides']),
     );
   }
 
@@ -4235,6 +4530,13 @@ class MyRideSummary {
   final double? fare;
   final String? currency;
   final bool manualEntry;
+  final String? bookingMode;
+  final String? paymentStatus;
+  final DateTime? driverPaymentConfirmedAt;
+  final DateTime? completedAt;
+  final DateTime? scheduledPickupAt;
+  final double? emptyKmSaved;
+  final double? taxiTerugEarningsEuros;
 
   const MyRideSummary({
     required this.id,
@@ -4245,13 +4547,38 @@ class MyRideSummary {
     required this.fare,
     required this.currency,
     required this.manualEntry,
+    this.bookingMode,
+    this.paymentStatus,
+    this.driverPaymentConfirmedAt,
+    this.completedAt,
+    this.scheduledPickupAt,
+    this.emptyKmSaved,
+    this.taxiTerugEarningsEuros,
   });
+
+  bool get isTaxiTerugRide => (bookingMode ?? '').trim() == 'terug';
+
+  bool get isPaymentCollected {
+    if (driverPaymentConfirmedAt != null) return true;
+    final ps = (paymentStatus ?? '').trim().toLowerCase();
+    return ps == 'confirmed' || ps == 'paid';
+  }
+
+  /// Completed Taxi Terug ride with payment collected (matches stats RPC).
+  bool get isTaxiTerugPaidCompleted =>
+      isTaxiTerugRide && status == 'completed' && isPaymentCollected;
 
   factory MyRideSummary.fromJson(Map<String, dynamic> j) {
     final manualFare = (j['manual_fare_cents'] as num?)?.toDouble();
     final resolved = manualFare != null
         ? manualFare / 100.0
         : HeyCabyRideFare.resolveTotalEuroFromRow(j);
+    final dispatch = j['dispatch_state'];
+    Map<String, dynamic>? dispatchMap;
+    if (dispatch is Map) {
+      dispatchMap = Map<String, dynamic>.from(dispatch);
+    }
+    double? dbl(dynamic v) => (v as num?)?.toDouble();
     return MyRideSummary(
       id: (j['id'] as String?) ?? '',
       createdAt: DateTime.tryParse((j['created_at'] as String?) ?? ''),
@@ -4261,6 +4588,17 @@ class MyRideSummary {
       fare: resolved,
       currency: j['currency'] as String?,
       manualEntry: j['manual_entry'] == true,
+      bookingMode: j['booking_mode'] as String?,
+      paymentStatus: j['payment_status'] as String?,
+      driverPaymentConfirmedAt: DateTime.tryParse(
+        (j['driver_payment_confirmed_at'] as String?) ?? '',
+      ),
+      completedAt:
+          DateTime.tryParse((j['completed_at'] as String?) ?? ''),
+      scheduledPickupAt:
+          DateTime.tryParse((j['scheduled_pickup_at'] as String?) ?? ''),
+      emptyKmSaved: dbl(dispatchMap?['empty_km_saved']),
+      taxiTerugEarningsEuros: dbl(dispatchMap?['taxi_terug_earnings_euros']),
     );
   }
 }
@@ -4271,7 +4609,6 @@ class MyRideDetails extends MyRideSummary {
   final int? platformFeeCents;
   final int? driverEarningsCents;
   final double? distanceKm;
-  final DateTime? completedAt;
   final DateTime? startedAt;
 
   const MyRideDetails({
@@ -4283,11 +4620,17 @@ class MyRideDetails extends MyRideSummary {
     required super.fare,
     required super.currency,
     required super.manualEntry,
+    super.bookingMode,
+    super.paymentStatus,
+    super.driverPaymentConfirmedAt,
+    super.completedAt,
+    super.scheduledPickupAt,
+    super.emptyKmSaved,
+    super.taxiTerugEarningsEuros,
     required this.paymentMethod,
     required this.platformFeeCents,
     required this.driverEarningsCents,
     required this.distanceKm,
-    required this.completedAt,
     required this.startedAt,
   });
 
@@ -4329,12 +4672,19 @@ class MyRideDetails extends MyRideSummary {
       fare: base.fare,
       currency: base.currency,
       manualEntry: base.manualEntry,
+      bookingMode: base.bookingMode,
+      paymentStatus: base.paymentStatus,
+      driverPaymentConfirmedAt: base.driverPaymentConfirmedAt,
+      completedAt: base.completedAt ??
+          DateTime.tryParse((j['completed_at'] as String?) ?? ''),
+      scheduledPickupAt: base.scheduledPickupAt,
+      emptyKmSaved: base.emptyKmSaved,
+      taxiTerugEarningsEuros: base.taxiTerugEarningsEuros,
       paymentMethod: (j['manual_payment_method'] as String?) ??
           (j['payment_method'] as String?),
       platformFeeCents: (j['platform_fee_cents'] as num?)?.toInt(),
       driverEarningsCents: (j['driver_earnings_cents'] as num?)?.toInt(),
       distanceKm: (j['estimated_distance_km'] as num?)?.toDouble(),
-      completedAt: DateTime.tryParse((j['completed_at'] as String?) ?? ''),
       startedAt: DateTime.tryParse((j['started_at'] as String?) ?? ''),
     );
   }

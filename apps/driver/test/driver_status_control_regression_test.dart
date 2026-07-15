@@ -22,11 +22,12 @@ void main() {
         contains('DriverStrings.statusControlOfflineHint'),
       );
       expect(
-          homeSheetSource, contains('label: DriverStrings.homeRidesSection'));
+          homeSheetSource, contains('_RideQuickLinksRow'));
       expect(
         homeSheetSource,
         contains('DriverStrings.driverHub'),
       );
+      expect(homeSheetSource, contains('ThreeStateToggle('));
     });
 
     test('keeps haptics on status transitions and supporting actions', () {

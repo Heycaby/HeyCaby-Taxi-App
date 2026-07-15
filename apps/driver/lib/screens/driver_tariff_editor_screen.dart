@@ -7,6 +7,7 @@ import '../providers/driver_data_providers.dart';
 import '../services/driver_data_service.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
+import '../utils/driver_tariff_profile_slots.dart';
 import '../widgets/driver_performance_flow_common.dart';
 import '../widgets/driver_rate_control_body.dart';
 import '../widgets/driver_rate_profile_controls.dart';
@@ -27,6 +28,7 @@ class _DriverTariffEditorScreenState
   final Map<String, TextEditingController> _waitCtrls = {};
   bool _saving = false;
   bool _creatingPresets = false;
+  String? _selectedProfileId;
 
   @override
   void dispose() {
@@ -43,12 +45,6 @@ class _DriverTariffEditorScreenState
       c.dispose();
     }
     super.dispose();
-  }
-
-  String _tariffName(String profileName) {
-    final lower = profileName.toLowerCase();
-    if (lower.contains(DriverStrings.tariffSuffix)) return profileName;
-    return '$profileName ${DriverStrings.tariffSuffix}';
   }
 
   void _ensureControllers(List<DriverRateProfile> profiles) {
@@ -70,24 +66,19 @@ class _DriverTariffEditorScreenState
         () => TextEditingController(text: p.waitingRate.toStringAsFixed(2)),
       );
     }
+    final sorted = sortTariffProfiles(profiles);
+    if (sorted.isEmpty) {
+      _selectedProfileId = null;
+      return;
+    }
+    if (_selectedProfileId == null ||
+        !sorted.any((p) => p.id == _selectedProfileId)) {
+      _selectedProfileId = sorted.first.id;
+    }
   }
 
   double? _parse(TextEditingController c) =>
       double.tryParse(c.text.trim().replaceAll(',', '.'));
-
-  bool _hasDayPartProfile(
-    List<DriverRateProfile> profiles,
-    _DayPartSlot slot,
-  ) {
-    final tokens = slot.matchTokens;
-    for (final p in profiles) {
-      final n = p.profileName.toLowerCase();
-      for (final t in tokens) {
-        if (n.contains(t)) return true;
-      }
-    }
-    return false;
-  }
 
   Future<void> _saveAll() async {
     final id = ref.read(driverIdProvider).valueOrNull;
@@ -134,6 +125,88 @@ class _DriverTariffEditorScreenState
     }
   }
 
+  Widget _buildBody({
+    required DriverColors colors,
+    required DriverTypography typography,
+    required HeyCabyColorTokens tokenColors,
+    required HeyCabyTypography tokenTypo,
+    required bool loading,
+    required String? errorMessage,
+    required List<DriverRateProfile> profiles,
+    required String? driverId,
+  }) {
+    return DriverRateControlBody(
+      colors: colors,
+      typography: typography,
+      tokenColors: tokenColors,
+      tokenTypo: tokenTypo,
+      loading: loading,
+      errorMessage: errorMessage,
+      presetBanner: !loading &&
+              profiles.isNotEmpty &&
+              tariffPresetsIncomplete(profiles) &&
+              driverId != null
+          ? DriverTariffPresetBanner(
+              title: DriverStrings.tariffSuggestionCardTitle,
+              body: DriverStrings.tariffSuggestionCardBody,
+              buttonLabel: DriverStrings.tariffSuggestionCardButton,
+              busyLabel: DriverStrings.creatingDayPartProfiles,
+              busy: _creatingPresets,
+              colors: colors,
+              typography: typography,
+              onApply: () async {
+                setState(() => _creatingPresets = true);
+                await ref
+                    .read(driverDataServiceProvider)
+                    .ensureTariffPresetProfiles(driverId);
+                if (!mounted) return;
+                setState(() => _creatingPresets = false);
+                ref.invalidate(driverRateProfilesProvider);
+              },
+            )
+          : null,
+      profiles: profiles,
+      selectedProfileId: _selectedProfileId,
+      onProfileSelected: (id) => setState(() => _selectedProfileId = id),
+      baseFieldBuilder: (p) => DriverRateEditableField(
+        label: DriverStrings.rateStart,
+        icon: Icons.flag_rounded,
+        prefix: '€',
+        controller: _baseCtrls[p.id]!,
+        colors: tokenColors,
+        typo: tokenTypo,
+      ),
+      kmFieldBuilder: (p) => DriverRateEditableField(
+        label: DriverStrings.ratePerKm,
+        icon: Icons.route_rounded,
+        prefix: '€',
+        controller: _kmCtrls[p.id]!,
+        colors: tokenColors,
+        typo: tokenTypo,
+      ),
+      minFieldBuilder: (p) => DriverRateEditableField(
+        label: DriverStrings.ratePerMin,
+        icon: Icons.schedule_rounded,
+        prefix: '€',
+        controller: _minCtrls[p.id]!,
+        colors: tokenColors,
+        typo: tokenTypo,
+      ),
+      waitFieldBuilder: (p) => DriverRateEditableField(
+        label: DriverStrings.rateWaiting,
+        icon: Icons.hourglass_top_rounded,
+        prefix: '€',
+        suffix: '/min',
+        controller: _waitCtrls[p.id]!,
+        colors: tokenColors,
+        typo: tokenTypo,
+      ),
+      saving: _saving,
+      onBack: () => Navigator.of(context).pop(),
+      onSave: _saveAll,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
@@ -145,122 +218,39 @@ class _DriverTariffEditorScreenState
     final driverId = ref.watch(driverIdProvider).valueOrNull;
 
     return profilesAsync.when(
-      loading: () => DriverRateControlBody(
+      loading: () => _buildBody(
         colors: colors,
         typography: typography,
+        tokenColors: tokenColors,
+        tokenTypo: tokenTypo,
         loading: true,
         errorMessage: null,
-        presetBanner: null,
-        profileEditors: const [],
-        saving: _saving,
-        onBack: () => Navigator.of(context).pop(),
-        onSave: _saveAll,
+        profiles: const [],
+        driverId: driverId,
       ),
-      error: (_, __) => DriverRateControlBody(
+      error: (_, __) => _buildBody(
         colors: colors,
         typography: typography,
+        tokenColors: tokenColors,
+        tokenTypo: tokenTypo,
         loading: false,
         errorMessage: DriverStrings.tariffsSaveFailed,
-        presetBanner: null,
-        profileEditors: const [],
-        saving: _saving,
-        onBack: () => Navigator.of(context).pop(),
-        onSave: _saveAll,
+        profiles: const [],
+        driverId: driverId,
       ),
       data: (profiles) {
         _ensureControllers(profiles);
-        final hasMissingPresets =
-            !_hasDayPartProfile(profiles, _DayPartSlot.morning) ||
-                !_hasDayPartProfile(profiles, _DayPartSlot.evening) ||
-                !_hasDayPartProfile(profiles, _DayPartSlot.lateNight);
-
-        return DriverRateControlBody(
+        return _buildBody(
           colors: colors,
           typography: typography,
+          tokenColors: tokenColors,
+          tokenTypo: tokenTypo,
           loading: false,
           errorMessage: null,
-          presetBanner: hasMissingPresets && driverId != null
-              ? DriverTariffPresetBanner(
-                  title: DriverStrings.tariffSuggestionCardTitle,
-                  body: DriverStrings.tariffSuggestionCardBody,
-                  buttonLabel: DriverStrings.tariffSuggestionCardButton,
-                  busyLabel: DriverStrings.creatingDayPartProfiles,
-                  busy: _creatingPresets,
-                  colors: colors,
-                  typography: typography,
-                  onApply: () async {
-                    setState(() => _creatingPresets = true);
-                    await ref
-                        .read(driverDataServiceProvider)
-                        .ensureTariffPresetProfiles(driverId);
-                    if (!mounted) return;
-                    setState(() => _creatingPresets = false);
-                    ref.invalidate(driverRateProfilesProvider);
-                  },
-                )
-              : null,
-          profileEditors: profiles
-              .map(
-                (p) => DriverTariffProfileEditorCard(
-                  title: _tariffName(p.profileName),
-                  colors: colors,
-                  typography: typography,
-                  baseField: DriverRateEditableField(
-                    label: DriverStrings.rateStart,
-                    prefix: '€',
-                    controller: _baseCtrls[p.id]!,
-                    colors: tokenColors,
-                    typo: tokenTypo,
-                  ),
-                  kmField: DriverRateEditableField(
-                    label: DriverStrings.ratePerKm,
-                    prefix: '€',
-                    controller: _kmCtrls[p.id]!,
-                    colors: tokenColors,
-                    typo: tokenTypo,
-                  ),
-                  minField: DriverRateEditableField(
-                    label: DriverStrings.ratePerMin,
-                    prefix: '€',
-                    controller: _minCtrls[p.id]!,
-                    colors: tokenColors,
-                    typo: tokenTypo,
-                  ),
-                  waitField: DriverRateEditableField(
-                    label: DriverStrings.rateWaiting,
-                    prefix: '€',
-                    suffix: '/min',
-                    controller: _waitCtrls[p.id]!,
-                    colors: tokenColors,
-                    typo: tokenTypo,
-                  ),
-                ),
-              )
-              .toList(),
-          saving: _saving,
-          onBack: () => Navigator.of(context).pop(),
-          onSave: _saveAll,
+          profiles: profiles,
+          driverId: driverId,
         );
       },
     );
-  }
-}
-
-enum _DayPartSlot {
-  morning,
-  evening,
-  lateNight,
-}
-
-extension on _DayPartSlot {
-  List<String> get matchTokens {
-    switch (this) {
-      case _DayPartSlot.morning:
-        return const ['morning', 'ochtend'];
-      case _DayPartSlot.evening:
-        return const ['evening', 'avond'];
-      case _DayPartSlot.lateNight:
-        return const ['late night', 'latenight', 'nacht'];
-    }
   }
 }

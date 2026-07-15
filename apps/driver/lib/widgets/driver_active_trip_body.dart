@@ -7,12 +7,13 @@ import '../utils/driver_address_clipboard.dart';
 import '../l10n/driver_strings.dart';
 import '../utils/driver_nav_app_helpers.dart';
 import '../providers/driver_ride_unread_messages_provider.dart';
+import '../providers/driver_state_provider.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../ui/driver_status_badge.dart';
 import 'driver_ride_bolt_layout.dart';
 import 'driver_ride_flow_common.dart';
-import 'driver_taxi_terug_queued_banner_slot.dart';
+import 'driver_next_ride_banner_slot.dart';
 
 /// **Active Trip** — Bolt-style en route to pickup.
 class DriverActiveTripBody extends ConsumerWidget {
@@ -68,11 +69,14 @@ class DriverActiveTripBody extends ConsumerWidget {
   final bool showNearPickupAssist;
 
   void _openRouteDetails(BuildContext context, WidgetRef ref) {
+    final driver = ref.read(driverStateProvider);
     showDriverRideRouteDetailsSheet(
       context: context,
       colors: colors,
       typography: typography,
-      destinationAddress: pickupAddress,
+      destinationAddress:
+          driver.destinationAddress ?? destinationAddress,
+      routeState: driver.activeRouteState,
       farePill: farePill,
       riderName: riderName,
       navAppLabel: watchDriverNavAppLabel(ref),
@@ -132,7 +136,7 @@ class DriverActiveTripBody extends ConsumerWidget {
       onNavigate: onNavigate,
       requestsPaused: requestsPaused,
       statusBusy: statusBusy,
-      headerBanner: DriverTaxiTerugQueuedBannerSlot(
+      headerBanner: DriverNextRideBannerSlot(
         currentRideId: rideId,
         colors: colors,
         typography: typography,

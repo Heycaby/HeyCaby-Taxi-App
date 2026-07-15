@@ -20,6 +20,9 @@ class DriverRideCard extends StatelessWidget {
     this.metaLabel,
     this.statusLabel,
     this.statusTone = DriverStatusTone.neutral,
+    this.categoryLabel,
+    this.categoryTone = DriverStatusTone.neutral,
+    this.detailLabel,
     this.onTap,
     this.trailing,
     this.incomingPulse = false,
@@ -33,6 +36,9 @@ class DriverRideCard extends StatelessWidget {
   final String? metaLabel;
   final String? statusLabel;
   final DriverStatusTone statusTone;
+  final String? categoryLabel;
+  final DriverStatusTone categoryTone;
+  final String? detailLabel;
   final VoidCallback? onTap;
   final Widget? trailing;
   final bool incomingPulse;
@@ -58,6 +64,16 @@ class DriverRideCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (categoryLabel != null) ...[
+                    DriverStatusBadge(
+                      label: categoryLabel!,
+                      colors: colors,
+                      typography: typography,
+                      tone: categoryTone,
+                    ),
+                    if (statusLabel != null)
+                      const SizedBox(width: DriverSpacing.xs),
+                  ],
                   if (statusLabel != null)
                     DriverStatusBadge(
                       label: statusLabel!,
@@ -88,6 +104,16 @@ class DriverRideCard extends StatelessWidget {
                 pickupLabel: pickupLabel,
                 dropoffLabel: dropoffLabel,
               ),
+              if (detailLabel != null) ...[
+                const SizedBox(height: DriverSpacing.xs),
+                Text(
+                  detailLabel!,
+                  style: typography.bodySmall.copyWith(
+                    color: colors.textMuted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
               if (metaLabel != null) ...[
                 const SizedBox(height: DriverSpacing.md),
                 Text(

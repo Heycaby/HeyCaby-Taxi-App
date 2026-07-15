@@ -35,8 +35,9 @@ DriverRideProximityAssist resolveRideProximityAssist({
   double pickupRadiusM = kDriverPickupAssistRadiusM,
   double destinationRadiusM = kDriverDestinationAssistRadiusM,
 }) {
-  if (driverLat == null || driverLng == null)
+  if (driverLat == null || driverLng == null) {
     return DriverRideProximityAssist.none;
+  }
 
   switch (appState) {
     case DriverAppState.assigned:

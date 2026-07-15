@@ -7,6 +7,8 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 import 'package:heycaby_utils/heycaby_utils.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/rider_ride_snapshot_service.dart';
+
 class RidePayDriverResult {
   const RidePayDriverResult({
     required this.confirmed,
@@ -103,15 +105,13 @@ class _RidePayDriverSheet extends StatefulWidget {
 class _RidePayDriverSheetState extends State<_RidePayDriverSheet> {
   static const _tipPresets = <double>[0, 2, 5, 10];
   static const _paymentService = RidePaymentService();
-  static const _riderSelfConfirmAfter = Duration(minutes: 10);
-
   late RidePaymentMethod _method;
   double _selectedTip = 0;
   bool _confirming = false;
   bool _driverConfirmed = false;
   bool _riderCanSelfConfirm = false;
   bool _checkoutAdvanced = false;
-  DateTime? _completedAt;
+  DateTime? _selfConfirmAvailableAt;
   Timer? _pollTimer;
   Timer? _selfConfirmTimer;
   RealtimeChannel? _paymentChannel;
@@ -149,38 +149,40 @@ class _RidePayDriverSheetState extends State<_RidePayDriverSheet> {
   }
 
   void _scheduleRiderSelfConfirmTimer() {
-    if (_riderCanSelfConfirm || _completedAt == null) return;
-    final elapsed = DateTime.now().toUtc().difference(_completedAt!);
-    final remaining = _riderSelfConfirmAfter - elapsed;
+    if (_riderCanSelfConfirm || _selfConfirmAvailableAt == null) return;
+    final remaining =
+        _selfConfirmAvailableAt!.difference(DateTime.now().toUtc());
     if (remaining <= Duration.zero) {
-      if (mounted) setState(() => _riderCanSelfConfirm = true);
+      unawaited(_refreshPaymentSnapshot());
       return;
     }
     _selfConfirmTimer?.cancel();
     _selfConfirmTimer = Timer(remaining, () {
-      if (mounted) setState(() => _riderCanSelfConfirm = true);
+      unawaited(_refreshPaymentSnapshot());
     });
   }
 
   Future<void> _refreshPaymentSnapshot() async {
     try {
-      final row = await HeyCabySupabase.client
-          .from('ride_requests')
-          .select('completed_at, driver_payment_confirmed_at, tip_amount_eur')
-          .eq('id', widget.rideId)
-          .maybeSingle();
+      final row = await RiderRideSnapshotService.fetch(
+        rideRequestId: widget.rideId,
+        riderToken: widget.riderToken,
+      );
       if (!mounted || row == null) return;
 
-      final completedRaw = row['completed_at']?.toString();
-      final completedAt = completedRaw != null
-          ? DateTime.tryParse(completedRaw)?.toUtc()
+      final availableRaw = row['rider_self_confirm_available_at']?.toString();
+      final selfConfirmAvailableAt = availableRaw != null
+          ? DateTime.tryParse(availableRaw)?.toUtc()
           : null;
       final driverConfirmed = row['driver_payment_confirmed_at'] != null;
+      final riderCanSelfConfirm = row['rider_can_self_confirm'] == true;
       final tip = row['tip_amount_eur'];
 
       setState(() {
-        _completedAt = completedAt ?? _completedAt;
+        _selfConfirmAvailableAt =
+            selfConfirmAvailableAt ?? _selfConfirmAvailableAt;
         _driverConfirmed = driverConfirmed;
+        _riderCanSelfConfirm = riderCanSelfConfirm;
         if (tip is num && tip.toDouble() > 0) {
           _selectedTip = tip.toDouble().clamp(0, 99999);
         }
@@ -269,8 +271,7 @@ class _RidePayDriverSheetState extends State<_RidePayDriverSheet> {
     final typography = widget.typography;
     final l10n = widget.l10n;
     final bottom = MediaQuery.paddingOf(context).bottom;
-    final fareLabel =
-        _fare != null ? formatRidePaymentEuro(_fare!) : '—';
+    final fareLabel = _fare != null ? formatRidePaymentEuro(_fare!) : '—';
     final amountLabel = _selectedTip > 0 ? _totalLabel : fareLabel;
 
     return Padding(
@@ -474,7 +475,8 @@ class _RidePayDriverSheetState extends State<_RidePayDriverSheet> {
     return switch (_method) {
       RidePaymentMethod.cash => l10n.ridePayDriverConfirmWithTotal(_totalLabel),
       RidePaymentMethod.pin => l10n.paymentRiderPaidConfirm,
-      RidePaymentMethod.tikkie => l10n.ridePayDriverConfirmWithTotal(_totalLabel),
+      RidePaymentMethod.tikkie =>
+        l10n.ridePayDriverConfirmWithTotal(_totalLabel),
     };
   }
 }
@@ -651,9 +653,7 @@ class _TipChip extends StatelessWidget {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: selected
-              ? colors.accent.withValues(alpha: 0.12)
-              : colors.card,
+          color: selected ? colors.accent.withValues(alpha: 0.12) : colors.card,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: selected

@@ -34,3 +34,7 @@ scripts:
   guard:boundaries:
     run: ./scripts/enforce_monorepo_boundaries.sh
     description: Enforce app/backend boundary rules
+
+  guard:authority:
+    run: ./scripts/check_domain_authority.sh
+    description: Enforce domain ownership and deployed-source authority rules

@@ -1,10 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import 'package:heycaby_api/src/app_notifications_service.dart';
 import 'package:heycaby_api/src/driver_billing_edge_service.dart';
 import 'package:heycaby_api/src/supabase_client.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Supabase RPC [fn_driver_accept_ride_invite] returned a business error (no HTTP fallback).
 class DriverAcceptRideException implements Exception {
@@ -66,6 +65,17 @@ class DriverApi {
 
   Future<void> clearReadNotifications() async {
     await _notifications.clearRead(userType: 'driver');
+  }
+
+  Future<void> deleteAllNotifications() async {
+    await _notifications.deleteAll(userType: 'driver');
+  }
+
+  Future<void> deleteNotifications(List<String> notificationIds) async {
+    await _notifications.deleteIds(
+      notificationIds: notificationIds,
+      userType: 'driver',
+    );
   }
 
   /// Billing / platform-fee status — Supabase [fn_driver_billing_status] (Phase E; no Go).
@@ -359,6 +369,8 @@ class DriverApi {
       'driver_location_unavailable',
       'target_location_unavailable',
       'missing_rider_token',
+      'ride_prepayment_required',
+      'ride_prepayment_config_invalid',
     ];
     for (final code in known) {
       if (message.contains(code)) return code;

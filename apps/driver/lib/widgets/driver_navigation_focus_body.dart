@@ -6,13 +6,14 @@ import '../utils/driver_address_clipboard.dart';
 import '../l10n/driver_strings.dart';
 import '../utils/driver_nav_app_helpers.dart';
 import '../providers/driver_ride_unread_messages_provider.dart';
+import '../providers/driver_state_provider.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../ui/driver_button.dart';
 import '../ui/driver_status_badge.dart';
 import 'driver_ride_bolt_layout.dart';
 import 'driver_ride_flow_common.dart';
-import 'driver_taxi_terug_queued_banner_slot.dart';
+import 'driver_next_ride_banner_slot.dart';
 
 /// **Navigation Focus** — Bolt-style trip in progress.
 class DriverNavigationFocusBody extends ConsumerWidget {
@@ -70,11 +71,14 @@ class DriverNavigationFocusBody extends ConsumerWidget {
   final String? currentRideId;
 
   void _openRouteDetails(BuildContext context, WidgetRef ref) {
+    final driver = ref.read(driverStateProvider);
     showDriverRideRouteDetailsSheet(
       context: context,
       colors: colors,
       typography: typography,
-      destinationAddress: destinationAddress,
+      destinationAddress:
+          driver.destinationAddress ?? destinationAddress,
+      routeState: driver.activeRouteState,
       farePill: driverRideBoltFarePill(expectedAmountLabel),
       riderName: riderName,
       navAppLabel: watchDriverNavAppLabel(ref),
@@ -139,7 +143,7 @@ class DriverNavigationFocusBody extends ConsumerWidget {
       statusBusy: statusBusy,
       headerBanner: currentRideId == null
           ? null
-          : DriverTaxiTerugQueuedBannerSlot(
+          : DriverNextRideBannerSlot(
               currentRideId: currentRideId!,
               colors: colors,
               typography: typography,

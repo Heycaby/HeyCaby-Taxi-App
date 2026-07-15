@@ -4,7 +4,6 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
-import '../theme/driver_spacing.dart';
 
 /// "Saved by Riders" section for Driver Hub.
 /// Shows total count, this-week delta, and recent additions (first name only).
@@ -243,73 +242,33 @@ class _RecentRow extends StatelessWidget {
   }
 }
 
-/// Compact "Saved by Riders" insight card for Driver Home sheet.
-/// Only shows if the driver has at least 1 saved-by-rider entry.
-class DriverHomeSavedByRidersCard extends ConsumerWidget {
-  const DriverHomeSavedByRidersCard({super.key});
+/// Compact copy for profile rating row and rating sheet (not a standalone home card).
+class SavedByRidersInlineCopy {
+  const SavedByRidersInlineCopy({
+    required this.countLine,
+    this.namesLine,
+  });
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = ref.watch(colorsProvider);
-    final typo = ref.watch(typographyProvider);
-    final summaryAsync = ref.watch(driverFavoriteSummaryProvider);
-    final summary = summaryAsync.valueOrNull;
+  final String countLine;
+  final String? namesLine;
+}
 
-    if (summary == null || summary.totalSavedByRiders == 0) {
-      return const SizedBox.shrink();
-    }
+SavedByRidersInlineCopy? savedByRidersInlineCopy(DriverFavoriteSummary? summary) {
+  if (summary == null || summary.totalSavedByRiders == 0) return null;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: DriverSpacing.lg),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colors.accent.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colors.accent.withValues(alpha: 0.18)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: colors.accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.favorite_rounded,
-              color: colors.accent,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  DriverStrings.savedByRidersTitle,
-                  style: typo.titleSmall.copyWith(
-                    color: colors.text,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  summary.addedThisWeek > 0
-                      ? '${DriverStrings.savedByRidersTotal(summary.totalSavedByRiders)} · ${DriverStrings.savedByRidersThisWeek(summary.addedThisWeek)}'
-                      : DriverStrings.savedByRidersTotal(
-                          summary.totalSavedByRiders),
-                  style: typo.bodySmall.copyWith(
-                    color: colors.textMid,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+  var countLine = DriverStrings.savedByRidersAsFavorite(summary.totalSavedByRiders);
+  if (summary.addedThisWeek > 0) {
+    countLine =
+        '$countLine · ${DriverStrings.savedByRidersThisWeek(summary.addedThisWeek)}';
   }
+
+  final names = summary.recent
+      .map((r) => r.riderFirstName.trim())
+      .where((name) => name.isNotEmpty)
+      .take(2)
+      .join(', ');
+  final namesLine =
+      names.isEmpty ? null : DriverStrings.savedByRidersRecentNames(names);
+
+  return SavedByRidersInlineCopy(countLine: countLine, namesLine: namesLine);
 }

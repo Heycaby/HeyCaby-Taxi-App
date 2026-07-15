@@ -175,9 +175,14 @@ class RiderNotifyLiveActivity {
 
     if (status == 'completed' ||
         status == 'cancelled' ||
-        status == 'canceled') {
+        status == 'canceled' ||
+        status == 'payment_confirmed' ||
+        status == 'rejected' ||
+        status == 'declined' ||
+        status == 'missed' ||
+        status == 'expired') {
       _resetThrottle();
-      if (paymentComplete) {
+      if (status == 'completed' && paymentComplete) {
         await _pushActiveRidePayload(
           rideRequestId,
           LiveRideActivityPayload.activeRide(
@@ -189,6 +194,7 @@ class RiderNotifyLiveActivity {
             destination: destination,
             paymentComplete: true,
           ),
+          rideVersion: rideVersion,
         );
         await Future<void>.delayed(const Duration(seconds: 4));
       }
@@ -324,16 +330,65 @@ class RiderNotifyLiveActivity {
       _currentRideRequestId = null;
     } catch (e) {
       if (kDebugMode) debugPrint('RiderNotifyLiveActivity.endActiveRide: $e');
+      try {
+        await _live.endAllActivities();
+        _currentRideRequestId = null;
+      } catch (e2) {
+        if (kDebugMode) {
+          debugPrint('RiderNotifyLiveActivity.endAllActivities: $e2');
+        }
+      }
     }
+  }
+
+  /// Ends the lock-screen activity for any terminal ride status.
+  static Future<void> endTerminalRide({
+    required String rideRequestId,
+    required String status,
+    required String driverName,
+    required String vehicleLabel,
+    required String plate,
+    required int? etaMinutes,
+    String? destination,
+    bool paymentPending = false,
+    bool paymentComplete = false,
+    int rideVersion = 0,
+  }) async {
+    await syncActiveRide(
+      rideRequestId: rideRequestId,
+      status: status,
+      driverName: driverName,
+      vehicleLabel: vehicleLabel,
+      plate: plate,
+      etaMinutes: etaMinutes,
+      destination: destination,
+      paymentPending: paymentPending,
+      paymentComplete: paymentComplete,
+      rideVersion: rideVersion,
+    );
+  }
+
+  /// Dismiss any orphan lock-screen activity when no ride is active in-app.
+  static Future<void> reconcileNoActiveRide() async {
+    await end();
   }
 
   static Future<void> end() async {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.iOS) return;
+    _resetThrottle();
     try {
       await _live.endActivity(kRideLiveActivityId);
       _currentRideRequestId = null;
     } catch (e) {
       if (kDebugMode) debugPrint('RiderNotifyLiveActivity.end: $e');
+      try {
+        await _live.endAllActivities();
+        _currentRideRequestId = null;
+      } catch (e2) {
+        if (kDebugMode) {
+          debugPrint('RiderNotifyLiveActivity.endAllActivities: $e2');
+        }
+      }
     }
   }
 }

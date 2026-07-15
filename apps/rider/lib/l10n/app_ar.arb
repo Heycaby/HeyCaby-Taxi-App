@@ -114,6 +114,8 @@
   },
   "homeRecentPlacesTitle": "أماكن حديثة",
   "homeRecentPlacesEdit": "تعديل",
+  "homeQuickPlacesTitle": "المحفوظة والحديثة",
+  "homeQuickPlacesManage": "إدارة",
   "savedTripsTitle": "الرحلات المحفوظة",
   "homeCompleteProfile": "أكمل الملف",
   "vehicleCategoryTitle": "هل تحتاج إلى مركبة محددة؟",
@@ -1562,6 +1564,12 @@
   "activeRideTimelinePickup": "الالتقاط",
   "activeRideTimelineDestination": "الوجهة",
   "activeRideContactDriver": "اتصل بالسائق",
+  "maskedCallDriver": "اتصل بالسائق عبر HeyCaby",
+  "maskedCallTitle": "الاتصال عبر HeyCaby؟",
+  "maskedCallBody": "يبقى رقم هاتفك خاصًا. تستمر المكالمات حتى 5 دقائق. نتصل بك أولاً ثم نصل سائقك.",
+  "maskedCallNow": "اتصل الآن",
+  "maskedCallQueued": "يتصل بك HeyCaby الآن. أجب للاتصال.",
+  "maskedCallUnavailable": "الاتصال غير متاح مؤقتًا. استخدم التنبيه أو الرسائل.",
   "openAction": "فتح",
   "rideReceiptTitle": "إيصال الرحلة",
   "rideReceiptUnavailable": "الإيصال غير متاح بعد.",
@@ -1733,10 +1741,35 @@
   "taxiTerugTrackerBoostFailed": "تعذر زيادة العرض. يرجى المحاولة مرة أخرى.",
   "taxiTerugTrackerCurrentOffer": "العرض الحالي: €{amount}",
   "activeRouteEditTitle": "تعديل مسارك",
-  "activeRouteEditBody": "سيرى السائق التغييرات فورًا. قد تتغير الأجرة النهائية حسب المسار.",
+  "activeRouteEditBody": "يجب أن يوافق السائق على التوقفات الإضافية قبل إضافتها. قد تتغير الأجرة النهائية حسب المسار.",
+  "activeRouteWaitingDriver": "بانتظار موافقة السائق على هذا التوقف",
+  "activeRoutePendingStop": "قيد الانتظار",
+  "activeRouteDuplicateRequest": "لقد طلبت هذا التوقف بالفعل. بانتظار السائق.",
+  "activeRouteNoChange": "هذا التوقف موجود بالفعل في مسارك.",
   "activeRouteChangeDestination": "تغيير الوجهة",
   "activeRouteAddStop": "إضافة توقف",
   "activeRouteStopAdded": "تمت إضافة التوقف",
   "activeRouteUpdated": "تم تحديث المسار",
-  "activeRouteUpdateFailed": "تعذر تحديث المسار. مسارك الأصلي لم يتغير."
+  "activeRouteUpdateFailed": "تعذر تحديث المسار. مسارك الأصلي لم يتغير.",
+  "activeRouteDestinationChanged": "تم تغيير العنوان",
+  "activeRouteStopsAdded": "{count, plural, =1{تمت إضافة توقف واحد} other{تمت إضافة {count} توقفات}}",
+  "@activeRouteStopsAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "prepayRideTitle": "ادفع بأمان داخل التطبيق",
+  "prepayRideRequiredBody": "تتطلب هذه الرحلة الدفع المسبق بعد قبول السائق. تؤكد Mollie الدفع بأمان.",
+  "prepayRideOptionalBody": "ادفع للسائق كالمعتاد، أو ادفع الآن بأمان عبر Mollie.",
+  "prepayPayNow": "ادفع الآن",
+  "prepayPayDriver": "ادفع للسائق",
+  "prepayOpenCheckout": "فتح صفحة الدفع الآمنة",
+  "prepayAwaitingConfirmation": "بانتظار تأكيد Mollie",
+  "prepayPaid": "تم تأكيد الدفع",
+  "prepayDriverNotReady": "لا يستطيع هذا السائق استلام رحلات مدفوعة مسبقاً بعد. ادفع للسائق كالمعتاد.",
+  "prepayUnavailable": "الدفع المسبق غير متاح مؤقتاً. طريقة الدفع الحالية لم تتغير.",
+  "prepayRetry": "حاول مرة أخرى",
+  "prepayAmount": "المبلغ: {amount}"
 }

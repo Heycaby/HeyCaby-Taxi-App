@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:heycaby_api/heycaby_api.dart';
 import 'package:home_widget/home_widget.dart';
 
 import '../constants/heycaby_widget_config.dart';
+import 'rider_driver_profile_service.dart';
+import 'rider_eta_service.dart';
+import 'rider_ride_snapshot_service.dart';
 
 /// Bridges ride state → home / lock-screen widgets via [home_widget].
 /// iOS: App Group + WidgetKit kinds `WidgetA`–`WidgetD`.
@@ -137,11 +139,7 @@ class HeycabyWidgetSync {
   }) async {
     if (!_nativeMobile) return;
     try {
-      final row = await HeyCabySupabase.client
-          .from('ride_requests')
-          .select('driver_id, status')
-          .eq('id', rideId)
-          .maybeSingle();
+      final row = await RiderRideSnapshotService.fetch(rideRequestId: rideId);
       final driverId = row?['driver_id'] as String?;
       final st = row?['status'] as String? ?? '';
       if (driverId == null ||
@@ -151,18 +149,11 @@ class HeycabyWidgetSync {
               st != 'arrived')) {
         return;
       }
-      final d = await HeyCabySupabase.client
-          .from('drivers')
-          .select('full_name, vehicle_model, vehicle_make, vehicle_plate')
-          .eq('id', driverId)
-          .maybeSingle();
+      final d = await RiderDriverProfileService.fetchForRide(
+        rideRequestId: rideId,
+      );
       if (d == null) return;
-      final trust = await HeyCabySupabase.client
-          .from('driver_trust_scores')
-          .select('score')
-          .eq('driver_id', driverId)
-          .maybeSingle();
-      final name = d['full_name'] as String? ?? '';
+      final name = (d['full_name'] ?? d['driver_name'] ?? '').toString();
       final first = name.trim().split(RegExp(r'\s+')).first;
       final car = [
         d['vehicle_make'] as String?,
@@ -173,7 +164,7 @@ class HeycabyWidgetSync {
       await _save('widget_a_driver_name', first);
       await _save('widget_a_car', car);
       await _save('widget_a_plate', d['vehicle_plate'] as String? ?? '');
-      final score = trust?['score'];
+      final score = d['rating'] ?? d['trust_score'];
       await _save('widget_a_rating', score != null ? '$score' : '');
       await _save(
         'widget_a_eta_minutes',
@@ -228,13 +219,7 @@ class HeycabyWidgetSync {
   static Future<void> refreshScheduledRideFromRideId(String rideId) async {
     if (!_nativeMobile) return;
     try {
-      final row = await HeyCabySupabase.client
-          .from('ride_requests')
-          .select(
-            'driver_id, scheduled_pickup_at, pickup_address, destination_address',
-          )
-          .eq('id', rideId)
-          .maybeSingle();
+      final row = await RiderRideSnapshotService.fetch(rideRequestId: rideId);
       if (row == null) return;
       final origin = row['pickup_address'] as String? ?? '';
       final dest = row['destination_address'] as String? ?? '';
@@ -245,24 +230,17 @@ class HeycabyWidgetSync {
       final driverId = row['driver_id'] as String?;
       final minsToDep = dep.difference(DateTime.now()).inMinutes;
       if (driverId != null && minsToDep <= 30 && minsToDep >= -120) {
-        final d = await HeyCabySupabase.client
-            .from('drivers')
-            .select('full_name, vehicle_model, vehicle_make, vehicle_plate')
-            .eq('id', driverId)
-            .maybeSingle();
+        final d = await RiderDriverProfileService.fetchForRide(
+          rideRequestId: rideId,
+        );
         if (d != null) {
-          final trust = await HeyCabySupabase.client
-              .from('driver_trust_scores')
-              .select('score')
-              .eq('driver_id', driverId)
-              .maybeSingle();
-          final name = d['full_name'] as String? ?? '';
+          final name = (d['full_name'] ?? d['driver_name'] ?? '').toString();
           final first = name.trim().split(RegExp(r'\s+')).first;
           final car = [
             d['vehicle_make'] as String?,
             d['vehicle_model'] as String?,
           ].whereType<String>().where((s) => s.trim().isNotEmpty).join(' ');
-          final score = trust?['score'];
+          final score = d['rating'] ?? d['trust_score'];
           await syncScheduledRide(
             origin: origin,
             destination: dest,
@@ -317,7 +295,8 @@ class HeycabyWidgetSync {
     required double destLng,
   }) async {
     if (!_nativeMobile) return;
-    final existing = await HomeWidget.getWidgetData<String>('widget_d_total_km');
+    final existing =
+        await HomeWidget.getWidgetData<String>('widget_d_total_km');
     if (existing != null && existing.isNotEmpty) return;
     final km = Geolocator.distanceBetween(
           pickupLat,
@@ -353,7 +332,15 @@ class HeycabyWidgetSync {
         1000.0;
     final progress = (1.0 - (kmRemaining / totalKm)).clamp(0.0, 1.0);
     final pct = (progress * 100).round();
-    final minutes = (kmRemaining / 0.35).ceil().clamp(1, 999);
+
+    // Real ETA from Mapbox traffic-aware routing — no hardcoded speed.
+    final minutes = await RiderEtaService.etaMinutes(
+      fromLat: driverLat,
+      fromLng: driverLng,
+      toLat: destLat,
+      toLng: destLng,
+    );
+    if (minutes == null) return; // No real ETA — don't fabricate.
     final now = DateTime.now();
     final eta = now.add(Duration(minutes: minutes));
 

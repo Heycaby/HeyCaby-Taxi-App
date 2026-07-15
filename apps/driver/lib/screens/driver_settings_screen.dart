@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
+import '../providers/driver_runtime_providers.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
@@ -19,6 +21,11 @@ class DriverSettingsScreen extends ConsumerWidget {
     final colors = DriverColors.fromTheme(ref.watch(colorsProvider));
     final typography =
         DriverTypography.fromTheme(ref.watch(typographyProvider));
+    final mollieConnectEnabled = ref
+            .watch(driverRemoteConfigProvider)
+            .valueOrNull
+            ?.mollieConnectEnabled ==
+        true;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -104,6 +111,14 @@ class DriverSettingsScreen extends ConsumerWidget {
                           onTap: () => context.push('/driver/preferences'),
                         ),
                         DriverSettingsNavRow(
+                          icon: Icons.notifications_none_rounded,
+                          title: DriverStrings.meldingen,
+                          colors: colors,
+                          typography: typography,
+                          onTap: () =>
+                              HeyCabyFcmRegistration.openNotificationSettings(),
+                        ),
+                        DriverSettingsNavRow(
                           icon: Icons.bar_chart_rounded,
                           title: DriverStrings.financeAndTax,
                           colors: colors,
@@ -123,8 +138,17 @@ class DriverSettingsScreen extends ConsumerWidget {
                           colors: colors,
                           typography: typography,
                           onTap: () => context.push('/driver/billing'),
-                          showDivider: false,
+                          showDivider: mollieConnectEnabled,
                         ),
+                        if (mollieConnectEnabled)
+                          DriverSettingsNavRow(
+                            icon: Icons.account_balance_wallet_outlined,
+                            title: DriverStrings.molliePayments,
+                            colors: colors,
+                            typography: typography,
+                            onTap: () => context.push('/driver/mollie'),
+                            showDivider: false,
+                          ),
                       ],
                     ),
                     const SizedBox(height: DriverSpacing.xl),

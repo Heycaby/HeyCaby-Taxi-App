@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heycaby_api/heycaby_api.dart';
 
 import '../providers/driver_data_providers.dart';
 
@@ -11,5 +12,8 @@ Future<String?> bootstrapDriverSessionAfterAuth(WidgetRef ref) async {
   ref.invalidate(driverIdProvider);
   ref.invalidate(driverProfileProvider);
   ref.invalidate(driverComplianceProvider);
+  if (driverId != null) {
+    await HeyCabyFcmRegistration.sync(appRole: 'driver');
+  }
   return driverId;
 }

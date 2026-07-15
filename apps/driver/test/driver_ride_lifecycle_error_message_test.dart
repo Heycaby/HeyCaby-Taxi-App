@@ -4,6 +4,15 @@ import 'package:heycaby_driver/l10n/driver_strings.dart';
 import 'package:heycaby_driver/utils/driver_ride_lifecycle_error_message.dart';
 
 void main() {
+  test('prepayment gate tells the Driver to wait for confirmation', () {
+    final message = driverRideLifecycleErrorMessage(
+      const DriverRideLifecycleException('ride_prepayment_required'),
+    );
+
+    expect(message.toLowerCase(), contains('betaling'));
+    expect(message.toLowerCase(), contains('bevestigd'));
+  });
+
   test('maps too_far_from_pickup to proximity copy', () {
     expect(
       driverRideLifecycleErrorMessage(

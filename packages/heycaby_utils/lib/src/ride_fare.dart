@@ -49,7 +49,8 @@ class HeyCabyRideFare {
     return (euro * 100).round();
   }
 
-  /// Snapshot written at booking / accept so every screen reads the same €.
+  /// Snapshot written by the booking or backend command authority so every
+  /// screen reads the same € amount.
   static Map<String, dynamic> fareSnapshotForInsert(double quoteEuro) => {
         'offered_fare': quoteEuro,
         'quoted_fare': quoteEuro,

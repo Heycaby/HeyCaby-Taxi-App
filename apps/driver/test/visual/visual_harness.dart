@@ -1,5 +1,3 @@
-import 'golden_bootstrap.dart' show kDriverGoldenTypographyBootstrapped;
-
 import 'golden_text_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,11 +15,13 @@ class DriverVisualHarness extends StatelessWidget {
     required this.child,
     this.themeId = kDriverGoldenThemeId,
     this.surfaceSize = kDriverGoldenSize,
+    this.textScaler = TextScaler.noScaling,
   });
 
   final Widget child;
   final String themeId;
   final Size surfaceSize;
+  final TextScaler textScaler;
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +40,7 @@ class DriverVisualHarness extends StatelessWidget {
             size: surfaceSize,
             devicePixelRatio: 1,
             padding: const EdgeInsets.only(top: 59, bottom: 34),
+            textScaler: textScaler,
           ),
           child: Scaffold(
             backgroundColor: colors.bg,

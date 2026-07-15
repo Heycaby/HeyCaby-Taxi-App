@@ -307,6 +307,12 @@ class AppLocalizationsNl extends AppLocalizations {
   String get homeRecentPlacesEdit => 'Bewerken';
 
   @override
+  String get homeQuickPlacesTitle => 'Opgeslagen & recent';
+
+  @override
+  String get homeQuickPlacesManage => 'Beheren';
+
+  @override
   String get savedTripsTitle => 'Opgeslagen ritten';
 
   @override
@@ -3508,6 +3514,26 @@ class AppLocalizationsNl extends AppLocalizations {
   String get activeRideContactDriver => 'Contacteer chauffeur';
 
   @override
+  String get maskedCallDriver => 'Bel chauffeur via HeyCaby';
+
+  @override
+  String get maskedCallTitle => 'Bellen via HeyCaby?';
+
+  @override
+  String get maskedCallBody =>
+      'Je telefoonnummer blijft privé. Gesprekken duren maximaal 5 minuten. Eerst bellen we jou, daarna verbinden we je chauffeur.';
+
+  @override
+  String get maskedCallNow => 'Bel nu';
+
+  @override
+  String get maskedCallQueued => 'HeyCaby belt je nu. Neem op om te verbinden.';
+
+  @override
+  String get maskedCallUnavailable =>
+      'Bellen is tijdelijk niet beschikbaar. Gebruik Ping of Bericht.';
+
+  @override
   String activeRideCategoryLabel(String category) {
     return 'Categorie: $category';
   }
@@ -3967,7 +3993,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get activeRouteEditBody =>
-      'Je chauffeur ziet wijzigingen direct. De uiteindelijke ritprijs kan door de route veranderen.';
+      'Je chauffeur moet extra stops accepteren voordat ze worden toegevoegd. De uiteindelijke ritprijs kan door de route veranderen.';
 
   @override
   String get activeRouteChangeDestination => 'Bestemming wijzigen';
@@ -3984,4 +4010,74 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get activeRouteUpdateFailed =>
       'We konden de route niet bijwerken. Je oorspronkelijke route is ongewijzigd.';
+
+  @override
+  String get activeRouteWaitingDriver =>
+      'Wachten tot je chauffeur deze stop accepteert';
+
+  @override
+  String get activeRoutePendingStop => 'In afwachting';
+
+  @override
+  String get activeRouteDuplicateRequest =>
+      'Je hebt deze stop al gevraagd. Wacht op je chauffeur.';
+
+  @override
+  String get activeRouteNoChange => 'Die stop staat al op je route.';
+
+  @override
+  String get activeRouteDestinationChanged => 'Adres gewijzigd';
+
+  @override
+  String activeRouteStopsAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count stops toegevoegd',
+      one: '1 stop toegevoegd',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get prepayRideTitle => 'Veilig betalen in de app';
+
+  @override
+  String get prepayRideRequiredBody =>
+      'Voor deze rit betaal je vooraf nadat de chauffeur accepteert. Mollie bevestigt de betaling veilig.';
+
+  @override
+  String get prepayRideOptionalBody =>
+      'Betaal de chauffeur zoals altijd, of betaal nu veilig via Mollie.';
+
+  @override
+  String get prepayPayNow => 'Nu betalen';
+
+  @override
+  String get prepayPayDriver => 'Betaal chauffeur';
+
+  @override
+  String get prepayOpenCheckout => 'Open veilige betaalpagina';
+
+  @override
+  String get prepayAwaitingConfirmation => 'Wachten op bevestiging van Mollie';
+
+  @override
+  String get prepayPaid => 'Betaling bevestigd';
+
+  @override
+  String get prepayDriverNotReady =>
+      'Deze chauffeur kan nog geen vooruitbetalingen ontvangen. Betaal de chauffeur zoals altijd.';
+
+  @override
+  String get prepayUnavailable =>
+      'Vooraf betalen is tijdelijk niet beschikbaar. Je bestaande betaalmethode blijft ongewijzigd.';
+
+  @override
+  String get prepayRetry => 'Opnieuw proberen';
+
+  @override
+  String prepayAmount(String amount) {
+    return 'Bedrag: $amount';
+  }
 }

@@ -1,0 +1,31 @@
+name: Domain authority
+
+on:
+  pull_request:
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "supabase/**"
+      - "docs/domains/**"
+      - "scripts/check_domain_authority.sh"
+      - "scripts/enforce_monorepo_boundaries.sh"
+      - "melos.yaml"
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  authority-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install ripgrep and jq
+        run: sudo apt-get update && sudo apt-get install -y ripgrep jq
+      - name: Check domain ownership and source authority
+        run: ./scripts/check_domain_authority.sh
+      - name: Check Flutter/backend boundaries
+        run: ./scripts/enforce_monorepo_boundaries.sh
+      - name: Check patch hygiene
+        run: git diff --check

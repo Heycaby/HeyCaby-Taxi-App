@@ -1,4 +1,4 @@
-import 'dart:async' show unawaited;
+import 'dart:async' show Timer, unawaited;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +10,7 @@ import 'package:heycaby_utils/heycaby_utils.dart';
 import '../l10n/driver_strings.dart';
 import '../providers/driver_location_provider.dart';
 import '../providers/driver_ride_proximity_provider.dart';
+import '../providers/driver_runtime_providers.dart';
 import '../providers/driver_state_provider.dart';
 import '../services/driver_automatic_ping_service.dart';
 import '../services/driver_pickup_wait_service.dart';
@@ -43,6 +44,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
   bool _startingTrip = false;
   bool _enRouteStarted = false;
   String? _farePill;
+  Timer? _arrivalVerificationTimer;
 
   @override
   void initState() {
@@ -52,6 +54,50 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(hydrateDriverRideCoordsIfNeeded(ref, widget.rideId));
     });
+  }
+
+  @override
+  void dispose() {
+    _arrivalVerificationTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<bool> _requestVerifiedArrival() async {
+    var position = ref.read(driverLocationProvider).valueOrNull;
+    if (position == null ||
+        DateTime.now().difference(position.timestamp).inSeconds > 30) {
+      await ref.read(driverLocationProvider.notifier).refresh();
+      position = ref.read(driverLocationProvider).valueOrNull;
+    }
+    if (position == null) {
+      throw const RideVerificationException('driver_location_unavailable');
+    }
+    final result = await const RideVerificationService().requestDriverArrival(
+      rideId: widget.rideId,
+      latitude: position.latitude,
+      longitude: position.longitude,
+      accuracyMeters: position.accuracy,
+      speedKmh: position.speed.isFinite ? position.speed * 3.6 : 0,
+      recordedAt: position.timestamp,
+    );
+    if (result['verified'] == true || result['status'] == 'driver_arrived') {
+      return true;
+    }
+    final retrySeconds = (result['retry_after_seconds'] as num?)?.toInt() ?? 10;
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Arrival is being verified. Stay near the pickup for $retrySeconds seconds.',
+          ),
+        ),
+      );
+    }
+    _arrivalVerificationTimer?.cancel();
+    _arrivalVerificationTimer = Timer(Duration(seconds: retrySeconds), () {
+      if (mounted && !_loading) unawaited(_markArrived());
+    });
+    return false;
   }
 
   Future<void> _hydrateEnRouteState() async {
@@ -117,9 +163,18 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen> {
         action: 'arrive_pickup',
       );
       if (!allowed) return;
-      await ref
-          .read(driverApiProvider)
-          .markArrived(rideRequestId: widget.rideId);
+      final verificationEnabled = ref
+              .read(driverRemoteConfigProvider)
+              .valueOrNull
+              ?.arrivalVerificationEnabled ==
+          true;
+      if (verificationEnabled) {
+        if (!await _requestVerifiedArrival()) return;
+      } else {
+        await ref
+            .read(driverApiProvider)
+            .markArrived(rideRequestId: widget.rideId);
+      }
       unawaited(
         const DriverAutomaticPingService().sendIfNeeded(
           rideRequestId: widget.rideId,

@@ -1,8 +1,8 @@
-import type { SupabaseClient } from 'jsr:@supabase/supabase-js'
+import type { SupabaseClient } from "jsr:@supabase/supabase-js";
 
-import type { RiderNotificationRow } from './notify_types.ts'
-import { resolveRiderFcmTokens } from './resolve_fcm_tokens.ts'
-import { sendFcmNotification } from './notify_push.ts'
+import type { RiderNotificationRow } from "./notify_types.ts";
+import { resolveRiderFcmTokens } from "./resolve_fcm_tokens.ts";
+import { sendRiderPushBatch } from "./push_batch.ts";
 
 export async function deliverNotification(
   supabase: SupabaseClient,
@@ -10,7 +10,7 @@ export async function deliverNotification(
 ): Promise<Response> {
   // Insert notification into database
   const { data: inserted, error: insertError } = await supabase
-    .from('notifications')
+    .from("notifications")
     .insert({
       user_type: notification.user_type,
       user_id: notification.user_id,
@@ -22,40 +22,48 @@ export async function deliverNotification(
       priority: notification.priority,
       channel: notification.channel,
     })
-    .select('id')
-    .single()
+    .select("id")
+    .single();
 
   if (insertError || !inserted) {
-    console.error('Failed to insert notification:', insertError)
-    return new Response(JSON.stringify({ error: 'insert_failed' }), {
+    console.error("Failed to insert notification:", insertError);
+    return new Response(JSON.stringify({ error: "insert_failed" }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    })
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
-  const notificationId = inserted.id as string
+  const notificationId = inserted.id as string;
 
-  const fcmTokens = await resolveRiderFcmTokens(supabase, notification)
+  const fcmTokens = await resolveRiderFcmTokens(supabase, notification);
 
-  let pushed = 0
-  for (const token of fcmTokens) {
-    await sendFcmNotification(token, {
-      title: notification.title,
-      body: notification.body,
-      data: notification.data,
-      priority: notification.priority,
-    })
-    pushed++
+  const push = await sendRiderPushBatch(supabase, fcmTokens, {
+    title: notification.title,
+    body: notification.body,
+    data: notification.data,
+    priority: notification.priority,
+  });
+
+  if (push.acceptedCount > 0) {
+    await supabase
+      .from("notifications")
+      .update({ push_sent_at: new Date().toISOString() })
+      .eq("id", notificationId);
   }
 
-  // Mark push_sent_at on the notification row
-  await supabase
-    .from('notifications')
-    .update({ push_sent_at: new Date().toISOString() })
-    .eq('id', notificationId)
-
-  return new Response(JSON.stringify({ ok: true, pushed, notification_id: notificationId }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  })
+  return new Response(
+    JSON.stringify({
+      ok: true,
+      notification_id: notificationId,
+      push_device_count: push.deviceCount,
+      push_accepted_count: push.acceptedCount,
+      push_failed_count: push.failedCount,
+      invalid_token_count: push.invalidTokenCount,
+      push_error_codes: push.errorCodes,
+    }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    },
+  );
 }

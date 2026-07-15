@@ -37,6 +37,13 @@ Future<void> showDriverRideCommunicationSheet({
       distanceToPickupM: distanceToPickupM,
       ref: ref,
       onOpenChat: () {
+        unawaited(
+          const RideVerificationService().recordContact(
+            rideId: rideRequestId,
+            channel: 'chat',
+            outcome: 'chat_opened_from_driver_communication_center',
+          ),
+        );
         Navigator.of(ctx).pop();
         onOpenChat();
       },
@@ -73,10 +80,15 @@ class _DriverRideCommunicationSheetState
   Timer? _cooldownTicker;
   DriverPingType? _sending;
   int _historyRefresh = 0;
+  late Future<RideCommunicationPermissions> _permissions;
+  bool _startingCall = false;
 
   @override
   void initState() {
     super.initState();
+    _permissions = const MaskedRideCallingService().permissions(
+      rideId: widget.rideRequestId,
+    );
     _cooldownTicker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
@@ -105,6 +117,44 @@ class _DriverRideCommunicationSheetState
         }
       });
     }
+  }
+
+  Future<void> _startMaskedCall() async {
+    if (_startingCall) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(DriverStrings.communicationCallTitle),
+        content: Text(DriverStrings.communicationCallBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(DriverStrings.communicationCallNow),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _startingCall = true);
+    final result = await const MaskedRideCallingService().startCall(
+      rideId: widget.rideRequestId,
+    );
+    if (!mounted) return;
+    setState(() {
+      _startingCall = false;
+      _permissions = const MaskedRideCallingService().permissions(
+        rideId: widget.rideRequestId,
+      );
+    });
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(result.ok
+          ? DriverStrings.communicationCallQueued
+          : DriverStrings.communicationCallUnavailable),
+    ));
   }
 
   @override
@@ -218,6 +268,29 @@ class _DriverRideCommunicationSheetState
                     ),
                   ),
                   const SizedBox(height: DriverSpacing.lg),
+                  FutureBuilder<RideCommunicationPermissions>(
+                    future: _permissions,
+                    builder: (context, snapshot) {
+                      if (snapshot.data?.canCall != true) {
+                        return const SizedBox.shrink();
+                      }
+                      return Padding(
+                        padding:
+                            const EdgeInsets.only(bottom: DriverSpacing.sm),
+                        child: FilledButton.icon(
+                          onPressed: _startingCall ? null : _startMaskedCall,
+                          icon: _startingCall
+                              ? const SizedBox.square(
+                                  dimension: 18,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.call_outlined),
+                          label: Text(DriverStrings.communicationMaskedCall),
+                        ),
+                      );
+                    },
+                  ),
                   FilledButton.icon(
                     onPressed: widget.onOpenChat,
                     icon: const Icon(Icons.chat_bubble_outline_rounded),

@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +11,7 @@ import '../providers/driver_taxi_terug_queued_provider.dart';
 import '../providers/driver_taxi_terug_stats_provider.dart';
 import '../services/driver_data_service.dart';
 import 'driver_operational_restore_models.dart';
+import 'ride_gps_tracker.dart';
 
 /// Program 3B — restore shift availability + active ride from server on cold start.
 class DriverOperationalRestoreService {
@@ -61,6 +64,11 @@ class DriverOperationalRestoreService {
         destinationAddress: ride.destinationAddress,
         destinationLat: ride.destinationLat,
         destinationLng: ride.destinationLng,
+        bookedDestinationAddress: ride.bookedDestinationAddress,
+        bookedDestinationLat: ride.bookedDestinationLat,
+        bookedDestinationLng: ride.bookedDestinationLng,
+        routeStops: ride.routeStops,
+        routeRevision: ride.routeRevision,
         bookingMode: ride.bookingMode,
         paymentMethod: ride.paymentMethod,
         riderContactName: ride.riderContactName,
@@ -110,6 +118,12 @@ Future<void> restoreDriverOperationalState(
   ref.invalidate(driverTaxiTerugStatsProvider);
 
   service.navigateIfNeeded(router, snap);
+
+  // Resume GPS breadcrumb tracking if restoring an in_progress ride.
+  if (snap.activeRide != null &&
+      snap.activeRide!.appState == DriverAppState.inProgress) {
+    unawaited(RideGpsTracker().startTracking(snap.activeRide!.rideId));
+  }
 
   if (kDebugMode) {
     debugPrint(

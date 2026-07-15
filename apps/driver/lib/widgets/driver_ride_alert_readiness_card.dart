@@ -11,7 +11,7 @@ import '../theme/driver_spacing.dart';
 
 final driverRideAlertReadinessProvider =
     FutureProvider.autoDispose<HeyCabyNotificationReadiness>((ref) async {
-  return HeyCabyFcmRegistration.readiness();
+  return HeyCabyFcmRegistration.readiness(appRole: 'driver');
 });
 
 /// Short-lived confirmation that ride alerts are configured.
@@ -32,6 +32,7 @@ class _DriverRideAlertReadinessCardState
   Timer? _autoDismiss;
   bool _hidden = false;
   bool _autoDismissScheduled = false;
+  bool _retryingPush = false;
 
   @override
   void dispose() {
@@ -70,6 +71,23 @@ class _DriverRideAlertReadinessCardState
     if (_hidden) return false;
     if (status.ready && !isOnline) return false;
     return true;
+  }
+
+  bool _needsOsSettings(HeyCabyNotificationReadiness status) {
+    return !status.authorized ||
+        !status.alertsEnabled ||
+        !status.soundsEnabled ||
+        !status.timeSensitiveEnabled;
+  }
+
+  Future<void> _retryPushRegistration() async {
+    if (_retryingPush) return;
+    setState(() => _retryingPush = true);
+    HapticService.selectionClick();
+    await HeyCabyFcmRegistration.sync(appRole: 'driver');
+    if (!mounted) return;
+    ref.invalidate(driverRideAlertReadinessProvider);
+    setState(() => _retryingPush = false);
   }
 
   @override
@@ -157,7 +175,10 @@ class _DriverRideAlertReadinessCardState
                             Text(
                               status.ready
                                   ? DriverStrings.rideAlertsReady
-                                  : DriverStrings.rideAlertsWarning,
+                                  : (!_needsOsSettings(status) &&
+                                          !status.deviceRegistered)
+                                      ? DriverStrings.rideAlertsPushHint
+                                      : DriverStrings.rideAlertsWarning,
                               style: typo.bodySmall
                                   .copyWith(color: colors.textMid),
                             ),
@@ -166,9 +187,18 @@ class _DriverRideAlertReadinessCardState
                       ),
                       if (!status.ready)
                         TextButton(
-                          onPressed:
-                              HeyCabyFcmRegistration.openNotificationSettings,
-                          child: Text(DriverStrings.openSettings),
+                          onPressed: _retryingPush
+                              ? null
+                              : _needsOsSettings(status)
+                                  ? HeyCabyFcmRegistration.openNotificationSettings
+                                  : _retryPushRegistration,
+                          child: Text(
+                            _needsOsSettings(status)
+                                ? DriverStrings.openSettings
+                                : _retryingPush
+                                    ? '…'
+                                    : DriverStrings.rideAlertsRetryPush,
+                          ),
                         ),
                       IconButton(
                         onPressed: () {
@@ -191,25 +221,29 @@ class _DriverRideAlertReadinessCardState
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                  _ReadinessPillGrid(
                     children: [
                       _ReadinessChip(
                         label: DriverStrings.rideAlertsNotifications,
                         ready: status.authorized && status.alertsEnabled,
+                        fullWidth: true,
                       ),
                       _ReadinessChip(
                         label: DriverStrings.rideAlertsSound,
                         ready: status.soundsEnabled,
+                        fullWidth: true,
                       ),
                       _ReadinessChip(
                         label: DriverStrings.rideAlertsTimeSensitive,
                         ready: status.timeSensitiveEnabled,
+                        fullWidth: true,
                       ),
                       _ReadinessChip(
                         label: DriverStrings.rideAlertsRegistered,
-                        ready: status.tokenRegistered,
+                        failedLabel: DriverStrings.rideAlertsNotRegistered,
+                        ready: status.deviceRegistered,
+                        notReadyUsesError: true,
+                        fullWidth: true,
                       ),
                     ],
                   ),
@@ -225,34 +259,96 @@ class _DriverRideAlertReadinessCardState
   }
 }
 
+class _ReadinessPillGrid extends StatelessWidget {
+  const _ReadinessPillGrid({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    assert(children.length == 4);
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: children[0]),
+            const SizedBox(width: 8),
+            Expanded(child: children[1]),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(child: children[2]),
+            const SizedBox(width: 8),
+            Expanded(child: children[3]),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 class _ReadinessChip extends ConsumerWidget {
-  const _ReadinessChip({required this.label, required this.ready});
+  const _ReadinessChip({
+    required this.label,
+    required this.ready,
+    this.failedLabel,
+    this.notReadyUsesError = false,
+    this.fullWidth = false,
+  });
 
   final String label;
+  final String? failedLabel;
   final bool ready;
+  final bool notReadyUsesError;
+  final bool fullWidth;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = ref.watch(colorsProvider);
     final typo = ref.watch(typographyProvider);
+    final notReadyColor =
+        notReadyUsesError ? colors.error : colors.warning;
+    final displayLabel =
+        !ready && failedLabel != null ? failedLabel! : label;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      width: fullWidth ? double.infinity : null,
+      padding: EdgeInsets.symmetric(
+        horizontal: fullWidth ? 8 : 9,
+        vertical: fullWidth ? 7 : 6,
+      ),
       decoration: BoxDecoration(
         color: colors.bgAlt,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(fullWidth ? 12 : 999),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
+        mainAxisAlignment:
+            fullWidth ? MainAxisAlignment.center : MainAxisAlignment.start,
         children: [
           Icon(
-            ready ? Icons.check_circle_rounded : Icons.error_outline_rounded,
-            size: 15,
-            color: ready ? colors.success : colors.warning,
+            ready
+                ? Icons.check_circle_rounded
+                : notReadyUsesError
+                    ? Icons.cancel_rounded
+                    : Icons.error_outline_rounded,
+            size: fullWidth ? 14 : 15,
+            color: ready ? colors.success : notReadyColor,
           ),
           const SizedBox(width: 5),
-          Text(
-            label,
-            style: typo.labelSmall.copyWith(fontWeight: FontWeight.w700),
+          Flexible(
+            child: Text(
+              displayLabel,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: fullWidth ? TextAlign.center : TextAlign.start,
+              style: typo.labelSmall.copyWith(
+                fontWeight: FontWeight.w700,
+                fontSize: fullWidth ? 10.5 : null,
+                color: ready ? colors.text : notReadyColor,
+              ),
+            ),
           ),
         ],
       ),

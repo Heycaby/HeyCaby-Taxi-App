@@ -493,9 +493,11 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
         zoom: 14.5,
       );
     }
+    // No valid pickup coords — show zoomed-out NL overview until real
+    // coordinates arrive from the server. This is NOT a ride location.
     return CameraOptions(
-      center: Point(coordinates: Position(4.4777, 51.9244)),
-      zoom: 12,
+      center: Point(coordinates: Position(5.2913, 52.1326)),
+      zoom: 7.0,
     );
   }
 
@@ -522,24 +524,26 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
         phase == _ActiveRideMapPhase.atPickup) {
       chipHeadline = l10n.tripComplete;
     } else if (driver != null) {
-      if (phase == _ActiveRideMapPhase.inTrip && destination != null) {
+      if (phase == _ActiveRideMapPhase.inTrip && destination != null &&
+          destination.hasValidCoords &&
+          driver.lat != 0 && driver.lng != 0) {
         chipDistanceKm = NearbySupplyService.distanceKm(
           driver.lat,
           driver.lng,
           destination.lat,
           destination.lng,
         );
-        chipDurationMin = widget.etaMinutes ??
-            ((chipDistanceKm / 28.0) * 60.0).ceil().clamp(1, 90);
-      } else if (phase == _ActiveRideMapPhase.enRoutePickup && pickup != null) {
+        chipDurationMin = widget.etaMinutes;
+      } else if (phase == _ActiveRideMapPhase.enRoutePickup && pickup != null &&
+          pickup.hasValidCoords &&
+          driver.lat != 0 && driver.lng != 0) {
         chipDistanceKm = NearbySupplyService.distanceKm(
           driver.lat,
           driver.lng,
           pickup.lat,
           pickup.lng,
         );
-        chipDurationMin = widget.etaMinutes ??
-            ((chipDistanceKm / 28.0) * 60.0).ceil().clamp(1, 90);
+        chipDurationMin = widget.etaMinutes;
       }
     }
 
@@ -577,7 +581,7 @@ class _ActiveRideMapStackState extends ConsumerState<ActiveRideMapStack>
             cameraTick: _cameraTick,
           ),
           if (chipHeadline != null ||
-              (chipDistanceKm != null && chipDurationMin != null))
+              chipDistanceKm != null)
             Positioned(
               top: topPad + 10,
               left: 16,
@@ -634,7 +638,9 @@ class _ActiveRideMapMetricsChip extends StatelessWidget {
     final tripLabel = headline ??
         (distanceKm != null && durationMin != null
             ? '${distanceKm!.toStringAsFixed(1)} km · $durationMin min'
-            : null);
+            : distanceKm != null
+                ? '${distanceKm!.toStringAsFixed(1)} km'
+                : null);
     if (tripLabel == null) return const SizedBox.shrink();
 
     return Material(

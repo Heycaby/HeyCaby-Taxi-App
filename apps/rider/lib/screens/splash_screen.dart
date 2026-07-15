@@ -3,18 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:heycaby_api/heycaby_api.dart' show appPublicLinks;
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
-import 'package:heycaby_api/heycaby_api.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../constants/rider_search_window.dart';
 import '../models/ride_matching_variant.dart';
 import '../providers/location_provider.dart';
+import '../providers/ride_request_provider.dart';
 import '../providers/rider_locale_provider.dart';
 import '../services/rider_home_banners_service.dart';
 import '../services/rider_runtime_config_service.dart';
-import '../services/stale_ride_cleanup.dart';
 
 /// First launch: short brand splash (max ~3s). Returning users skip to location flow.
 class SplashScreen extends ConsumerStatefulWidget {
@@ -96,54 +95,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   Future<String?> _checkForActiveRide() async {
     try {
-      final identity = await ref.read(riderIdentityProvider.future);
-      if (!identity.hasSession || identity.riderToken == null) return null;
-
-      final activeRide = await HeyCabySupabase.client
-          .from('ride_requests')
-          .select('id, status, created_at, booking_mode')
-          .eq('rider_token', identity.riderToken!)
-          .inFilter('status', [
-            'pending',
-            'bidding',
-            'assigned',
-            'accepted',
-            'driver_found',
-            'driver_en_route',
-            'driver_arrived',
-            'in_progress',
-          ])
-          .order('created_at', ascending: false)
-          .limit(1)
-          .maybeSingle();
-
-      if (activeRide == null) return null;
-
-      final status = activeRide['status'] as String;
-      final createdRaw = activeRide['created_at'];
-      final createdAt =
-          createdRaw == null ? null : DateTime.tryParse(createdRaw.toString());
-
-      // Do not reopen Searching for hours-old open requests — same 30 min window as notify-me.
-      if ((status == 'pending' || status == 'bidding') &&
-          createdAt != null &&
-          DateTime.now().difference(createdAt) > kRiderDriverSearchWindow) {
-        final id = activeRide['id'] as String?;
-        if (id != null) {
-          unawaited(
-            cancelExpiredRiderOpenRide(
-              rideId: id,
-              riderToken: identity.riderToken!,
-            ),
-          );
-        }
-        return null;
-      }
+      final restored = await ref
+          .read(rideRequestProvider.notifier)
+          .tryRestoreActiveRideRequest();
+      if (!restored) return null;
+      final activeRide = ref.read(rideRequestProvider);
+      final status = activeRide.status ?? '';
 
       switch (status) {
         case 'pending':
         case 'bidding':
-          final bm = activeRide['booking_mode'] as String?;
+          final bm = activeRide.bookingMode;
           return rideMatchingVariantForBookingModeString(bm).routePath;
         case 'accepted':
         case 'assigned':

@@ -12,12 +12,18 @@ import 'home_announcement_banner.dart';
 import 'home_favorite_supply_insight.dart';
 import 'home_supply_insight.dart';
 import 'home_booking_options_grid.dart';
-import 'home_recent_places_section.dart';
+import 'home_quick_places_section.dart';
 import 'home_ride_again_section.dart';
-import 'home_saved_trips_section.dart';
 import 'home_search_hero_card.dart';
 
-/// Draggable home sheet — V2 information hierarchy (search first).
+/// Draggable home sheet — search first, then supply, quick destinations, modes.
+///
+/// Hierarchy (do not reorder state-critical cards at the top):
+/// 1. Draft resume + active booking (live ride recovery)
+/// 2. Search hero + contextual supply / announcement
+/// 3. Booking modes (Taxi Terug, airport, schedule, favourites)
+/// 4. Quick places (saved addresses + recent + saved trips — one row)
+/// 5. Ride again (trusted driver — only when favourites exist)
 class HomeBottomSheet extends ConsumerWidget {
   const HomeBottomSheet({
     super.key,
@@ -98,34 +104,53 @@ class HomeBottomSheet extends ConsumerWidget {
             const ActiveBookingCard(
               placement: ActiveBookingCardPlacement.homeSheet,
             ),
-            if (!hideHomeChrome)
+            if (!hideHomeChrome) ...[
               HomeSearchHeroCard(colors: colors, typo: typo, l10n: l10n),
-            if (announcement != null)
-              HomeAnnouncementBanner(
-                banner: announcement,
-                colors: colors,
-                typo: typo,
-              ),
-            if (showFavoriteSupplyInsight)
-              HomeFavoriteSupplyInsightCard(
-                snapshot: favoriteSupplySnapshot,
-                colors: colors,
-                typo: typo,
-                l10n: l10n,
-              ),
-            if (showSupplyInsight)
-              HomeSupplyInsightCard(
-                snapshot: supplySnapshot,
-                colors: colors,
-                typo: typo,
-                l10n: l10n,
-              ),
-            HomeRideAgainSection(colors: colors, typo: typo, l10n: l10n),
-            HomeSavedTripsSection(colors: colors, typo: typo, l10n: l10n),
-            if (!hideHomeChrome)
+              if (announcement != null)
+                HomeAnnouncementBanner(
+                  banner: announcement,
+                  colors: colors,
+                  typo: typo,
+                ),
+              if (showFavoriteSupplyInsight)
+                HomeFavoriteSupplyInsightCard(
+                  snapshot: favoriteSupplySnapshot,
+                  colors: colors,
+                  typo: typo,
+                  l10n: l10n,
+                ),
+              if (showSupplyInsight)
+                HomeSupplyInsightCard(
+                  snapshot: supplySnapshot,
+                  colors: colors,
+                  typo: typo,
+                  l10n: l10n,
+                ),
               HomeBookingOptionsGrid(colors: colors, typo: typo, l10n: l10n),
-            if (!hideHomeChrome)
-              HomeRecentPlacesSection(colors: colors, typo: typo, l10n: l10n),
+              HomeQuickPlacesSection(colors: colors, typo: typo, l10n: l10n),
+            ] else ...[
+              if (announcement != null)
+                HomeAnnouncementBanner(
+                  banner: announcement,
+                  colors: colors,
+                  typo: typo,
+                ),
+              if (showFavoriteSupplyInsight)
+                HomeFavoriteSupplyInsightCard(
+                  snapshot: favoriteSupplySnapshot,
+                  colors: colors,
+                  typo: typo,
+                  l10n: l10n,
+                ),
+              if (showSupplyInsight)
+                HomeSupplyInsightCard(
+                  snapshot: supplySnapshot,
+                  colors: colors,
+                  typo: typo,
+                  l10n: l10n,
+                ),
+            ],
+            HomeRideAgainSection(colors: colors, typo: typo, l10n: l10n),
             SizedBox(
               height: kBottomNavigationBarHeight +
                   MediaQuery.paddingOf(context).bottom +

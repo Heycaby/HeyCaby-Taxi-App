@@ -30,6 +30,8 @@ class DriverIdentityViewModel {
     this.apkExpiryLabel,
     this.vehicleDescriptor,
     this.vehicleSeats,
+    this.savedByRidersCountLine,
+    this.savedByRidersNamesLine,
   });
 
   final String headline;
@@ -49,6 +51,8 @@ class DriverIdentityViewModel {
   final String? vehicleDescriptor;
   final int? vehicleSeats;
   final List<DriverIdentityRequirement> completionItems;
+  final String? savedByRidersCountLine;
+  final String? savedByRidersNamesLine;
 }
 
 class DriverIdentityRequirement {
@@ -478,28 +482,72 @@ class _ProfileHeroCard extends StatelessWidget {
                     DriverSpacing.xl,
                     DriverSpacing.xl,
                   ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _ProfileStatPill(
-                        colors: colors,
-                        typography: typography,
-                        icon: Icons.star_rounded,
-                        value: model.rating.toStringAsFixed(1),
-                        label: DriverStrings.driverRating,
-                        onTap: onOpenRatings,
-                      ),
-                      const SizedBox(width: DriverSpacing.sm),
-                      Expanded(
-                        child: Text(
-                          DriverStrings.profileRatingHint,
-                          style: typography.bodySmall.copyWith(
-                            color: colors.textMuted,
-                            height: 1.35,
+                      Row(
+                        children: [
+                          _ProfileStatPill(
+                            colors: colors,
+                            typography: typography,
+                            icon: Icons.star_rounded,
+                            value: model.rating.toStringAsFixed(1),
+                            label: DriverStrings.driverRating,
+                            onTap: onOpenRatings,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          const SizedBox(width: DriverSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              DriverStrings.profileRatingHint,
+                              style: typography.bodySmall.copyWith(
+                                color: colors.textMuted,
+                                height: 1.35,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
+                      if (model.savedByRidersCountLine != null) ...[
+                        const SizedBox(height: DriverSpacing.sm),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.favorite_rounded,
+                              color: colors.primary,
+                              size: 16,
+                            ),
+                            const SizedBox(width: DriverSpacing.xs),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    model.savedByRidersCountLine!,
+                                    style: typography.bodySmall.copyWith(
+                                      color: colors.textSecondary,
+                                      fontWeight: FontWeight.w600,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                  if (model.savedByRidersNamesLine != null) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      model.savedByRidersNamesLine!,
+                                      style: typography.labelSmall.copyWith(
+                                        color: colors.textMuted,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),

@@ -94,6 +94,19 @@ class DriverFcmHandler {
           fromTap: fromTap,
           foreground: foreground,
         );
+      case 'taxi_terug_offer_increased':
+        ref.invalidate(driverTaxiThruRiderPostsProvider);
+        ref.invalidate(driverTaxiThruPostsCountProvider);
+        if (!context.mounted) return;
+        await dispatchDriverNotification(
+          context: context,
+          category: payload.effectiveCategory,
+          title: payload.title ?? '',
+          body: payload.body ?? '',
+          data: payload.rawData,
+          fromTap: fromTap,
+          foreground: foreground,
+        );
       case 'chat':
         await dispatchDriverNotification(
           context: context,
@@ -145,6 +158,8 @@ class DriverFcmHandler {
     final rideId = payload.rideRequestId;
     if (rideId == null || rideId.isEmpty) return;
 
+    // Foreground delivery and notification taps share the same backend
+    // validation gate. Normal taxi offers must not use CallKit/VoIP semantics.
     await DriverIncomingRideCoordinator.openIncomingRide(
       context: context,
       ref: ref,

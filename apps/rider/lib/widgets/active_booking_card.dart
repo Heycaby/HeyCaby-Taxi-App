@@ -127,8 +127,12 @@ class _ActiveBookingCardState extends ConsumerState<ActiveBookingCard> {
         .read(rideRequestProvider.notifier)
         .attachRideRequestForMatchingFlow(snap.id);
     if (!mounted) return;
-    final mode =
-        attached ? ref.read(rideRequestProvider).bookingMode : snap.bookingMode;
+    final ride = ref.read(rideRequestProvider);
+    if (NearTermRideSnapshot.liveStatuses.contains(ride.status)) {
+      context.go('/active');
+      return;
+    }
+    final mode = attached ? ride.bookingMode : snap.bookingMode;
     context.go(rideMatchingVariantForBookingModeString(mode).routePath);
   }
 
@@ -227,6 +231,69 @@ class _ActiveBookingCardState extends ConsumerState<ActiveBookingCard> {
           return const SizedBox.shrink();
         }
         _syncMarketplace(snap);
+
+        // Live ride (driver assigned / en route / in trip) — show a simple
+        // "open active ride" chip instead of the matching/searching UI.
+        if (snap.isLiveRide) {
+          final label = snap.status == 'in_progress'
+              ? l10n.rideStatusInProgress
+              : l10n.rideStatusDriverAssigned;
+          if (onHomeSheet) {
+            return Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 8),
+              child: _HomeCompactBookingChip(
+                colors: colors,
+                typo: typo,
+                l10n: l10n,
+                title: label,
+                trailingStatus: '',
+                destination: snap.destinationAddress,
+                onExpand: () => _setHomeExpanded(true),
+                onOpenFlow: () => unawaited(_openRideFlow(snap)),
+              ),
+            );
+          }
+          return InkWell(
+            onTap: () => unawaited(_openRideFlow(snap)),
+            borderRadius: BorderRadius.circular(22),
+            child: Container(
+              padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 16, 14),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: colors.border),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.local_taxi_rounded, color: colors.accent, size: 28),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label,
+                          style: typo.bodyMedium.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: colors.text,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          snap.destinationAddress,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: typo.bodySmall.copyWith(color: colors.textMid),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right_rounded, color: colors.textMid),
+                ],
+              ),
+            ),
+          );
+        }
 
         final mode = rideMatchingVariantForBookingModeString(snap.bookingMode);
         final inviteCount =

@@ -12,15 +12,19 @@ import '../providers/driver_runtime_providers.dart';
 import '../widgets/driver_ride_alert_readiness_card.dart';
 import '../theme/app_icons.dart';
 import 'driver_profile_realtime_listener.dart';
+import 'driver_hub_goals_realtime_listener.dart';
+import 'driver_scheduled_rides_realtime_listener.dart';
 import 'ride_invite_realtime_listener.dart';
 import 'driver_notifications_listener.dart';
 import 'driver_location_tracking_listener.dart';
 import 'driver_fcm_listener.dart';
 import 'driver_active_ride_realtime_listener.dart';
+import 'driver_route_change_request.dart';
 import 'driver_resilience_banner.dart';
 import 'driver_resilience_listener.dart';
 import 'driver_ride_proximity_listener.dart';
 import 'driver_automatic_ping_listener.dart';
+import 'driver_ride_line_strip.dart';
 import '../utils/driver_immersive_shell.dart';
 import '../utils/driver_runtime_refresh.dart';
 
@@ -92,12 +96,10 @@ class _DriverShellState extends ConsumerState<DriverShell>
     final colors = ref.watch(colorsProvider);
     final typo = ref.watch(typographyProvider);
     final location = GoRouterState.of(context).uri.toString();
-    // Home | Community | My rides | Me
+    // Home | My rides | Profile
     int currentIndex = 0;
-    if (location.startsWith('/driver/community')) {
+    if (location.startsWith('/driver/my-rides')) {
       currentIndex = 1;
-    } else if (location.startsWith('/driver/my-rides')) {
-      currentIndex = 2;
     } else if (location.startsWith('/driver/me') ||
         location.startsWith('/driver/settings') ||
         location.startsWith('/driver/documents') ||
@@ -111,7 +113,7 @@ class _DriverShellState extends ConsumerState<DriverShell>
         location.startsWith('/driver/terms') ||
         location.startsWith('/driver/indemnification') ||
         location.startsWith('/driver/veriff')) {
-      currentIndex = 3;
+      currentIndex = 2;
     }
 
     final immersive = isDriverImmersiveRoute(location);
@@ -122,73 +124,82 @@ class _DriverShellState extends ConsumerState<DriverShell>
         children: [
           widget.child,
           const DriverProfileRealtimeListener(),
+          const DriverHubGoalsRealtimeListener(),
+          const DriverScheduledRidesRealtimeListener(),
           const RideInviteRealtimeListener(),
           const DriverFcmListener(),
           const DriverActiveRideRealtimeListener(),
+          const DriverRouteChangeRequestListener(),
           const DriverNotificationsListener(),
           const DriverLocationTrackingListener(),
           const DriverRideProximityListener(),
           const DriverAutomaticPingListener(),
           const DriverResilienceListener(),
           const DriverResilienceBanner(),
+          if (immersive)
+            const Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: SafeArea(
+                top: false,
+                child: DriverRideLineStrip(),
+              ),
+            ),
         ],
       ),
       bottomNavigationBar: immersive
           ? null
-          : Container(
-              decoration: BoxDecoration(
-                color: colors.bg,
-                border: Border(
-                  top: BorderSide(color: colors.border, width: 0.5),
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const DriverRideLineStrip(),
+                Container(
+                  decoration: BoxDecoration(
+                    color: colors.bg,
+                    border: Border(
+                      top: BorderSide(color: colors.border, width: 0.5),
+                    ),
+                  ),
+                  child: SafeArea(
+                    top: false,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _NavItem(
+                            icon: AppIcons.navHome,
+                            label: DriverStrings.home,
+                            isActive: currentIndex == 0,
+                            colors: colors,
+                            typo: typo,
+                            onTap: () => context.go('/driver'),
+                          ),
+                        ),
+                        Expanded(
+                          child: _NavItem(
+                            icon: AppIcons.navMyRides,
+                            label: DriverStrings.myRides,
+                            isActive: currentIndex == 1,
+                            colors: colors,
+                            typo: typo,
+                            onTap: () => context.go('/driver/my-rides'),
+                          ),
+                        ),
+                        Expanded(
+                          child: _NavItem(
+                            icon: AppIcons.navProfile,
+                            label: DriverStrings.profile,
+                            isActive: currentIndex == 2,
+                            colors: colors,
+                            typo: typo,
+                            onTap: () => context.go('/driver/me'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              child: SafeArea(
-                top: false,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _NavItem(
-                        icon: AppIcons.navHome,
-                        label: DriverStrings.home,
-                        isActive: currentIndex == 0,
-                        colors: colors,
-                        typo: typo,
-                        onTap: () => context.go('/driver'),
-                      ),
-                    ),
-                    Expanded(
-                      child: _NavItem(
-                        icon: AppIcons.navCommunity,
-                        label: DriverStrings.community,
-                        isActive: currentIndex == 1,
-                        colors: colors,
-                        typo: typo,
-                        onTap: () => context.go('/driver/community'),
-                      ),
-                    ),
-                    Expanded(
-                      child: _NavItem(
-                        icon: AppIcons.navMyRides,
-                        label: DriverStrings.myRides,
-                        isActive: currentIndex == 2,
-                        colors: colors,
-                        typo: typo,
-                        onTap: () => context.go('/driver/my-rides'),
-                      ),
-                    ),
-                    Expanded(
-                      child: _NavItem(
-                        icon: AppIcons.navProfile,
-                        label: DriverStrings.profile,
-                        isActive: currentIndex == 3,
-                        colors: colors,
-                        typo: typo,
-                        onTap: () => context.go('/driver/me'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              ],
             ),
     );
   }

@@ -15,22 +15,10 @@ import '../theme/driver_typography.dart';
 import '../ui/driver_empty_state.dart';
 import '../ui/driver_ride_card.dart';
 import '../ui/driver_skeleton.dart';
-import '../ui/driver_status_badge.dart';
+import '../utils/driver_ride_ledger_display.dart';
 import '../widgets/driver_ledger_flow_common.dart';
 
 enum TodayFilter { all, completed, upcoming, cancelled }
-
-const completedStatuses = {'completed'};
-const cancelledStatuses = {'cancelled'};
-const upcomingStatuses = {
-  'accepted',
-  'assigned',
-  'driver_en_route',
-  'driver_arrived',
-  'in_progress',
-  'pending',
-  'dispatched',
-};
 
 class TodayRidesScreen extends ConsumerStatefulWidget {
   const TodayRidesScreen({super.key, this.initialFilter});
@@ -56,42 +44,26 @@ class _TodayRidesScreenState extends ConsumerState<TodayRidesScreen> {
     switch (_filter) {
       case TodayFilter.completed:
         return rides
-            .where((r) => completedStatuses.contains(r.status))
+            .where((r) => driverCompletedRideStatuses.contains(r.status))
             .toList();
       case TodayFilter.cancelled:
         return rides
-            .where((r) => cancelledStatuses.contains(r.status))
+            .where((r) => driverCancelledRideStatuses.contains(r.status))
             .toList();
       case TodayFilter.upcoming:
-        return rides.where((r) => upcomingStatuses.contains(r.status)).toList();
+        return rides
+            .where((r) => driverUpcomingRideStatuses.contains(r.status))
+            .toList();
       case TodayFilter.all:
         return rides;
     }
   }
 
-  DriverStatusTone _statusTone(MyRideSummary ride) {
-    if (ride.manualEntry) return DriverStatusTone.warning;
-    if (completedStatuses.contains(ride.status))
-      return DriverStatusTone.success;
-    if (cancelledStatuses.contains(ride.status)) return DriverStatusTone.error;
-    return DriverStatusTone.neutral;
-  }
-
-  String _statusLabel(MyRideSummary ride) {
-    if (ride.manualEntry) return DriverStrings.manualRideTag;
-    if (completedStatuses.contains(ride.status)) {
-      return DriverStrings.rideCompleted;
-    }
-    if (cancelledStatuses.contains(ride.status)) {
-      return DriverStrings.rideCancelled;
-    }
-    return ride.status;
-  }
-
   DriverLedgerHistoryItem _mapItem(MyRideSummary ride) {
-    final date = ride.createdAt == null
+    final when = ride.completedAt ?? ride.scheduledPickupAt ?? ride.createdAt;
+    final date = when == null
         ? '—'
-        : DateFormat('HH:mm').format(ride.createdAt!.toLocal());
+        : DateFormat('HH:mm').format(when.toLocal());
     final fare = ride.fare == null
         ? '—'
         : HeyCabyRideFare.formatEuroLabel(ride.fare) ?? '—';
@@ -103,8 +75,8 @@ class _TodayRidesScreenState extends ConsumerState<TodayRidesScreen> {
       pickupLabel: from,
       dropoffLabel: to,
       fareLabel: fare,
-      statusLabel: _statusLabel(ride),
-      statusTone: _statusTone(ride),
+      statusLabel: driverRideStatusLabel(ride),
+      statusTone: driverRideStatusTone(ride),
     );
   }
 
@@ -144,7 +116,6 @@ class _TodayRidesScreenState extends ConsumerState<TodayRidesScreen> {
     return ridesAsync.when(
       data: (rides) {
         final filtered = _applyFilter(rides);
-        final items = filtered.map(_mapItem).toList();
 
         return DriverLedgerFlowScaffold(
           title: DriverStrings.todaysRides,
@@ -160,7 +131,7 @@ class _TodayRidesScreenState extends ConsumerState<TodayRidesScreen> {
                 onChanged: (f) => setState(() => _filter = f),
               ),
               Expanded(
-                child: items.isEmpty
+                child: filtered.isEmpty
                     ? DriverEmptyState(
                         icon: _emptyIcon(),
                         title: _emptyMessage()!,
@@ -174,11 +145,13 @@ class _TodayRidesScreenState extends ConsumerState<TodayRidesScreen> {
                           DriverSpacing.screenEdge,
                           DriverSpacing.lg,
                         ),
-                        itemCount: items.length,
+                        itemCount: filtered.length,
                         separatorBuilder: (_, __) =>
                             const SizedBox(height: DriverSpacing.md),
                         itemBuilder: (context, index) {
-                          final item = items[index];
+                          final ride = filtered[index];
+                          final item = _mapItem(ride);
+                          final category = driverRideCategoryLabel(ride);
                           return DriverRideCard(
                             colors: colors,
                             typography: typography,
@@ -188,8 +161,11 @@ class _TodayRidesScreenState extends ConsumerState<TodayRidesScreen> {
                             metaLabel: item.dateLabel,
                             statusLabel: item.statusLabel,
                             statusTone: item.statusTone,
+                            categoryLabel: category,
+                            categoryTone: driverRideCategoryTone(ride),
+                            detailLabel: driverRideTaxiTerugDetail(ride),
                             onTap: () => context
-                                .push('/driver/my-rides/${filtered[index].id}'),
+                                .push('/driver/my-rides/${ride.id}'),
                           );
                         },
                       ),

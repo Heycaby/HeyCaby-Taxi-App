@@ -43,6 +43,9 @@ class DriverBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final viewInsets = MediaQuery.viewInsetsOf(context).bottom;
+    final maxSheetHeight =
+        MediaQuery.sizeOf(context).height * 0.88 - bottom - viewInsets;
     final radius =
         floating ? DriverRadius.sheetFloating : DriverRadius.sheetTop;
 
@@ -53,23 +56,33 @@ class DriverBottomSheet extends StatelessWidget {
       tintOpacity: 0.88,
       boxShadow: DriverShadows.floating(colors),
       padding: EdgeInsets.zero,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (showHandle)
-            Padding(
-              padding: const EdgeInsets.only(top: DriverSpacing.md),
-              child: Container(
-                width: 44,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: colors.border.withValues(alpha: 0.85),
-                  borderRadius: BorderRadius.circular(DriverRadius.pill),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: maxSheetHeight.clamp(200.0, double.infinity),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (showHandle)
+              Padding(
+                padding: const EdgeInsets.only(top: DriverSpacing.md),
+                child: Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: colors.border.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(DriverRadius.pill),
+                  ),
                 ),
               ),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(bottom: viewInsets > 0 ? 8 : 0),
+                child: child,
+              ),
             ),
-          child,
-        ],
+          ],
+        ),
       ),
     );
 

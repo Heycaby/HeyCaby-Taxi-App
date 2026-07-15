@@ -125,6 +125,22 @@ class _ReceiptContent extends StatelessWidget {
     );
     final diff = (expected != null && paid != null) ? paid - expected : null;
 
+    // Fare breakdown fields (from fn_get_ride_fare_breakdown).
+    final actualDistanceKm = _tryParseAmount(receipt['actual_distance_km']);
+    final estimatedDistanceKm =
+        _tryParseAmount(receipt['estimated_distance_km']);
+    final actualDurationMin = _tryParseAmount(receipt['actual_duration_min']);
+    final estimatedDurationMin =
+        _tryParseAmount(receipt['estimated_duration_min']);
+    final overtimeMinutes = _tryParseInt(receipt['traffic_overtime_minutes']);
+    final overtimeFeeCents =
+        _tryParseInt(receipt['traffic_overtime_fee_cents']);
+    final finalFare = _tryParseAmount(receipt['final_fare']);
+    final quotedFare = _tryParseAmount(receipt['quoted_fare']);
+    final overtimeFee = overtimeFeeCents != null
+        ? overtimeFeeCents / 100.0
+        : _tryParseAmount(receipt['traffic_overtime_fee_cents']);
+
     return ListView(
       padding: const EdgeInsetsDirectional.fromSTEB(20, 4, 20, 28),
       children: [
@@ -166,12 +182,47 @@ class _ReceiptContent extends StatelessWidget {
           typo: typo,
           l10n: l10n,
           rows: [
+            if (quotedFare != null)
+              _ReceiptRowData(
+                icon: Icons.price_check_rounded,
+                label: 'Quoted fare',
+                value: _formatMoney(quotedFare, currency),
+              ),
             if (baseFare != null)
               _ReceiptRowData(
                 icon: Icons.local_taxi_rounded,
                 label: l10n.rideReceiptBaseFare,
                 value: _formatMoney(baseFare, currency),
               ),
+            if (actualDistanceKm != null && actualDistanceKm > 0)
+              _ReceiptRowData(
+                icon: Icons.straighten_rounded,
+                label: 'Distance travelled',
+                value:
+                    '${actualDistanceKm.toStringAsFixed(1)} km'
+                    '${estimatedDistanceKm != null && estimatedDistanceKm > 0 ? ' (est. ${estimatedDistanceKm.toStringAsFixed(1)} km)' : ''}',
+              ),
+            if (actualDurationMin != null && actualDurationMin > 0)
+              _ReceiptRowData(
+                icon: Icons.schedule_rounded,
+                label: 'Trip duration',
+                value:
+                    '${actualDurationMin.round()} min'
+                    '${estimatedDurationMin != null && estimatedDurationMin > 0 ? ' (est. ${estimatedDurationMin.round()} min)' : ''}',
+              ),
+            if (overtimeMinutes != null && overtimeMinutes > 0) ...[
+              _ReceiptRowData(
+                icon: Icons.traffic_rounded,
+                label: 'Traffic overtime',
+                value: '$overtimeMinutes min',
+              ),
+              if (overtimeFee != null && overtimeFee > 0)
+                _ReceiptRowData(
+                  icon: Icons.add_circle_outline_rounded,
+                  label: 'Overtime fee (50% rate)',
+                  value: _formatMoney(overtimeFee, currency),
+                ),
+            ],
             if (waitingFee != null && (waitingFee > 0 || waitingWaived))
               _ReceiptRowData(
                 icon: waitingWaived
@@ -188,6 +239,13 @@ class _ReceiptContent extends StatelessWidget {
                 icon: Icons.av_timer_rounded,
                 label: l10n.rideReceiptChargeableWait,
                 value: l10n.rideReceiptSeconds(chargeableWaitSeconds),
+              ),
+            if (finalFare != null)
+              _ReceiptRowData(
+                icon: Icons.account_balance_wallet_rounded,
+                label: 'Final fare',
+                value: _formatMoney(finalFare, currency),
+                emphasized: true,
               ),
             if (expected != null)
               _ReceiptRowData(

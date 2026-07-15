@@ -18,12 +18,14 @@ class DriverCommunityNotificationsPreview extends StatelessWidget {
 
   static const _items = [
     DriverCommunityNotificationPreviewItem(
+      id: 'preview-1',
       title: 'New announcement',
       body: 'Platform fee update for April — read the pinned post.',
       timeLabel: '12m ago',
       unread: true,
     ),
     DriverCommunityNotificationPreviewItem(
+      id: 'preview-2',
       title: 'Ride swap claimed',
       body: 'Your swap offer to Schiphol was accepted.',
       timeLabel: '2h ago',
@@ -44,7 +46,8 @@ class DriverCommunityNotificationsPreview extends StatelessWidget {
           error: null,
           items: _items,
           onMarkAllRead: () {},
-          onClearRead: () {},
+          onDeleteAll: () {},
+          onDeleteSelected: (_) {},
           onNotificationTap: (_) {},
         ),
       ),

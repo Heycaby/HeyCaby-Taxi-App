@@ -14,7 +14,7 @@ This is a Flutter monorepo (Melos) with two mobile apps (`apps/rider/`, `apps/dr
 
 - **No simulator/emulator available.** `flutter run` will fail. Verification is limited to static analysis, unit/widget tests, and localization generation.
 - **Supabase** — `SUPABASE_URL` and `SUPABASE_ANON_KEY` must be passed via `--dart-define` (or merged `.env` for IPA builds) before `HeyCabySupabase.initialize()` succeeds; they are not hardcoded in `packages/heycaby_api`. Static analysis/tests do not start the apps. **`MAPBOX_ACCESS_TOKEN`** is still required at runtime for maps.
-- **Supabase environments** — QA and device testing use **staging** (`fdavszxncggswuiwggcp`, `https://fdavszxncggswuiwggcp.supabase.co`). Apply MCP migrations and SQL to staging first; production is `fvrprxguoternoxnyhoj` only after staging passes or explicit prod request.
+- **Supabase environments** — QA and device testing use **production** (`fvrprxguoternoxnyhoj`, `https://fvrprxguoternoxnyhoj.supabase.co`). Apply MCP migrations, SQL, and edge-function deploys to production unless the user explicitly asks for staging (`fdavszxncggswuiwggcp`).
 - **Android Play upload** — Before `flutter build appbundle`, add `apps/<app>/android/key.properties` (copy from `key.properties.example`). Release `assembleRelease` / `bundleRelease` fail fast if it is missing.
 
 ### iOS physical device (full app — no “minimal” shortcuts)

@@ -15,6 +15,7 @@ import 'router.dart';
 import 'services/driver_fcm_scope.dart';
 import 'services/driver_operational_restore_service.dart';
 import 'services/driver_session_bootstrap.dart';
+import 'widgets/driver_ride_alert_readiness_card.dart';
 
 class HeyCabyDriverApp extends ConsumerStatefulWidget {
   const HeyCabyDriverApp({super.key});
@@ -67,6 +68,7 @@ class _HeyCabyDriverAppState extends ConsumerState<HeyCabyDriverApp> {
     if (driverId != null) {
       await restoreDriverOperationalState(ref, appRouter);
     }
+    ref.invalidate(driverRideAlertReadinessProvider);
   }
 
   @override

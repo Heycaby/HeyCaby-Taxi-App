@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../l10n/driver_strings.dart';
 import '../theme/app_icons.dart';
 import '../providers/driver_data_providers.dart';
+import '../providers/driver_earnings_targets_notifier.dart';
 import '../providers/driver_state_provider.dart';
 import '../utils/driver_ticket_navigation.dart';
 
@@ -179,13 +180,10 @@ class DriverHubEarningsTargetSection extends ConsumerWidget {
                   final amount =
                       double.tryParse(controller.text.replaceAll(',', '.'));
                   if (amount != null && amount > 0) {
-                    final id = await ref.read(driverIdProvider.future);
-                    if (id != null) {
-                      await ref
-                          .read(driverDataServiceProvider)
-                          .upsertEarningsTarget(id, period, amount);
-                      ref.invalidate(driverEarningsTargetsProvider);
-                    }
+                    final ok = await ref
+                        .read(driverEarningsTargetsProvider.notifier)
+                        .saveTarget(period, amount);
+                    if (!ok && ctx.mounted) return;
                   }
                   if (ctx.mounted) Navigator.of(ctx).pop();
                 },

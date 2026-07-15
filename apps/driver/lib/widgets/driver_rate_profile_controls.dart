@@ -10,6 +10,7 @@ class DriverRateEditableField extends StatelessWidget {
     required this.controller,
     required this.colors,
     required this.typo,
+    this.icon,
     this.prefix,
     this.suffix,
   });
@@ -18,6 +19,7 @@ class DriverRateEditableField extends StatelessWidget {
   final TextEditingController controller;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
+  final IconData? icon;
   final String? prefix;
   final String? suffix;
 
@@ -26,35 +28,45 @@ class DriverRateEditableField extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
-          color: colors.card,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colors.border),
+          color: colors.surface.withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: colors.border.withValues(alpha: 0.65)),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              label,
-              style: typo.labelSmall
-                  .copyWith(color: colors.textSoft, fontSize: 11),
+            Icon(
+              icon ?? Icons.euro_rounded,
+              color: colors.accent,
+              size: 22,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             TextField(
               controller: controller,
+              textAlign: TextAlign.center,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              style: typo.bodyMedium.copyWith(
+              style: typo.titleSmall.copyWith(
                 color: colors.text,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w900,
               ),
               decoration: InputDecoration(
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 6),
+                contentPadding: const EdgeInsets.symmetric(vertical: 2),
                 border: InputBorder.none,
                 prefixText: prefix,
                 suffixText: suffix,
+              ),
+            ),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: typo.labelSmall.copyWith(
+                color: colors.textSoft,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],

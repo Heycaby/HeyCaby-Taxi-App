@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:audio_session/audio_session.dart' as audio_session;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 
@@ -8,18 +11,19 @@ import 'package:flutter/foundation.dart';
 /// - assets/sounds/shared/...
 class SoundService {
   static const String rideRequestRingtoneAsset =
-      'sounds/driver/ride_request_incoming.wav';
+      'sounds/driver/african_king_gyl_15sec.wav';
 
   static final SoundService _instance = SoundService._internal();
   factory SoundService() => _instance;
   SoundService._internal() {
-    // Keep cues snappy and audible for status-preview taps.
     _player.setPlayerMode(PlayerMode.lowLatency);
     _player.setReleaseMode(ReleaseMode.stop);
     _player.setVolume(1.0);
   }
 
   final AudioPlayer _player = AudioPlayer();
+  final AudioPlayer _rideRequestPlayer = AudioPlayer();
+  Timer? _rideRequestStopTimer;
   bool _enabled = true;
   int _rideRequestSession = 0;
 
@@ -29,6 +33,32 @@ class SoundService {
     _enabled = enabled;
   }
 
+  Future<void> _activateRideRequestAudioSession() async {
+    try {
+      final session = await audio_session.AudioSession.instance;
+      await session.configure(
+        audio_session.AudioSessionConfiguration(
+          avAudioSessionCategory:
+              audio_session.AVAudioSessionCategory.playback,
+          avAudioSessionCategoryOptions:
+              audio_session.AVAudioSessionCategoryOptions.duckOthers,
+          avAudioSessionMode: audio_session.AVAudioSessionMode.defaultMode,
+          androidAudioAttributes: const audio_session.AndroidAudioAttributes(
+            contentType: audio_session.AndroidAudioContentType.sonification,
+            usage: audio_session.AndroidAudioUsage.notificationRingtone,
+          ),
+          androidAudioFocusGainType:
+              audio_session.AndroidAudioFocusGainType.gain,
+        ),
+      );
+      await session.setActive(true);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('SoundService: audio session setup failed - $e');
+      }
+    }
+  }
+
   /// Plays incoming ride request ringtone for the active offer window.
   Future<void> playRideRequest({
     Duration duration = const Duration(seconds: 30),
@@ -36,27 +66,33 @@ class SoundService {
     if (!_enabled) return;
     final session = ++_rideRequestSession;
     try {
-      await _player.stop();
-      await _player.setVolume(1.0);
-      await _player.setReleaseMode(ReleaseMode.loop);
-      await _player.play(AssetSource(rideRequestRingtoneAsset));
-      await Future<void>.delayed(duration);
-      if (session == _rideRequestSession) {
-        await _player.stop();
-        await _player.setReleaseMode(ReleaseMode.stop);
-      }
+      await _activateRideRequestAudioSession();
+      _rideRequestStopTimer?.cancel();
+      await _rideRequestPlayer.stop();
+      await _rideRequestPlayer.setPlayerMode(PlayerMode.mediaPlayer);
+      await _rideRequestPlayer.setReleaseMode(ReleaseMode.loop);
+      await _rideRequestPlayer.setVolume(1.0);
+      await _rideRequestPlayer.play(AssetSource(rideRequestRingtoneAsset));
+
+      _rideRequestStopTimer = Timer(duration, () {
+        if (session == _rideRequestSession) {
+          stopRideRequest();
+        }
+      });
     } catch (e) {
       if (kDebugMode) {
         debugPrint('SoundService: Failed to play incoming ride - $e');
       }
-      // Missing sound should be silent by design.
     }
   }
 
   /// Stops the ride request sound (call on accept/decline/expire).
   void stopRideRequest() {
     _rideRequestSession++;
-    _player.stop();
+    _rideRequestStopTimer?.cancel();
+    _rideRequestStopTimer = null;
+    unawaited(_rideRequestPlayer.stop());
+    unawaited(_rideRequestPlayer.setReleaseMode(ReleaseMode.stop));
   }
 
   /// Confirmation that the driver has accepted a ride — plays once.
@@ -104,21 +140,18 @@ class SoundService {
   /// Status cue when driver goes online (money mindset).
   Future<void> playStatusOnline() async {
     if (!_enabled) return;
-    // Punchy and rewarding when driver goes online.
     await _playSoundOnce('sounds/shared/trip_complete.mp3', volume: 1.0);
   }
 
   /// Status cue when driver switches to break.
   Future<void> playStatusOnBreak() async {
     if (!_enabled) return;
-    // Quieter, short transition cue for break mode.
     await _playSoundOnce('sounds/shared/driver_found.mp3', volume: 0.38);
   }
 
   /// Status cue when driver goes offline / ends shift.
   Future<void> playStatusOffline() async {
     if (!_enabled) return;
-    // Clear end-of-shift cue, softer than online.
     await _playSoundOnce('sounds/shared/driver_cancelled.mp3', volume: 0.65);
   }
 
@@ -132,7 +165,6 @@ class SoundService {
   /// Premium short cue for quick tariff switching interactions.
   Future<void> playTariffSwitch() async {
     if (!_enabled) return;
-    // Faint, short droplet cue so preference toggles stay subtle.
     await _playSoundOnce('sounds/shared/toggle_drop_soft.wav', volume: 0.24);
   }
 
@@ -146,7 +178,6 @@ class SoundService {
       if (kDebugMode) {
         debugPrint('SoundService: Failed to play $assetPath - $e');
       }
-      // Missing sound should be silent by design.
     }
   }
 
@@ -156,10 +187,13 @@ class SoundService {
   }
 
   void stopAll() {
+    stopRideRequest();
     _player.stop();
   }
 
   void dispose() {
+    _rideRequestStopTimer?.cancel();
+    _rideRequestPlayer.dispose();
     _player.dispose();
   }
 }

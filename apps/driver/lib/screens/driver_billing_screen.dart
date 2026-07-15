@@ -38,7 +38,9 @@ String? _dueLine(Map<String, dynamic>? status) {
 
   if (paymentPending) return DriverStrings.platformBalancePaymentPendingBody;
   if (state == 'current') return DriverStrings.platformBalanceCurrentBody;
-  if (state == 'paused') return DriverStrings.platformBalancePausedBody;
+  if (state == 'paused' || state == 'direct_payment_paused') {
+    return DriverStrings.platformBalancePausedBody;
+  }
 
   final target = graceUntil ?? dueAt;
   if (target == null) return DriverStrings.platformBalanceDueBody;
@@ -51,7 +53,9 @@ String? _dueLine(Map<String, dynamic>? status) {
 DriverStatusTone _statusTone(Map<String, dynamic>? status) {
   final state = (status?['balance_state'] as String?)?.trim();
   if (status?['payment_pending'] == true) return DriverStatusTone.warning;
-  if (state == 'paused') return DriverStatusTone.error;
+  if (state == 'paused' || state == 'direct_payment_paused') {
+    return DriverStatusTone.error;
+  }
   if (state == 'due') return DriverStatusTone.warning;
   return DriverStatusTone.success;
 }
@@ -116,6 +120,8 @@ class DriverBillingScreen extends ConsumerWidget {
         : 0;
     final state = (status?['balance_state'] as String?)?.trim() ?? 'current';
     final rideRequestsPaused = status?['ride_requests_paused'] == true;
+    final directPaymentRidesPaused =
+        status?['direct_payment_rides_paused'] == true;
     final paymentPending = status?['payment_pending'] == true;
     final canSettle =
         outstanding > 0 && status?['can_settle_outstanding'] == true;
@@ -124,7 +130,9 @@ class DriverBillingScreen extends ConsumerWidget {
       outstandingDisplay: _money(status, outstanding),
       statusLine: switch (state) {
         _ when paymentPending => DriverStrings.platformBalancePaymentPending,
-        'paused' => DriverStrings.platformBalanceRequestsPaused,
+        'paused' ||
+        'direct_payment_paused' =>
+          DriverStrings.platformBalanceDirectRidesPaused,
         'due' => DriverStrings.platformBalanceOutstanding,
         _ => DriverStrings.platformBalanceCurrent,
       },
@@ -134,6 +142,13 @@ class DriverBillingScreen extends ConsumerWidget {
       paymentPending: paymentPending,
       canSettle: canSettle,
       isCurrent: outstanding <= 0,
+      warningDisplay: status?['warning_threshold_cents'] is num
+          ? _money(status, (status!['warning_threshold_cents'] as num).toInt())
+          : null,
+      limitDisplay: status?['limit_cents'] is num
+          ? _money(status, (status!['limit_cents'] as num).toInt())
+          : null,
+      directPaymentRidesPaused: directPaymentRidesPaused,
     );
 
     return DriverPlatformBalanceBody(

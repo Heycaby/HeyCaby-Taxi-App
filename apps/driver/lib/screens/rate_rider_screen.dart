@@ -10,6 +10,7 @@ import '../l10n/driver_strings.dart';
 import '../providers/driver_state_provider.dart';
 import '../providers/driver_taxi_terug_stats_provider.dart';
 import '../services/driver_operational_restore_service.dart';
+import '../utils/driver_today_rides_refresh.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_feedback_loop_body.dart';
@@ -65,6 +66,7 @@ class _RateRiderScreenState extends ConsumerState<RateRiderScreen> {
         );
       }
       if (!mounted) return;
+      invalidateTodayRideProviders(ref);
       ref.invalidate(driverTaxiTerugStatsProvider);
       final resumed = await resumeActivatedTaxiTerugRideIfAny(
         ref,
@@ -95,6 +97,7 @@ class _RateRiderScreenState extends ConsumerState<RateRiderScreen> {
         ref.read(driverApiProvider).setStatus(status: 'on_break'),
       );
     }
+    invalidateTodayRideProviders(ref);
     ref.invalidate(driverTaxiTerugStatsProvider);
     final resumed = await resumeActivatedTaxiTerugRideIfAny(
       ref,

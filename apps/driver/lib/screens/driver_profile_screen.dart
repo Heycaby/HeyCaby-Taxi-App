@@ -26,6 +26,7 @@ import '../theme/driver_typography.dart';
 import '../models/driver_runtime_models.dart';
 import '../utils/driver_readiness_routes.dart';
 import '../widgets/driver_identity_body.dart';
+import '../widgets/driver_hub_saved_by_riders_section.dart';
 import '../widgets/driver_rating_sheet.dart';
 import '../utils/validation_utils.dart';
 
@@ -988,6 +989,9 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
     final profileAsync = ref.watch(driverProfileProvider);
     final complianceAsync = ref.watch(driverComplianceProvider);
     final runtimeAsync = ref.watch(driverRuntimeSnapshotProvider);
+    final savedByRidersInline = savedByRidersInlineCopy(
+      ref.watch(driverFavoriteSummaryProvider).valueOrNull,
+    );
     final email = HeyCabySupabase.client.auth.currentUser?.email;
 
     return Scaffold(
@@ -1053,6 +1057,8 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                     compliance: compliance,
                     runtime: runtime,
                   ),
+                  savedByRidersCountLine: savedByRidersInline?.countLine,
+                  savedByRidersNamesLine: savedByRidersInline?.namesLine,
                 ),
                 onEditProfile: () async {
                   HapticService.lightTap();

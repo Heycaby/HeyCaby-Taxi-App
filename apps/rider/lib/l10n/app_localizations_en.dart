@@ -69,13 +69,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeSmartOptionsTitle => 'How do you want to ride?';
 
   @override
-  String get homeBestPriceTitle => 'TAXI TERUG';
+  String get homeBestPriceTitle => 'RETURN TAXI';
 
   @override
   String get homeBestPriceSubtitle => 'Find drivers already heading your way.';
 
   @override
-  String get homeTaxiTerugTitle => 'TAXI TERUG';
+  String get homeTaxiTerugTitle => 'RETURN TAXI';
 
   @override
   String get homeTaxiTerugSubtitle => 'Find drivers already heading your way.';
@@ -90,7 +90,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get taxiTerugFareExplanation =>
-      'Taxi Terug means the taxi is already going your direction. The fare depends on the driver\'s tariff — not a platform discount.';
+      'Return Taxi means the taxi is already going your direction. The fare depends on the driver\'s tariff — not a platform discount.';
 
   @override
   String get taxiTerugDriversAcceptHint =>
@@ -139,7 +139,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get taxiTerugWaitToleranceBody =>
-      'Taxi Terug drivers may finish a ride nearby first. We only show taxis that can reach you within your wait time.';
+      'Return Taxi drivers may finish a ride nearby first. We only show taxis that can reach you within your wait time.';
 
   @override
   String taxiTerugWaitMinutes(int minutes) {
@@ -169,7 +169,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get taxiTerugQueuedConfirmed => 'Taxi Terug confirmed';
+  String get taxiTerugQueuedConfirmed => 'Return Taxi confirmed';
 
   @override
   String get taxiTerugQueuedWaitingForDriver =>
@@ -209,7 +209,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeSupplyNoneSubtitle =>
-      'Try TAXI TERUG or schedule a ride for later.';
+      'Try RETURN TAXI or schedule a ride for later.';
 
   @override
   String homeSupplyNearbyTitle(int count) {
@@ -303,6 +303,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeRecentPlacesEdit => 'Edit';
+
+  @override
+  String get homeQuickPlacesTitle => 'Saved & recent';
+
+  @override
+  String get homeQuickPlacesManage => 'Manage';
 
   @override
   String get savedTripsTitle => 'Saved trips';
@@ -3010,7 +3016,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchFactMarketplace =>
-      'Drivers heading home sometimes ride for less. Try TAXI TERUG for a better price.';
+      'Drivers heading home sometimes ride for less. Try RETURN TAXI for a better price.';
 
   @override
   String get searchFactZZP =>
@@ -3222,7 +3228,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rideMatchingTypeLabelMarketplace => 'Marketplace';
 
   @override
-  String get rideMatchingTypeLabelTerug => 'TAXI TERUG';
+  String get rideMatchingTypeLabelTerug => 'RETURN TAXI';
 
   @override
   String get rideMatchingTypeLabelScheduled => 'Scheduled';
@@ -3483,6 +3489,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activeRideContactDriver => 'Contact driver';
+
+  @override
+  String get maskedCallDriver => 'Call driver through HeyCaby';
+
+  @override
+  String get maskedCallTitle => 'Call through HeyCaby?';
+
+  @override
+  String get maskedCallBody =>
+      'Your phone number stays private. Calls last up to 5 minutes. We call you first, then connect your driver.';
+
+  @override
+  String get maskedCallNow => 'Call now';
+
+  @override
+  String get maskedCallQueued =>
+      'HeyCaby is calling you now. Answer to connect.';
+
+  @override
+  String get maskedCallUnavailable =>
+      'Calling is temporarily unavailable. Use Ping or Message instead.';
 
   @override
   String activeRideCategoryLabel(String category) {
@@ -3819,7 +3846,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smartBundleTapToHide => 'Tap to hide ride classes';
 
   @override
-  String get taxiTerugScreenTitle => 'Taxi Terug';
+  String get taxiTerugScreenTitle => 'Return Taxi';
 
   @override
   String get taxiTerugScreenSubtitle =>
@@ -3846,23 +3873,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get taxiTerugScreenDisabled =>
-      'Taxi Terug is not available right now.';
+      'Return Taxi is not available right now.';
 
   @override
-  String get taxiTerugScreenNoRides => 'No Taxi Terug rides found.';
+  String get taxiTerugScreenNoRides => 'No Return Taxi rides found.';
 
   @override
   String get taxiTerugScreenNoRidesBody =>
       'Post your trip so drivers heading that way can accept.';
 
   @override
-  String get taxiTerugScreenPostCta => 'Post Taxi Terug Request';
+  String get taxiTerugScreenPostCta => 'Post Return Taxi Request';
 
   @override
   String get taxiTerugScreenBook => 'Book';
 
   @override
-  String get taxiTerugScreenPostTitle => 'Post Taxi Terug Request';
+  String get taxiTerugScreenPostTitle => 'Post Return Taxi Request';
 
   @override
   String get taxiTerugScreenPostBody =>
@@ -3892,7 +3919,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get taxiTerugPickCityHint => 'Pick a city above';
 
   @override
-  String get taxiTerugTrackerSearching => 'Finding your Taxi Terug match';
+  String get taxiTerugTrackerSearching => 'Finding your Return Taxi match';
 
   @override
   String get taxiTerugTrackerSearchingBody =>
@@ -3903,14 +3930,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get taxiTerugTrackerNoMatchBody =>
-      'No Taxi Terug drivers were found within 1 hour. Please try again later.';
+      'No Return Taxi drivers were found within 1 hour. Please try again later.';
 
   @override
   String get taxiTerugTrackerCancelTitle => 'Cancel request';
 
   @override
   String get taxiTerugTrackerCancelConfirm =>
-      'Are you sure you want to cancel your Taxi Terug request?';
+      'Are you sure you want to cancel your Return Taxi request?';
 
   @override
   String get taxiTerugTrackerBoost => 'Boost offer';
@@ -3941,7 +3968,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activeRouteEditBody =>
-      'Your driver will see changes instantly. The final fare may change with the route.';
+      'Your driver must accept extra stops before they are added. The final fare may change with the route.';
 
   @override
   String get activeRouteChangeDestination => 'Change destination';
@@ -3958,4 +3985,74 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get activeRouteUpdateFailed =>
       'We couldn’t update the route. Your original route is unchanged.';
+
+  @override
+  String get activeRouteWaitingDriver =>
+      'Waiting for your driver to accept this stop';
+
+  @override
+  String get activeRoutePendingStop => 'Pending';
+
+  @override
+  String get activeRouteDuplicateRequest =>
+      'You already asked for this stop. Waiting for your driver.';
+
+  @override
+  String get activeRouteNoChange => 'That stop is already on your route.';
+
+  @override
+  String get activeRouteDestinationChanged => 'Changed address';
+
+  @override
+  String activeRouteStopsAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count stops added',
+      one: '1 stop added',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get prepayRideTitle => 'Pay securely in the app';
+
+  @override
+  String get prepayRideRequiredBody =>
+      'This ride requires prepayment after your driver accepts. Mollie confirms the payment securely.';
+
+  @override
+  String get prepayRideOptionalBody =>
+      'Pay your driver as usual, or pay now securely through Mollie.';
+
+  @override
+  String get prepayPayNow => 'Pay now';
+
+  @override
+  String get prepayPayDriver => 'Pay driver';
+
+  @override
+  String get prepayOpenCheckout => 'Open secure checkout';
+
+  @override
+  String get prepayAwaitingConfirmation => 'Waiting for Mollie confirmation';
+
+  @override
+  String get prepayPaid => 'Payment confirmed';
+
+  @override
+  String get prepayDriverNotReady =>
+      'This driver cannot receive prepaid rides yet. Pay the driver as usual.';
+
+  @override
+  String get prepayUnavailable =>
+      'Prepayment is temporarily unavailable. Your existing payment method is unchanged.';
+
+  @override
+  String get prepayRetry => 'Try again';
+
+  @override
+  String prepayAmount(String amount) {
+    return 'Amount: $amount';
+  }
 }

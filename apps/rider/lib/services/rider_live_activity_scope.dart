@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/driver_tracking_provider.dart';
 import '../providers/ride_request_provider.dart';
 import 'rider_ride_lifecycle_engine.dart';
+import 'rider_notify_live_activity.dart';
 
 /// Wires Supabase realtime, polling, app lifecycle, and driver location into
 /// [RiderRideLifecycleEngine] — the Live Activity is a first-class consumer of ride state.
@@ -41,7 +42,11 @@ class _RiderLiveActivityScopeState extends ConsumerState<RiderLiveActivityScope>
       _ensureRideSubscription(ride.rideRequestId);
       _ensurePollTimer(ride);
       _ensureGraceTimer();
-      unawaited(_refreshFromServer(source: 'scope_init'));
+      if (ride.rideRequestId == null || ride.rideRequestId!.isEmpty) {
+        unawaited(RiderNotifyLiveActivity.reconcileNoActiveRide());
+      } else {
+        unawaited(_refreshFromServer(source: 'scope_init'));
+      }
     });
   }
 
@@ -64,9 +69,8 @@ class _RiderLiveActivityScopeState extends ConsumerState<RiderLiveActivityScope>
   void _ensurePollTimer(RideRequestState ride) {
     final id = ride.rideRequestId;
     final status = ride.status;
-    final needsPoll = id != null &&
-        status != null &&
-        !RiderRideStatuses.isTerminal(status);
+    final needsPoll =
+        id != null && status != null && !RiderRideStatuses.isTerminal(status);
     if (!needsPoll) {
       _pollTimer?.cancel();
       _pollTimer = null;
@@ -116,7 +120,15 @@ class _RiderLiveActivityScopeState extends ConsumerState<RiderLiveActivityScope>
             unawaited(_refreshFromServer(source: 'realtime'));
           },
         )
-        .subscribe();
+        .subscribe((status, error) {
+      if (status == RealtimeSubscribeStatus.subscribed) {
+        // Realtime is delivery, not truth. Fetch after every successful
+        // subscription so reconnects cannot leave stale Rider state.
+        unawaited(
+          _refreshFromServer(source: 'realtime_subscribed'),
+        );
+      }
+    });
   }
 
   Future<void> _refreshFromServer({required String source}) async {
@@ -136,7 +148,10 @@ class _RiderLiveActivityScopeState extends ConsumerState<RiderLiveActivityScope>
     ref.listen<RideRequestState>(rideRequestProvider, (prev, next) {
       if (prev?.rideRequestId != next.rideRequestId) {
         if (prev?.rideRequestId != null) {
-          _engine.resetForRideChange();
+          _engine.resetForRideChange(previousRideId: prev?.rideRequestId);
+        }
+        if (next.rideRequestId == null || next.rideRequestId!.isEmpty) {
+          unawaited(RiderNotifyLiveActivity.reconcileNoActiveRide());
         }
         _ensureRideSubscription(next.rideRequestId);
       }

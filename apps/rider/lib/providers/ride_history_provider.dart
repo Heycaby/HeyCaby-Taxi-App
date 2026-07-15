@@ -29,17 +29,21 @@ class RideHistoryItem {
   });
 
   factory RideHistoryItem.fromJson(Map<String, dynamic> json) {
-    final driver = json['driver'] as Map<String, dynamic>?;
+    final driver = json['driver'] is Map
+        ? Map<String, dynamic>.from(json['driver'] as Map)
+        : null;
+    final createdAt = _parseRideTimestamp(json['created_at']);
+    if (createdAt == null) {
+      throw const FormatException('missing created_at');
+    }
     return RideHistoryItem(
       id: json['id'] as String,
       status: json['status'] as String,
       pickupAddress: (json['pickup_address'] as String?) ?? '',
       destinationAddress: (json['destination_address'] as String?) ?? '',
       fare: (json['fare'] as num?)?.toDouble(),
-      createdAt: DateTime.parse(json['created_at'] as String),
-      completedAt: json['completed_at'] != null
-          ? DateTime.tryParse(json['completed_at'] as String)
-          : null,
+      createdAt: createdAt,
+      completedAt: _parseRideTimestamp(json['completed_at']),
       driverName: (driver?['full_name'] ?? driver?['name']) as String?,
       driverPhoto:
           (driver?['profile_photo_url'] ?? driver?['photo_url']) as String?,
@@ -56,18 +60,33 @@ String _displayStatus(Map<String, dynamic> row) {
   return status;
 }
 
-RideHistoryItem _rideHistoryItemFromRow(Map<String, dynamic> row) {
-  final driver = row['driver'] as Map<String, dynamic>?;
+DateTime? _parseRideTimestamp(dynamic raw) {
+  if (raw == null) return null;
+  if (raw is DateTime) return raw;
+  return DateTime.tryParse(raw.toString());
+}
+
+Map<String, dynamic>? _driverMap(dynamic raw) {
+  if (raw is Map) return Map<String, dynamic>.from(raw);
+  return null;
+}
+
+RideHistoryItem? _rideHistoryItemFromRow(Map<String, dynamic> row) {
+  final id = row['id']?.toString();
+  if (id == null || id.isEmpty) return null;
+
+  final createdAt = _parseRideTimestamp(row['created_at']);
+  if (createdAt == null) return null;
+
+  final driver = _driverMap(row['driver']);
   return RideHistoryItem(
-    id: row['id'] as String,
+    id: id,
     status: _displayStatus(row),
     pickupAddress: (row['pickup_address'] as String?) ?? '',
     destinationAddress: (row['destination_address'] as String?) ?? '',
     fare: HeyCabyRideFare.resolveTotalEuroFromRow(row),
-    createdAt: DateTime.parse(row['created_at'] as String),
-    completedAt: row['completed_at'] != null
-        ? DateTime.tryParse(row['completed_at'] as String)
-        : null,
+    createdAt: createdAt,
+    completedAt: _parseRideTimestamp(row['completed_at']),
     driverName: driver?['full_name'] as String?,
     driverPhoto: driver?['profile_photo_url'] as String?,
   );
@@ -83,7 +102,15 @@ Future<List<RideHistoryItem>> fetchRideHistoryItems({
   }
 
   final rows = await const RiderMyRidesService().fetchAll(scope: 'history');
-  var items = rows.map(_rideHistoryItemFromRow).toList();
+  var items = <RideHistoryItem>[];
+  for (final raw in rows) {
+    try {
+      final item = _rideHistoryItemFromRow(raw);
+      if (item != null) items.add(item);
+    } catch (_) {
+      // Skip malformed rows instead of failing the whole Rides tab.
+    }
+  }
 
   switch (filter) {
     case 'completed':
@@ -105,7 +132,14 @@ class RideHistoryNotifier extends AsyncNotifier<List<RideHistoryItem>> {
   @override
   Future<List<RideHistoryItem>> build() async {
     final identity = await ref.watch(riderIdentityProvider.future);
-    return fetchRideHistoryItems(identity: identity, filter: _currentFilter);
+    try {
+      return await fetchRideHistoryItems(
+        identity: identity,
+        filter: _currentFilter,
+      );
+    } catch (_) {
+      return const [];
+    }
   }
 
   Future<void> setFilter(String filter) async {

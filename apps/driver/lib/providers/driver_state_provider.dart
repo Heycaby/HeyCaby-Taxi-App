@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heycaby_utils/heycaby_utils.dart';
 
 enum DriverAppState {
   loggedOut,
@@ -33,6 +34,12 @@ class DriverData {
   final String? destinationAddress;
   final double? destinationLat;
   final double? destinationLng;
+  final String? bookedDestinationAddress;
+  final double? bookedDestinationLat;
+  final double? bookedDestinationLng;
+  final List<ActiveRideRouteStop> routeStops;
+  final int routeRevision;
+  final PendingRouteChange? pendingRouteChange;
   final bool radarActive;
   final bool pendingBreak;
 
@@ -50,6 +57,12 @@ class DriverData {
     this.destinationAddress,
     this.destinationLat,
     this.destinationLng,
+    this.bookedDestinationAddress,
+    this.bookedDestinationLat,
+    this.bookedDestinationLng,
+    this.routeStops = const [],
+    this.routeRevision = 0,
+    this.pendingRouteChange,
     this.radarActive = false,
     this.pendingBreak = false,
   });
@@ -68,6 +81,13 @@ class DriverData {
     String? destinationAddress,
     double? destinationLat,
     double? destinationLng,
+    String? bookedDestinationAddress,
+    double? bookedDestinationLat,
+    double? bookedDestinationLng,
+    List<ActiveRideRouteStop>? routeStops,
+    int? routeRevision,
+    PendingRouteChange? pendingRouteChange,
+    bool clearPendingRouteChange = false,
     bool? radarActive,
     bool? pendingBreak,
   }) =>
@@ -85,12 +105,33 @@ class DriverData {
         destinationAddress: destinationAddress ?? this.destinationAddress,
         destinationLat: destinationLat ?? this.destinationLat,
         destinationLng: destinationLng ?? this.destinationLng,
+        bookedDestinationAddress:
+            bookedDestinationAddress ?? this.bookedDestinationAddress,
+        bookedDestinationLat: bookedDestinationLat ?? this.bookedDestinationLat,
+        bookedDestinationLng: bookedDestinationLng ?? this.bookedDestinationLng,
+        routeStops: routeStops ?? this.routeStops,
+        routeRevision: routeRevision ?? this.routeRevision,
+        pendingRouteChange: clearPendingRouteChange
+            ? null
+            : (pendingRouteChange ?? this.pendingRouteChange),
         radarActive: radarActive ?? this.radarActive,
         pendingBreak: pendingBreak ?? this.pendingBreak,
       );
 
   static DriverData empty() =>
       const DriverData(appState: DriverAppState.loggedOut);
+
+  ActiveRideRouteState get activeRouteState => ActiveRideRouteState(
+        destinationAddress: destinationAddress ?? '',
+        destinationLat: destinationLat,
+        destinationLng: destinationLng,
+        bookedDestinationAddress: bookedDestinationAddress,
+        bookedDestinationLat: bookedDestinationLat,
+        bookedDestinationLng: bookedDestinationLng,
+        stops: routeStops,
+        routeRevision: routeRevision,
+        pendingRouteChange: pendingRouteChange,
+      );
 }
 
 class DriverStateNotifier extends Notifier<DriverData> {
@@ -133,10 +174,36 @@ class DriverStateNotifier extends Notifier<DriverData> {
         destinationAddress: destinationAddress,
         destinationLat: destLat,
         destinationLng: destLng,
+        bookedDestinationAddress: destinationAddress,
+        bookedDestinationLat: destLat,
+        bookedDestinationLng: destLng,
+        routeStops: const [],
+        routeRevision: 0,
+        pendingRouteChange: null,
         bookingMode: bookingMode,
         riderContactName: riderName,
         appState: DriverAppState.assigned,
       );
+
+  void patchActiveRouteFromRow(Map<String, dynamic> row) {
+    final route = ActiveRideRouteState.fromRideRow(row);
+    if (route.destinationAddress.isEmpty) return;
+    state = state.copyWith(
+      destinationAddress: route.destinationAddress,
+      destinationLat: route.destinationLat,
+      destinationLng: route.destinationLng,
+      bookedDestinationAddress:
+          route.bookedDestinationAddress ?? state.bookedDestinationAddress,
+      bookedDestinationLat:
+          route.bookedDestinationLat ?? state.bookedDestinationLat,
+      bookedDestinationLng:
+          route.bookedDestinationLng ?? state.bookedDestinationLng,
+      routeStops: route.stops,
+      routeRevision: route.routeRevision,
+      pendingRouteChange: route.pendingRouteChange,
+      clearPendingRouteChange: true,
+    );
+  }
 
   void patchRideCoords({
     double? pickupLat,
@@ -174,6 +241,11 @@ class DriverStateNotifier extends Notifier<DriverData> {
     String? destinationAddress,
     double? destinationLat,
     double? destinationLng,
+    String? bookedDestinationAddress,
+    double? bookedDestinationLat,
+    double? bookedDestinationLng,
+    List<ActiveRideRouteStop>? routeStops,
+    int? routeRevision,
     String? bookingMode,
     String? paymentMethod,
     String? riderContactName,
@@ -199,6 +271,12 @@ class DriverStateNotifier extends Notifier<DriverData> {
       destinationAddress: destinationAddress,
       destinationLat: destinationLat,
       destinationLng: destinationLng,
+      bookedDestinationAddress:
+          bookedDestinationAddress ?? destinationAddress,
+      bookedDestinationLat: bookedDestinationLat ?? destinationLat,
+      bookedDestinationLng: bookedDestinationLng ?? destinationLng,
+      routeStops: routeStops ?? const [],
+      routeRevision: routeRevision ?? 0,
       bookingMode: bookingMode,
       riderPaymentMethod: paymentMethod,
       riderContactName: riderContactName,

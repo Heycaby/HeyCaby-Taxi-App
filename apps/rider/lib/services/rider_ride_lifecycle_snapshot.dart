@@ -13,6 +13,8 @@ class RiderRideLifecycleSnapshot {
   const RiderRideLifecycleSnapshot({
     required this.rideRequestId,
     this.status,
+    this.effectiveStatus,
+    this.providerStatus,
     this.driverId,
     this.acceptedAt,
     this.driverArrivedAt,
@@ -26,6 +28,8 @@ class RiderRideLifecycleSnapshot {
 
   final String rideRequestId;
   final String? status;
+  final String? effectiveStatus;
+  final String? providerStatus;
   final String? driverId;
   final DateTime? acceptedAt;
   final DateTime? driverArrivedAt;
@@ -43,6 +47,8 @@ class RiderRideLifecycleSnapshot {
     return RiderRideLifecycleSnapshot(
       rideRequestId: rideRequestId,
       status: row['status']?.toString(),
+      effectiveStatus: row['effective_status']?.toString(),
+      providerStatus: row['provider_status']?.toString(),
       driverId: row['driver_id']?.toString(),
       acceptedAt: _parseTs(row['accepted_at']),
       driverArrivedAt: _parseTs(row['driver_arrived_at']),
@@ -66,17 +72,18 @@ class RiderRideLifecycleSnapshot {
   /// Priority matches CTO spec: payment → completed → in_progress → arrived →
   /// nearby → en_route → accepted → searching fallback.
   String resolveEffectiveStatus() {
+    final backend = (effectiveStatus ?? '').trim().toLowerCase();
+    if (backend.isNotEmpty) return backend;
+
     final ps = (paymentStatus ?? '').trim().toLowerCase();
-    if (ps == 'paid') return 'payment_confirmed';
+    if (ps == 'confirmed' || ps == 'paid') return 'payment_confirmed';
 
     final st = (status ?? '').trim().toLowerCase();
 
     if (st == 'completed' || completedAt != null) return 'completed';
     if (st == 'in_progress' || startedAt != null) return 'in_progress';
 
-    if (driverArrivedAt != null ||
-        st == 'driver_arrived' ||
-        st == 'arrived') {
+    if (driverArrivedAt != null || st == 'driver_arrived' || st == 'arrived') {
       return 'driver_arrived';
     }
 
@@ -120,6 +127,8 @@ class RiderRideLifecycleSnapshot {
     }
 
     cmp('status', prev.status, next.status);
+    cmp('effective_status', prev.effectiveStatus, next.effectiveStatus);
+    cmp('provider_status', prev.providerStatus, next.providerStatus);
     cmp('driver_id', prev.driverId, next.driverId);
     cmp('accepted_at', prev.acceptedAt?.toIso8601String(),
         next.acceptedAt?.toIso8601String());
@@ -150,6 +159,8 @@ class RiderRideLifecycleSnapshot {
     final w = waitingInfo;
     return [
       status,
+      effectiveStatus,
+      providerStatus,
       driverId,
       acceptedAt?.millisecondsSinceEpoch,
       driverArrivedAt?.millisecondsSinceEpoch,

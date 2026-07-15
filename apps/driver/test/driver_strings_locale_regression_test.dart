@@ -109,16 +109,16 @@ void main() {
     expect(DriverStrings.selectRatingPrompt, 'Select a rating.');
     expect(DriverStrings.thanksForRating, 'Thanks for your rating!');
     expect(DriverStrings.actionFailedPrefix, 'Failed:');
-    expect(DriverStrings.returnTrips, 'Taxi Terug');
-    expect(DriverStrings.returnMode, 'Taxi Terug');
+    expect(DriverStrings.returnTrips, 'Return Taxi');
+    expect(DriverStrings.returnMode, 'Return Taxi');
     expect(DriverStrings.returnModeOff, 'Off');
     expect(
       DriverStrings.returnModeOffBody,
-      'Heading home? Earn on the way with Taxi Terug.',
+      'Heading home? Earn on the way with Return Taxi.',
     );
     expect(
       DriverStrings.returnModeAvailableCount(3),
-      '3 Taxi Terug rides available',
+      '3 Return Taxi rides available',
     );
     expect(
         DriverStrings.returnModeHeadingTo('Rotterdam'), 'Heading to Rotterdam');
@@ -130,12 +130,12 @@ void main() {
     );
     expect(
       DriverStrings.returnModeNoMatchesYet,
-      "No Taxi Terug rides yet. We'll keep looking while you drive.",
+      "No Return Taxi rides yet. We'll keep looking while you drive.",
     );
     expect(DriverStrings.returnModeActivate, 'Activate');
     expect(DriverStrings.returnModeManage, 'Manage');
     expect(DriverStrings.returnModeDisable, 'Disable');
-    expect(DriverStrings.returnModeHeadingHomeTitle, 'Taxi Terug?');
+    expect(DriverStrings.returnModeHeadingHomeTitle, 'Return Taxi?');
     expect(
       DriverStrings.returnModeHeadingHomeBody('Rotterdam'),
       'We can find rides toward Rotterdam while you drive.',

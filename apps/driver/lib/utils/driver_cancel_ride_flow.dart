@@ -11,6 +11,7 @@ import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_ride_premium_style.dart';
 import 'driver_ride_lifecycle_error_message.dart';
+import 'driver_today_rides_refresh.dart';
 
 /// Confirms, calls cancel API, clears active ride, returns home.
 Future<bool> confirmAndCancelDriverRide({
@@ -64,6 +65,7 @@ Future<bool> confirmAndCancelDriverRide({
           pauseNewRequests: settlement.pauseNewRequests,
         );
     if (afterCancel != null) await afterCancel();
+    invalidateTodayRideProviders(ref);
     if (settlement.pauseNewRequests) {
       ref.read(driverStateProvider.notifier).setPendingBreak(true);
     }

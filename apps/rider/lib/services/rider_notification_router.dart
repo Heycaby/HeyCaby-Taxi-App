@@ -8,6 +8,7 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../services/sound_service.dart';
 import '../utils/rider_driver_ping.dart';
+import 'rider_ride_snapshot_service.dart';
 
 /// Permanent notification behavior matrix (Program 3C).
 ///
@@ -217,11 +218,7 @@ Future<bool> _rideNotificationIsCurrent(
   if (normalized.contains('cancel')) return true;
   if (normalized.contains('rating')) return true;
   try {
-    final row = await HeyCabySupabase.client
-        .from('ride_requests')
-        .select('status')
-        .eq('id', rideId)
-        .maybeSingle();
+    final row = await RiderRideSnapshotService.fetch(rideRequestId: rideId);
     final status = row?['status']?.toString().toLowerCase();
     return const {
       'pending',
@@ -273,7 +270,9 @@ void _showRiderRatingPill({
           color: Colors.transparent,
           child: Semantics(
             button: true,
-            label: displayBody.isEmpty ? displayTitle : '$displayTitle. $displayBody',
+            label: displayBody.isEmpty
+                ? displayTitle
+                : '$displayTitle. $displayBody',
             child: InkWell(
               onTap: () {
                 remove();

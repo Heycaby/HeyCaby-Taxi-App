@@ -15,6 +15,8 @@ import '../providers/ride_request_provider.dart';
 import '../services/booking_flow_navigation.dart';
 import '../services/sound_service.dart';
 import '../services/stale_ride_cleanup.dart';
+import '../services/rider_driver_profile_service.dart';
+import '../services/rider_ride_snapshot_service.dart';
 
 /// Full-screen details for an open `ride_requests` row from the Rides → Upcoming tab.
 class UpcomingRideRequestDetailScreen extends ConsumerStatefulWidget {
@@ -59,15 +61,10 @@ class _UpcomingRideRequestDetailScreenState
     final identity = await ref.read(riderIdentityProvider.future);
     if (!identity.hasSession || identity.riderToken == null) return;
     try {
-      final raw = await HeyCabySupabase.client
-          .from('ride_requests')
-          .select(
-            'id, status, pickup_address, destination_address, scheduled_pickup_at, '
-            'booking_mode, driver_id, created_at',
-          )
-          .eq('id', _rideId)
-          .eq('rider_token', identity.riderToken!)
-          .maybeSingle();
+      final raw = await RiderRideSnapshotService.fetch(
+        rideRequestId: _rideId,
+        riderToken: identity.riderToken,
+      );
       if (!mounted) return;
       if (raw == null) {
         context.pop();
@@ -78,13 +75,16 @@ class _UpcomingRideRequestDetailScreenState
       final driverId = m['driver_id'] as String?;
       if (driverId != null && driverId.isNotEmpty) {
         try {
-          final d = await HeyCabySupabase.client
-              .from('drivers')
-              .select('name, photo_url')
-              .eq('id', driverId)
-              .maybeSingle();
+          final d = await RiderDriverProfileService.fetchForRide(
+            rideRequestId: _rideId,
+            riderToken: identity.riderToken,
+          );
           if (d != null) {
-            drv = Map<String, dynamic>.from(d as Map);
+            drv = {
+              ...d,
+              'name': d['full_name'],
+              'photo_url': d['profile_photo_url'],
+            };
           }
         } catch (_) {}
       }

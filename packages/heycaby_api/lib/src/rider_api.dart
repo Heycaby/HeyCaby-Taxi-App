@@ -77,6 +77,22 @@ class RiderApi {
     }
   }
 
+  /// Fetches the detailed fare breakdown (actual distance, duration, overtime).
+  Future<Map<String, dynamic>?> fetchRideFareBreakdown({
+    required String rideRequestId,
+  }) async {
+    try {
+      final raw = await HeyCabySupabase.client.rpc(
+        'fn_get_ride_fare_breakdown',
+        params: {'p_ride_request_id': rideRequestId},
+      );
+      if (raw is! Map) return null;
+      return Map<String, dynamic>.from(raw);
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Rider confirms they verified the assigned plate for an active ride.
   Future<bool> attestPlateForRide({
     required String rideRequestId,
@@ -119,9 +135,17 @@ class RiderApi {
     required String rideRequestId,
     required String bidId,
   }) async {
-    throw UnsupportedError(
-      'Use Supabase ride_requests update (acceptMarketplaceOffer).',
+    final raw = await HeyCabySupabase.client.rpc(
+      'fn_rider_accept_marketplace_offer',
+      params: {
+        'p_ride_request_id': rideRequestId,
+        'p_bid_id': bidId,
+      },
     );
+    if (raw is! Map || raw['ok'] != true) {
+      final code = raw is Map ? raw['code'] : null;
+      throw StateError(code?.toString() ?? 'marketplace_accept_failed');
+    }
   }
 
   /// Fetch Taxi Terug candidate drivers heading toward the rider's destination.

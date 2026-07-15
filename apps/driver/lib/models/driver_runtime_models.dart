@@ -25,6 +25,27 @@ class DriverRemoteConfig {
   /// Plate-first onboarding: only plate + terms + indemnification block go-online.
   bool get driverOnboardingV2 => featureFlags['driver_onboarding_v2'] == true;
 
+  /// Controls only Driver Mollie OAuth onboarding. Rider payment modes have
+  /// their own independent backend flags.
+  bool get mollieConnectEnabled =>
+      featureFlags['ride_prepaid_driver_connect_enabled'] == true;
+
+  /// Global kill switch for all prepaid ride behavior.
+  bool get marketplaceRoutingEnabled =>
+      featureFlags['mollie_marketplace_routing_enabled'] == true;
+
+  bool get prepaidPaymentsEnabled =>
+      marketplaceRoutingEnabled &&
+      featureFlags['ride_prepaid_payments_enabled'] == true;
+
+  bool get arrivalVerificationEnabled =>
+      featureFlags['ride_arrival_verification_enabled'] == true;
+
+  bool get boardingPinEnabled => featureFlags['boarding_pin_enabled'] == true;
+
+  bool get verifiedCompletionEnabled =>
+      featureFlags['verified_completion_enabled'] == true;
+
   factory DriverRemoteConfig.fromJson(Map<String, dynamic> json) {
     final search =
         (json['search'] as Map?)?.cast<String, dynamic>() ?? const {};

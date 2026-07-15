@@ -2,7 +2,6 @@ import 'dart:async' show Timer, unawaited;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
-import 'package:heycaby_utils/heycaby_utils.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/marketplace_driver_offer.dart';
@@ -43,13 +42,20 @@ Future<bool> boostMarketplaceOffer({
 }) async {
   final rideId = ref.read(rideRequestProvider).rideRequestId;
   if (rideId == null) return false;
-  ref.read(bookingProvider.notifier).setMarketplaceBidEuro(newEuro);
   try {
-    await HeyCabySupabase.client.from('ride_requests').update({
-      'marketplace_offered_fare': newEuro,
-      ...HeyCabyRideFare.fareSnapshotForInsert(newEuro.toDouble()),
-    }).eq('id', rideId);
-    await seedMarketplaceDriverInvites(rideId);
+    final raw = await HeyCabySupabase.client.rpc(
+      'fn_rider_boost_marketplace_offer',
+      params: {
+        'p_ride_request_id': rideId,
+        'p_new_fare': newEuro,
+      },
+    );
+    if (raw is! Map || raw['ok'] != true) return false;
+    final acceptedFare = (raw['new_fare'] as num?)?.round() ?? newEuro;
+    ref.read(bookingProvider.notifier).setMarketplaceBidEuro(acceptedFare);
+    if (raw['booking_mode'] != 'terug') {
+      await seedMarketplaceDriverInvites(rideId);
+    }
     return true;
   } catch (_) {
     return false;
@@ -63,16 +69,19 @@ Future<bool> acceptMarketplaceOffer({
   required String rideRequestId,
 }) async {
   try {
-    final agreedEuro = offer.bidAmountEuro;
-    await HeyCabySupabase.client.from('ride_requests').update({
-      'driver_id': offer.driverId,
-      'status': 'assigned',
-      ...HeyCabyRideFare.fareSnapshotForInsert(agreedEuro),
-    }).eq('id', rideRequestId);
-    await HeyCabySupabase.client
-        .from('ride_bids')
-        .update({'status': 'accepted'}).eq('id', offer.id);
-    ref.read(bookingProvider.notifier).setMarketplaceBidEuro(agreedEuro.round());
+    final raw = await HeyCabySupabase.client.rpc(
+      'fn_rider_accept_marketplace_offer',
+      params: {
+        'p_ride_request_id': rideRequestId,
+        'p_bid_id': offer.id,
+      },
+    );
+    if (raw is! Map || raw['ok'] != true) return false;
+    final agreedEuro =
+        ((raw['agreed_fare'] as num?)?.toDouble()) ?? offer.bidAmountEuro;
+    ref
+        .read(bookingProvider.notifier)
+        .setMarketplaceBidEuro(agreedEuro.round());
     ref.read(rideRequestProvider.notifier).updateStatus('assigned');
     return true;
   } catch (_) {
@@ -99,9 +108,13 @@ Future<void> declineMarketplaceOffer({
   required MarketplaceDriverOffer offer,
 }) async {
   try {
-    await HeyCabySupabase.client
-        .from('ride_bids')
-        .update({'status': 'rejected'}).eq('id', offer.id);
+    await HeyCabySupabase.client.rpc(
+      'fn_rider_set_marketplace_bid_status',
+      params: {
+        'p_bid_id': offer.id,
+        'p_status': 'rejected',
+      },
+    );
   } catch (_) {
     // Local dismiss still applies if RLS blocks update.
   }

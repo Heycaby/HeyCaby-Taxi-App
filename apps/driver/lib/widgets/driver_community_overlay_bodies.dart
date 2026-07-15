@@ -20,12 +20,14 @@ import '../ui/driver_empty_state.dart';
 /// Preview row for community notification goldens.
 class DriverCommunityNotificationPreviewItem {
   const DriverCommunityNotificationPreviewItem({
+    this.id = '',
     required this.title,
     required this.body,
     required this.timeLabel,
     required this.unread,
   });
 
+  final String id;
   final String title;
   final String body;
   final String timeLabel;
@@ -78,7 +80,7 @@ final kDriverCommunitySearchCategories = <DriverCommunitySearchCategory>[
 ];
 
 /// Notifications bottom sheet (presentation).
-class DriverCommunityNotificationsSheetBody extends StatelessWidget {
+class DriverCommunityNotificationsSheetBody extends StatefulWidget {
   const DriverCommunityNotificationsSheetBody({
     super.key,
     required this.colors,
@@ -87,7 +89,8 @@ class DriverCommunityNotificationsSheetBody extends StatelessWidget {
     required this.error,
     required this.items,
     required this.onMarkAllRead,
-    required this.onClearRead,
+    required this.onDeleteAll,
+    required this.onDeleteSelected,
     required this.onNotificationTap,
   });
 
@@ -97,11 +100,107 @@ class DriverCommunityNotificationsSheetBody extends StatelessWidget {
   final String? error;
   final List<DriverCommunityNotificationPreviewItem> items;
   final VoidCallback onMarkAllRead;
-  final VoidCallback onClearRead;
+  final VoidCallback onDeleteAll;
+  final ValueChanged<List<String>> onDeleteSelected;
   final ValueChanged<int> onNotificationTap;
 
   @override
+  State<DriverCommunityNotificationsSheetBody> createState() =>
+      _DriverCommunityNotificationsSheetBodyState();
+}
+
+class _DriverCommunityNotificationsSheetBodyState
+    extends State<DriverCommunityNotificationsSheetBody> {
+  bool _selectionMode = false;
+  final Set<String> _selectedIds = <String>{};
+
+  void _exitSelectionMode() {
+    setState(() {
+      _selectionMode = false;
+      _selectedIds.clear();
+    });
+  }
+
+  void _toggleSelectAll() {
+    setState(() {
+      if (_selectedIds.length == widget.items.length) {
+        _selectedIds.clear();
+      } else {
+        _selectedIds
+          ..clear()
+          ..addAll(widget.items.map((e) => e.id).where((id) => id.isNotEmpty));
+      }
+    });
+  }
+
+  void _toggleItem(String id) {
+    if (id.isEmpty) return;
+    setState(() {
+      if (_selectedIds.contains(id)) {
+        _selectedIds.remove(id);
+      } else {
+        _selectedIds.add(id);
+      }
+    });
+  }
+
+  Future<void> _confirmDeleteAll() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(DriverStrings.communityDeleteAllConfirmTitle),
+        content: Text(DriverStrings.communityDeleteAllConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(DriverStrings.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(DriverStrings.communityDeleteAll),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      widget.onDeleteAll();
+      _exitSelectionMode();
+    }
+  }
+
+  Future<void> _confirmDeleteSelected() async {
+    if (_selectedIds.isEmpty) return;
+    final count = _selectedIds.length;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(DriverStrings.communityDeleteSelectedConfirmTitle(count)),
+        content: Text(DriverStrings.communityDeleteSelectedConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(DriverStrings.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(DriverStrings.communityDeleteSelected(count)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      widget.onDeleteSelected(_selectedIds.toList(growable: false));
+      _exitSelectionMode();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final colors = widget.colors;
+    final typography = widget.typography;
+    final allSelected = widget.items.isNotEmpty &&
+        _selectedIds.length == widget.items.length;
+
     return DriverBottomSheet(
       colors: colors,
       child: Column(
@@ -125,27 +224,85 @@ class DriverCommunityNotificationsSheetBody extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: DriverSpacing.xs),
+                Text(
+                  DriverStrings.communityNotificationsRetentionHint,
+                  style: typography.bodySmall.copyWith(
+                    color: colors.textMuted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: DriverSpacing.sm),
                 Wrap(
                   alignment: WrapAlignment.end,
                   spacing: DriverSpacing.xs,
-                  children: [
-                    TextButton(
-                      onPressed: onClearRead,
-                      child: Text(
-                        DriverStrings.communityClearRead,
-                        style: typography.labelMedium
-                            .copyWith(color: colors.textMuted),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: onMarkAllRead,
-                      child: Text(
-                        DriverStrings.communityMarkAllRead,
-                        style: typography.labelMedium
-                            .copyWith(color: colors.primary),
-                      ),
-                    ),
-                  ],
+                  runSpacing: DriverSpacing.xs,
+                  children: _selectionMode
+                      ? [
+                          TextButton(
+                            onPressed: _exitSelectionMode,
+                            child: Text(
+                              DriverStrings.cancel,
+                              style: typography.labelMedium
+                                  .copyWith(color: colors.textMuted),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed:
+                                widget.items.isEmpty ? null : _toggleSelectAll,
+                            child: Text(
+                              allSelected
+                                  ? DriverStrings.communityDeselectAll
+                                  : DriverStrings.communitySelectAll,
+                              style: typography.labelMedium
+                                  .copyWith(color: colors.primary),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _selectedIds.isEmpty
+                                ? null
+                                : _confirmDeleteSelected,
+                            child: Text(
+                              DriverStrings.communityDeleteSelected(
+                                _selectedIds.length,
+                              ),
+                              style: typography.labelMedium.copyWith(
+                                color: _selectedIds.isEmpty
+                                    ? colors.textMuted
+                                    : colors.error,
+                              ),
+                            ),
+                          ),
+                        ]
+                      : [
+                          TextButton(
+                            onPressed: widget.items.isEmpty
+                                ? null
+                                : () => setState(() => _selectionMode = true),
+                            child: Text(
+                              DriverStrings.communitySelect,
+                              style: typography.labelMedium
+                                  .copyWith(color: colors.textMuted),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: widget.items.isEmpty
+                                ? null
+                                : _confirmDeleteAll,
+                            child: Text(
+                              DriverStrings.communityDeleteAll,
+                              style: typography.labelMedium
+                                  .copyWith(color: colors.error),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: widget.onMarkAllRead,
+                            child: Text(
+                              DriverStrings.communityMarkAllRead,
+                              style: typography.labelMedium
+                                  .copyWith(color: colors.primary),
+                            ),
+                          ),
+                        ],
                 ),
               ],
             ),
@@ -154,13 +311,13 @@ class DriverCommunityNotificationsSheetBody extends StatelessWidget {
             constraints: BoxConstraints(
               maxHeight: MediaQuery.sizeOf(context).height * 0.6,
             ),
-            child: loading
+            child: widget.loading
                 ? const Padding(
                     padding: EdgeInsets.all(DriverSpacing.xl),
                     child: Center(
                         child: CircularProgressIndicator(strokeWidth: 2)),
                   )
-                : error != null
+                : widget.error != null
                     ? Padding(
                         padding: const EdgeInsets.fromLTRB(
                           DriverSpacing.screenEdge,
@@ -170,12 +327,12 @@ class DriverCommunityNotificationsSheetBody extends StatelessWidget {
                         ),
                         child: DriverEmptyState(
                           icon: Icons.error_outline_rounded,
-                          title: error!,
+                          title: widget.error!,
                           colors: colors,
                           typography: typography,
                         ),
                       )
-                    : items.isEmpty
+                    : widget.items.isEmpty
                         ? Padding(
                             padding: const EdgeInsets.fromLTRB(
                               DriverSpacing.screenEdge,
@@ -198,16 +355,25 @@ class DriverCommunityNotificationsSheetBody extends StatelessWidget {
                               DriverSpacing.lg,
                             ),
                             shrinkWrap: true,
-                            itemCount: items.length,
+                            itemCount: widget.items.length,
                             separatorBuilder: (_, __) =>
                                 const SizedBox(height: DriverSpacing.sm),
                             itemBuilder: (_, index) {
-                              final item = items[index];
+                              final item = widget.items[index];
+                              final selected = _selectedIds.contains(item.id);
                               return DriverCommunityNotificationTile(
                                 item: item,
                                 colors: colors,
                                 typography: typography,
-                                onTap: () => onNotificationTap(index),
+                                selectionMode: _selectionMode,
+                                selected: selected,
+                                onTap: () {
+                                  if (_selectionMode) {
+                                    _toggleItem(item.id);
+                                  } else {
+                                    widget.onNotificationTap(index);
+                                  }
+                                },
                               );
                             },
                           ),
@@ -225,12 +391,16 @@ class DriverCommunityNotificationTile extends StatelessWidget {
     required this.colors,
     required this.typography,
     required this.onTap,
+    this.selectionMode = false,
+    this.selected = false,
   });
 
   final DriverCommunityNotificationPreviewItem item;
   final DriverColors colors;
   final DriverTypography typography;
   final VoidCallback onTap;
+  final bool selectionMode;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
@@ -242,6 +412,16 @@ class DriverCommunityNotificationTile extends StatelessWidget {
         padding: const EdgeInsets.all(DriverSpacing.md),
         child: Row(
           children: [
+            if (selectionMode) ...[
+              Icon(
+                selected
+                    ? Icons.check_circle_rounded
+                    : Icons.radio_button_unchecked_rounded,
+                color: selected ? colors.primary : colors.textMuted,
+                size: 22,
+              ),
+              const SizedBox(width: DriverSpacing.sm),
+            ],
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -965,6 +1145,7 @@ Future<void> showDriverCommunityNotificationsSheet(
             items: items
                 .map(
                   (n) => DriverCommunityNotificationPreviewItem(
+                    id: n.id,
                     title: n.title,
                     body: n.body,
                     timeLabel: driverCommunityTileRelativeTime(n.createdAt),
@@ -977,8 +1158,13 @@ Future<void> showDriverCommunityNotificationsSheet(
               ref.invalidate(communityNotificationsProvider);
               ref.invalidate(communityUnreadNotificationsCountProvider);
             },
-            onClearRead: () async {
-              await ref.read(driverApiProvider).clearReadNotifications();
+            onDeleteAll: () async {
+              await ref.read(driverApiProvider).deleteAllNotifications();
+              ref.invalidate(communityNotificationsProvider);
+              ref.invalidate(communityUnreadNotificationsCountProvider);
+            },
+            onDeleteSelected: (ids) async {
+              await ref.read(driverApiProvider).deleteNotifications(ids);
               ref.invalidate(communityNotificationsProvider);
               ref.invalidate(communityUnreadNotificationsCountProvider);
             },
@@ -1002,7 +1188,8 @@ Future<void> showDriverCommunityNotificationsSheet(
             error: null,
             items: const [],
             onMarkAllRead: () {},
-            onClearRead: () {},
+            onDeleteAll: () {},
+            onDeleteSelected: (_) {},
             onNotificationTap: (_) {},
           ),
           error: (_, __) => DriverCommunityNotificationsSheetBody(
@@ -1012,7 +1199,8 @@ Future<void> showDriverCommunityNotificationsSheet(
             error: DriverStrings.communityNotificationsLoadFailed,
             items: const [],
             onMarkAllRead: () {},
-            onClearRead: () {},
+            onDeleteAll: () {},
+            onDeleteSelected: (_) {},
             onNotificationTap: (_) {},
           ),
         );

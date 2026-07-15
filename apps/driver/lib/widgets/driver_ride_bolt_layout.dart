@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_map/heycaby_map.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
+import 'package:heycaby_utils/heycaby_utils.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -19,7 +20,9 @@ import '../theme/driver_typography.dart';
 import 'driver_ride_flow_common.dart';
 import 'driver_ride_map_pins_overlay.dart';
 import 'driver_ride_premium_style.dart';
+import 'driver_route_change_request.dart';
 import 'driver_smart_ping_banner.dart';
+import '../providers/driver_state_provider.dart';
 
 enum DriverRideBoltPhase {
   enRoutePickup,
@@ -437,6 +440,7 @@ Future<void> showDriverRideRouteDetailsSheet({
   required DriverColors colors,
   required DriverTypography typography,
   required String destinationAddress,
+  ActiveRideRouteState? routeState,
   String? farePill,
   String? riderName,
   required VoidCallback onContact,
@@ -454,157 +458,264 @@ Future<void> showDriverRideRouteDetailsSheet({
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (ctx) => SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-        child: DriverRidePremiumStyle.glassSurface(
-          colors: colors,
-          borderRadius: DriverRadius.sheetTop,
-          blurSigma: 26,
-          tintOpacity: 0.92,
-          padding: EdgeInsets.fromLTRB(
-            DriverSpacing.lg,
-            DriverSpacing.md,
-            DriverSpacing.lg,
-            DriverSpacing.lg + MediaQuery.paddingOf(ctx).bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              DriverRidePremiumStyle.sheetHandle(colors),
-              const SizedBox(height: DriverSpacing.md),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      DriverStrings.rideRouteDetailsTitle,
-                      style: typography.titleLarge.copyWith(
-                        fontWeight: FontWeight.w900,
+    builder: (ctx) {
+      return Consumer(
+        builder: (context, ref, _) {
+          final driver = ref.watch(driverStateProvider);
+          final pending = driver.pendingRouteChange;
+          final rideId = driver.activeRideId ?? rideRequestId;
+          final route = routeState ??
+              ActiveRideRouteState(destinationAddress: destinationAddress);
+          return SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+              child: DriverRidePremiumStyle.glassSurface(
+                colors: colors,
+                borderRadius: DriverRadius.sheetTop,
+                blurSigma: 26,
+                tintOpacity: 0.92,
+                padding: EdgeInsets.fromLTRB(
+                  DriverSpacing.lg,
+                  DriverSpacing.md,
+                  DriverSpacing.lg,
+                  DriverSpacing.lg + MediaQuery.paddingOf(ctx).bottom,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    DriverRidePremiumStyle.sheetHandle(colors),
+                    const SizedBox(height: DriverSpacing.md),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            DriverStrings.rideRouteDetailsTitle,
+                            style: typography.titleLarge.copyWith(
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                      ],
+                    ),
+                    if (pending != null && rideId != null) ...[
+                      const SizedBox(height: DriverSpacing.md),
+                      DriverRouteChangeRequestPanel(
+                        colors: colors,
+                        typography: typography,
+                        rideRequestId: rideId,
+                        confirmedRoute: route,
+                        pending: pending,
+                        compact: true,
+                        onResponded: () => Navigator.of(ctx).pop(),
                       ),
+                    ],
+                if (farePill != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    farePill,
+                    style: typography.bodyMedium.copyWith(
+                      color: colors.textSecondary,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  IconButton(
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    icon: const Icon(Icons.close_rounded),
+                ],
+                if (route.hasRouteEdits) ...[
+                  const SizedBox(height: DriverSpacing.sm),
+                  _DriverRouteEditBadges(
+                    colors: colors,
+                    typography: typography,
+                    route: route,
                   ),
                 ],
-              ),
-              if (farePill != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  farePill,
-                  style: typography.bodyMedium.copyWith(
-                    color: colors.textSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
+                const SizedBox(height: DriverSpacing.lg),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.place_rounded, color: colors.error, size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        route.destinationAddress.isNotEmpty
+                            ? route.destinationAddress
+                            : destinationAddress,
+                        style: typography.titleMedium.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-              const SizedBox(height: DriverSpacing.lg),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.place_rounded, color: colors.error, size: 22),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      destinationAddress,
-                      style: typography.titleMedium.copyWith(
+                if (route.stopCount > 0) ...[
+                  const SizedBox(height: DriverSpacing.md),
+                  for (final stop in route.stops) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.more_horiz_rounded,
+                          color: colors.primary,
+                          size: 22,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            stop.address,
+                            style: typography.bodyLarge.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ],
+                if (rideRequestId != null && smartPingPhase != null) ...[
+                  const SizedBox(height: DriverSpacing.lg),
+                  DriverSmartPingBanner(
+                    rideRequestId: rideRequestId,
+                    phase: smartPingPhase,
+                    presentation: DriverSmartPingPresentation.inline,
+                    onlyOnMyWay: smartPingOnMyWayOnly,
+                  ),
+                ],
+                if (onCancelRide != null) ...[
+                  const SizedBox(height: DriverSpacing.lg),
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      onCancelRide();
+                    },
+                    icon: Icon(Icons.close_rounded, color: colors.error),
+                    label: Text(
+                      DriverStrings.cancelOrder,
+                      style: typography.labelLarge.copyWith(
+                        color: colors.error,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
                 ],
-              ),
-              if (rideRequestId != null && smartPingPhase != null) ...[
-                const SizedBox(height: DriverSpacing.lg),
-                DriverSmartPingBanner(
-                  rideRequestId: rideRequestId,
-                  phase: smartPingPhase,
-                  presentation: DriverSmartPingPresentation.inline,
-                  onlyOnMyWay: smartPingOnMyWayOnly,
-                ),
-              ],
-              if (onCancelRide != null) ...[
-                const SizedBox(height: DriverSpacing.lg),
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                    onCancelRide();
-                  },
-                  icon: Icon(Icons.close_rounded, color: colors.error),
-                  label: Text(
-                    DriverStrings.cancelOrder,
-                    style: typography.labelLarge.copyWith(
-                      color: colors.error,
+                const Divider(height: 32),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading:
+                      Icon(Icons.person_outline_rounded, color: colors.text),
+                  title: Text(
+                    riderName != null
+                        ? DriverStrings.rideRouteDetailsContact(riderName)
+                        : DriverStrings.contactRider,
+                    style: typography.titleSmall.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                ),
-              ],
-              const Divider(height: 32),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(Icons.person_outline_rounded, color: colors.text),
-                title: Text(
-                  riderName != null
-                      ? DriverStrings.rideRouteDetailsContact(riderName)
-                      : DriverStrings.contactRider,
-                  style: typography.titleSmall.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  onContact();
-                },
-              ),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(Icons.navigation_rounded, color: colors.primary),
-                title: Text(
-                  navAppLabel ?? DriverStrings.hotspotsWaze,
-                  style: typography.titleSmall.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                trailing: onChangeNavigation != null
-                    ? TextButton(
-                        onPressed: onChangeNavigation,
-                        child: Text(DriverStrings.rideRouteDetailsChangeNav),
-                      )
-                    : null,
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  onNavigate();
-                },
-              ),
-              if (onToggleRequests != null) ...[
-                const SizedBox(height: DriverSpacing.sm),
-                OutlinedButton.icon(
-                  onPressed: () {
+                  onTap: () {
                     Navigator.of(ctx).pop();
-                    onToggleRequests();
+                    onContact();
                   },
-                  icon: Icon(
-                    requestsPaused
-                        ? Icons.play_arrow_rounded
-                        : Icons.pan_tool_alt_rounded,
-                  ),
-                  label: Text(
-                    requestsPaused
-                        ? DriverStrings.resumeRequests
-                        : DriverStrings.stopNewRequests,
-                  ),
                 ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading:
+                      Icon(Icons.navigation_rounded, color: colors.primary),
+                  title: Text(
+                    navAppLabel ?? DriverStrings.hotspotsWaze,
+                    style: typography.titleSmall.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  trailing: onChangeNavigation != null
+                      ? TextButton(
+                          onPressed: onChangeNavigation,
+                          child: Text(DriverStrings.rideRouteDetailsChangeNav),
+                        )
+                      : null,
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    onNavigate();
+                  },
+                ),
+                if (onToggleRequests != null) ...[
+                  const SizedBox(height: DriverSpacing.sm),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      onToggleRequests();
+                    },
+                    icon: Icon(
+                      requestsPaused
+                          ? Icons.play_arrow_rounded
+                          : Icons.pan_tool_alt_rounded,
+                    ),
+                    label: Text(
+                      requestsPaused
+                          ? DriverStrings.resumeRequests
+                          : DriverStrings.stopNewRequests,
+                    ),
+                  ),
+                ],
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    },
   );
+}
+
+class _DriverRouteEditBadges extends StatelessWidget {
+  const _DriverRouteEditBadges({
+    required this.colors,
+    required this.typography,
+    required this.route,
+  });
+
+  final DriverColors colors;
+  final DriverTypography typography;
+  final ActiveRideRouteState route;
+
+  @override
+  Widget build(BuildContext context) {
+    final badges = <String>[];
+    if (route.destinationChanged) {
+      badges.add(DriverStrings.rideRouteDestinationChanged);
+    }
+    if (route.stopCount > 0) {
+      badges.add(DriverStrings.rideRouteStopsAdded(route.stopCount));
+    }
+    if (badges.isEmpty) return const SizedBox.shrink();
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final label in badges)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: colors.warning.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: colors.warning.withValues(alpha: 0.35)),
+            ),
+            child: Text(
+              label,
+              style: typography.labelLarge.copyWith(
+                color: colors.warning,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 Future<void> showDriverRideSafetyToolkitSheet({

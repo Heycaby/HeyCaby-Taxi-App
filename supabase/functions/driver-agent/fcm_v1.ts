@@ -96,14 +96,28 @@ export async function sendFcmV1ToToken(
   const high = nudge.priority === "critical" || nudge.priority === "high";
   const dataPayload = stringifyData(nudge.data);
   const incoming = dataPayload?.category === "incoming_ride";
+  const badgeWorthy = incoming ||
+    dataPayload?.category === "taxi_terug_offer_increased";
   const inviteId = dataPayload?.ride_invite_id;
   const rideRequestId = dataPayload?.ride_request_id;
   const expiresAt = dataPayload?.expires_at
     ? Date.parse(dataPayload.expires_at)
     : Number.NaN;
+  const ttlSeconds = Number.isFinite(expiresAt)
+    ? Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000))
+    : null;
+
+  if (incoming && ttlSeconds !== null && ttlSeconds <= 0) {
+    return {
+      ok: false,
+      permanentFailure: false,
+      errorCode: "invite_expired",
+    };
+  }
 
   const androidBlock: Record<string, unknown> = {
     priority: high ? "HIGH" : "NORMAL",
+    ...(incoming && ttlSeconds !== null ? { ttl: `${ttlSeconds}s` } : {}),
   };
   if (nudge.androidChannelId) {
     androidBlock.notification = {
@@ -134,7 +148,7 @@ export async function sendFcmV1ToToken(
       },
       payload: {
         aps: {
-          badge: incoming ? 1 : undefined,
+          badge: badgeWorthy ? 1 : undefined,
           sound: incoming ? "heycaby_ride_request.wav" : "default",
           ...(incoming ? { category: "HEYCABY_INCOMING_RIDE" } : {}),
           ...(rideRequestId ? { "thread-id": rideRequestId } : {}),

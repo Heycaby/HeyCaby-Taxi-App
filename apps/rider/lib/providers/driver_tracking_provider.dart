@@ -20,6 +20,19 @@ class DriverLocation {
   });
 
   Point get point => Point(coordinates: Position(lng, lat));
+
+  /// True when lat/lng are real geographic coordinates (not (0,0) fallback).
+  bool get hasValidCoords =>
+      lat != 0.0 &&
+      lng != 0.0 &&
+      lat.abs() <= 90 &&
+      lng.abs() <= 180;
+
+  /// True when [updatedAt] is within the last [maxStaleness].
+  bool isFresh({Duration maxStaleness = const Duration(seconds: 30)}) {
+    final age = DateTime.now().difference(updatedAt);
+    return age <= maxStaleness;
+  }
 }
 
 class DriverTrackingNotifier extends AutoDisposeAsyncNotifier<DriverLocation?> {
@@ -71,10 +84,18 @@ class DriverTrackingNotifier extends AutoDisposeAsyncNotifier<DriverLocation?> {
         return;
       }
       final row = Map<String, dynamic>.from(response);
+      final lat = (row['latitude'] as num).toDouble();
+      final lng = (row['longitude'] as num).toDouble();
+      // Reject invalid coords — no fallback, only real data.
+      if (lat == 0.0 && lng == 0.0 ||
+          lat.abs() > 90 || lng.abs() > 180) {
+        state = const AsyncData(null);
+        return;
+      }
       state = AsyncData(DriverLocation(
         driverId: row['driver_id'] as String,
-        lat: (row['latitude'] as num).toDouble(),
-        lng: (row['longitude'] as num).toDouble(),
+        lat: lat,
+        lng: lng,
         heading: (row['heading'] as num?)?.toDouble(),
         updatedAt: DateTime.parse(row['updated_at'] as String),
       ));
@@ -87,6 +108,7 @@ class DriverTrackingNotifier extends AutoDisposeAsyncNotifier<DriverLocation?> {
     _pollTimer?.cancel();
     _pollTimer = null;
     _rideId = null;
+    state = const AsyncData(null);
   }
 }
 

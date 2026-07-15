@@ -47,20 +47,7 @@ Future<bool> cancelExpiredRiderOpenRide({
       );
     }
 
-    // Fallback until migration is everywhere — only when we know the row token.
-    if (token == null || token.isEmpty) return false;
-    final updated = await HeyCabySupabase.client
-        .from('ride_requests')
-        .update({
-          'status': 'cancelled',
-          'cancelled_by': 'rider',
-          'cancellation_reason': cancellationReason,
-        })
-        .eq('id', rideId)
-        .eq('rider_token', token)
-        .inFilter('status', ['pending', 'bidding', 'no_driver'])
-        .select('id');
-    return updated.isNotEmpty;
+    return false;
   } catch (e) {
     if (kDebugMode) debugPrint('cancelExpiredRiderOpenRide: $e');
     return false;

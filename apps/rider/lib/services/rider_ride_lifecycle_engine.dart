@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:heycaby_api/heycaby_api.dart';
 
 import '../providers/booking_provider.dart';
 import '../providers/driver_tracking_provider.dart';
@@ -8,8 +7,10 @@ import '../providers/ride_request_provider.dart';
 import 'nearby_supply_service.dart';
 import 'rider_dispatch_status_service.dart';
 import 'rider_driver_profile_service.dart';
+import 'rider_eta_service.dart';
 import 'rider_lifecycle_proof_logger.dart';
 import 'rider_ride_lifecycle_snapshot.dart';
+import 'rider_ride_snapshot_service.dart';
 import 'rider_ride_state_refresh.dart';
 import 'rider_ride_state_version.dart';
 
@@ -25,6 +26,27 @@ export 'rider_ride_state_refresh.dart'
 final riderRideLifecycleEngineProvider = Provider<RiderRideLifecycleEngine>(
   RiderRideLifecycleEngine.new,
 );
+
+/// Latest full backend record fetched by the canonical Rider lifecycle engine.
+///
+/// Screens consume this projection instead of opening their own Realtime
+/// channels or polling `ride_requests` independently.
+class RiderRideBackendRecord {
+  RiderRideBackendRecord({
+    required this.rideRequestId,
+    required Map<String, dynamic> record,
+    required this.source,
+    required this.revision,
+  }) : record = Map<String, dynamic>.unmodifiable(record);
+
+  final String rideRequestId;
+  final Map<String, dynamic> record;
+  final String source;
+  final String revision;
+}
+
+final riderRideBackendRecordProvider =
+    StateProvider<RiderRideBackendRecord?>((ref) => null);
 
 /// Orchestrates the entire ride lifecycle. All paths call [refreshRideState].
 class RiderRideLifecycleEngine {
@@ -46,11 +68,11 @@ class RiderRideLifecycleEngine {
     if (rideId == null || rideId.isEmpty) return;
 
     try {
-      final row = await HeyCabySupabase.client
-          .from('ride_requests')
-          .select(kRiderRideLifecycleSelect)
-          .eq('id', rideId)
-          .maybeSingle();
+      final ride = _ref.read(rideRequestProvider);
+      final row = await RiderRideSnapshotService.fetch(
+        rideRequestId: rideId,
+        riderToken: ride.riderToken,
+      );
       if (row == null) return;
       await applyBackendRecord(
         Map<String, dynamic>.from(row),
@@ -85,8 +107,7 @@ class RiderRideLifecycleEngine {
     final providerStatus = inferRideProviderStatus(snapshot);
 
     if (kDebugMode && lifecycleChanged) {
-      final changed =
-          RiderRideLifecycleSnapshot.changedFields(prev, snapshot);
+      final changed = RiderRideLifecycleSnapshot.changedFields(prev, snapshot);
       debugPrint(
         '[RideLifecycleEngine] $source ride=$rideId '
         'changedFields=${changed.join(',')} '
@@ -105,6 +126,17 @@ class RiderRideLifecycleEngine {
       _ref.read(rideRequestProvider.notifier).updateStatus(providerStatus);
     }
 
+    _ref.read(riderRideBackendRecordProvider.notifier).state =
+        RiderRideBackendRecord(
+      rideRequestId: rideId,
+      record: record,
+      source: source,
+      revision: [
+        record['updated_at'],
+        record['driver_on_my_way_at'],
+      ].join('|'),
+    );
+
     if (RiderRideStatuses.isSearch(effectiveStatus)) {
       final dispatch = await RiderDispatchStatusService.fetch(rideId);
       _driversNotified = dispatch.driversNotified;
@@ -116,7 +148,8 @@ class RiderRideLifecycleEngine {
       _ref.read(driverTrackingProvider.notifier).startTracking(rideId);
     }
 
-    final presentation = _buildPresentation(ride, record, effectiveStatus);
+    final presentation =
+        await _buildPresentation(ride, record, effectiveStatus);
 
     if (RiderRideStateVersionGate.isGraceTickSource(source)) {
       await RiderRideStateRefresh.refreshLocalPresentation(
@@ -146,7 +179,7 @@ class RiderRideLifecycleEngine {
     await RiderRideStateRefresh.refreshLocalPresentation(
       snapshot: snapshot,
       effectiveStatus: snapshot.resolveEffectiveStatus(),
-      presentation: _buildPresentation(
+      presentation: await _buildPresentation(
         ride,
         {},
         snapshot.resolveEffectiveStatus(),
@@ -155,9 +188,16 @@ class RiderRideLifecycleEngine {
     );
   }
 
-  void resetForRideChange() {
-    final rideId = _ref.read(rideRequestProvider).rideRequestId;
+  void resetForRideChange({String? previousRideId}) {
+    final rideId = previousRideId ??
+        _ref.read(riderRideBackendRecordProvider)?.rideRequestId;
     if (rideId != null) RiderRideStateVersionGate.reset(rideId);
+    final projected = _ref.read(riderRideBackendRecordProvider);
+    if (projected == null ||
+        previousRideId == null ||
+        projected.rideRequestId == previousRideId) {
+      _ref.read(riderRideBackendRecordProvider.notifier).state = null;
+    }
     _driverName = '';
     _vehicleLabel = '';
     _vehiclePlate = '';
@@ -172,16 +212,16 @@ class RiderRideLifecycleEngine {
     );
     if (map == null) return;
     _driverName = (map['full_name'] ?? map['driver_name'] ?? '').toString();
-    _vehicleLabel = (map['vehicle_label'] ?? map['vehicle_model'] ?? '')
-        .toString();
+    _vehicleLabel =
+        (map['vehicle_label'] ?? map['vehicle_model'] ?? '').toString();
     _vehiclePlate = (map['vehicle_plate'] ?? map['plate'] ?? '').toString();
   }
 
-  RideStatePresentation _buildPresentation(
+  Future<RideStatePresentation> _buildPresentation(
     RideRequestState ride,
     Map<String, dynamic> record,
     String effectiveStatus,
-  ) {
+  ) async {
     final booking = _ref.read(bookingProvider);
     final pickup = booking.pickup?.displayName ??
         record['pickup_address']?.toString() ??
@@ -193,23 +233,27 @@ class RiderRideLifecycleEngine {
     final driverLocation = _ref.read(driverTrackingProvider).valueOrNull;
     double? driverKmToPickup;
     int? etaMinutes;
-    if (driverLocation != null && booking.pickup != null) {
+    if (driverLocation != null &&
+        booking.pickup != null &&
+        booking.pickup!.hasValidCoords &&
+        driverLocation.lat != 0 &&
+        driverLocation.lng != 0) {
       driverKmToPickup = NearbySupplyService.distanceKm(
         driverLocation.lat,
         driverLocation.lng,
         booking.pickup!.lat,
         booking.pickup!.lng,
       );
-      final target =
-          effectiveStatus == 'in_progress' ? booking.destination : booking.pickup;
-      if (target != null) {
-        final km = NearbySupplyService.distanceKm(
-          driverLocation.lat,
-          driverLocation.lng,
-          target.lat,
-          target.lng,
+      final target = effectiveStatus == 'in_progress'
+          ? booking.destination
+          : booking.pickup;
+      if (target != null && target.hasValidCoords) {
+        etaMinutes = await RiderEtaService.etaMinutes(
+          fromLat: driverLocation.lat,
+          fromLng: driverLocation.lng,
+          toLat: target.lat,
+          toLng: target.lng,
         );
-        etaMinutes = ((km / 28.0) * 60.0).ceil().clamp(1, 90);
       }
     }
 
@@ -224,8 +268,9 @@ class RiderRideLifecycleEngine {
       driversNotified: _driversNotified,
       driverKmToPickup: driverKmToPickup,
       etaMinutes: etaMinutes,
-      paymentMethodLabel:
-          booking.paymentMethods.isNotEmpty ? booking.paymentMethods.first : null,
+      paymentMethodLabel: booking.paymentMethods.isNotEmpty
+          ? booking.paymentMethods.first
+          : null,
     );
   }
 }

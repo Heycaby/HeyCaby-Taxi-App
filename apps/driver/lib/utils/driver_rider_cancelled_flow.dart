@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
-import '../providers/driver_data_providers.dart';
+import 'driver_today_rides_refresh.dart';
 import '../providers/driver_state_provider.dart';
 import '../services/sound_service.dart';
 
@@ -67,8 +67,7 @@ Future<void> handleDriverRiderCancelled({
   HapticService.heavyTap();
 
   ref.read(driverStateProvider.notifier).clearActiveRide();
-  ref.invalidate(driverShiftStatsProvider);
-  ref.invalidate(driverEarningsProvider);
+  invalidateTodayRideProviders(ref);
 
   if (!context.mounted) return;
   // Never stack lifecycle surfaces. Move off any rate/ride sheet first, give

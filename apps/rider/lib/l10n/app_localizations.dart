@@ -217,7 +217,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeBestPriceTitle.
   ///
   /// In en, this message translates to:
-  /// **'TAXI TERUG'**
+  /// **'RETURN TAXI'**
   String get homeBestPriceTitle;
 
   /// No description provided for @homeBestPriceSubtitle.
@@ -229,7 +229,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeTaxiTerugTitle.
   ///
   /// In en, this message translates to:
-  /// **'TAXI TERUG'**
+  /// **'RETURN TAXI'**
   String get homeTaxiTerugTitle;
 
   /// No description provided for @homeTaxiTerugSubtitle.
@@ -253,7 +253,7 @@ abstract class AppLocalizations {
   /// No description provided for @taxiTerugFareExplanation.
   ///
   /// In en, this message translates to:
-  /// **'Taxi Terug means the taxi is already going your direction. The fare depends on the driver\'s tariff — not a platform discount.'**
+  /// **'Return Taxi means the taxi is already going your direction. The fare depends on the driver\'s tariff — not a platform discount.'**
   String get taxiTerugFareExplanation;
 
   /// No description provided for @taxiTerugDriversAcceptHint.
@@ -313,7 +313,7 @@ abstract class AppLocalizations {
   /// No description provided for @taxiTerugWaitToleranceBody.
   ///
   /// In en, this message translates to:
-  /// **'Taxi Terug drivers may finish a ride nearby first. We only show taxis that can reach you within your wait time.'**
+  /// **'Return Taxi drivers may finish a ride nearby first. We only show taxis that can reach you within your wait time.'**
   String get taxiTerugWaitToleranceBody;
 
   /// No description provided for @taxiTerugWaitMinutes.
@@ -355,7 +355,7 @@ abstract class AppLocalizations {
   /// No description provided for @taxiTerugQueuedConfirmed.
   ///
   /// In en, this message translates to:
-  /// **'Taxi Terug confirmed'**
+  /// **'Return Taxi confirmed'**
   String get taxiTerugQueuedConfirmed;
 
   /// No description provided for @taxiTerugQueuedWaitingForDriver.
@@ -427,7 +427,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeSupplyNoneSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Try TAXI TERUG or schedule a ride for later.'**
+  /// **'Try RETURN TAXI or schedule a ride for later.'**
   String get homeSupplyNoneSubtitle;
 
   /// No description provided for @homeSupplyNearbyTitle.
@@ -537,6 +537,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Edit'**
   String get homeRecentPlacesEdit;
+
+  /// No description provided for @homeQuickPlacesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved & recent'**
+  String get homeQuickPlacesTitle;
+
+  /// No description provided for @homeQuickPlacesManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage'**
+  String get homeQuickPlacesManage;
 
   /// No description provided for @savedTripsTitle.
   ///
@@ -5324,7 +5336,7 @@ abstract class AppLocalizations {
   /// No description provided for @searchFactMarketplace.
   ///
   /// In en, this message translates to:
-  /// **'Drivers heading home sometimes ride for less. Try TAXI TERUG for a better price.'**
+  /// **'Drivers heading home sometimes ride for less. Try RETURN TAXI for a better price.'**
   String get searchFactMarketplace;
 
   /// No description provided for @searchFactZZP.
@@ -5624,7 +5636,7 @@ abstract class AppLocalizations {
   /// No description provided for @rideMatchingTypeLabelTerug.
   ///
   /// In en, this message translates to:
-  /// **'TAXI TERUG'**
+  /// **'RETURN TAXI'**
   String get rideMatchingTypeLabelTerug;
 
   /// No description provided for @rideMatchingTypeLabelScheduled.
@@ -6076,6 +6088,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Contact driver'**
   String get activeRideContactDriver;
+
+  /// No description provided for @maskedCallDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Call driver through HeyCaby'**
+  String get maskedCallDriver;
+
+  /// No description provided for @maskedCallTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Call through HeyCaby?'**
+  String get maskedCallTitle;
+
+  /// No description provided for @maskedCallBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone number stays private. Calls last up to 5 minutes. We call you first, then connect your driver.'**
+  String get maskedCallBody;
+
+  /// No description provided for @maskedCallNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Call now'**
+  String get maskedCallNow;
+
+  /// No description provided for @maskedCallQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'HeyCaby is calling you now. Answer to connect.'**
+  String get maskedCallQueued;
+
+  /// No description provided for @maskedCallUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Calling is temporarily unavailable. Use Ping or Message instead.'**
+  String get maskedCallUnavailable;
 
   /// No description provided for @activeRideCategoryLabel.
   ///
@@ -6650,7 +6698,7 @@ abstract class AppLocalizations {
   /// No description provided for @taxiTerugScreenTitle.
   ///
   /// In en, this message translates to:
-  /// **'Taxi Terug'**
+  /// **'Return Taxi'**
   String get taxiTerugScreenTitle;
 
   /// No description provided for @taxiTerugScreenSubtitle.
@@ -6698,13 +6746,13 @@ abstract class AppLocalizations {
   /// No description provided for @taxiTerugScreenDisabled.
   ///
   /// In en, this message translates to:
-  /// **'Taxi Terug is not available right now.'**
+  /// **'Return Taxi is not available right now.'**
   String get taxiTerugScreenDisabled;
 
   /// No description provided for @taxiTerugScreenNoRides.
   ///
   /// In en, this message translates to:
-  /// **'No Taxi Terug rides found.'**
+  /// **'No Return Taxi rides found.'**
   String get taxiTerugScreenNoRides;
 
   /// No description provided for @taxiTerugScreenNoRidesBody.
@@ -6716,7 +6764,7 @@ abstract class AppLocalizations {
   /// No description provided for @taxiTerugScreenPostCta.
   ///
   /// In en, this message translates to:
-  /// **'Post Taxi Terug Request'**
+  /// **'Post Return Taxi Request'**
   String get taxiTerugScreenPostCta;
 
   /// No description provided for @taxiTerugScreenBook.
@@ -6728,7 +6776,7 @@ abstract class AppLocalizations {
   /// No description provided for @taxiTerugScreenPostTitle.
   ///
   /// In en, this message translates to:
-  /// **'Post Taxi Terug Request'**
+  /// **'Post Return Taxi Request'**
   String get taxiTerugScreenPostTitle;
 
   /// No description provided for @taxiTerugScreenPostBody.
@@ -6782,7 +6830,7 @@ abstract class AppLocalizations {
   /// No description provided for @taxiTerugTrackerSearching.
   ///
   /// In en, this message translates to:
-  /// **'Finding your Taxi Terug match'**
+  /// **'Finding your Return Taxi match'**
   String get taxiTerugTrackerSearching;
 
   /// No description provided for @taxiTerugTrackerSearchingBody.
@@ -6800,7 +6848,7 @@ abstract class AppLocalizations {
   /// No description provided for @taxiTerugTrackerNoMatchBody.
   ///
   /// In en, this message translates to:
-  /// **'No Taxi Terug drivers were found within 1 hour. Please try again later.'**
+  /// **'No Return Taxi drivers were found within 1 hour. Please try again later.'**
   String get taxiTerugTrackerNoMatchBody;
 
   /// No description provided for @taxiTerugTrackerCancelTitle.
@@ -6812,7 +6860,7 @@ abstract class AppLocalizations {
   /// No description provided for @taxiTerugTrackerCancelConfirm.
   ///
   /// In en, this message translates to:
-  /// **'Are you sure you want to cancel your Taxi Terug request?'**
+  /// **'Are you sure you want to cancel your Return Taxi request?'**
   String get taxiTerugTrackerCancelConfirm;
 
   /// No description provided for @taxiTerugTrackerBoost.
@@ -6860,7 +6908,7 @@ abstract class AppLocalizations {
   /// No description provided for @activeRouteEditBody.
   ///
   /// In en, this message translates to:
-  /// **'Your driver will see changes instantly. The final fare may change with the route.'**
+  /// **'Your driver must accept extra stops before they are added. The final fare may change with the route.'**
   String get activeRouteEditBody;
 
   /// No description provided for @activeRouteChangeDestination.
@@ -6892,6 +6940,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'We couldn’t update the route. Your original route is unchanged.'**
   String get activeRouteUpdateFailed;
+
+  /// No description provided for @activeRouteWaitingDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for your driver to accept this stop'**
+  String get activeRouteWaitingDriver;
+
+  /// No description provided for @activeRoutePendingStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get activeRoutePendingStop;
+
+  /// No description provided for @activeRouteDuplicateRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'You already asked for this stop. Waiting for your driver.'**
+  String get activeRouteDuplicateRequest;
+
+  /// No description provided for @activeRouteNoChange.
+  ///
+  /// In en, this message translates to:
+  /// **'That stop is already on your route.'**
+  String get activeRouteNoChange;
+
+  /// No description provided for @activeRouteDestinationChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed address'**
+  String get activeRouteDestinationChanged;
+
+  /// No description provided for @activeRouteStopsAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 stop added} other{{count} stops added}}'**
+  String activeRouteStopsAdded(int count);
+
+  /// No description provided for @prepayRideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay securely in the app'**
+  String get prepayRideTitle;
+
+  /// No description provided for @prepayRideRequiredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This ride requires prepayment after your driver accepts. Mollie confirms the payment securely.'**
+  String get prepayRideRequiredBody;
+
+  /// No description provided for @prepayRideOptionalBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay your driver as usual, or pay now securely through Mollie.'**
+  String get prepayRideOptionalBody;
+
+  /// No description provided for @prepayPayNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay now'**
+  String get prepayPayNow;
+
+  /// No description provided for @prepayPayDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay driver'**
+  String get prepayPayDriver;
+
+  /// No description provided for @prepayOpenCheckout.
+  ///
+  /// In en, this message translates to:
+  /// **'Open secure checkout'**
+  String get prepayOpenCheckout;
+
+  /// No description provided for @prepayAwaitingConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for Mollie confirmation'**
+  String get prepayAwaitingConfirmation;
+
+  /// No description provided for @prepayPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment confirmed'**
+  String get prepayPaid;
+
+  /// No description provided for @prepayDriverNotReady.
+  ///
+  /// In en, this message translates to:
+  /// **'This driver cannot receive prepaid rides yet. Pay the driver as usual.'**
+  String get prepayDriverNotReady;
+
+  /// No description provided for @prepayUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepayment is temporarily unavailable. Your existing payment method is unchanged.'**
+  String get prepayUnavailable;
+
+  /// No description provided for @prepayRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get prepayRetry;
+
+  /// No description provided for @prepayAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount: {amount}'**
+  String prepayAmount(String amount);
 }
 
 class _AppLocalizationsDelegate

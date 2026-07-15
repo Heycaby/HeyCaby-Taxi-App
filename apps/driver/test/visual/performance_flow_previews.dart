@@ -5,6 +5,9 @@ import 'package:heycaby_driver/theme/driver_typography.dart';
 import 'package:heycaby_driver/widgets/driver_performance_flow_common.dart';
 import 'package:heycaby_driver/widgets/driver_performance_scorecard_body.dart';
 import 'package:heycaby_driver/widgets/driver_rate_control_body.dart';
+import 'package:heycaby_driver/services/driver_data_service.dart';
+
+import 'golden_text_theme.dart';
 
 class DriverPerformanceScorecardPreview extends StatelessWidget {
   const DriverPerformanceScorecardPreview({
@@ -56,23 +59,38 @@ class DriverRateControlPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokenColors = colors.tokens;
+    final tokenTypo = buildDriverGoldenTypography();
+    const profile = DriverRateProfile(
+      id: 'preview-standard',
+      driverId: 'preview-driver',
+      profileName: 'Standaard',
+      baseFare: 4.5,
+      perKmRate: 2.2,
+      perMinRate: 0.45,
+      waitingRate: 0.35,
+      isActive: true,
+    );
+
     return DriverRateControlBody(
       colors: colors,
       typography: typography,
+      tokenColors: tokenColors,
+      tokenTypo: tokenTypo,
       loading: false,
       errorMessage: null,
       presetBanner: null,
-      profileEditors: [
-        DriverTariffProfileEditorCard(
-          title: 'Standard Tariff',
-          colors: colors,
-          typography: typography,
-          baseField: _MockField(label: DriverStrings.rateStart, value: '4.50'),
-          kmField: _MockField(label: DriverStrings.ratePerKm, value: '2.20'),
-          minField: _MockField(label: DriverStrings.ratePerMin, value: '0.45'),
-          waitField: _MockField(label: DriverStrings.rateWaiting, value: '0.35'),
-        ),
-      ],
+      profiles: const [profile],
+      selectedProfileId: profile.id,
+      onProfileSelected: (_) {},
+      baseFieldBuilder: (_) =>
+          _MockField(label: DriverStrings.rateStart, value: '4.50'),
+      kmFieldBuilder: (_) =>
+          _MockField(label: DriverStrings.ratePerKm, value: '2.20'),
+      minFieldBuilder: (_) =>
+          _MockField(label: DriverStrings.ratePerMin, value: '0.45'),
+      waitFieldBuilder: (_) =>
+          _MockField(label: DriverStrings.rateWaiting, value: '0.35'),
       saving: false,
       onBack: () {},
       onSave: () {},

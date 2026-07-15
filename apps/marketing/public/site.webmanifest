@@ -1,0 +1,26 @@
+{
+  "name": "HeyCaby — De taxi-app gebouwd door chauffeurs",
+  "short_name": "HeyCaby",
+  "description": "Nederlandse taxi-app zonder commissie. Chauffeurs houden 100% van hun ritprijs. Rijders reizen veilig van boeking tot afzet.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F5F7",
+  "theme_color": "#F5F5F7",
+  "orientation": "portrait",
+  "lang": "nl-NL",
+  "categories": ["travel", "transportation", "navigation"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

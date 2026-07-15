@@ -11,6 +11,7 @@ import '../theme/driver_colors.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
 import '../ui/driver_app_bar.dart';
+import '../utils/driver_ride_ledger_display.dart';
 import 'scheduled_preride_actions.dart';
 import 'scheduled_ride_detail_sheet.dart';
 
@@ -185,7 +186,7 @@ class _EarningsContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final earningsAsync = ref.watch(driverEarningsProvider);
-    final ridesAsync = ref.watch(todayRidesProvider);
+    final ridesAsync = ref.watch(todayMyRidesProvider);
 
     return earningsAsync.when(
       data: (summary) {
@@ -372,7 +373,12 @@ class _EarningsContent extends ConsumerWidget {
               const SizedBox(height: 12),
               ridesAsync.when(
                 data: (rides) {
-                  if (rides.isEmpty) {
+                  final completed = rides
+                      .where(
+                        (r) => driverCompletedRideStatuses.contains(r.status),
+                      )
+                      .toList();
+                  if (completed.isEmpty) {
                     return Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
@@ -385,15 +391,21 @@ class _EarningsContent extends ConsumerWidget {
                         border: Border.all(color: colors.border),
                       ),
                       child: Text(
-                        'No rides completed yet today.',
-                        style: typo.bodyMedium.copyWith(color: colors.textSoft),
+                        DriverStrings.geenRittenVandaag,
+                        style:
+                            typo.bodyMedium.copyWith(color: colors.textSoft),
                       ),
                     );
                   }
                   return Column(
-                    children: rides
-                        .map((r) =>
-                            _TodayRideTile(ride: r, colors: colors, typo: typo))
+                    children: completed
+                        .map(
+                          (r) => _TodayRideTile(
+                            ride: r,
+                            colors: colors,
+                            typo: typo,
+                          ),
+                        )
                         .toList(),
                   );
                 },
@@ -567,7 +579,7 @@ class _WeeklyEarningsChart extends ConsumerWidget {
 }
 
 class _TodayRideTile extends StatelessWidget {
-  final TodayRide ride;
+  final MyRideSummary ride;
   final HeyCabyColorTokens colors;
   final HeyCabyTypography typo;
 
@@ -581,10 +593,13 @@ class _TodayRideTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final fareStr =
         ride.fare != null ? '€${ride.fare!.toStringAsFixed(2)}' : '—';
-    final timeStr = ride.completedAt != null
-        ? DateFormat('HH:mm').format(ride.completedAt!)
-        : '—';
-    final route = ride.displayRoute;
+    final when = ride.completedAt ?? ride.scheduledPickupAt ?? ride.createdAt;
+    final timeStr =
+        when != null ? DateFormat('HH:mm').format(when.toLocal()) : '—';
+    final from = (ride.pickupAddress ?? '—').split(',').first.trim();
+    final to = (ride.destinationAddress ?? '—').split(',').first.trim();
+    final route = '$from → $to';
+    final category = driverRideCategoryLabel(ride);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -608,15 +623,29 @@ class _TodayRideTile extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Expanded(
-            flex: 2,
-            child: Text(
-              '$route · $fareStr · $timeStr',
-              style: typo.bodyMedium.copyWith(
-                color: colors.text,
-                fontWeight: FontWeight.w600,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (category != null) ...[
+                  Text(
+                    category,
+                    style: typo.labelSmall.copyWith(
+                      color: colors.accent,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                ],
+                Text(
+                  '$route · $fareStr · $timeStr',
+                  style: typo.bodyMedium.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
         ],
@@ -1017,6 +1046,7 @@ class _AssignedScheduledWorkCard extends ConsumerWidget {
               typo: typo,
               onInvalidate: () {
                 ref.invalidate(scheduledRidesByTabProvider('confirmed'));
+                ref.invalidate(scheduledRidesCountProvider);
                 ref.invalidate(scheduledRidesProvider);
               },
             ),

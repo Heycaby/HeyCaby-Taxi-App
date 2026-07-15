@@ -4,10 +4,10 @@
 
 | Environment | Dashboard name | Project ref (`project_id`) | URL |
 |-------------|----------------|----------------------------|-----|
-| **Staging (QA / device tests)** | HeyCaby Staging | `fdavszxncggswuiwggcp` | `https://fdavszxncggswuiwggcp.supabase.co` |
-| Production | HEYCABY-TAXI | `fvrprxguoternoxnyhoj` | `https://fvrprxguoternoxnyhoj.supabase.co` |
+| **Production (QA / device tests)** | HEYCABY-TAXI | `fvrprxguoternoxnyhoj` | `https://fvrprxguoternoxnyhoj.supabase.co` |
+| Staging (legacy / optional) | HeyCaby Staging | `fdavszxncggswuiwggcp` | `https://fdavszxncggswuiwggcp.supabase.co` |
 
-**Always apply and smoke-test migrations on staging first.** Promote to production only after staging passes or when explicitly requested.
+**Apply and smoke-test migrations on production** unless explicitly testing on staging. Production migration history may use dashboard-applied version IDs that differ from local filenames; use MCP `apply_migration` with the repo SQL when `supabase db push` reports history drift.
 
 Apply with the [Supabase CLI](https://supabase.com/docs/guides/cli) linked to the target project, or paste SQL into **Dashboard → SQL Editor** (use MCP `apply_migration` with the correct `project_id`).
 

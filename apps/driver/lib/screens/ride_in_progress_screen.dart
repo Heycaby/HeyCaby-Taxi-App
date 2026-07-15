@@ -10,13 +10,16 @@ import 'package:heycaby_utils/heycaby_utils.dart';
 import '../l10n/driver_strings.dart';
 import '../providers/driver_location_provider.dart';
 import '../providers/driver_ride_proximity_provider.dart';
+import '../providers/driver_runtime_providers.dart';
 import '../providers/driver_state_provider.dart';
 import '../providers/driver_taxi_terug_queued_provider.dart';
+import '../services/ride_gps_tracker.dart';
 import '../services/sound_service.dart';
 import '../utils/driver_cancel_ride_flow.dart';
 import '../utils/driver_navigation_launch.dart';
 import '../utils/driver_ride_coord_utils.dart';
 import '../utils/driver_ride_lifecycle_error_message.dart';
+import '../utils/driver_today_rides_refresh.dart';
 import '../utils/driver_ride_proximity_gate.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
@@ -97,12 +100,73 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
         },
       );
       if (!allowed) return;
-      await ref
-          .read(driverApiProvider)
-          .completeRide(rideRequestId: widget.rideId);
+      final verifiedCompletion = ref
+              .read(driverRemoteConfigProvider)
+              .valueOrNull
+              ?.verifiedCompletionEnabled ==
+          true;
+      if (verifiedCompletion) {
+        await RideGpsTracker().flush();
+        var position = ref.read(driverLocationProvider).valueOrNull;
+        if (position == null ||
+            DateTime.now().difference(position.timestamp).inSeconds > 30) {
+          await ref.read(driverLocationProvider.notifier).refresh();
+          position = ref.read(driverLocationProvider).valueOrNull;
+        }
+        if (position == null) {
+          throw const RideVerificationException('driver_location_unavailable');
+        }
+        final completion =
+            await const RideVerificationService().completeVerifiedRide(
+          rideId: widget.rideId,
+          latitude: position.latitude,
+          longitude: position.longitude,
+          accuracyMeters: position.accuracy,
+          recordedAt: position.timestamp,
+        );
+        if (completion['status'] == 'review_required') {
+          if (!mounted) return;
+          await showDialog<void>(
+            context: context,
+            builder: (context) => AlertDialog(
+              icon: const Icon(Icons.policy_rounded),
+              title: const Text('Ride evidence under review'),
+              content: const Text(
+                'The trip was not auto-completed because some journey evidence needs review. Payment remains protected and unrouted. Support can inspect the full timeline.',
+              ),
+              actions: [
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Understood'),
+                ),
+              ],
+            ),
+          );
+          return;
+        }
+      } else {
+        await ref
+            .read(driverApiProvider)
+            .completeRide(rideRequestId: widget.rideId);
+      }
+      // Settlement is an additive, feature-flagged branch. Completion remains
+      // canonical even if Mollie routing is temporarily unavailable; the
+      // backend leaves the payment in routing_pending for retry/alerting.
+      if (ref
+              .read(driverRemoteConfigProvider)
+              .valueOrNull
+              ?.prepaidPaymentsEnabled ==
+          true) {
+        await const PrepaidRidePaymentService()
+            .routeCompletedPayment(rideId: widget.rideId);
+      }
+      // Stop GPS breadcrumb recording and flush final batch.
+      // The fare recalculation trigger fires on the backend when status → completed.
+      await RideGpsTracker().stopTracking();
       ref
           .read(driverStateProvider.notifier)
           .setStatus(DriverAppState.completed);
+      invalidateTodayRideProviders(ref);
       SoundService().playTripComplete();
       if (!mounted) return;
       context.go('/driver/ride/complete/${widget.rideId}');
@@ -134,6 +198,8 @@ class _RideInProgressScreenState extends ConsumerState<RideInProgressScreen> {
   Future<void> _cancelRide() async {
     if (_loading) return;
     setState(() => _loading = true);
+    await RideGpsTracker().stopTracking();
+    if (!mounted) return;
     await confirmAndCancelDriverRide(
       context: context,
       ref: ref,

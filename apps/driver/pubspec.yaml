@@ -1,6 +1,6 @@
 name: heycaby_driver
 description: HeyCaby Driver app
-version: 1.0.0+36
+version: 1.0.0+54
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -29,6 +29,7 @@ dependencies:
   
   # Audio
   audioplayers: ^6.0.0
+  audio_session: ^0.1.21
   
   # SVG
   flutter_svg: ^2.0.9
@@ -76,6 +77,7 @@ flutter:
     - assets/branding/
     - assets/images/
     - assets/icons/
+    - assets/icons/hub/
     - assets/illustrations/
     - assets/lottie/
     - assets/patterns/

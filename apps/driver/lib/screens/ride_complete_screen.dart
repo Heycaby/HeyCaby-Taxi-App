@@ -14,10 +14,12 @@ import '../providers/driver_taxi_terug_stats_provider.dart';
 import '../services/driver_data_service.dart';
 import '../services/driver_operational_restore_service.dart';
 import '../utils/driver_runtime_refresh.dart';
+import '../utils/driver_today_rides_refresh.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_collect_payment_sheet.dart';
 import '../widgets/driver_reward_screen_body.dart';
+import '../widgets/driver_taxi_terug_wizard_sheet.dart';
 
 /// **Reward Screen** — celebrate completion; collect payment; rate rider.
 class RideCompleteScreen extends ConsumerStatefulWidget {
@@ -44,6 +46,7 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
     super.initState();
     _loadExpectedAmount();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      invalidateTodayRideProviders(ref);
       unawaited(_runPostCompleteFlow());
     });
   }
@@ -111,6 +114,7 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
     );
     if (!mounted) return;
     if (result?.confirmed == true) {
+      invalidateTodayRideProviders(ref);
       setState(() => _paymentConfirmed = true);
       return;
     }
@@ -147,6 +151,8 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
                     returnDiscountPct: status.returnDiscountPct > 0
                         ? status.returnDiscountPct
                         : 15,
+                    intentType: 'home',
+                    destinationRadiusKm: status.destinationRadiusKm,
                   );
           ref.invalidate(driverReturnModeProvider);
           ref.invalidate(driverProfileProvider);
@@ -163,6 +169,16 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
           await ref.read(driverDataServiceProvider).dismissReturnModePrompt();
           ref.invalidate(driverReturnModeProvider);
           if (ctx.mounted) Navigator.of(ctx).pop();
+        },
+        onChange: () async {
+          if (ctx.mounted) Navigator.of(ctx).pop();
+          if (!mounted) return;
+          await showDriverTaxiTerugWizard(
+            context,
+            ref,
+            initialPath: TaxiTerugWizardPath.goingHome,
+            skipPathChoice: true,
+          );
         },
       ),
     );
@@ -208,6 +224,7 @@ class _RideCompleteScreenState extends ConsumerState<RideCompleteScreen> {
           );
         }
         unawaited(refreshDriverRuntime(ref));
+        invalidateTodayRideProviders(ref);
         ref.invalidate(driverTaxiTerugStatsProvider);
         final resumed = await resumeActivatedTaxiTerugRideIfAny(
           ref,
@@ -228,6 +245,7 @@ class _ReturnModePromptSheet extends StatelessWidget {
     required this.typo,
     required this.onActivate,
     required this.onDismiss,
+    required this.onChange,
   });
 
   final DriverReturnModeStatus status;
@@ -235,6 +253,7 @@ class _ReturnModePromptSheet extends StatelessWidget {
   final HeyCabyTypography typo;
   final Future<void> Function() onActivate;
   final Future<void> Function() onDismiss;
+  final Future<void> Function() onChange;
 
   @override
   Widget build(BuildContext context) {
@@ -282,14 +301,14 @@ class _ReturnModePromptSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: Icon(
-                  Icons.keyboard_backspace_rounded,
+                  Icons.home_rounded,
                   color: colors.success,
                   size: 28,
                 ),
               ),
               const SizedBox(height: 18),
               Text(
-                DriverStrings.returnModeHeadingHomeTitle,
+                DriverStrings.taxiTerugWizardHeadHome,
                 style: typo.headingSmall.copyWith(
                   color: colors.text,
                   fontWeight: FontWeight.w900,
@@ -351,9 +370,13 @@ class _ReturnModePromptSheet extends StatelessWidget {
               const SizedBox(height: 22),
               FilledButton(
                 onPressed: onActivate,
-                child: Text(DriverStrings.returnModeActivate),
+                child: Text(DriverStrings.taxiTerugWizardOneTapActivate),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
+              TextButton(
+                onPressed: onChange,
+                child: Text(DriverStrings.taxiTerugWizardChangeSettings),
+              ),
               TextButton(
                 onPressed: onDismiss,
                 child: Text(DriverStrings.notNow),

@@ -15,13 +15,14 @@ import type {
   FavoriteAddedPayload,
   ManualDriverPingPayload,
   ManualPreridePayload,
+  TaxiTerugOfferIncreasedPayload,
   WebhookPayload,
 } from "./notify_types.ts";
 import {
   authorizeManualPreride,
   deliverNotification,
 } from "./notify_deliver.ts";
-import { sendFcmNotification } from "./notify_push.ts";
+import { sendPushNotification } from "./notify_push.ts";
 import {
   appendPingAudit,
   buildPingCopy,
@@ -32,6 +33,15 @@ import {
   recentPingCooldown,
 } from "./ping_helpers.ts";
 import { json, ok, safeCompare } from "./util.ts";
+
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function euroAmount(value: number): string {
+  return Number.isInteger(value)
+    ? value.toFixed(0)
+    : value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+}
 
 async function enrichInviteNotification(
   supabase: { from: (table: string) => any },
@@ -104,7 +114,138 @@ Deno.serve(async (req) => {
     const manual = body as
       | ManualPreridePayload
       | ManualDriverPingPayload
-      | FavoriteAddedPayload;
+      | FavoriteAddedPayload
+      | TaxiTerugOfferIncreasedPayload;
+
+    if (manual?.event === "taxi_terug_offer_increased") {
+      const offer = manual as TaxiTerugOfferIncreasedPayload;
+      if (!webhookSecret) {
+        return json({ error: "Misconfigured" }, 500);
+      }
+      const incomingSecret = req.headers.get("x-webhook-secret") ?? "";
+      if (!(await safeCompare(incomingSecret, webhookSecret))) {
+        return json({ error: "Unauthorized" }, 401);
+      }
+
+      const previousFare = Number(offer.previous_fare);
+      const newFare = Number(offer.new_fare);
+      const increase = Number(offer.increase);
+      if (
+        !uuidPattern.test(offer.ride_request_id ?? "") ||
+        !uuidPattern.test(offer.source_event_id ?? "") ||
+        !Number.isFinite(previousFare) ||
+        !Number.isFinite(newFare) ||
+        !Number.isFinite(increase) ||
+        newFare <= previousFare ||
+        Math.abs(newFare - previousFare - increase) > 0.004
+      ) {
+        return json({ error: "invalid_taxi_terug_offer_event" }, 400);
+      }
+
+      const { data: ride, error: rideError } = await supabase
+        .from("ride_requests")
+        .select(
+          "booking_mode, status, driver_id, expires_at, marketplace_offered_fare",
+        )
+        .eq("id", offer.ride_request_id)
+        .maybeSingle();
+      const rideExpiry = ride?.expires_at
+        ? Date.parse(ride.expires_at as string)
+        : Number.NaN;
+      const currentFare = Number(ride?.marketplace_offered_fare);
+      if (
+        rideError ||
+        !ride ||
+        ride.booking_mode !== "terug" ||
+        !["pending", "bidding"].includes(ride.status as string) ||
+        ride.driver_id ||
+        (Number.isFinite(rideExpiry) && rideExpiry <= Date.now()) ||
+        !Number.isFinite(currentFare) ||
+        Math.abs(currentFare - newFare) > 0.004
+      ) {
+        return json({
+          ok: true,
+          skipped: true,
+          reason: "taxi_terug_offer_not_live",
+        });
+      }
+
+      const { data: inviteRows, error: inviteError } = await supabase
+        .from("ride_request_invites")
+        .select("driver_id")
+        .eq("ride_request_id", offer.ride_request_id)
+        .eq("status", "pending")
+        .gt("expires_at", new Date().toISOString());
+      if (inviteError) {
+        console.error(
+          "driver-agent: Taxi Terug offer audience lookup failed",
+          inviteError.code,
+        );
+        return json({ error: "audience_lookup_failed" }, 500);
+      }
+
+      const driverIds = [
+        ...new Set(
+          (inviteRows ?? [])
+            .map((row) => row.driver_id as string | null)
+            .filter((id): id is string => !!id),
+        ),
+      ];
+      let eligible = 0;
+      let delivered = 0;
+      let failed = 0;
+
+      for (const driverId of driverIds) {
+        const { data: qualification, error: qualificationError } =
+          await supabase.rpc("fn_terugtaxi_qualify", {
+            p_driver_id: driverId,
+            p_ride_request_id: offer.ride_request_id,
+          });
+        if (
+          qualificationError ||
+          !(qualification as Record<string, unknown> | null)?.qualified
+        ) continue;
+        eligible += 1;
+
+        const response = await deliverNotification(supabase, {
+          target: "driver",
+          user_type: "driver",
+          user_id: driverId,
+          agent: "driver_agent",
+          category: "taxi_terug_offer_increased",
+          title: "Taxi Terug offer increased",
+          body: `The Rider increased the offer by €${
+            euroAmount(increase)
+          }.\nNew offer: €${euroAmount(newFare)}.`,
+          data: {
+            source_event_id: offer.source_event_id,
+            ride_request_id: offer.ride_request_id,
+            booking_mode: "terug",
+            previous_fare: previousFare,
+            new_fare: newFare,
+            increase,
+            screen: "taxi_thru",
+            notification_type: "taxi_terug_offer_increased",
+          },
+          priority: "high",
+          channel: "both",
+        }, offer);
+        if (response.ok) {
+          delivered += 1;
+        } else {
+          failed += 1;
+        }
+      }
+
+      return json({
+        ok: true,
+        source_event_id: offer.source_event_id,
+        audience_count: driverIds.length,
+        eligible_count: eligible,
+        delivered_count: delivered,
+        failed_count: failed,
+      });
+    }
 
     if (manual?.event === "driver_ping" && manual.ride_request_id) {
       const ping = manual as ManualDriverPingPayload;
@@ -277,31 +418,67 @@ Deno.serve(async (req) => {
       // Just send FCM push to the driver's registered devices.
       const { data: pushRows } = await supabase
         .from("push_devices")
-        .select("id, fcm_token")
+        .select(
+          "id, fcm_token, apns_token, apns_environment, platform, app_role",
+        )
         .eq("driver_id", fav.driver_id)
         .eq("app_role", "driver");
 
       let pushed = 0;
       let failed = 0;
       let invalidTokensRemoved = 0;
+      const pushErrorCodes = new Set<string>();
+      const pushProviders = new Set<string>();
       for (const row of pushRows ?? []) {
         const token = row?.fcm_token as string | null;
-        if (!token || token.length < 10) continue;
-        const result = await sendFcmNotification(token, {
-          title: fav.title,
-          body: fav.body,
-          data: {
-            ...(fav.data ?? {}),
-            notification_id: fav.notification_id,
-            category: "favorite_added",
+        const apnsToken = row?.apns_token as string | null;
+        if (
+          (!token || token.length < 10) &&
+          (!apnsToken || apnsToken.length < 10)
+        ) continue;
+        const result = await sendPushNotification(
+          {
+            fcm_token: token,
+            apns_token: apnsToken,
+            apns_environment: row?.apns_environment as string | null,
+            platform: row?.platform as string,
+            app_role: row?.app_role as string,
           },
-          priority: fav.priority ?? "medium",
-        });
+          {
+            title: fav.title,
+            body: fav.body,
+            data: {
+              ...(fav.data ?? {}),
+              notification_id: fav.notification_id,
+              category: "favorite_added",
+            },
+            priority: fav.priority ?? "medium",
+          },
+        );
+        if (
+          result.ok && result.provider === "apns" && result.apnsEnvironment &&
+          result.apnsEnvironment !== row?.apns_environment && row?.id
+        ) {
+          await supabase.from("push_devices").update({
+            apns_environment: result.apnsEnvironment,
+            updated_at: new Date().toISOString(),
+          }).eq("id", row.id);
+        }
+        if (result.provider) pushProviders.add(result.provider);
+        if (result.errorCode) pushErrorCodes.add(result.errorCode);
+        if (result.invalidApnsToken && row?.id) {
+          invalidTokensRemoved++;
+          await supabase.from("push_devices").update({
+            apns_token: null,
+            apns_environment: null,
+            updated_at: new Date().toISOString(),
+          }).eq("id", row.id);
+        }
         if (result.ok) {
           pushed++;
         } else {
           failed++;
-          if (result.permanentFailure && row?.id) {
+          if (result.permanentFailure && !result.invalidApnsToken && row?.id) {
             await supabase.from("push_devices").delete().eq("id", row.id);
             invalidTokensRemoved++;
           }
@@ -321,6 +498,8 @@ Deno.serve(async (req) => {
         pushed,
         failed,
         invalid_tokens_removed: invalidTokensRemoved,
+        push_providers: [...pushProviders],
+        push_error_codes: [...pushErrorCodes],
       });
     }
 

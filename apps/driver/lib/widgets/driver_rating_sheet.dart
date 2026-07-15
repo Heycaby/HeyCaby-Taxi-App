@@ -8,6 +8,7 @@ import '../services/driver_data_service.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
+import 'driver_hub_saved_by_riders_section.dart';
 
 Future<void> showDriverRatingSheet({
   required BuildContext context,
@@ -43,6 +44,9 @@ class _DriverRatingSheet extends ConsumerWidget {
     final summaryAsync = ref.watch(driverRatingSummaryProvider);
     final scoreAsync = ref.watch(driverMyRatingProvider);
     final commentsAsync = ref.watch(driverCommentsFilteredProvider);
+    final savedByRidersInline = savedByRidersInlineCopy(
+      ref.watch(driverFavoriteSummaryProvider).valueOrNull,
+    );
     final summary = summaryAsync.valueOrNull;
     final score = scoreAsync.valueOrNull;
     final comments = commentsAsync.valueOrNull ?? const <DriverComment>[];
@@ -154,6 +158,45 @@ class _DriverRatingSheet extends ConsumerWidget {
                             color: colors.textMuted,
                           ),
                         ),
+                        if (savedByRidersInline != null) ...[
+                          const SizedBox(height: DriverSpacing.sm),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.favorite_rounded,
+                                color: colors.primary,
+                                size: 18,
+                              ),
+                              const SizedBox(width: DriverSpacing.xs),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      savedByRidersInline.countLine,
+                                      style: typography.bodyMedium.copyWith(
+                                        color: colors.textSecondary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    if (savedByRidersInline.namesLine !=
+                                        null) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        savedByRidersInline.namesLine!,
+                                        style: typography.bodySmall.copyWith(
+                                          color: colors.textMuted,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                         const SizedBox(height: DriverSpacing.xxl),
                         Text(
                           DriverStrings.ratingDistributionTitle,

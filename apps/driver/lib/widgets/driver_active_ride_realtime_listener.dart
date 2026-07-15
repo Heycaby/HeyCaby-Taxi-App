@@ -9,6 +9,11 @@ import '../providers/driver_resync_generation_provider.dart';
 import '../providers/driver_state_provider.dart';
 import '../utils/driver_rider_cancelled_flow.dart';
 
+const _kActiveRideRouteSelect =
+    'status, destination_address, destination_lat, destination_lng, '
+    'booked_destination_address, booked_destination_lat, booked_destination_lng, '
+    'route_stops, route_revision, pending_route_change';
+
 /// Supabase realtime backup when rider cancels during an active trip (Program 3C / L1-3).
 class DriverActiveRideRealtimeListener extends ConsumerStatefulWidget {
   const DriverActiveRideRealtimeListener({super.key});
@@ -47,10 +52,14 @@ class _DriverActiveRideRealtimeListenerState
     try {
       final row = await HeyCabySupabase.client
           .from('ride_requests')
-          .select('status')
+          .select(_kActiveRideRouteSelect)
           .eq('id', rideId)
           .maybeSingle();
-      if (row?['status'] == 'cancelled' && mounted) {
+      if (row == null || !mounted) return;
+      ref.read(driverStateProvider.notifier).patchActiveRouteFromRow(
+            Map<String, dynamic>.from(row),
+          );
+      if (row['status'] == 'cancelled' && mounted) {
         await handleDriverRiderCancelled(
           ref: ref,
           context: context,
@@ -93,7 +102,11 @@ class _DriverActiveRideRealtimeListenerState
             value: rideId,
           ),
           callback: (payload) {
-            final status = payload.newRecord['status'] as String?;
+            final record = Map<String, dynamic>.from(payload.newRecord);
+            ref.read(driverStateProvider.notifier).patchActiveRouteFromRow(
+                  record,
+                );
+            final status = record['status'] as String?;
             if (status != 'cancelled' || !context.mounted) return;
             handleDriverRiderCancelled(
               ref: ref,

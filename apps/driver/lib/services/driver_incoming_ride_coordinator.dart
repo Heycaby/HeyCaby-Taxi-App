@@ -9,7 +9,6 @@ import 'package:heycaby_ui/heycaby_ui.dart';
 import '../l10n/driver_strings.dart';
 import '../providers/driver_data_providers.dart';
 import 'driver_incoming_ride_prefetch.dart';
-import 'sound_service.dart';
 
 /// One presentation gate for FCM, Realtime, notification rows, and restore.
 /// Supabase owns availability; local Flutter lifecycle state never rejects an invite.
@@ -112,9 +111,6 @@ class DriverIncomingRideCoordinator {
       unawaited(_trace(resolvedInviteId, 'opened'));
 
       HapticService.heavyTap();
-      if (foreground) {
-        unawaited(SoundService().playRideRequest());
-      }
 
       if (!context.mounted) return;
       unawaited(_trace(resolvedInviteId, 'viewed'));

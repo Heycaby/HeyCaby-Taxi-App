@@ -20,8 +20,6 @@ import 'screens/driver_score_screen.dart';
 import 'screens/work_screen.dart';
 import 'screens/driver_tariff_editor_screen.dart';
 import 'screens/driver_hotspots_screen.dart';
-import 'screens/driver_community_hub_screen.dart';
-import 'screens/driver_community_channel_feed_screen.dart';
 import 'screens/driver_tell_friend_screen.dart';
 import 'screens/driver_preferences_screen.dart';
 import 'screens/driver_profile_screen.dart';
@@ -37,6 +35,7 @@ import 'screens/driver_terms_screen.dart';
 import 'screens/driver_privacy_screen.dart';
 import 'screens/driver_indemnification_screen.dart';
 import 'screens/driver_app_suggestion_screen.dart';
+import 'screens/driver_missed_opportunities_screen.dart';
 import 'screens/today_rides_screen.dart';
 import 'screens/driver_return_trips_screen.dart';
 import 'screens/driver_journey_intent_screen.dart';
@@ -49,6 +48,7 @@ import 'screens/support_lee_screen.dart';
 import 'screens/vehicle_edit_screen.dart';
 import 'screens/driver_billing_screen.dart';
 import 'screens/driver_billing_history_screen.dart';
+import 'screens/driver_mollie_connect_screen.dart';
 import 'screens/driver_finance_screen.dart';
 import 'screens/driver_runtime_gate_screen.dart';
 import 'screens/driver_my_rides_screen.dart';
@@ -233,20 +233,11 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: '/driver/community',
-          pageBuilder: (_, state) =>
-              _shellPage(state, const DriverCommunityHubScreen()),
+          redirect: (_, __) => '/driver',
         ),
         GoRoute(
           path: '/driver/community/feed',
-          pageBuilder: (_, state) {
-            final raw = state.uri.queryParameters['channel'] ?? 'general';
-            final channel =
-                raw == 'announcements' ? 'announcements' : 'general';
-            return _shellPage(
-              state,
-              DriverCommunityChannelFeedScreen(channel: channel),
-            );
-          },
+          redirect: (_, __) => '/driver',
         ),
         GoRoute(
           path: '/driver/tell-friend',
@@ -285,6 +276,23 @@ final appRouter = GoRouter(
           path: '/driver/billing/history',
           pageBuilder: (_, state) =>
               _shellPage(state, const DriverBillingHistoryScreen()),
+        ),
+        GoRoute(
+          path: '/driver/mollie',
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverMollieConnectScreen()),
+        ),
+        GoRoute(
+          path: '/mollie/connect',
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverMollieConnectScreen()),
+        ),
+        // Custom URI `heycaby-driver://mollie/connect` may be normalized by
+        // the platform to its path-only location before GoRouter sees it.
+        GoRoute(
+          path: '/connect',
+          pageBuilder: (_, state) =>
+              _shellPage(state, const DriverMollieConnectScreen()),
         ),
         GoRoute(
           path: '/driver/finance',
@@ -412,6 +420,13 @@ final appRouter = GoRouter(
               TodayRidesScreen(initialFilter: initialFilter),
             );
           },
+        ),
+        GoRoute(
+          path: '/driver/missed-opportunities',
+          pageBuilder: (_, state) => _shellPage(
+            state,
+            const DriverMissedOpportunitiesScreen(),
+          ),
         ),
         GoRoute(
           path: '/driver/help-articles',

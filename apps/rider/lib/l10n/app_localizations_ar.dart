@@ -301,6 +301,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeRecentPlacesEdit => 'تعديل';
 
   @override
+  String get homeQuickPlacesTitle => 'المحفوظة والحديثة';
+
+  @override
+  String get homeQuickPlacesManage => 'إدارة';
+
+  @override
   String get savedTripsTitle => 'الرحلات المحفوظة';
 
   @override
@@ -3448,6 +3454,26 @@ class AppLocalizationsAr extends AppLocalizations {
   String get activeRideContactDriver => 'اتصل بالسائق';
 
   @override
+  String get maskedCallDriver => 'اتصل بالسائق عبر HeyCaby';
+
+  @override
+  String get maskedCallTitle => 'الاتصال عبر HeyCaby؟';
+
+  @override
+  String get maskedCallBody =>
+      'يبقى رقم هاتفك خاصًا. تستمر المكالمات حتى 5 دقائق. نتصل بك أولاً ثم نصل سائقك.';
+
+  @override
+  String get maskedCallNow => 'اتصل الآن';
+
+  @override
+  String get maskedCallQueued => 'يتصل بك HeyCaby الآن. أجب للاتصال.';
+
+  @override
+  String get maskedCallUnavailable =>
+      'الاتصال غير متاح مؤقتًا. استخدم التنبيه أو الرسائل.';
+
+  @override
   String activeRideCategoryLabel(String category) {
     return 'الفئة: $category';
   }
@@ -3895,7 +3921,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get activeRouteEditBody =>
-      'سيرى السائق التغييرات فورًا. قد تتغير الأجرة النهائية حسب المسار.';
+      'يجب أن يوافق السائق على التوقفات الإضافية قبل إضافتها. قد تتغير الأجرة النهائية حسب المسار.';
 
   @override
   String get activeRouteChangeDestination => 'تغيير الوجهة';
@@ -3912,4 +3938,73 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get activeRouteUpdateFailed =>
       'تعذر تحديث المسار. مسارك الأصلي لم يتغير.';
+
+  @override
+  String get activeRouteWaitingDriver => 'بانتظار موافقة السائق على هذا التوقف';
+
+  @override
+  String get activeRoutePendingStop => 'قيد الانتظار';
+
+  @override
+  String get activeRouteDuplicateRequest =>
+      'لقد طلبت هذا التوقف بالفعل. بانتظار السائق.';
+
+  @override
+  String get activeRouteNoChange => 'هذا التوقف موجود بالفعل في مسارك.';
+
+  @override
+  String get activeRouteDestinationChanged => 'تم تغيير العنوان';
+
+  @override
+  String activeRouteStopsAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'تمت إضافة $count توقفات',
+      one: 'تمت إضافة توقف واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get prepayRideTitle => 'ادفع بأمان داخل التطبيق';
+
+  @override
+  String get prepayRideRequiredBody =>
+      'تتطلب هذه الرحلة الدفع المسبق بعد قبول السائق. تؤكد Mollie الدفع بأمان.';
+
+  @override
+  String get prepayRideOptionalBody =>
+      'ادفع للسائق كالمعتاد، أو ادفع الآن بأمان عبر Mollie.';
+
+  @override
+  String get prepayPayNow => 'ادفع الآن';
+
+  @override
+  String get prepayPayDriver => 'ادفع للسائق';
+
+  @override
+  String get prepayOpenCheckout => 'فتح صفحة الدفع الآمنة';
+
+  @override
+  String get prepayAwaitingConfirmation => 'بانتظار تأكيد Mollie';
+
+  @override
+  String get prepayPaid => 'تم تأكيد الدفع';
+
+  @override
+  String get prepayDriverNotReady =>
+      'لا يستطيع هذا السائق استلام رحلات مدفوعة مسبقاً بعد. ادفع للسائق كالمعتاد.';
+
+  @override
+  String get prepayUnavailable =>
+      'الدفع المسبق غير متاح مؤقتاً. طريقة الدفع الحالية لم تتغير.';
+
+  @override
+  String get prepayRetry => 'حاول مرة أخرى';
+
+  @override
+  String prepayAmount(String amount) {
+    return 'المبلغ: $amount';
+  }
 }

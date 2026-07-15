@@ -23,7 +23,7 @@ class RideSwapHowIntroSection extends StatelessWidget {
   final HeyCabyTypography typo;
   final bool includePullHint;
 
-  static List<String> _bulletKeys = [
+  static final List<String> _bulletKeys = [
     DriverStrings.rideSwapBulletViewSwaps,
     DriverStrings.rideSwapBulletCheckDetails,
     DriverStrings.rideSwapBulletTakeRide,

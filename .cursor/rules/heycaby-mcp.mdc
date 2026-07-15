@@ -13,15 +13,28 @@ When the task touches an external system and this workspace has a **configured M
 
 This matches the project owner preference: **always use MCP when it applies.**
 
-## Supabase: staging first
+## Supabase: MCP for push / deploy
 
-Device and agent testing use **HeyCaby Staging**, not production.
+**Always use the Supabase MCP** for database and backend deploys — do not use `supabase db push`, Dashboard SQL paste, or ad-hoc curl unless MCP is unavailable in the session.
+
+| Operation | MCP tool |
+|-----------|----------|
+| Apply migrations | `apply_migration` (SQL from `supabase/migrations/`) |
+| Ad-hoc SQL / smoke checks | `execute_sql` |
+| Edge functions | `deploy_edge_function` |
+| Logs / advisors | `get_logs`, `get_advisors` |
+
+Read tool schemas with `GetMcpTools` before calling. After `apply_migration`, confirm with `execute_sql` on `supabase_migrations.schema_migrations` or a targeted smoke query.
+
+## Supabase: production first
+
+Device and agent testing use **HEYCABY-TAXI production**, not staging.
 
 | Environment | Project | Ref / `project_id` |
 |-------------|---------|-------------------|
-| **Staging (default for tests)** | HeyCaby Staging | `fdavszxncggswuiwggcp` |
-| Production | HEYCABY-TAXI | `fvrprxguoternoxnyhoj` |
+| **Production (default for tests)** | HEYCABY-TAXI | `fvrprxguoternoxnyhoj` |
+| Staging (legacy / optional) | HeyCaby Staging | `fdavszxncggswuiwggcp` |
 
-- **Apply migrations, `execute_sql`, and smoke checks on staging first.** Only promote to production after staging passes or when the user explicitly asks for prod.
-- Rider/driver `.env` / `--dart-define` must point at staging (`https://fdavszxncggswuiwggcp.supabase.co`) during QA — not `fvrprxguoternoxnyhoj`.
+- **Apply migrations, `execute_sql`, edge-function deploys, and smoke checks on production** unless the user explicitly asks for staging.
+- Rider/driver `.env` / `--dart-define` must point at production (`https://fvrprxguoternoxnyhoj.supabase.co`) during QA and device testing.
 - Staging-only webhook / `app_config` migrations must not be copied to production unchanged (see `supabase/README.md`).

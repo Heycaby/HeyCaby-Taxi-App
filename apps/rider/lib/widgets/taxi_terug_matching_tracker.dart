@@ -3,10 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../providers/active_search_provider.dart';
 import '../providers/booking_provider.dart';
@@ -16,6 +14,7 @@ import '../providers/ride_request_provider.dart';
 import '../services/heycaby_widget_sync.dart';
 import '../services/rider_notify_live_activity.dart';
 import '../services/rider_notify_search_notifications.dart';
+import '../services/rider_ride_lifecycle_engine.dart';
 import '../services/sound_service.dart';
 import '../services/stale_ride_cleanup.dart';
 
@@ -35,13 +34,12 @@ class TaxiTerugMatchingTracker extends ConsumerStatefulWidget {
 
 class _TaxiTerugMatchingTrackerState
     extends ConsumerState<TaxiTerugMatchingTracker> {
-  RealtimeChannel? _rideChannel;
   Timer? _countdownTimer;
   Timer? _expiryTimer;
-  Timer? _pollTimer;
   Timer? _widgetSyncTimer;
   bool _isCancelling = false;
   bool _isBoosting = false;
+  bool _noMatchHandled = false;
   Duration _remaining = _kTaxiTerugMatchWindow;
 
   @override
@@ -52,10 +50,8 @@ class _TaxiTerugMatchingTrackerState
 
   @override
   void dispose() {
-    _rideChannel?.unsubscribe();
     _countdownTimer?.cancel();
     _expiryTimer?.cancel();
-    _pollTimer?.cancel();
     _widgetSyncTimer?.cancel();
     super.dispose();
   }
@@ -79,50 +75,38 @@ class _TaxiTerugMatchingTrackerState
       return;
     }
 
-    _subscribeRide(rideId);
     _startCountdown(rideState.rideCreatedAt);
-    _startPolling(rideId);
     _startWidgetSync();
     _startLiveActivity(rideState.rideCreatedAt);
   }
 
-  void _subscribeRide(String rideId) {
-    _rideChannel?.unsubscribe();
-    _rideChannel = HeyCabySupabase.client
-        .channel('taxi-terug-tracker:$rideId')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.update,
-          schema: 'public',
-          table: 'ride_requests',
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'id',
-            value: rideId,
-          ),
-          callback: (payload) {
-            final newStatus = payload.newRecord['status'] as String?;
-            final newFare =
-                payload.newRecord['marketplace_offered_fare'] as num?;
-            if (newStatus == null) return;
-            ref.read(rideRequestProvider.notifier).updateStatus(newStatus);
-            if (newFare != null) {
-              ref
-                  .read(bookingProvider.notifier)
-                  .setMarketplaceBidEuro(newFare.toInt());
-            }
-            if (newStatus == 'assigned' ||
-                newStatus == 'accepted' ||
-                newStatus == 'driver_found' ||
-                newStatus == 'driver_en_route' ||
-                newStatus == 'driver_arrived' ||
-                newStatus == 'in_progress') {
-              _cleanupBackground();
-              unawaited(SoundService().playDriverFound());
-              if (mounted) context.go('/active');
-            }
-          },
-        )
-        .subscribe();
+  void _handleLifecycleRecord(RiderRideBackendRecord projection) {
+    if (!mounted) return;
+    final rideId = ref.read(rideRequestProvider).rideRequestId;
+    if (rideId == null || projection.rideRequestId != rideId) return;
+    final row = projection.record;
+    final newFare = row['marketplace_offered_fare'] as num?;
+    if (newFare != null) {
+      ref.read(bookingProvider.notifier).setMarketplaceBidEuro(newFare.toInt());
+    }
+    final newStatus =
+        (row['provider_status'] ?? row['status'])?.toString().toLowerCase();
+    if (newStatus == 'cancelled' || newStatus == 'expired') {
+      // The backend is already terminal. Clean up presentation without
+      // issuing a duplicate cancellation command.
+      unawaited(_onNoMatchFound(cancelBackend: false));
+      return;
+    }
+    if (newStatus == 'assigned' ||
+        newStatus == 'accepted' ||
+        newStatus == 'driver_found' ||
+        newStatus == 'driver_en_route' ||
+        newStatus == 'driver_arrived' ||
+        newStatus == 'in_progress') {
+      _cleanupBackground();
+      unawaited(SoundService().playDriverFound());
+      context.go('/active');
+    }
   }
 
   void _startCountdown(DateTime? createdAt) {
@@ -149,37 +133,6 @@ class _TaxiTerugMatchingTrackerState
     }
     _expiryTimer?.cancel();
     _expiryTimer = Timer(untilExpiry, _onNoMatchFound);
-  }
-
-  void _startPolling(String rideId) {
-    _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) async {
-      try {
-        final row = await HeyCabySupabase.client
-            .from('ride_requests')
-            .select('status')
-            .eq('id', rideId)
-            .maybeSingle();
-        if (row == null) {
-          if (mounted) _onNoMatchFound();
-          return;
-        }
-        final status = row['status'] as String?;
-        if (status != null) {
-          ref.read(rideRequestProvider.notifier).updateStatus(status);
-          if (status == 'cancelled' || status == 'expired') {
-            if (mounted) _onNoMatchFound();
-          } else if (status == 'assigned' ||
-              status == 'accepted' ||
-              status == 'driver_found' ||
-              status == 'driver_en_route' ||
-              status == 'driver_arrived' ||
-              status == 'in_progress') {
-            if (mounted) context.go('/active');
-          }
-        }
-      } catch (_) {}
-    });
   }
 
   void _startWidgetSync() {
@@ -237,9 +190,7 @@ class _TaxiTerugMatchingTrackerState
   void _cleanupBackground() {
     _expiryTimer?.cancel();
     _countdownTimer?.cancel();
-    _pollTimer?.cancel();
     _widgetSyncTimer?.cancel();
-    _rideChannel?.unsubscribe();
     unawaited(HeycabyWidgetSync.clearAll());
     unawaited(RiderNotifyLiveActivity.end());
     unawaited(RiderNotifySearchNotifications.dismiss());
@@ -325,13 +276,17 @@ class _TaxiTerugMatchingTrackerState
     ));
   }
 
-  Future<void> _onNoMatchFound() async {
-    if (!mounted) return;
+  Future<void> _onNoMatchFound({bool cancelBackend = true}) async {
+    if (!mounted || _noMatchHandled) return;
+    _noMatchHandled = true;
     _cleanupBackground();
 
-    final rideId = ref.read(rideRequestProvider).rideRequestId;
-    if (rideId != null) {
-      final rideState = ref.read(rideRequestProvider);
+    final rideState = ref.read(rideRequestProvider);
+    final rideId = rideState.rideRequestId;
+    final status = rideState.status?.toLowerCase();
+    if (cancelBackend &&
+        rideId != null &&
+        (status == 'pending' || status == 'bidding')) {
       try {
         await cancelExpiredRiderOpenRide(
           rideId: rideId,
@@ -409,6 +364,12 @@ class _TaxiTerugMatchingTrackerState
     final typo = ref.watch(typographyProvider);
     final l10n = AppLocalizations.of(context);
     final rideState = ref.watch(rideRequestProvider);
+    ref.listen<RiderRideBackendRecord?>(
+      riderRideBackendRecordProvider,
+      (previous, next) {
+        if (next != null) _handleLifecycleRecord(next);
+      },
+    );
 
     final rideId = rideState.rideRequestId;
     final mode = rideState.bookingMode;

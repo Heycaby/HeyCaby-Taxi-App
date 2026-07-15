@@ -10,6 +10,8 @@
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -38,6 +40,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>heycaby</string>
+				<string>heycaby-driver</string>
 			</array>
 		</dict>
 	</array>

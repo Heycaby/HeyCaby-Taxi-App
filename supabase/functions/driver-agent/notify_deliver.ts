@@ -6,11 +6,12 @@ import {
   serviceRoleKey,
   supabaseUrl,
 } from "./config.ts";
+import { notificationDeliveryGate } from "./invite_gate.ts";
 import type { AgentNotificationRow, WebhookPayload } from "./notify_types.ts";
 import {
   getDriverIdForRideRequest,
   recentPrerideNotification,
-  sendFcmNotification,
+  sendPushNotification,
 } from "./notify_push.ts";
 import { appendPingAudit } from "./ping_helpers.ts";
 import { json, safeCompare } from "./util.ts";
@@ -80,6 +81,39 @@ export async function deliverNotification(
     });
   }
 
+  const initialInviteGate = await notificationDeliveryGate(supabase, n);
+  if (!initialInviteGate.live) {
+    console.info(JSON.stringify({
+      level: "info",
+      message: "notification_delivery_suppressed",
+      reason: initialInviteGate.reason,
+      rideRequestId: n.data?.ride_request_id ?? null,
+      rideInviteId: n.data?.ride_invite_id ?? n.data?.invite_id ?? null,
+      driverId: n.user_id,
+    }));
+    return deliveryJson(n, {
+      ok: true,
+      skipped: true,
+      reason: initialInviteGate.reason,
+    });
+  }
+  if (n.category === "incoming_ride" && initialInviteGate.expiresAt) {
+    n = {
+      ...n,
+      data: { ...n.data, expires_at: initialInviteGate.expiresAt },
+    };
+  }
+  if (n.category === "incoming_ride" && n.data?.ride_request_id) {
+    const { data: ride } = await supabase.from("ride_requests")
+      .select("pickup_address")
+      .eq("id", n.data.ride_request_id as string)
+      .maybeSingle();
+    const pickup = typeof ride?.pickup_address === "string"
+      ? ride.pickup_address.trim()
+      : "";
+    if (pickup) n = { ...n, body: `Pickup: ${pickup}` };
+  }
+
   if (n.category === "preride_request" && n.data?.ride_request_id) {
     const dup = await recentPrerideNotification(
       supabase,
@@ -115,6 +149,13 @@ export async function deliverNotification(
     .single();
 
   if (insertError) {
+    if (insertError.code === "23505" && n.data?.source_event_id) {
+      return deliveryJson(n, {
+        ok: true,
+        skipped: true,
+        reason: "duplicate_source_event",
+      });
+    }
     console.error("Insert notification error:", insertError);
     return json({ error: insertError.message }, 500);
   }
@@ -124,42 +165,99 @@ export async function deliverNotification(
   let pushAcceptedCount = 0;
   let pushFailedCount = 0;
   let invalidTokenCount = 0;
+  let apnsAcceptedCount = 0;
+  let fcmAcceptedCount = 0;
+  const providerMessageIds: string[] = [];
   const pushErrorCodes = new Set<string>();
   let deliveredAuditWritten = false;
 
   if (n.channel !== "in_app" && n.channel !== "silent") {
     pushAttempted = true;
-    let devices = supabase.from("push_devices").select("id, fcm_token");
+    let devices = supabase.from("push_devices").select(
+      "id, fcm_token, apns_token, apns_environment, platform, app_role",
+    );
     devices = n.target === "driver"
       ? devices.eq("driver_id", n.user_id).eq("app_role", "driver")
       : devices.eq("rider_identity_id", n.user_id).eq("app_role", "rider");
     const { data: rows, error: devicesError } = await devices;
     if (devicesError) {
-      console.error("driver-agent: push device lookup failed", devicesError.code);
+      console.error(
+        "driver-agent: push device lookup failed",
+        devicesError.code,
+      );
       pushErrorCodes.add("device_lookup_failed");
     }
 
     for (const row of rows ?? []) {
+      const sendGate = await notificationDeliveryGate(supabase, n);
+      if (!sendGate.live) {
+        pushErrorCodes.add(sendGate.reason);
+        console.info(JSON.stringify({
+          level: "info",
+          message: "notification_push_suppressed",
+          reason: sendGate.reason,
+          rideRequestId: n.data?.ride_request_id ?? null,
+          rideInviteId: n.data?.ride_invite_id ?? n.data?.invite_id ?? null,
+          driverId: n.user_id,
+        }));
+        break;
+      }
       const token = row?.fcm_token as string | null;
-      if (!token || token.length < 10) continue;
+      const apnsToken = row?.apns_token as string | null;
+      if (
+        (!token || token.length < 10) &&
+        (!apnsToken || apnsToken.length < 10)
+      ) continue;
       pushDeviceCount += 1;
-      const result = await sendFcmNotification(token, {
-        title: n.title,
-        body: n.body,
-        data: {
-          ...n.data,
-          notification_id: inserted?.id,
-          category: n.category,
+      const result = await sendPushNotification(
+        {
+          fcm_token: token,
+          apns_token: apnsToken,
+          apns_environment: row?.apns_environment as string | null,
+          platform: row?.platform as string,
+          app_role: row?.app_role as string,
         },
-        priority: n.priority,
-      });
+        {
+          title: n.title,
+          body: n.body,
+          data: {
+            ...n.data,
+            ...(sendGate.expiresAt ? { expires_at: sendGate.expiresAt } : {}),
+            notification_id: inserted?.id,
+            category: n.category,
+          },
+          priority: n.priority,
+        },
+      );
+      if (
+        result.ok && result.provider === "apns" && result.apnsEnvironment &&
+        result.apnsEnvironment !== row?.apns_environment && row?.id
+      ) {
+        await supabase.from("push_devices").update({
+          apns_environment: result.apnsEnvironment,
+          updated_at: new Date().toISOString(),
+        }).eq("id", row.id);
+      }
+      if (result.invalidApnsToken && row?.id) {
+        invalidTokenCount += 1;
+        await supabase.from("push_devices").update({
+          apns_token: null,
+          apns_environment: null,
+          updated_at: new Date().toISOString(),
+        }).eq("id", row.id);
+      }
       if (result.ok) {
         pushAcceptedCount += 1;
+        if (result.provider === "apns") apnsAcceptedCount += 1;
+        if (result.provider === "fcm") fcmAcceptedCount += 1;
+        if (result.providerMessageId) {
+          providerMessageIds.push(result.providerMessageId);
+        }
         continue;
       }
       pushFailedCount += 1;
       if (result.errorCode) pushErrorCodes.add(result.errorCode);
-      if (result.permanentFailure && row?.id) {
+      if (result.permanentFailure && !result.invalidApnsToken && row?.id) {
         invalidTokenCount += 1;
         await supabase.from("push_devices").delete().eq("id", row.id);
       }
@@ -207,6 +305,9 @@ export async function deliverNotification(
       push_accepted_count: pushAcceptedCount,
       push_failed_count: pushFailedCount,
       invalid_token_count: invalidTokenCount,
+      apns_accepted_count: apnsAcceptedCount,
+      fcm_accepted_count: fcmAcceptedCount,
+      provider_message_ids: providerMessageIds,
       push_error_codes: [...pushErrorCodes],
       delivered_audit_written: deliveredAuditWritten,
     },
@@ -221,6 +322,9 @@ export async function deliverNotification(
     push_accepted_count: pushAcceptedCount,
     push_failed_count: pushFailedCount,
     invalid_token_count: invalidTokenCount,
+    apns_accepted_count: apnsAcceptedCount,
+    fcm_accepted_count: fcmAcceptedCount,
+    provider_message_ids: providerMessageIds,
     push_error_codes: [...pushErrorCodes],
     delivered_audit_written: deliveredAuditWritten,
   });

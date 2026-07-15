@@ -37,6 +37,16 @@ export interface FavoriteAddedPayload {
   priority?: string;
 }
 
+export interface TaxiTerugOfferIncreasedPayload {
+  event: "taxi_terug_offer_increased";
+  source_event_id: string;
+  ride_request_id: string;
+  previous_fare: number;
+  new_fare: number;
+  increase: number;
+  occurred_at?: string;
+}
+
 export type AgentNotificationRow = {
   target: "driver" | "rider";
   user_type: "driver" | "rider";

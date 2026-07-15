@@ -10,6 +10,7 @@ import 'rider_notification_router.dart'
     show behaviorForCategory, RiderNotificationBehavior;
 import 'rider_notify_live_activity.dart';
 import 'rider_ride_lifecycle_snapshot.dart';
+import 'rider_ride_snapshot_service.dart';
 import 'rider_ride_state_version.dart';
 
 /// **Single door** for backend ride truth → Live Activity (+ optional in-app sync).
@@ -26,11 +27,9 @@ abstract final class RiderRideStateRefresh {
     RideStatePresentation? presentation,
   }) async {
     try {
-      final row = await HeyCabySupabase.client
-          .from('ride_requests')
-          .select(kRiderRideLifecycleSelect)
-          .eq('id', rideRequestId)
-          .maybeSingle();
+      final row = await RiderRideSnapshotService.fetch(
+        rideRequestId: rideRequestId,
+      );
       if (row == null) return;
       await refreshRideStateFromRow(
         row: Map<String, dynamic>.from(row),
@@ -57,16 +56,20 @@ abstract final class RiderRideStateRefresh {
       rideRequestId: rideRequestId,
     );
     final version = snapshot.rideVersion;
+    final effectiveStatus = snapshot.resolveEffectiveStatus();
+    final terminal = RiderRideStatuses.isTerminal(effectiveStatus);
 
     if (!RiderRideStateVersionGate.shouldApply(
       rideRequestId: rideRequestId,
       incomingVersion: version,
       source: source,
     )) {
+      if (terminal) {
+        await RiderNotifyLiveActivity.end();
+      }
       return;
     }
 
-    final effectiveStatus = snapshot.resolveEffectiveStatus();
     if (kDebugMode) {
       debugPrint(
         '[RideLifecycleEngine] refreshRideState source=$source ride=$rideRequestId '
@@ -167,7 +170,7 @@ abstract final class RiderRideStateRefresh {
     }
 
     if (RiderRideStatuses.isTerminal(status)) {
-      await RiderNotifyLiveActivity.syncActiveRide(
+      await RiderNotifyLiveActivity.endTerminalRide(
         rideRequestId: snapshot.rideRequestId,
         status: status,
         driverName: presentation.driverName,
@@ -175,11 +178,11 @@ abstract final class RiderRideStateRefresh {
         plate: presentation.vehiclePlate,
         etaMinutes: presentation.etaMinutes,
         destination: presentation.destinationSummary,
-        waitingInfo: waitingInfo,
-        rideVersion: snapshot.rideVersion,
         paymentComplete: status == 'payment_confirmed' ||
             (paymentStatus ?? '').toLowerCase() == 'paid',
-        paymentPending: status == 'completed',
+        paymentPending: status == 'completed' &&
+            (paymentStatus ?? '').toLowerCase() != 'paid',
+        rideVersion: snapshot.rideVersion,
       );
       return;
     }

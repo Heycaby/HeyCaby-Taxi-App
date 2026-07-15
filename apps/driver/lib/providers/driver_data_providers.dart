@@ -7,6 +7,7 @@ import '../services/driver_billing_service.dart';
 import '../services/driver_data_service.dart';
 import '../services/driver_shift_session_service.dart';
 import '../services/ride_swap_service.dart';
+import '../utils/driver_ride_ledger_display.dart';
 import 'driver_state_provider.dart';
 import 'driver_location_provider.dart';
 
@@ -136,14 +137,6 @@ final driverHubBadgeCountProvider = FutureProvider<int>((ref) async {
       .getHubBadgeCount(id, driver.userId);
 });
 
-/// Earnings targets (daily/weekly) for Driver Hub.
-final driverEarningsTargetsProvider =
-    FutureProvider<Map<String, double>>((ref) async {
-  final id = await ref.watch(driverIdProvider.future);
-  if (id == null) return {};
-  return ref.read(driverDataServiceProvider).getEarningsTargets(id);
-});
-
 /// Recent tickets for Driver Hub help section.
 final driverRecentTicketsProvider =
     FutureProvider<List<DriverTicket>>((ref) async {
@@ -151,7 +144,16 @@ final driverRecentTicketsProvider =
   return ref.read(driverDataServiceProvider).getRecentTickets(userId, limit: 3);
 });
 
-/// Scheduled rides count/cards. For home sheet and scheduled screen.
+/// Live pending scheduled ride count for the home overview card.
+/// Source: Supabase view `scheduled_rides_available` (pending future scheduled rides).
+final scheduledRidesCountProvider = FutureProvider<int>((ref) async {
+  final zoneId = await ref.watch(currentZoneIdProvider.future);
+  return ref
+      .read(driverDataServiceProvider)
+      .getScheduledRidesAvailableCount(zoneId: zoneId);
+});
+
+/// Scheduled rides list. For scheduled screen and shift command.
 /// Filters by driver's current zone so drivers only see rides in their area.
 final scheduledRidesProvider = FutureProvider<List<ScheduledRide>>((ref) async {
   final id = await ref.watch(driverIdProvider.future);
@@ -240,11 +242,10 @@ final driverCommentsFilteredProvider =
       .toList();
 });
 
-/// Today's ride list for Earnings sub-tab.
-final todayRidesProvider = FutureProvider<List<TodayRide>>((ref) async {
-  final id = await ref.watch(driverIdProvider.future);
-  if (id == null) return [];
-  return ref.read(driverDataServiceProvider).getTodayRides(id);
+/// Today's ride list — same [ride_requests] rows as [todayMyRidesProvider].
+@Deprecated('Use todayMyRidesProvider')
+final todayRidesProvider = FutureProvider<List<MyRideSummary>>((ref) async {
+  return ref.watch(todayMyRidesProvider.future);
 });
 
 /// All rides for the current driver (history list for My Rides tab).
@@ -254,26 +255,32 @@ final myRidesProvider = FutureProvider<List<MyRideSummary>>((ref) async {
   return ref.read(driverDataServiceProvider).getMyRides(id);
 });
 
-/// Today's rides for the current driver — all statuses (completed, upcoming, cancelled).
+/// Today's rides — single source: [ride_requests] for Today card + Today screen.
 final todayMyRidesProvider = FutureProvider<List<MyRideSummary>>((ref) async {
   final id = await ref.watch(driverIdProvider.future);
   if (id == null) return [];
   return ref.read(driverDataServiceProvider).getTodayMyRides(id);
 });
 
+/// Completed rides in the last 24 hours (derived from [todayMyRidesProvider]).
+final completedTodayRidesCountProvider = Provider<int>((ref) {
+  final rides = ref.watch(todayMyRidesProvider).valueOrNull ?? const [];
+  return rides
+      .where((r) => driverCompletedRideStatuses.contains(r.status))
+      .length;
+});
+
+/// All rides in the last 24 hours — count for the home Today card.
+final todayRidesCountProvider = Provider<int>((ref) {
+  return ref.watch(todayMyRidesProvider).valueOrNull?.length ?? 0;
+});
+
 /// Upcoming (active/in-progress) rides for the current driver — for home card count.
 final upcomingRidesProvider = FutureProvider<List<MyRideSummary>>((ref) async {
   final rides = await ref.watch(todayMyRidesProvider.future);
-  const upcomingStatuses = {
-    'accepted',
-    'assigned',
-    'driver_en_route',
-    'driver_arrived',
-    'in_progress',
-    'pending',
-    'dispatched',
-  };
-  return rides.where((r) => upcomingStatuses.contains(r.status)).toList();
+  return rides
+      .where((r) => driverUpcomingRideStatuses.contains(r.status))
+      .toList();
 });
 
 /// Detail payload for one ride entry in My Rides.
@@ -476,4 +483,11 @@ final driverTaxiThruRiderPostsProvider =
         driverLat: pos?.latitude,
         driverLng: pos?.longitude,
       );
+});
+
+/// Live count for home Posts shortcut badge.
+final driverTaxiThruPostsCountProvider = FutureProvider<int>((ref) async {
+  final snap = await ref.watch(driverTaxiThruRiderPostsProvider.future);
+  if (!snap.enabled) return 0;
+  return snap.posts.length;
 });

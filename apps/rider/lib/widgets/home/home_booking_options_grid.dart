@@ -69,12 +69,12 @@ class HomeBookingOptionsGrid extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(16, 22, 16, 0),
+      padding: const EdgeInsetsDirectional.fromSTEB(16, 18, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsetsDirectional.only(start: 2, bottom: 14),
+            padding: const EdgeInsetsDirectional.only(start: 2, bottom: 12),
             child: Text(
               l10n.homeSmartOptionsTitle,
               style: typo.titleLarge.copyWith(
@@ -93,40 +93,19 @@ class HomeBookingOptionsGrid extends ConsumerWidget {
             featured: true,
             onTap: () => unawaited(_openTaxiTerug(context, ref)),
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _BookingOptionTile(
-                  colors: colors,
-                  typo: typo,
-                  icon: Icons.star_rounded,
-                  title: l10n.myDrivers,
-                  subtitle: l10n.myDriversHomeSubtitle,
-                  onTap: () => unawaited(_openMyDrivers(context, ref)),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _BookingOptionTile(
-                  colors: colors,
-                  typo: typo,
-                  icon: Icons.flight_takeoff_rounded,
-                  title: l10n.homeAirportBookingTitle,
-                  subtitle: l10n.homeAirportBookingSubtitle,
-                  onTap: () => unawaited(_openAirport(context, ref)),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          _BookingOptionTile(
+          const SizedBox(height: 12),
+          _RiderQuickActionsRow(
             colors: colors,
             typo: typo,
-            icon: Icons.schedule_rounded,
-            title: l10n.homeScheduleLaterTitle,
-            subtitle: l10n.homeScheduleLaterSubtitle,
-            onTap: () => unawaited(_openScheduled(context, ref)),
+            myDriversLabel: l10n.myDrivers,
+            myDriversSubtitle: l10n.myDriversHomeSubtitle,
+            airportLabel: l10n.homeAirportBookingTitle,
+            airportSubtitle: l10n.homeAirportBookingBadge,
+            scheduleLabel: l10n.homeScheduleLaterTitle,
+            scheduleSubtitle: l10n.homeScheduleLaterSubtitle,
+            onMyDriversTap: () => unawaited(_openMyDrivers(context, ref)),
+            onAirportTap: () => unawaited(_openAirport(context, ref)),
+            onScheduleTap: () => unawaited(_openScheduled(context, ref)),
           ),
         ],
       ),
@@ -271,6 +250,161 @@ class _BookingOptionTile extends StatelessWidget {
                     ),
                   ],
                 ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Driver-home quick-actions row — one card, three circular icon tiles.
+class _RiderQuickActionsRow extends StatelessWidget {
+  const _RiderQuickActionsRow({
+    required this.colors,
+    required this.typo,
+    required this.myDriversLabel,
+    required this.myDriversSubtitle,
+    required this.airportLabel,
+    required this.airportSubtitle,
+    required this.scheduleLabel,
+    required this.scheduleSubtitle,
+    required this.onMyDriversTap,
+    required this.onAirportTap,
+    required this.onScheduleTap,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final String myDriversLabel;
+  final String myDriversSubtitle;
+  final String airportLabel;
+  final String airportSubtitle;
+  final String scheduleLabel;
+  final String scheduleSubtitle;
+  final VoidCallback onMyDriversTap;
+  final VoidCallback onAirportTap;
+  final VoidCallback onScheduleTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsetsDirectional.fromSTEB(16, 18, 16, 16),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.border.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _RiderHomeQuickActionTile(
+              colors: colors,
+              typo: typo,
+              icon: Icons.star_rounded,
+              label: myDriversLabel,
+              subtitle: myDriversSubtitle,
+              onTap: onMyDriversTap,
+            ),
+          ),
+          Expanded(
+            child: _RiderHomeQuickActionTile(
+              colors: colors,
+              typo: typo,
+              icon: Icons.flight_takeoff_rounded,
+              label: airportLabel,
+              subtitle: airportSubtitle,
+              onTap: onAirportTap,
+            ),
+          ),
+          Expanded(
+            child: _RiderHomeQuickActionTile(
+              colors: colors,
+              typo: typo,
+              icon: Icons.schedule_rounded,
+              label: scheduleLabel,
+              subtitle: scheduleSubtitle,
+              onTap: onScheduleTap,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RiderHomeQuickActionTile extends StatelessWidget {
+  const _RiderHomeQuickActionTile({
+    required this.colors,
+    required this.typo,
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsetsDirectional.symmetric(
+            horizontal: 4,
+            vertical: 8,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colors.bgAlt,
+                ),
+                child: Icon(
+                  icon,
+                  color: colors.text,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: typo.labelSmall.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w600,
+                  height: 1.15,
+                  fontSize: 11,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: typo.labelSmall.copyWith(
+                  color: colors.textSoft,
+                  fontWeight: FontWeight.w500,
+                  height: 1.1,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

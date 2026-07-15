@@ -141,6 +141,7 @@ class _ScheduledRidesScreenState extends ConsumerState<ScheduledRidesScreen> {
           typo: typo,
           onInvalidate: () {
             ref.invalidate(scheduledRidesByTabProvider('confirmed'));
+            ref.invalidate(scheduledRidesCountProvider);
             ref.invalidate(scheduledRidesProvider);
           },
         ),

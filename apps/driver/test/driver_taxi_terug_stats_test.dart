@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:heycaby_driver/models/driver_taxi_terug_stats.dart';
+import 'package:heycaby_driver/services/driver_data_service.dart';
 
 void main() {
   group('DriverTaxiTerugStats', () {
@@ -30,6 +31,32 @@ void main() {
         DriverTaxiTerugStats.parseRpc({'ok': false, 'reason': 'not_a_driver'}),
         isNull,
       );
+    });
+  });
+
+  group('MyRideSummary Taxi Terug', () {
+    test('isTaxiTerugPaidCompleted requires terug mode, completed, payment', () {
+      final paid = MyRideSummary.fromJson({
+        'id': 'r1',
+        'status': 'completed',
+        'booking_mode': 'terug',
+        'driver_payment_confirmed_at': '2026-07-01T10:00:00Z',
+        'dispatch_state': {
+          'empty_km_saved': 12.5,
+          'taxi_terug_earnings_euros': 42.5,
+        },
+      });
+      expect(paid.isTaxiTerugRide, isTrue);
+      expect(paid.isTaxiTerugPaidCompleted, isTrue);
+      expect(paid.emptyKmSaved, 12.5);
+
+      final unpaid = MyRideSummary.fromJson({
+        'id': 'r2',
+        'status': 'completed',
+        'booking_mode': 'terug',
+        'payment_status': 'pending',
+      });
+      expect(unpaid.isTaxiTerugPaidCompleted, isFalse);
     });
   });
 }

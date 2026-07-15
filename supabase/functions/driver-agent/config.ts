@@ -10,7 +10,7 @@ let cachedWebhookSecret: string | null = null;
 
 /**
  * Edge Function secrets remain the preferred source. The RPC fallback reads the
- * existing Vault secret and is executable by service_role only, so staging DB
+ * existing Vault secret and is executable by service_role only, so database
  * webhooks continue to work if an Edge Function redeploy loses its env secret.
  */
 export async function resolveWebhookSecret(): Promise<string> {

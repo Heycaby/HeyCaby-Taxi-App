@@ -19,6 +19,9 @@ import '../services/driver_incoming_ride_prefetch.dart';
 import '../services/location_service.dart';
 import '../services/sound_service.dart';
 import '../utils/accept_ride_error_message.dart';
+import '../utils/driver_missed_opportunity_recorder.dart';
+import '../utils/driver_today_rides_refresh.dart';
+import '../utils/driver_taxi_thru_refresh.dart';
 import '../utils/driver_ride_coord_utils.dart';
 import '../utils/driver_rider_cancelled_flow.dart';
 import '../theme/driver_colors.dart';
@@ -76,6 +79,11 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
     _loadRide();
     if (widget.urgent) {
       HapticService.heavyTap();
+      unawaited(
+        SoundService().playRideRequest(
+          duration: const Duration(seconds: _countdownMax),
+        ),
+      );
     }
   }
 
@@ -125,9 +133,6 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
 
   void _startCountdownIfNeeded() {
     if (!widget.urgent || _countdownTimer != null) return;
-    SoundService().playRideRequest(
-      duration: Duration(seconds: _countdownTotal),
-    );
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       _syncCountdownToServerClock();
@@ -167,7 +172,8 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
   Future<void> _loadRide() async {
     try {
       final driverId = await ref.read(driverIdProvider.future);
-      final needsInviteFetch = widget.urgent && widget.prefetch?.expiresAt == null;
+      final needsInviteFetch =
+          widget.urgent && widget.prefetch?.expiresAt == null;
 
       final results = await Future.wait<dynamic>([
         HeyCabySupabase.client.from('ride_requests').select('''
@@ -218,6 +224,20 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
 
       enrichDriverRideRequestCoords(res);
       _applyPrefetchToRide(res);
+
+      // Earnings are quoted by the backend. Flutter only renders the frozen
+      // service-fee contract and never calculates an authoritative split.
+      try {
+        final quote = await HeyCabySupabase.client.rpc(
+          'fn_quote_driver_ride_earnings',
+          params: {'p_ride_id': widget.rideId, 'p_driver_id': driverId},
+        );
+        if (quote is Map && quote['ok'] == true) {
+          res.addAll(Map<String, dynamic>.from(quote));
+        }
+      } catch (_) {
+        // Dark-launch/legacy compatibility: accept RPC remains authoritative.
+      }
 
       var seconds = _countdown;
 
@@ -506,24 +526,14 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
           .read(driverApiProvider)
           .declineRide(rideRequestId: widget.rideId);
     } catch (_) {}
+    await recordDriverMissedOpportunity(
+      ref: ref,
+      rideRequestId: widget.rideId,
+      rideRow: _rideData,
+    );
     if (mounted) setState(() => _isDeclining = false);
     if (!mounted) return;
     await _showMissedRequestDialog();
-  }
-
-  Future<void> _persistAcceptedFareSnapshot() async {
-    final r = _rideData;
-    if (r == null) return;
-    final euro = HeyCabyRideFare.resolveEuroFromRow(r);
-    if (euro == null) return;
-    try {
-      await HeyCabySupabase.client
-          .from('ride_requests')
-          .update(HeyCabyRideFare.fareSnapshotForInsert(euro))
-          .eq('id', widget.rideId);
-    } catch (_) {
-      // Display still uses enriched local fare; DB sync is best-effort.
-    }
   }
 
   Future<void> _acceptRide() async {
@@ -565,7 +575,6 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
       await ref
           .read(driverApiProvider)
           .acceptRide(rideRequestId: widget.rideId);
-      await _persistAcceptedFareSnapshot();
       SoundService().playRideAccepted();
       HapticService.success();
       final r =
@@ -585,6 +594,10 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
             bookingMode: r?['booking_mode'] as String?,
             riderName: r?['pickup_contact_name'] as String?,
           );
+      invalidateTodayRideProviders(ref);
+      if ((r?['booking_mode'] as String?) == 'terug') {
+        invalidateTaxiThruProviders(ref);
+      }
       if (!mounted) return;
       context.go('/driver/ride/active/${widget.rideId}');
     } on DriverAcceptRideException catch (acceptError) {
@@ -602,7 +615,7 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
       }
       await _showAcceptFailure(
         acceptRideErrorMessageFor(acceptError),
-        leaveAfter: _shouldLeaveAfterAcceptError(acceptError.code),
+        leaveAfter: shouldDismissAfterAcceptError(acceptError),
       );
     } catch (error) {
       if (!mounted) return;
@@ -670,17 +683,6 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
     );
   }
 
-  bool _shouldLeaveAfterAcceptError(String code) {
-    final normalized = code.split(':').first.trim();
-    return normalized == 'race_lost' ||
-        normalized == 'ride_not_found' ||
-        normalized == 'ride_cancelled' ||
-        normalized == 'no_valid_invite' ||
-        normalized == 'invite_missing' ||
-        normalized == 'invite_expired' ||
-        normalized == 'invite_not_pending';
-  }
-
   Future<void> _declineRide() async {
     if (_isDeclining || _isAccepting) return;
     setState(() => _isDeclining = true);
@@ -691,6 +693,11 @@ class _NewRideRequestScreenState extends ConsumerState<NewRideRequestScreen> {
       await ref
           .read(driverApiProvider)
           .declineRide(rideRequestId: widget.rideId);
+      await recordDriverMissedOpportunity(
+        ref: ref,
+        rideRequestId: widget.rideId,
+        rideRow: _rideData,
+      );
     } catch (_) {}
     if (mounted) setState(() => _isDeclining = false);
     if (!mounted) return;

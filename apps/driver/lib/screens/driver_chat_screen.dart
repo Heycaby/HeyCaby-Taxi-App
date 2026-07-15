@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -96,6 +98,8 @@ class DriverChatNotifier extends AutoDisposeAsyncNotifier<ChatState> {
     state = const AsyncData(ChatState(isLoading: true));
 
     try {
+      await _subscription?.unsubscribe();
+      _subscription = null;
       _blockedSenderKeys.clear();
       final uid = HeyCabySupabase.client.auth.currentUser?.id;
       if (uid != null && uid.isNotEmpty) {
@@ -113,7 +117,8 @@ class DriverChatNotifier extends AutoDisposeAsyncNotifier<ChatState> {
           .from('messages')
           .select()
           .eq('ride_request_id', rideId)
-          .order('created_at', ascending: true);
+          .order('created_at', ascending: true)
+          .order('id', ascending: true);
 
       final raw = (response as List)
           .map((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
@@ -149,17 +154,56 @@ class DriverChatNotifier extends AutoDisposeAsyncNotifier<ChatState> {
                 _senderKey(newMessage.senderType, newMessage.senderId))) {
               return;
             }
-            final currentMessages = state.value?.messages ?? [];
-            state = AsyncData(
-              ChatState(messages: [...currentMessages, newMessage]),
-            );
+            _appendMessage(newMessage);
             // Play notification sound only for messages from rider
             if (newMessage.senderType == 'rider') {
               SoundService().playNotification();
             }
           },
         )
-        .subscribe();
+        .subscribe((status, [error]) {
+      if (status == RealtimeSubscribeStatus.subscribed) {
+        unawaited(_recoverCanonicalMessages(rideId));
+      }
+    });
+  }
+
+  Future<void> _recoverCanonicalMessages(String rideId) async {
+    try {
+      final response = await HeyCabySupabase.client
+          .from('messages')
+          .select()
+          .eq('ride_request_id', rideId)
+          .order('created_at', ascending: true)
+          .order('id', ascending: true);
+      final recovered = (response as List)
+          .map((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
+          .where((message) => !_blockedSenderKeys
+              .contains(_senderKey(message.senderType, message.senderId)));
+      final current = state.value?.messages ?? const <ChatMessage>[];
+      final byId = <String, ChatMessage>{
+        for (final message in current) message.id: message,
+        for (final message in recovered) message.id: message,
+      };
+      final merged = byId.values.toList()
+        ..sort((a, b) {
+          final byTime = a.createdAt.compareTo(b.createdAt);
+          return byTime != 0 ? byTime : a.id.compareTo(b.id);
+        });
+      state = AsyncData(ChatState(messages: merged));
+    } catch (_) {
+      // The open channel remains usable; the next reconnect retries recovery.
+    }
+  }
+
+  void _appendMessage(ChatMessage message) {
+    final currentMessages = state.value?.messages ?? [];
+    if (currentMessages.any((m) => m.id == message.id)) return;
+    final messages = [...currentMessages, message]..sort((a, b) {
+        final byTime = a.createdAt.compareTo(b.createdAt);
+        return byTime != 0 ? byTime : a.id.compareTo(b.id);
+      });
+    state = AsyncData(ChatState(messages: messages));
   }
 
   Future<bool> blockRider({
@@ -207,19 +251,59 @@ class DriverChatNotifier extends AutoDisposeAsyncNotifier<ChatState> {
     );
   }
 
-  Future<void> sendMessage(String rideId, String message,
-      {required String senderId}) async {
+  Future<String?> sendMessage(
+    String rideId,
+    String message, {
+    required String senderId,
+    String? idempotencyKey,
+  }) async {
+    final retryKey =
+        idempotencyKey ?? HeyCabyRideChatMessages.newIdempotencyKey();
+    final pendingId = 'pending-$retryKey';
+    _appendMessage(
+      ChatMessage(
+        id: pendingId,
+        rideId: rideId,
+        senderId: senderId,
+        senderType: 'driver',
+        message: message,
+        createdAt: DateTime.now(),
+        isRead: false,
+      ),
+    );
+
     try {
-      await HeyCabySupabase.client.from('messages').insert({
-        'ride_request_id': rideId,
-        'sender_id': senderId,
-        'sender_type': 'driver',
-        'content': message,
-      });
-    } catch (e) {
-      state = AsyncData(
-        state.value!.copyWith(error: 'Failed to send message'),
+      final row = await HeyCabyRideChatMessages.send(
+        rideId: rideId,
+        idempotencyKey: retryKey,
+        content: message,
       );
+      final canonical = ChatMessage.fromJson(row);
+      final current = state.value?.messages ?? [];
+      final messages = current.where((m) => m.id != pendingId).toList();
+      if (!messages.any((m) => m.id == canonical.id)) {
+        messages.add(canonical);
+      }
+      messages.sort((a, b) {
+        final byTime = a.createdAt.compareTo(b.createdAt);
+        return byTime != 0 ? byTime : a.id.compareTo(b.id);
+      });
+      state = AsyncData(
+        ChatState(
+          messages: messages,
+          error: null,
+        ),
+      );
+      return null;
+    } catch (_) {
+      final afterError = state.value?.messages ?? [];
+      state = AsyncData(
+        ChatState(
+          messages: afterError.where((m) => m.id != pendingId).toList(),
+          error: 'Failed to send message',
+        ),
+      );
+      return retryKey;
     }
   }
 }
@@ -241,6 +325,8 @@ class DriverChatScreen extends ConsumerStatefulWidget {
 class _DriverChatScreenState extends ConsumerState<DriverChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  String? _retryMessage;
+  String? _retryIdempotencyKey;
 
   bool _chatAllowedForCurrentState(DriverData driver) {
     final activeRideMatches = driver.activeRideId == widget.rideId;
@@ -290,10 +376,27 @@ class _DriverChatScreenState extends ConsumerState<DriverChatScreen> {
     final userId = HeyCabySupabase.client.auth.currentUser?.id;
     if (userId == null) return;
 
+    final retryKey = _retryMessage == text ? _retryIdempotencyKey : null;
     _messageController.clear();
-    await ref
-        .read(driverChatProvider.notifier)
-        .sendMessage(widget.rideId, text, senderId: userId);
+    final failedKey = await ref.read(driverChatProvider.notifier).sendMessage(
+          widget.rideId,
+          text,
+          senderId: userId,
+          idempotencyKey: retryKey,
+        );
+    if (failedKey == null) {
+      _retryMessage = null;
+      _retryIdempotencyKey = null;
+    } else {
+      _retryMessage = text;
+      _retryIdempotencyKey = failedKey;
+      if (_messageController.text.trim().isEmpty) {
+        _messageController.text = text;
+        _messageController.selection = TextSelection.collapsed(
+          offset: _messageController.text.length,
+        );
+      }
+    }
 
     Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
   }

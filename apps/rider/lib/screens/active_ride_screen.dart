@@ -10,7 +10,6 @@ import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_models/heycaby_models.dart';
 import 'package:heycaby_utils/heycaby_utils.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/rating_route_args.dart';
@@ -20,20 +19,26 @@ import '../models/taxi_terug_queue_status.dart';
 import '../providers/booking_provider.dart';
 import '../providers/driver_tracking_provider.dart';
 import '../providers/ride_request_provider.dart';
+import '../providers/rider_ride_unread_messages_provider.dart';
 import '../providers/taxi_terug_queue_provider.dart';
 import '../services/heycaby_widget_sync.dart';
+import '../services/rider_eta_service.dart';
 import '../services/nearby_supply_service.dart';
 import '../services/rider_driver_profile_service.dart';
 import '../services/rider_notification_lifecycle_service.dart';
+import '../services/rider_notify_live_activity.dart';
 import '../services/rider_plate_verification_service.dart';
 import '../services/rider_plate_verification_storage.dart';
-import '../services/rider_ride_ping_service.dart';
 import '../services/rider_ride_lifecycle_engine.dart';
+import '../services/rider_ride_snapshot_service.dart';
+import '../services/rider_runtime_config_service.dart';
 import '../services/stale_ride_cleanup.dart';
 import '../widgets/active_ride/active_ride_map_stack.dart';
 import '../widgets/active_ride/active_ride_status_dock.dart';
 import '../widgets/address_search_modal.dart';
 import '../widgets/rider_driver_info_card.dart';
+import '../widgets/rider_prepay_card.dart';
+import '../widgets/rider_trip_pin_card.dart';
 import '../widgets/taxi_terug_queue_banner.dart';
 import '../widgets/ride_pay_driver_sheet.dart';
 import '../widgets/rate_driver_sheet.dart';
@@ -48,67 +53,105 @@ class ActiveRideScreen extends ConsumerStatefulWidget {
 
 class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     with WidgetsBindingObserver {
-  RealtimeChannel? _rideStatusChannel;
+  static const _kSheetPeek = 0.22;
+  static const _kSheetCollapsed = 0.40;
+  static const _kSheetExpanded = 0.85;
+  static const _kMapDockMaxExtent = 0.34;
+  static const _kEmbeddedTimelineMinExtent = 0.48;
   RiderDriverSheetInfo? _driverInfo;
   String? _assignedDriverId;
   bool _plateVerified = false;
   RideWaitingInfo? _waitingInfo;
-  Timer? _statusRefreshTimer;
   Timer? _waitingUiTimer;
   int _lastStaleStatusMinuteTracked = -1;
   String? _lastRiderPing;
   int? _liveFareCents;
   final List<AddressResult> _routeStops = [];
+  ActiveRideRouteState? _activeRouteState;
   bool _rideCompletedCheckoutHandled = false;
-  double _sheetExtent = 0.38;
+  double _sheetExtent = 0.40;
   bool _driverOnMyWay = false;
   bool _driverNearPickupNotified = false;
   double? _enRouteBaselineKm;
   double? _tripBaselineKm;
-  Timer? _pingPollTimer;
-  static const _pingService = RiderRidePingService();
+  String? _lastBackendRecordRevision;
+  String? _communicationRideId;
+  Future<RideCommunicationPermissions>? _communicationPermissions;
+
+  // Cached ETA from Mapbox routing (real traffic-aware travel time).
+  int? _cachedEtaMinutes;
+  String? _etaCacheKey;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _subscribeToRideStatus();
-      final rideId = ref.read(rideRequestProvider).rideRequestId;
-      if (rideId != null) {
-        ref.read(driverTrackingProvider.notifier).startTracking(rideId);
-        _loadDriverInfo(rideId);
-        _loadWaitingInfo(rideId);
-        unawaited(_loadPlateVerificationState(rideId));
-        unawaited(RiderPlateVerificationService.syncPendingQueue());
-        ref.invalidate(taxiTerugQueueStatusProvider(rideId));
-        unawaited(_refreshDriverOnMyWay(rideId));
-        _startPingPollTimer(rideId);
-      }
-      _startStatusRefreshTimer();
-      _startWaitingUiTimer();
-      _syncRidePhaseWidgets();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initOrRestore());
   }
 
-  void _startPingPollTimer(String rideId) {
-    _pingPollTimer?.cancel();
-    _pingPollTimer = Timer.periodic(const Duration(seconds: 12), (_) {
-      unawaited(_refreshDriverOnMyWay(rideId));
-    });
-  }
-
-  Future<void> _refreshDriverOnMyWay(String rideId) async {
-    final ride = ref.read(rideRequestProvider);
-    final identity = await ref.read(riderIdentityProvider.future);
-    final onWay = await _pingService.driverOnMyWay(
-      rideId,
-      riderToken: ride.riderToken ?? identity.riderToken,
-    );
+  Future<void> _initOrRestore() async {
     if (!mounted) return;
-    if (onWay != _driverOnMyWay) {
-      setState(() => _driverOnMyWay = onWay);
+    var rideId = ref.read(rideRequestProvider).rideRequestId;
+
+    // If no ride in memory, try restoring from server (cold start, deep link, Rides tab).
+    if (rideId == null || rideId.isEmpty) {
+      final restored = await ref
+          .read(rideRequestProvider.notifier)
+          .tryRestoreActiveRideRequest();
+      if (!mounted) return;
+      if (!restored) {
+        context.go('/home');
+        return;
+      }
+      final ride = ref.read(rideRequestProvider);
+      // If the restored ride is pending/bidding, redirect to matching screen.
+      if (ride.status == 'pending' || ride.status == 'bidding') {
+        context.go(rideMatchingVariantForBookingModeString(ride.bookingMode)
+            .routePath);
+        return;
+      }
+      if (!_isActiveRideStatus(ride.status)) {
+        context.go('/home');
+        return;
+      }
+      rideId = ride.rideRequestId;
     }
+
+    if (rideId == null) {
+      if (!mounted) return;
+      context.go('/home');
+      return;
+    }
+
+    ref.read(driverTrackingProvider.notifier).startTracking(rideId);
+    _loadDriverInfo(rideId);
+    unawaited(_loadPlateVerificationState(rideId));
+    unawaited(RiderPlateVerificationService.syncPendingQueue());
+    ref.invalidate(taxiTerugQueueStatusProvider(rideId));
+    final projected = ref.read(riderRideBackendRecordProvider);
+    if (projected?.rideRequestId == rideId) {
+      unawaited(_applyBackendRideRecord(projected!));
+    }
+    unawaited(
+      ref
+          .read(riderRideLifecycleEngineProvider)
+          .refreshRideState(source: 'active_ride_init'),
+    );
+    _startWaitingUiTimer();
+    _syncRidePhaseWidgets();
+  }
+
+  bool _isActiveRideStatus(String? status) {
+    const activeStatuses = {
+      'assigned',
+      'accepted',
+      'driver_found',
+      'driver_en_route',
+      'driver_arrived',
+      'arrived',
+      'in_progress',
+    };
+    return status != null && activeStatuses.contains(status);
   }
 
   void _updateJourneyBaselines({
@@ -164,7 +207,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
   void _startWaitingUiTimer() {
     _waitingUiTimer?.cancel();
     _waitingUiTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       final status = ref.read(rideRequestProvider).status ?? '';
       final waiting = _waitingInfo;
       if (waiting == null) return;
@@ -177,6 +220,39 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
         setState(() => _liveFareCents = total > 0 ? total : _liveFareCents);
       }
     });
+  }
+
+  Future<void> _startMaskedDriverCall(String rideId) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.maskedCallTitle),
+        content: Text(l10n.maskedCallBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.maskedCallNow),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final result =
+        await const MaskedRideCallingService().startCall(rideId: rideId);
+    if (!mounted) return;
+    setState(() {
+      _communicationPermissions =
+          const MaskedRideCallingService().permissions(rideId: rideId);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content:
+          Text(result.ok ? l10n.maskedCallQueued : l10n.maskedCallUnavailable),
+    ));
   }
 
   Future<void> _loadDriverInfo(String rideId) async {
@@ -261,21 +337,55 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     );
   }
 
-  Future<void> _loadWaitingInfo(String rideId) async {
-    try {
-      final row = await HeyCabySupabase.client
-          .from('ride_requests')
-          .select(
-            'driver_arrived_at, waiting_grace_seconds, waiting_rate_per_minute, chargeable_wait_seconds, waiting_fee_cents, waiting_fee_waived, quoted_fare, offered_fare, estimated_fare, final_fare, marketplace_offered_fare',
-          )
-          .eq('id', rideId)
-          .maybeSingle();
-      if (!mounted || row == null) return;
-      _applyWaitingRecord(Map<String, dynamic>.from(row));
-      _applyLiveFare(Map<String, dynamic>.from(row));
-    } catch (_) {
-      // Older environments may not have the waiting-fee contract yet.
+  AddressResult _addressFromRouteStop(ActiveRideRouteStop stop) {
+    final short = stop.address.split(',').first.trim();
+    return AddressResult(
+      displayName: short.isEmpty ? stop.address : short,
+      fullAddress: stop.address,
+      lat: stop.lat,
+      lng: stop.lng,
+    );
+  }
+
+  void _applyActiveRouteFromRow(Map<String, dynamic> row) {
+    var route = ActiveRideRouteState.fromRideRow(row);
+    if (route.destinationAddress.isEmpty) return;
+    if ((route.bookedDestinationAddress == null ||
+            route.bookedDestinationAddress!.isEmpty) &&
+        route.routeRevision == 0) {
+      route = ActiveRideRouteState(
+        destinationAddress: route.destinationAddress,
+        destinationLat: route.destinationLat,
+        destinationLng: route.destinationLng,
+        bookedDestinationAddress: route.destinationAddress,
+        bookedDestinationLat: route.destinationLat,
+        bookedDestinationLng: route.destinationLng,
+        stops: route.stops,
+        routeRevision: route.routeRevision,
+      );
     }
+
+    final destination =
+        route.destinationLat != null && route.destinationLng != null
+            ? AddressResult(
+                displayName: route.destinationAddress.split(',').first.trim(),
+                fullAddress: route.destinationAddress,
+                lat: route.destinationLat!,
+                lng: route.destinationLng!,
+              )
+            : null;
+
+    if (destination != null) {
+      ref.read(bookingProvider.notifier).setDestination(destination);
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _activeRouteState = route;
+      _routeStops
+        ..clear()
+        ..addAll(route.stops.map(_addressFromRouteStop));
+    });
   }
 
   void _applyLiveFare(Map<String, dynamic> row) {
@@ -296,13 +406,10 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     final rideId = ref.read(rideRequestProvider).rideRequestId;
     if (rideId == null) return;
     try {
-      final row = await HeyCabySupabase.client
-          .from('ride_requests')
-          .select(
-            'quoted_fare, offered_fare, estimated_fare, final_fare, marketplace_offered_fare, waiting_fee_cents, waiting_fee_waived',
-          )
-          .eq('id', rideId)
-          .maybeSingle();
+      final row = await RiderRideSnapshotService.fetch(
+        rideRequestId: rideId,
+        riderToken: ref.read(rideRequestProvider).riderToken,
+      );
       if (!mounted || row == null) return;
       _applyLiveFare(Map<String, dynamic>.from(row));
     } catch (_) {
@@ -358,7 +465,6 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     if (_rideCompletedCheckoutHandled || !mounted) return;
     _rideCompletedCheckoutHandled = true;
     unawaited(HeycabyWidgetSync.clearAll());
-    _pauseBackgroundPolling();
     ref.read(rideRequestProvider.notifier).updateStatus('completed');
     unawaited(ref.read(driverTrackingProvider.notifier).refreshNow());
     await _refreshFareForCheckout();
@@ -391,8 +497,6 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     if (!mounted) return;
     if (result == null || !result.confirmed) {
       _rideCompletedCheckoutHandled = false;
-      _startStatusRefreshTimer();
-      _startPingPollTimer(rideId);
       return;
     }
     _tearDownActiveRideSubscriptions();
@@ -410,12 +514,6 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     final parsed = RideWaitingInfo.fromJson(row);
     if (!mounted || parsed == null) return;
     setState(() => _waitingInfo = parsed);
-    unawaited(
-      ref.read(riderRideLifecycleEngineProvider).applyBackendRecord(
-            row,
-            source: 'active_ride_waiting',
-          ),
-    );
   }
 
   Future<void> _syncRidePhaseWidgets() async {
@@ -465,194 +563,98 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     }
   }
 
-  void _subscribeToRideStatus() {
+  Future<void> _applyBackendRideRecord(
+    RiderRideBackendRecord projection,
+  ) async {
+    if (!mounted) return;
     final rideId = ref.read(rideRequestProvider).rideRequestId;
-    if (rideId == null) return;
+    if (rideId == null || projection.rideRequestId != rideId) return;
 
-    _rideStatusChannel = HeyCabySupabase.client
-        .channel('ride_status:$rideId')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.update,
-          schema: 'public',
-          table: 'ride_requests',
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'id',
-            value: rideId,
-          ),
-          callback: (payload) {
-            final newStatus = payload.newRecord['status'] as String?;
-            _applyWaitingRecord(Map<String, dynamic>.from(payload.newRecord));
-            _applyLiveFare(Map<String, dynamic>.from(payload.newRecord));
-            final rideId = ref.read(rideRequestProvider).rideRequestId;
-            if (rideId != null) {
-              ref.invalidate(taxiTerugQueueStatusProvider(rideId));
-              unawaited(_refreshDriverOnMyWay(rideId));
-            }
-            if (newStatus == null) return;
-            ref.read(rideRequestProvider.notifier).updateStatus(newStatus);
-            if (rideId != null &&
-                (newStatus == 'assigned' ||
-                    newStatus == 'accepted' ||
-                    newStatus == 'driver_found' ||
-                    newStatus == 'driver_en_route' ||
-                    newStatus == 'driver_arrived' ||
-                    newStatus == 'arrived' ||
-                    newStatus == 'in_progress')) {
-              _loadDriverInfo(rideId);
-            }
-            if (newStatus == 'completed' && mounted) {
-              unawaited(_onRideCompleted());
-              return;
-            }
-            if ((newStatus == 'pending' || newStatus == 'bidding') && mounted) {
-              final mode = ref.read(rideRequestProvider).bookingMode ??
-                  bookingModeStorageString(
-                      ref.read(bookingProvider).effectiveRideMode);
-              final path =
-                  rideMatchingVariantForBookingModeString(mode).routePath;
-              context.go(path);
-              return;
-            }
-            const terminalNoActive = {
-              'cancelled',
-              'canceled',
-              'rejected',
-              'declined',
-              'missed',
-              'expired',
-            };
-            if (terminalNoActive.contains(newStatus) && mounted) {
-              unawaited(HeycabyWidgetSync.clearAll());
-              ref.read(rideRequestProvider.notifier).reset();
-              context.go('/home');
-            }
-          },
-        )
-        .subscribe();
-  }
+    final revision = '$rideId|${projection.revision}';
+    if (_lastBackendRecordRevision == revision) return;
+    _lastBackendRecordRevision = revision;
 
-  void _startStatusRefreshTimer() {
-    _statusRefreshTimer?.cancel();
-    _statusRefreshTimer = Timer.periodic(
-      const Duration(seconds: 10),
-      (_) => _refreshRideStatus(reason: 'periodic_poll'),
-    );
-  }
+    final row = projection.record;
+    _applyWaitingRecord(row);
+    _applyLiveFare(row);
+    _applyActiveRouteFromRow(row);
+    ref.invalidate(taxiTerugQueueStatusProvider(rideId));
 
-  Future<void> _refreshRideStatus({required String reason}) async {
-    final rideId = ref.read(rideRequestProvider).rideRequestId;
-    if (rideId == null) return;
-    try {
-      final row = await HeyCabySupabase.client
-          .from('ride_requests')
-          .select(
-            'status, updated_at, driver_arrived_at, waiting_grace_seconds, waiting_rate_per_minute, chargeable_wait_seconds, waiting_fee_cents, waiting_fee_waived, quoted_fare, offered_fare, estimated_fare, final_fare, marketplace_offered_fare',
-          )
-          .eq('id', rideId)
-          .maybeSingle();
-      if (row == null) return;
-      _applyWaitingRecord(Map<String, dynamic>.from(row));
-      _applyLiveFare(Map<String, dynamic>.from(row));
-      final remoteStatus = row['status'] as String?;
-      if (remoteStatus == null || remoteStatus.isEmpty) return;
-      final localStatus = ref.read(rideRequestProvider).status;
-      if (remoteStatus != localStatus) {
-        ref.read(rideRequestProvider.notifier).updateStatus(remoteStatus);
-        await _loadDriverInfo(rideId);
-        unawaited(
-          RiderNotificationLifecycleService.trackEvent(
-            'active_ride_status_mismatch_corrected',
-            payload: <String, dynamic>{
-              'reason': reason,
-              'local_status': localStatus,
-              'remote_status': remoteStatus,
-              'ride_request_id': rideId,
-            },
-          ),
-        );
-        debugPrint(
-          '[ActiveRideScreen] status refresh ($reason) local=$localStatus remote=$remoteStatus',
-        );
-      }
-      // Handle terminal statuses from periodic poll (backup for realtime).
-      const terminalNoActive = {
-        'cancelled',
-        'canceled',
-        'rejected',
-        'declined',
-        'missed',
-        'expired',
-      };
-      if (terminalNoActive.contains(remoteStatus) && mounted) {
-        unawaited(HeycabyWidgetSync.clearAll());
-        ref.read(rideRequestProvider.notifier).reset();
-        context.go('/home');
-        return;
-      }
-      if (remoteStatus == 'completed' && mounted) {
-        unawaited(_onRideCompleted());
-        return;
-      }
-      final updatedAtRaw = row['updated_at'] as String?;
-      if (updatedAtRaw != null) {
-        final updatedAt = DateTime.tryParse(updatedAtRaw)?.toLocal();
-        if (updatedAt != null) {
-          final age = DateTime.now().difference(updatedAt);
-          if (age.inMinutes >= 2) {
-            if (_lastStaleStatusMinuteTracked != age.inMinutes) {
-              _lastStaleStatusMinuteTracked = age.inMinutes;
-              unawaited(
-                RiderNotificationLifecycleService.trackEvent(
-                  'active_ride_status_snapshot_stale',
-                  payload: <String, dynamic>{
-                    'reason': reason,
-                    'ride_request_id': rideId,
-                    'stale_age_minutes': age.inMinutes,
-                    'status': remoteStatus,
-                  },
-                ),
-              );
-            }
-            debugPrint(
-              '[ActiveRideScreen] status snapshot is ${age.inMinutes}m old ($reason)',
-            );
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint('[ActiveRideScreen] status refresh error ($reason): $e');
+    final driverOnMyWay = row['driver_on_my_way'] == true;
+    if (driverOnMyWay != _driverOnMyWay && mounted) {
+      setState(() => _driverOnMyWay = driverOnMyWay);
     }
+
+    final remoteStatus =
+        (row['provider_status'] ?? row['status'])?.toString().toLowerCase();
+    if (remoteStatus == null || remoteStatus.isEmpty) return;
+
+    if (_isActiveRideStatus(remoteStatus)) {
+      await _loadDriverInfo(rideId);
+    }
+    if (!mounted) return;
+
+    if (remoteStatus == 'completed') {
+      unawaited(_onRideCompleted());
+      return;
+    }
+    if (remoteStatus == 'pending' || remoteStatus == 'bidding') {
+      final mode = ref.read(rideRequestProvider).bookingMode ??
+          bookingModeStorageString(ref.read(bookingProvider).effectiveRideMode);
+      context.go(rideMatchingVariantForBookingModeString(mode).routePath);
+      return;
+    }
+
+    const terminalNoActive = {
+      'cancelled',
+      'canceled',
+      'rejected',
+      'declined',
+      'missed',
+      'expired',
+    };
+    if (terminalNoActive.contains(remoteStatus)) {
+      unawaited(RiderNotifyLiveActivity.end());
+      unawaited(HeycabyWidgetSync.clearAll());
+      ref.read(rideRequestProvider.notifier).reset();
+      context.go('/home');
+      return;
+    }
+
+    final updatedAt =
+        DateTime.tryParse(row['updated_at']?.toString() ?? '')?.toLocal();
+    if (updatedAt == null) return;
+    final age = DateTime.now().difference(updatedAt);
+    if (age.inMinutes < 2 || _lastStaleStatusMinuteTracked == age.inMinutes) {
+      return;
+    }
+    _lastStaleStatusMinuteTracked = age.inMinutes;
+    unawaited(
+      RiderNotificationLifecycleService.trackEvent(
+        'active_ride_status_snapshot_stale',
+        payload: <String, dynamic>{
+          'reason': projection.source,
+          'ride_request_id': rideId,
+          'stale_age_minutes': age.inMinutes,
+          'status': remoteStatus,
+        },
+      ),
+    );
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _refreshRideStatus(reason: 'app_resumed');
       final rideId = ref.read(rideRequestProvider).rideRequestId;
       if (rideId != null) {
         ref.read(driverTrackingProvider.notifier).startTracking(rideId);
-        _loadWaitingInfo(rideId);
       }
     }
   }
 
-  void _pauseBackgroundPolling() {
-    _statusRefreshTimer?.cancel();
-    _statusRefreshTimer = null;
-    _pingPollTimer?.cancel();
-    _pingPollTimer = null;
-  }
-
   void _tearDownActiveRideSubscriptions() {
-    _statusRefreshTimer?.cancel();
-    _statusRefreshTimer = null;
     _waitingUiTimer?.cancel();
     _waitingUiTimer = null;
-    _pingPollTimer?.cancel();
-    _pingPollTimer = null;
-    _rideStatusChannel?.unsubscribe();
-    _rideStatusChannel = null;
     ref.read(driverTrackingProvider.notifier).stopTracking();
   }
 
@@ -735,6 +737,12 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     final rideId = ref.read(rideRequestProvider).rideRequestId;
     if (rideId == null) return;
     final l10n = AppLocalizations.of(context);
+    if (_activeRouteState?.hasPendingRouteChange == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.activeRouteWaitingDriver)),
+      );
+      return;
+    }
     final action = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
@@ -781,6 +789,13 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     if (destination == null) return;
     final nextStops = List<AddressResult>.from(_routeStops);
     if (action == 'stop') nextStops.add(selected);
+    final priorRoute = _activeRouteState;
+    final bookedAddress =
+        priorRoute?.bookedDestinationAddress ?? currentDestination?.fullAddress;
+    final bookedLat =
+        priorRoute?.bookedDestinationLat ?? currentDestination?.lat;
+    final bookedLng =
+        priorRoute?.bookedDestinationLng ?? currentDestination?.lng;
     try {
       final result = await HeyCabySupabase.client.rpc(
         'fn_rider_update_active_route',
@@ -799,24 +814,65 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
         },
       );
       if (result is! Map || result['ok'] != true) {
-        throw StateError(
-            result is Map ? '${result['error']}' : 'route_update_failed');
+        final error =
+            result is Map ? '${result['error']}' : 'route_update_failed';
+        final message = switch (error) {
+          'pending_route_change' => l10n.activeRouteWaitingDriver,
+          'duplicate_request' => l10n.activeRouteDuplicateRequest,
+          'no_change' => l10n.activeRouteNoChange,
+          _ => l10n.activeRouteUpdateFailed,
+        };
+        throw StateError(message);
+      }
+      final isPending = result['pending'] == true;
+      if (isPending) {
+        await ref
+            .read(riderRideLifecycleEngineProvider)
+            .refreshRideState(source: 'active_route_pending');
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.activeRouteWaitingDriver)),
+        );
+        return;
       }
       ref.read(bookingProvider.notifier).setDestination(destination);
       setState(() {
         _routeStops
           ..clear()
           ..addAll(nextStops);
+        _activeRouteState = ActiveRideRouteState(
+          destinationAddress: destination.fullAddress,
+          destinationLat: destination.lat,
+          destinationLng: destination.lng,
+          bookedDestinationAddress: bookedAddress,
+          bookedDestinationLat: bookedLat,
+          bookedDestinationLng: bookedLng,
+          stops: nextStops
+              .map(
+                (stop) => ActiveRideRouteStop(
+                  address: stop.fullAddress,
+                  lat: stop.lat,
+                  lng: stop.lng,
+                ),
+              )
+              .toList(growable: false),
+          routeRevision: (priorRoute?.routeRevision ?? 0) + 1,
+        );
       });
-      await _refreshRideStatus(reason: 'route_updated');
+      await ref
+          .read(riderRideLifecycleEngineProvider)
+          .refreshRideState(source: 'active_route_updated');
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.activeRouteUpdated)),
       );
-    } catch (_) {
+    } catch (e) {
       if (!context.mounted) return;
+      final message = e is StateError && e.message.isNotEmpty
+          ? e.message
+          : l10n.activeRouteUpdateFailed;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.activeRouteUpdateFailed)),
+        SnackBar(content: Text(message)),
       );
     }
   }
@@ -932,11 +988,13 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     final rideId = ref.read(rideRequestProvider).rideRequestId;
     if (rideId == null) return;
     try {
-      await HeyCabySupabase.client.from('safety_events').insert({
-        'ride_request_id': rideId,
-        'event_type': eventType,
-        'created_at': DateTime.now().toUtc().toIso8601String(),
-      });
+      await HeyCabySupabase.client.rpc(
+        'fn_rider_log_safety_event',
+        params: {
+          'p_ride_request_id': rideId,
+          'p_event_type': eventType,
+        },
+      );
     } catch (_) {}
   }
 
@@ -945,6 +1003,12 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     final colors = ref.watch(colorsProvider);
     final typo = ref.watch(typographyProvider);
     final l10n = AppLocalizations.of(context);
+    ref.listen<RiderRideBackendRecord?>(
+      riderRideBackendRecordProvider,
+      (previous, next) {
+        if (next != null) unawaited(_applyBackendRideRecord(next));
+      },
+    );
     ref.listen<RideRequestState>(rideRequestProvider, (prev, next) {
       final st = next.status ?? '';
       if (st == 'in_progress' ||
@@ -1049,9 +1113,32 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
       booking: booking,
       driverLocation: driverLocation,
     );
+    final chatUnreadCount = ride.rideRequestId == null
+        ? 0
+        : ref.watch(riderRideUnreadMessageCountProvider(ride.rideRequestId!));
+    if (ride.rideRequestId != null &&
+        _communicationRideId != ride.rideRequestId) {
+      _communicationRideId = ride.rideRequestId;
+      _communicationPermissions = const MaskedRideCallingService()
+          .permissions(rideId: ride.rideRequestId!);
+    }
 
     final screenH = MediaQuery.sizeOf(context).height;
     final bottomPad = MediaQuery.paddingOf(context).bottom;
+    final showMapStatusDock =
+        status != 'completed' && _sheetExtent < _kMapDockMaxExtent;
+    final showEmbeddedTimeline =
+        status != 'completed' && _sheetExtent >= _kEmbeddedTimelineMinExtent;
+    final prepayMode = riderPrepayModeFromBackend(
+      ride.bookingMode,
+      booking.effectiveRideMode,
+    );
+    final prepayEnabled = riderPrepayVisibleForRideStatus(status) &&
+        ride.rideRequestId != null &&
+        riderPrepayEnabledForMode(
+          riderRuntimeConfig.current,
+          prepayMode,
+        );
 
     return Scaffold(
       backgroundColor: colors.bg,
@@ -1059,12 +1146,23 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
         children: [
           ActiveRideMapStack(
             height: screenH,
-            cameraBottomPadding: screenH * 0.40 + bottomPad,
+            cameraBottomPadding: screenH * _sheetExtent + bottomPad + 8,
             booking: booking,
             driverLocation: driverLocation,
             status: status,
             etaMinutes: etaMinutes,
           ),
+          if (status != 'completed')
+            Positioned(
+              left: 16,
+              bottom: screenH * _sheetExtent + 16,
+              child: _MapSafetyButton(
+                colors: colors,
+                typo: typo,
+                label: l10n.safety,
+                onTap: () => _openSafetySheet(context),
+              ),
+            ),
           NotificationListener<DraggableScrollableNotification>(
             onNotification: (notification) {
               final extent = notification.extent;
@@ -1074,11 +1172,15 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
               return false;
             },
             child: DraggableScrollableSheet(
-              initialChildSize: 0.38,
-              minChildSize: 0.28,
-              maxChildSize: 0.88,
+              initialChildSize: _kSheetCollapsed,
+              minChildSize: _kSheetPeek,
+              maxChildSize: _kSheetExpanded,
               snap: true,
-              snapSizes: const [0.38, 0.88],
+              snapSizes: const [
+                _kSheetPeek,
+                _kSheetCollapsed,
+                _kSheetExpanded,
+              ],
               builder: (context, scrollController) {
                 return _ActiveRideSheet(
                   status: status,
@@ -1086,15 +1188,30 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                   typo: typo,
                   l10n: l10n,
                   booking: booking,
+                  rideId: ride.rideRequestId,
+                  riderToken: ride.riderToken,
+                  prepayEnabled: prepayEnabled,
+                  prepayMode: prepayMode,
                   scrollController: scrollController,
+                  showDetailSections: status == 'completed' ||
+                      _sheetExtent >= _kEmbeddedTimelineMinExtent,
+                  showEmbeddedTimeline: showEmbeddedTimeline,
                   onComplete: () => context.go('/home'),
                   onShare: () => _shareRide(context),
                   onEditRoute: () => _editActiveRoute(context),
                   routeStops: _routeStops,
+                  activeRouteState: _activeRouteState,
                   onSafety: () => _openSafetySheet(context),
                   onPingDriver: () => _openPingDriverSheet(context),
                   onPickupNote: () => context.push('/chat'),
-                  onCancelRide: () => _openCancelFlow(context),
+                  communicationPermissions: _communicationPermissions,
+                  onMaskedCall: ride.rideRequestId == null
+                      ? null
+                      : () => _startMaskedDriverCall(ride.rideRequestId!),
+                  chatUnreadCount: chatUnreadCount,
+                  onCancelRide: status == 'in_progress'
+                      ? () => _openEarlyEndFlow(context)
+                      : () => _openCancelFlow(context),
                   driverInfo: _driverInfo,
                   etaMinutes: etaMinutes,
                   lastRiderPing: _lastRiderPing,
@@ -1103,11 +1220,16 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                   plateVerified: _plateVerified,
                   onVerifyPlate: _onVerifyPlate,
                   taxiTerugQueue: taxiTerugQueued ? taxiTerugQueue : null,
+                  driverOnMyWay: _driverOnMyWay,
+                  driverLat: driverLocation?.lat,
+                  driverLng: driverLocation?.lng,
+                  enRouteBaselineKm: _enRouteBaselineKm,
+                  tripBaselineKm: _tripBaselineKm,
                 );
               },
             ),
           ),
-          if (status != 'completed')
+          if (showMapStatusDock)
             Positioned(
               left: 16,
               right: 16,
@@ -1179,17 +1301,12 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final identity = await ref.read(riderIdentityProvider.future);
-      final senderId = identity.identityId ??
-          HeyCabySupabase.client.auth.currentUser?.id ??
-          '';
-      if (senderId.isEmpty) return;
-      await HeyCabySupabase.client.from('messages').insert({
-        'ride_request_id': rideId,
-        'sender_id': senderId,
-        'sender_type': 'rider',
-        'content': message,
-      });
+      await HeyCabyRideChatMessages.send(
+        rideId: rideId,
+        idempotencyKey: HeyCabyRideChatMessages.newIdempotencyKey(),
+        content: message,
+        messageType: 'ping',
+      );
       if (!mounted) return;
       setState(() => _lastRiderPing = message);
       unawaited(HapticService.pingStandard());
@@ -1218,6 +1335,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     }
   }
 
+  /// Returns cached ETA if available, or null. Triggers async refresh.
   int? _estimateEtaMinutes({
     required String status,
     required BookingState booking,
@@ -1226,50 +1344,110 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     if (driverLocation == null) return null;
     final target =
         status == 'in_progress' ? booking.destination : booking.pickup;
-    if (target == null) return null;
-    final km = NearbySupplyService.distanceKm(
-      driverLocation.lat,
-      driverLocation.lng,
-      target.lat,
-      target.lng,
+    if (target == null || !target.hasValidCoords) return null;
+    if (driverLocation.lat == 0 && driverLocation.lng == 0) return null;
+
+    final cacheKey = '$status:${driverLocation.lat.toStringAsFixed(4)},'
+        '${driverLocation.lng.toStringAsFixed(4)}:'
+        '${target.lat.toStringAsFixed(4)},${target.lng.toStringAsFixed(4)}';
+    if (_etaCacheKey == cacheKey) return _cachedEtaMinutes;
+
+    // Cache miss — kick off async fetch, return stale value meanwhile.
+    _etaCacheKey = cacheKey;
+    unawaited(_refreshEta(status, booking, driverLocation, cacheKey));
+    return _cachedEtaMinutes;
+  }
+
+  Future<void> _refreshEta(
+    String status,
+    BookingState booking,
+    DriverLocation driverLocation,
+    String cacheKey,
+  ) async {
+    final target =
+        status == 'in_progress' ? booking.destination : booking.pickup;
+    if (target == null || !target.hasValidCoords) return;
+
+    final eta = await RiderEtaService.etaMinutes(
+      fromLat: driverLocation.lat,
+      fromLng: driverLocation.lng,
+      toLat: target.lat,
+      toLng: target.lng,
     );
-    // Conservative city speed profile to avoid optimistic ETAs.
-    final mins = ((km / 28.0) * 60.0).ceil();
-    return mins.clamp(1, 90);
+    if (_etaCacheKey == cacheKey && mounted) {
+      _cachedEtaMinutes = eta;
+      setState(() {});
+    }
   }
 
   Future<void> _openCancelFlow(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
-    final reason = await showModalBottomSheet<String>(
+    final colors = ref.read(colorsProvider);
+    final typo = ref.read(typographyProvider);
+
+    final confirmed = await showDialog<bool>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => _CancelReasonSheet(
-        colors: ref.read(colorsProvider),
-        typo: ref.read(typographyProvider),
+      barrierColor: colors.text.withValues(alpha: 0.48),
+      builder: (ctx) => _BoltCancelRideDialog(
+        colors: colors,
+        typo: typo,
+        l10n: l10n,
       ),
     );
-    if (reason == null || !context.mounted) return;
-
-    final confirmed = await showHeyCabyConfirmSheet(
-      context,
-      colors: ref.read(colorsProvider),
-      typography: ref.read(typographyProvider),
-      title: l10n.cancelBookingTitle,
-      message: l10n.activeRideCancelConfirmBody,
-      dismissLabel: l10n.activeRideWaitForDriver,
-      confirmLabel: l10n.cancelRide,
-      icon: Icons.close_rounded,
-      confirmDestructive: true,
-    );
     if (confirmed != true || !context.mounted) return;
-    final cancelled = await _cancelRideFromActive(reason);
+
+    final cancelled = await _cancelRideFromActive(l10n.reportOther);
     if (!context.mounted) return;
     if (cancelled) {
       context.go('/home');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.cancelRideFailed)),
+      );
+    }
+  }
+
+  Future<void> _openEarlyEndFlow(BuildContext context) async {
+    final colors = ref.read(colorsProvider);
+    final typo = ref.read(typographyProvider);
+    final confirmed = await showHeyCabyConfirmSheet(
+      context,
+      colors: colors,
+      typography: typo,
+      title: 'End this trip early?',
+      message:
+          'This creates a support case and preserves the ride, location, contact, and payment timeline. It does not automatically cancel or refund the trip.',
+      dismissLabel: 'Keep riding',
+      confirmLabel: 'Request early end',
+      icon: Icons.support_agent_rounded,
+    );
+    if (confirmed != true || !mounted) return;
+    final ride = ref.read(rideRequestProvider);
+    final rideId = ride.rideRequestId;
+    if (rideId == null) return;
+    try {
+      await const RideVerificationService().openCase(
+        rideId: rideId,
+        riderToken: ride.riderToken,
+        caseType: 'end_trip_early',
+        reason: 'Rider requested an early trip end from the active ride screen',
+      );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Your request is recorded. The ride and payment remain protected while support reviews it.',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'We could not create the support case yet. Please try again.',
+          ),
+        ),
       );
     }
   }
@@ -1307,14 +1485,24 @@ class _ActiveRideSheet extends StatelessWidget {
   final HeyCabyTypography typo;
   final AppLocalizations l10n;
   final BookingState booking;
+  final String? rideId;
+  final String? riderToken;
+  final bool prepayEnabled;
+  final BookingMode prepayMode;
   final ScrollController scrollController;
+  final bool showDetailSections;
+  final bool showEmbeddedTimeline;
   final VoidCallback onComplete;
   final VoidCallback onShare;
   final VoidCallback onEditRoute;
   final List<AddressResult> routeStops;
+  final ActiveRideRouteState? activeRouteState;
   final VoidCallback onSafety;
   final VoidCallback onPingDriver;
   final VoidCallback onPickupNote;
+  final Future<RideCommunicationPermissions>? communicationPermissions;
+  final VoidCallback? onMaskedCall;
+  final int chatUnreadCount;
   final VoidCallback onCancelRide;
   final RiderDriverSheetInfo? driverInfo;
   final int? etaMinutes;
@@ -1324,6 +1512,11 @@ class _ActiveRideSheet extends StatelessWidget {
   final bool plateVerified;
   final VoidCallback onVerifyPlate;
   final TaxiTerugQueueStatus? taxiTerugQueue;
+  final bool driverOnMyWay;
+  final double? driverLat;
+  final double? driverLng;
+  final double? enRouteBaselineKm;
+  final double? tripBaselineKm;
 
   const _ActiveRideSheet({
     required this.status,
@@ -1331,14 +1524,24 @@ class _ActiveRideSheet extends StatelessWidget {
     required this.typo,
     required this.l10n,
     required this.booking,
+    required this.rideId,
+    required this.riderToken,
+    required this.prepayEnabled,
+    required this.prepayMode,
     required this.scrollController,
+    required this.showDetailSections,
+    required this.showEmbeddedTimeline,
     required this.onComplete,
     required this.onShare,
     required this.onEditRoute,
     required this.routeStops,
+    this.activeRouteState,
     required this.onSafety,
     required this.onPingDriver,
     required this.onPickupNote,
+    this.communicationPermissions,
+    this.onMaskedCall,
+    this.chatUnreadCount = 0,
     required this.onCancelRide,
     required this.driverInfo,
     required this.etaMinutes,
@@ -1348,6 +1551,11 @@ class _ActiveRideSheet extends StatelessWidget {
     required this.plateVerified,
     required this.onVerifyPlate,
     this.taxiTerugQueue,
+    this.driverOnMyWay = false,
+    this.driverLat,
+    this.driverLng,
+    this.enRouteBaselineKm,
+    this.tripBaselineKm,
   });
 
   @override
@@ -1380,20 +1588,41 @@ class _ActiveRideSheet extends StatelessWidget {
       return HeyCabyRideFare.formatEuroLabel(quote) ?? '...';
     }
 
-    String heroTitle() {
+    String heroHeadline() {
       if (isCompleted) return l10n.tripComplete;
-      final name = driverInfo?.fullName.trim();
-      if (name != null && name.isNotEmpty) return name;
-      return l10n.driver;
+      if (taxiTerugQueue != null && taxiTerugQueue!.queuedTaxiTerug) {
+        return l10n.taxiTerugQueuedConfirmed;
+      }
+      switch (status) {
+        case 'driver_arrived':
+        case 'arrived':
+          return l10n.activeRideDriverOutside;
+        case 'in_progress':
+          if (etaMinutes != null) {
+            return l10n.activeRideArrivingIn(etaMinutes!.toString());
+          }
+          return l10n.activeRideTripInProgressHeadline;
+        case 'accepted':
+        case 'assigned':
+        case 'driver_found':
+        case 'driver_en_route':
+          if (etaMinutes != null) {
+            return l10n.activeRidePickupIn(etaMinutes!.toString());
+          }
+          if (driverOnMyWay || status == 'driver_en_route') {
+            return l10n.driverOnTheWay;
+          }
+          return l10n.activeRideDriverFound;
+        default:
+          return l10n.activeRideDriverFound;
+      }
     }
 
     String? heroSubtitle() {
       if (isCompleted) return null;
-      if (status == 'driver_arrived' || status == 'arrived') {
-        return l10n.activeRideVerifiedTaxi;
-      }
-      if (status == 'in_progress') {
-        return booking.destination?.displayName.split(',').first;
+      final name = driverInfo?.fullName.trim();
+      if (name != null && name.isNotEmpty) {
+        return '$name · ${categoryLabel()}';
       }
       return categoryLabel();
     }
@@ -1431,11 +1660,12 @@ class _ActiveRideSheet extends StatelessWidget {
             ],
             const SizedBox(height: 16),
             Text(
-              heroTitle(),
+              heroHeadline(),
               style: typo.headingLarge.copyWith(
                 color: colors.text,
-                fontWeight: FontWeight.w700,
-                height: 1.15,
+                fontWeight: FontWeight.w800,
+                height: 1.1,
+                letterSpacing: -0.4,
               ),
             ),
             if (heroSubtitle() != null) ...[
@@ -1446,7 +1676,7 @@ class _ActiveRideSheet extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: typo.bodyMedium.copyWith(
                   color: colors.textMid,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -1471,6 +1701,27 @@ class _ActiveRideSheet extends StatelessWidget {
                           l10n: l10n,
                         ),
             ),
+            if (prepayEnabled && rideId != null) ...[
+              const SizedBox(height: 12),
+              RiderPrepayCard(
+                rideId: rideId!,
+                riderToken: riderToken,
+                mode: prepayMode,
+                colors: colors,
+                typography: typo,
+                l10n: l10n,
+              ),
+            ],
+            if (rideId != null &&
+                (status == 'driver_arrived' || status == 'arrived')) ...[
+              const SizedBox(height: 12),
+              RiderTripPinCard(
+                rideId: rideId!,
+                riderToken: riderToken,
+                colors: colors,
+                typography: typo,
+              ),
+            ],
             if ((status == 'driver_arrived' || status == 'arrived') &&
                 !isCompleted &&
                 plateVerified) ...[
@@ -1503,10 +1754,46 @@ class _ActiveRideSheet extends StatelessWidget {
                           ),
                           child: Row(
                             children: [
-                              Icon(
-                                Icons.chat_bubble_outline_rounded,
-                                color: colors.textMid,
-                                size: 20,
+                              Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Icon(
+                                    Icons.chat_bubble_outline_rounded,
+                                    color: colors.textMid,
+                                    size: 20,
+                                  ),
+                                  if (chatUnreadCount > 0)
+                                    Positioned(
+                                      right: -6,
+                                      top: -4,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 5,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: colors.accent,
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                        constraints: const BoxConstraints(
+                                          minWidth: 16,
+                                          minHeight: 16,
+                                        ),
+                                        child: Text(
+                                          chatUnreadCount > 9
+                                              ? '9+'
+                                              : '$chatUnreadCount',
+                                          textAlign: TextAlign.center,
+                                          style: typo.labelSmall.copyWith(
+                                            color: colors.onAccent,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                               const SizedBox(width: 10),
                               Expanded(
@@ -1555,140 +1842,262 @@ class _ActiveRideSheet extends StatelessWidget {
                 typo: typo,
               ),
             ],
-            const SizedBox(height: 18),
-            _SectionCard(
-              title: l10n.yourRoute,
-              rightActionLabel: l10n.tripSummaryEdit,
-              onRightAction: onEditRoute,
-              colors: colors,
-              typo: typo,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _RouteRow(
-                    icon: Icons.place_rounded,
-                    iconColor: colors.warning,
-                    text: booking.pickup?.fullAddress ??
-                        l10n.activeRidePickupNotSet,
-                    typo: typo,
-                    colors: colors,
-                  ),
-                  const SizedBox(height: 10),
-                  for (final stop in routeStops) ...[
-                    _RouteRow(
-                      icon: Icons.more_horiz_rounded,
-                      iconColor: colors.accent,
-                      text: stop.fullAddress,
-                      typo: typo,
-                      colors: colors,
-                    ),
-                    const SizedBox(height: 10),
-                  ],
-                  _RouteRow(
-                    icon: Icons.flag_rounded,
-                    iconColor: colors.success,
-                    text: booking.destination?.fullAddress ??
-                        l10n.activeRideDestinationNotSet,
-                    typo: typo,
-                    colors: colors,
-                  ),
-                ],
+            if (showEmbeddedTimeline) ...[
+              const SizedBox(height: 18),
+              ActiveRideStatusDock(
+                embeddedInSheet: true,
+                status: status,
+                colors: colors,
+                typo: typo,
+                l10n: l10n,
+                etaMinutes: etaMinutes,
+                waitingInfo: waitingInfo,
+                quotedFareEuro: booking.quotedFareEuro,
+                liveFareCents: liveFareCents,
+                plateVerified: plateVerified,
+                onVerifyPlate: onVerifyPlate,
+                pickupLabel: activeRideShortPlaceLabel(
+                  booking.pickup?.displayName,
+                  l10n.activeRidePickupNotSet,
+                ),
+                destinationLabel: activeRideShortPlaceLabel(
+                  booking.destination?.displayName,
+                  l10n.activeRideDestinationNotSet,
+                ),
+                taxiTerugQueued: taxiTerugQueue?.queuedTaxiTerug == true,
+                taxiTerugPickupMin: taxiTerugQueue?.pickupAvailableMin,
+                taxiTerugPickupMax: taxiTerugQueue?.pickupAvailableMax,
+                driverOnMyWay: driverOnMyWay,
+                driverLat: driverLat,
+                driverLng: driverLng,
+                pickupLat: booking.pickup?.lat,
+                pickupLng: booking.pickup?.lng,
+                destLat: booking.destination?.lat,
+                destLng: booking.destination?.lng,
+                enRouteBaselineKm: enRouteBaselineKm,
+                tripBaselineKm: tripBaselineKm,
               ),
-            ),
-            const SizedBox(height: 12),
-            if (!isCompleted)
+            ],
+            if (showDetailSections) ...[
+              const SizedBox(height: 18),
               _SectionCard(
-                title: l10n.paymentMethod,
+                title: l10n.yourRoute,
+                rightActionLabel: l10n.tripSummaryEdit,
+                onRightAction: onEditRoute,
                 colors: colors,
                 typo: typo,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      l10n.activeRideCategoryLabel(categoryLabel()),
-                      style: typo.bodySmall.copyWith(color: colors.textMid),
+                    if (activeRouteState?.hasPendingRouteChange == true) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: colors.warning.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: colors.warning.withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.hourglass_top_rounded,
+                                color: colors.warning, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                l10n.activeRouteWaitingDriver,
+                                style: typo.bodySmall.copyWith(
+                                  color: colors.text,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    if (activeRouteState?.hasRouteEdits == true) ...[
+                      _RiderRouteEditBadges(
+                        colors: colors,
+                        typo: typo,
+                        l10n: l10n,
+                        route: activeRouteState!,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    _RouteRow(
+                      icon: Icons.place_rounded,
+                      iconColor: colors.warning,
+                      text: booking.pickup?.fullAddress ??
+                          l10n.activeRidePickupNotSet,
+                      typo: typo,
+                      colors: colors,
                     ),
                     const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Icon(Icons.contactless_rounded,
-                            color: colors.textMid, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            paymentLabel(),
-                            style: typo.bodyMedium.copyWith(color: colors.text),
-                          ),
+                    for (final stop in routeStops) ...[
+                      _RouteRow(
+                        icon: Icons.more_horiz_rounded,
+                        iconColor: colors.accent,
+                        text: stop.fullAddress,
+                        typo: typo,
+                        colors: colors,
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                    if (activeRouteState?.pendingRouteChange != null)
+                      for (final stop
+                          in activeRouteState!.pendingRouteChange!.stops.where(
+                        (pendingStop) => !routeStops.any(
+                          (confirmed) =>
+                              confirmed.fullAddress.trim() ==
+                              pendingStop.address.trim(),
                         ),
-                        Text(
-                          fareLabel(),
-                          style: typo.labelLarge.copyWith(
-                            color: colors.text,
-                            fontWeight: FontWeight.w700,
-                          ),
+                      )) ...[
+                        _RouteRow(
+                          icon: Icons.more_horiz_rounded,
+                          iconColor: colors.warning,
+                          text: stop.address,
+                          typo: typo,
+                          colors: colors,
+                          muted: true,
+                          trailingLabel: l10n.activeRoutePendingStop,
                         ),
+                        const SizedBox(height: 10),
                       ],
+                    _RouteRow(
+                      icon: Icons.flag_rounded,
+                      iconColor: colors.success,
+                      text: booking.destination?.fullAddress ??
+                          l10n.activeRideDestinationNotSet,
+                      typo: typo,
+                      colors: colors,
                     ),
                   ],
                 ),
               ),
-            if (!isCompleted) const SizedBox(height: 12),
-            _SectionCard(
-              title: l10n.chatMoreOptions,
-              colors: colors,
-              typo: typo,
-              child: Column(
-                children: [
-                  _MoreActionRow(
-                    icon: Icons.shield_outlined,
-                    label: l10n.safety,
-                    colors: colors,
-                    typo: typo,
-                    onTap: onSafety,
-                  ),
-                  const SizedBox(height: 10),
-                  _MoreActionRow(
-                    icon: Icons.ios_share_rounded,
-                    label: l10n.activeRideShareDetails,
-                    colors: colors,
-                    typo: typo,
-                    onTap: onShare,
-                  ),
-                  const SizedBox(height: 10),
-                  _MoreActionRow(
-                    icon: Icons.chat_bubble_outline_rounded,
-                    label: l10n.activeRideContactDriver,
-                    colors: colors,
-                    typo: typo,
-                    onTap: onPickupNote,
-                  ),
-                  if (!isCompleted) ...[
-                    const SizedBox(height: 10),
-                    _MoreActionRow(
-                      icon: Icons.close_rounded,
-                      label: l10n.cancelRide,
-                      colors: colors,
-                      typo: typo,
-                      isDanger: true,
-                      onTap: onCancelRide,
-                    ),
-                  ],
-                  if (isCompleted) ...[
-                    const SizedBox(height: 10),
-                    _MoreActionRow(
-                      icon: Icons.flag_outlined,
-                      label: l10n.reportIssue,
-                      colors: colors,
-                      typo: typo,
-                      onTap: () => context.push(
-                        '/report',
-                        extra: const ReportRouteArgs(fromActiveRide: true),
+              const SizedBox(height: 12),
+              if (!isCompleted)
+                _SectionCard(
+                  title: l10n.paymentMethod,
+                  colors: colors,
+                  typo: typo,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.activeRideCategoryLabel(categoryLabel()),
+                        style: typo.bodySmall.copyWith(color: colors.textMid),
                       ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Icon(Icons.contactless_rounded,
+                              color: colors.textMid, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              paymentLabel(),
+                              style:
+                                  typo.bodyMedium.copyWith(color: colors.text),
+                            ),
+                          ),
+                          Text(
+                            fareLabel(),
+                            style: typo.labelLarge.copyWith(
+                              color: colors.text,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              if (!isCompleted) const SizedBox(height: 12),
+              _SectionCard(
+                title: l10n.chatMoreOptions,
+                colors: colors,
+                typo: typo,
+                child: Column(
+                  children: [
+                    _MoreActionRow(
+                      icon: Icons.shield_outlined,
+                      label: l10n.safety,
+                      colors: colors,
+                      typo: typo,
+                      onTap: onSafety,
                     ),
+                    const SizedBox(height: 10),
+                    _MoreActionRow(
+                      icon: Icons.ios_share_rounded,
+                      label: l10n.activeRideShareDetails,
+                      colors: colors,
+                      typo: typo,
+                      onTap: onShare,
+                    ),
+                    const SizedBox(height: 10),
+                    _MoreActionRow(
+                      icon: Icons.chat_bubble_outline_rounded,
+                      label: l10n.activeRideContactDriver,
+                      colors: colors,
+                      typo: typo,
+                      onTap: onPickupNote,
+                    ),
+                    if (communicationPermissions != null &&
+                        onMaskedCall != null)
+                      FutureBuilder<RideCommunicationPermissions>(
+                        future: communicationPermissions,
+                        builder: (context, snapshot) {
+                          if (snapshot.data?.canCall != true) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: _MoreActionRow(
+                              icon: Icons.call_outlined,
+                              label: l10n.maskedCallDriver,
+                              colors: colors,
+                              typo: typo,
+                              onTap: onMaskedCall!,
+                            ),
+                          );
+                        },
+                      ),
+                    if (!isCompleted) ...[
+                      const SizedBox(height: 10),
+                      _MoreActionRow(
+                        icon: Icons.close_rounded,
+                        label: status == 'in_progress'
+                            ? 'End trip early'
+                            : l10n.cancelRide,
+                        colors: colors,
+                        typo: typo,
+                        isDanger: true,
+                        onTap: onCancelRide,
+                      ),
+                    ],
+                    if (isCompleted) ...[
+                      const SizedBox(height: 10),
+                      _MoreActionRow(
+                        icon: Icons.flag_outlined,
+                        label: l10n.reportIssue,
+                        colors: colors,
+                        typo: typo,
+                        onTap: () => context.push(
+                          '/report',
+                          extra: const ReportRouteArgs(fromActiveRide: true),
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
+            ],
             const SizedBox(height: 6),
           ],
         ),
@@ -1782,6 +2191,8 @@ class _RouteRow extends StatelessWidget {
   final String text;
   final HeyCabyTypography typo;
   final HeyCabyColorTokens colors;
+  final bool muted;
+  final String? trailingLabel;
 
   const _RouteRow({
     required this.icon,
@@ -1789,6 +2200,8 @@ class _RouteRow extends StatelessWidget {
     required this.text,
     required this.typo,
     required this.colors,
+    this.muted = false,
+    this.trailingLabel,
   });
 
   @override
@@ -1801,9 +2214,29 @@ class _RouteRow extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: typo.bodyMedium.copyWith(color: colors.text),
+            style: typo.bodyMedium.copyWith(
+              color: muted ? colors.textMid : colors.text,
+              fontWeight: muted ? FontWeight.w600 : FontWeight.w500,
+            ),
           ),
         ),
+        if (trailingLabel != null) ...[
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: colors.warning.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              trailingLabel!,
+              style: typo.labelSmall.copyWith(
+                color: colors.warning,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -2385,6 +2818,218 @@ class _SafetySheetRow extends StatelessWidget {
                   color: colors.textSoft, size: 22),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MapSafetyButton extends StatelessWidget {
+  const _MapSafetyButton({
+    required this.colors,
+    required this.typo,
+    required this.label,
+    required this.onTap,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: colors.card.withValues(alpha: 0.96),
+      elevation: 4,
+      shadowColor: colors.text.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.shield_outlined, color: colors.text, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: typo.labelLarge.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RiderRouteEditBadges extends StatelessWidget {
+  const _RiderRouteEditBadges({
+    required this.colors,
+    required this.typo,
+    required this.l10n,
+    required this.route,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final AppLocalizations l10n;
+  final ActiveRideRouteState route;
+
+  @override
+  Widget build(BuildContext context) {
+    final badges = <String>[];
+    if (route.destinationChanged) {
+      badges.add(l10n.activeRouteDestinationChanged);
+    }
+    if (route.stopCount > 0) {
+      badges.add(l10n.activeRouteStopsAdded(route.stopCount));
+    }
+    if (badges.isEmpty) return const SizedBox.shrink();
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final label in badges)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: colors.warning.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: colors.warning.withValues(alpha: 0.35)),
+            ),
+            child: Text(
+              label,
+              style: typo.labelLarge.copyWith(
+                color: colors.warning,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _BoltCancelRideDialog extends StatelessWidget {
+  const _BoltCancelRideDialog({
+    required this.colors,
+    required this.typo,
+    required this.l10n,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(22, 14, 22, 22),
+        decoration: BoxDecoration(
+          color: colors.card,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: colors.text.withValues(alpha: 0.14),
+              blurRadius: 28,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: IconButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                icon: Icon(Icons.close_rounded, color: colors.textSoft),
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: colors.error.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.close_rounded,
+                color: colors.error,
+                size: 36,
+              ),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              l10n.cancelBookingTitle,
+              textAlign: TextAlign.center,
+              style: typo.titleLarge.copyWith(
+                color: colors.text,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.3,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              l10n.activeRideCancelConfirmBody,
+              textAlign: TextAlign.center,
+              style: typo.bodyMedium.copyWith(
+                color: colors.textMid,
+                height: 1.45,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: FilledButton.styleFrom(
+                  backgroundColor: colors.error,
+                  foregroundColor: colors.onAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                child: Text(
+                  l10n.cancelRide,
+                  style: typo.labelLarge.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                style: FilledButton.styleFrom(
+                  backgroundColor: colors.bgAlt,
+                  foregroundColor: colors.text,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                child: Text(
+                  l10n.activeRideWaitForDriver,
+                  style: typo.labelLarge.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

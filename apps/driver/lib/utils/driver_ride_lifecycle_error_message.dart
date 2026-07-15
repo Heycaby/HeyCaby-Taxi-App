@@ -74,6 +74,8 @@ String _normalizeLifecycleErrorCode(String raw, {String? detail}) {
     'not_authorized',
     'terminal_ride',
     'ride_cancelled',
+    'ride_prepayment_required',
+    'ride_prepayment_config_invalid',
     'network_unreachable',
     'request_timeout',
     'server_unreachable',

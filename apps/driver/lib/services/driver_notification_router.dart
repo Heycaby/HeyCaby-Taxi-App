@@ -16,6 +16,7 @@ enum DriverNotificationBehavior {
   chat,
   rating,
   verification,
+  taxiTerug,
   shiftHandover,
   taxiSessionRevoked,
   generic,
@@ -23,6 +24,9 @@ enum DriverNotificationBehavior {
 
 DriverNotificationBehavior driverBehaviorForCategory(String? category) {
   final c = (category ?? '').toLowerCase();
+  if (c.contains('taxi_terug_offer')) {
+    return DriverNotificationBehavior.taxiTerug;
+  }
   if (c.contains('incoming_ride') || c.contains('ride_offer')) {
     return DriverNotificationBehavior.incomingRide;
   }
@@ -63,6 +67,9 @@ Future<void> playDriverNotificationFeedback(
     case DriverNotificationBehavior.verification:
       await HapticService.mediumTap();
       await sound.playNotification();
+    case DriverNotificationBehavior.taxiTerug:
+      await HapticService.mediumTap();
+      await sound.playNotification();
     case DriverNotificationBehavior.shiftHandover:
       await HapticService.heavyTap();
       await sound.playNotification();
@@ -93,6 +100,8 @@ String driverDeepLinkForBehavior(
         return '/driver/ride/new/$rideId';
       }
       return '/driver';
+    case DriverNotificationBehavior.taxiTerug:
+      return '/driver/taxi-thru';
     default:
       return '/driver';
   }

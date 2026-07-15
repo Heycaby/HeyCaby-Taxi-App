@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../widgets/active_booking_card.dart';
 import '../widgets/rides/rides_screen_header.dart';
 import '../providers/near_term_ride_request_provider.dart';
+import '../providers/ride_request_provider.dart';
 import 'report_screen.dart';
 import '../providers/ride_history_provider.dart';
 
@@ -28,11 +29,7 @@ class _RidesScreenState extends ConsumerState<RidesScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _setFilter();
-      ref.read(rideHistoryProvider.notifier).refresh();
-      ref.invalidate(ridesTabUpcomingRequestsProvider);
-    });
+    // Providers load on first watch; avoid racing refresh/setFilter on open.
   }
 
   void _setFilter() {
@@ -304,7 +301,12 @@ class _UpcomingRidesTab extends ConsumerWidget {
                 isFutureScheduled: isFutureScheduled,
                 onTap: () {
                   if (snap.isLiveRide) {
-                    context.push('/active');
+                    ref
+                        .read(rideRequestProvider.notifier)
+                        .attachRideRequestForMatchingFlow(snap.id)
+                        .then((_) {
+                      if (context.mounted) context.push('/active');
+                    });
                     return;
                   }
                   context.push(

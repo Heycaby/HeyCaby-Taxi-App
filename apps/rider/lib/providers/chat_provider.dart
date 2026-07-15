@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -62,6 +64,7 @@ class ChatState {
 
 class ChatNotifier extends AutoDisposeAsyncNotifier<ChatState> {
   RealtimeChannel? _subscription;
+  String? _loadedRideId;
   final Set<String> _blockedSenderKeys = {};
 
   static String _senderKey(String type, String id) => '$type:$id';
@@ -75,9 +78,15 @@ class ChatNotifier extends AutoDisposeAsyncNotifier<ChatState> {
   }
 
   Future<void> loadMessages(String rideId) async {
+    if (_loadedRideId == rideId && _subscription != null) {
+      await _recoverCanonicalMessages(rideId);
+      return;
+    }
     state = const AsyncData(ChatState(isLoading: true));
 
     try {
+      await _subscription?.unsubscribe();
+      _subscription = null;
       _blockedSenderKeys.clear();
       final identity = await ref.read(riderIdentityProvider.future);
       final blockerId = identity.identityId ?? '';
@@ -96,17 +105,19 @@ class ChatNotifier extends AutoDisposeAsyncNotifier<ChatState> {
           .from('messages')
           .select()
           .eq('ride_request_id', rideId)
-          .order('created_at', ascending: true);
+          .order('created_at', ascending: true)
+          .order('id', ascending: true);
 
       final raw = (response as List)
           .map((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
           .toList();
       final messages = raw
-          .where((m) =>
-              !_blockedSenderKeys.contains(_senderKey(m.senderType, m.senderId)))
+          .where((m) => !_blockedSenderKeys
+              .contains(_senderKey(m.senderType, m.senderId)))
           .toList();
 
       state = AsyncData(ChatState(messages: messages));
+      _loadedRideId = rideId;
       _subscribeToMessages(rideId);
     } catch (e) {
       state = AsyncData(ChatState(error: e.toString()));
@@ -127,21 +138,58 @@ class ChatNotifier extends AutoDisposeAsyncNotifier<ChatState> {
           ),
           callback: (payload) {
             final newMessage = ChatMessage.fromJson(payload.newRecord);
-            if (_blockedSenderKeys
-                .contains(_senderKey(newMessage.senderType, newMessage.senderId))) {
+            if (_blockedSenderKeys.contains(
+                _senderKey(newMessage.senderType, newMessage.senderId))) {
               return;
             }
-            final currentMessages = state.value?.messages ?? [];
-            state = AsyncData(
-              ChatState(messages: [...currentMessages, newMessage]),
-            );
+            _appendMessage(newMessage);
             // Play notification sound only for messages from driver
             if (newMessage.senderType == 'driver') {
               SoundService().playNotification();
             }
           },
         )
-        .subscribe();
+        .subscribe((status, [error]) {
+      if (status == RealtimeSubscribeStatus.subscribed) {
+        unawaited(_recoverCanonicalMessages(rideId));
+      }
+    });
+  }
+
+  Future<void> _recoverCanonicalMessages(String rideId) async {
+    try {
+      final response = await HeyCabySupabase.client
+          .from('messages')
+          .select()
+          .eq('ride_request_id', rideId)
+          .order('created_at', ascending: true)
+          .order('id', ascending: true);
+      final recovered = (response as List)
+          .map((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
+          .where((message) => !_blockedSenderKeys
+              .contains(_senderKey(message.senderType, message.senderId)));
+      final current = state.value?.messages ?? const <ChatMessage>[];
+      final byId = <String, ChatMessage>{
+        for (final message in current) message.id: message,
+        for (final message in recovered) message.id: message,
+      };
+      final merged = byId.values.toList()
+        ..sort((a, b) {
+          final byTime = a.createdAt.compareTo(b.createdAt);
+          return byTime != 0 ? byTime : a.id.compareTo(b.id);
+        });
+      state = AsyncData(ChatState(messages: merged));
+    } catch (_) {
+      // The open channel remains usable; the next reconnect retries recovery.
+    }
+  }
+
+  void _appendMessage(ChatMessage message) {
+    final currentMessages = state.value?.messages ?? [];
+    if (currentMessages.any((m) => m.id == message.id)) return;
+    state = AsyncData(
+      ChatState(messages: [...currentMessages, message]),
+    );
   }
 
   /// Blocks the driver’s messages in this ride chat (App Store UGC / messaging).
@@ -193,19 +241,58 @@ class ChatNotifier extends AutoDisposeAsyncNotifier<ChatState> {
     );
   }
 
-  Future<void> sendMessage(String rideId, String message,
-      {required String senderId}) async {
+  Future<String?> sendMessage(
+    String rideId,
+    String message, {
+    required String senderId,
+    String? idempotencyKey,
+  }) async {
+    final retryKey =
+        idempotencyKey ?? HeyCabyRideChatMessages.newIdempotencyKey();
+    final pendingId = 'pending-$retryKey';
+    _appendMessage(
+      ChatMessage(
+        id: pendingId,
+        rideId: rideId,
+        senderId: senderId,
+        senderType: 'rider',
+        message: message,
+        createdAt: DateTime.now(),
+      ),
+    );
+
     try {
-      await HeyCabySupabase.client.from('messages').insert({
-        'ride_request_id': rideId,
-        'sender_id': senderId,
-        'sender_type': 'rider',
-        'content': message,
-      });
-    } catch (e) {
-      state = AsyncData(
-        state.value!.copyWith(error: 'Failed to send message'),
+      final row = await HeyCabyRideChatMessages.send(
+        rideId: rideId,
+        idempotencyKey: retryKey,
+        content: message,
       );
+      final canonical = ChatMessage.fromJson(row);
+      final current = state.value?.messages ?? [];
+      final messages = current.where((m) => m.id != pendingId).toList();
+      if (!messages.any((m) => m.id == canonical.id)) {
+        messages.add(canonical);
+      }
+      messages.sort((a, b) {
+        final byTime = a.createdAt.compareTo(b.createdAt);
+        return byTime != 0 ? byTime : a.id.compareTo(b.id);
+      });
+      state = AsyncData(
+        ChatState(
+          messages: messages,
+          error: null,
+        ),
+      );
+      return null;
+    } catch (e) {
+      final current = state.value?.messages ?? [];
+      state = AsyncData(
+        ChatState(
+          messages: current.where((m) => m.id != pendingId).toList(),
+          error: 'Failed to send message',
+        ),
+      );
+      return retryKey;
     }
   }
 
@@ -214,9 +301,34 @@ class ChatNotifier extends AutoDisposeAsyncNotifier<ChatState> {
       await HeyCabySupabase.client
           .from('messages')
           .update({'is_read': true}).eq('id', messageId);
+      markDriverMessagesReadLocally(messageIds: {messageId});
     } catch (e) {
       // Silent fail
     }
+  }
+
+  void markDriverMessagesReadLocally({Set<String>? messageIds}) {
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData(
+      current.copyWith(
+        messages: current.messages.map((message) {
+          final shouldMark = message.senderType == 'driver' &&
+              !message.isRead &&
+              (messageIds == null || messageIds.contains(message.id));
+          if (!shouldMark) return message;
+          return ChatMessage(
+            id: message.id,
+            rideId: message.rideId,
+            senderId: message.senderId,
+            senderType: message.senderType,
+            message: message.message,
+            createdAt: message.createdAt,
+            isRead: true,
+          );
+        }).toList(growable: false),
+      ),
+    );
   }
 }
 

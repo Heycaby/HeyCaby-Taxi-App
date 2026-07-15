@@ -83,7 +83,16 @@ final nearTermRideRequestProvider =
           'id, status, pickup_address, destination_address, scheduled_pickup_at, booking_mode, created_at',
         )
         .eq('rider_token', identity.riderToken!)
-        .inFilter('status', ['pending', 'bidding'])
+        .inFilter('status', [
+          'pending',
+          'bidding',
+          'assigned',
+          'accepted',
+          'driver_found',
+          'driver_en_route',
+          'driver_arrived',
+          'in_progress',
+        ])
         .order('created_at', ascending: false)
         .limit(8);
 
@@ -105,13 +114,15 @@ final nearTermRideRequestProvider =
             (m['created_at'] ?? '').toString(),
           ) ??
           now;
-      if (await _expireStaleInstantRideIfNeeded(
-        rideId: id,
-        riderToken: identity.riderToken!,
-        createdAt: createdAt,
-        now: now,
-        scheduledPickupAt: scheduled,
-      )) {
+      final isLiveRide = NearTermRideSnapshot.liveStatuses.contains(status);
+      if (!isLiveRide &&
+          await _expireStaleInstantRideIfNeeded(
+            rideId: id,
+            riderToken: identity.riderToken!,
+            createdAt: createdAt,
+            now: now,
+            scheduledPickupAt: scheduled,
+          )) {
         continue;
       }
 
@@ -205,8 +216,10 @@ final farFutureScheduledRideRequestsProvider =
   }
 });
 
-/// All open `ride_requests` for the Rides tab (live trip, matching, scheduled).
-/// Order: live trips, future scheduled (soonest first), then matching (newest first).
+/// All open `ride_requests` for the Rides tab (matching, scheduled — not live).
+/// Live rides (driver assigned, en route, in trip) are shown on Home via
+/// [ActiveBookingCard], not in the Rides tab.
+/// Order: future scheduled (soonest first), then matching (newest first).
 final ridesTabUpcomingRequestsProvider =
     FutureProvider.autoDispose<List<NearTermRideSnapshot>>((ref) async {
   final identity = await ref.watch(riderIdentityProvider.future);
@@ -240,9 +253,7 @@ final ridesTabUpcomingRequestsProvider =
       );
     }
 
-    final live = snaps.where((s) => s.isLiveRide).toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
+    // Exclude live rides — they belong on Home, not Rides tab.
     final futureSched = snaps
         .where(
           (s) =>
@@ -265,8 +276,8 @@ final ridesTabUpcomingRequestsProvider =
         .toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-    return [...live, ...futureSched, ...matching];
+    return [...futureSched, ...matching];
   } catch (_) {
-    rethrow;
+    return const [];
   }
 });

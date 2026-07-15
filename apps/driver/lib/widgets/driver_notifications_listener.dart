@@ -204,6 +204,23 @@ class _DriverNotificationsListenerState
           await api.markNotificationRead(n.id);
           continue;
         }
+        if (category == 'taxi_terug_offer_increased') {
+          ref.invalidate(driverTaxiThruRiderPostsProvider);
+          ref.invalidate(driverTaxiThruPostsCountProvider);
+          if (mounted) {
+            await dispatchDriverNotification(
+              context: context,
+              category: n.category,
+              title: n.title,
+              body: n.body,
+              data: n.data,
+              fromTap: false,
+              foreground: true,
+            );
+          }
+          await api.markNotificationRead(n.id);
+          continue;
+        }
 
         if (!mounted) return;
         await dispatchDriverNotification(

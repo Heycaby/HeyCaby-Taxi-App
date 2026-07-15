@@ -40,6 +40,7 @@ import 'screens/terms_screen.dart';
 import 'screens/privacy_screen.dart';
 import 'screens/rider_announcement_web_screen.dart';
 import 'utils/rider_home_banner_actions.dart';
+import 'utils/ride_chat_allowed.dart';
 import 'screens/rider_support_screen.dart';
 import 'screens/rider_support_threads_screen.dart';
 import 'screens/rider_support_new_ticket_screen.dart';
@@ -109,31 +110,7 @@ String? _bookingRouteRedirect(Ref ref, GoRouterState state) {
   return null;
 }
 
-bool _isRideChatAllowed(String? status) {
-  const activeStatuses = {
-    'assigned',
-    'accepted',
-    'driver_found',
-    'driver_en_route',
-    'driver_arrived',
-    'arrived',
-    'in_progress',
-  };
-  return status != null && activeStatuses.contains(status);
-}
-
-bool _isActiveRideStatus(String? status) {
-  const activeStatuses = {
-    'assigned',
-    'accepted',
-    'driver_found',
-    'driver_en_route',
-    'driver_arrived',
-    'arrived',
-    'in_progress',
-  };
-  return status != null && activeStatuses.contains(status);
-}
+bool _isRideChatAllowed(String? status) => isRideChatAllowed(status);
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final refresh = ref.watch(bookingRouteRefreshProvider);
@@ -243,19 +220,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/active',
-        redirect: (context, state) {
-          final ride = ref.read(rideRequestProvider);
-          final hasRide = (ride.rideRequestId?.trim().isNotEmpty ?? false);
-          if (hasRide && _isActiveRideStatus(ride.status)) {
-            return null;
-          }
-          if (hasRide &&
-              (ride.status == 'pending' || ride.status == 'bidding')) {
-            return rideMatchingVariantForBookingModeString(ride.bookingMode)
-                .routePath;
-          }
-          return '/home';
-        },
         pageBuilder: (_, state) => _page(state, const ActiveRideScreen()),
       ),
       GoRoute(

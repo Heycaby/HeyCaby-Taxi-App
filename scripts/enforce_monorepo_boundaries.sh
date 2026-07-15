@@ -9,9 +9,11 @@ failures=0
 check_no_matches() {
   local description="$1"
   local pattern="$2"
-  local path="$3"
+  local path_list="$3"
+  local -a paths
+  read -r -a paths <<<"$path_list"
 
-  if rg --pcre2 -n "$pattern" "$path" >/tmp/heycaby_boundary_check.txt 2>/dev/null; then
+  if rg -U --pcre2 -n "$pattern" "${paths[@]}" >/tmp/heycaby_boundary_check.txt 2>/dev/null; then
     echo "FAIL: $description"
     cat /tmp/heycaby_boundary_check.txt
     echo

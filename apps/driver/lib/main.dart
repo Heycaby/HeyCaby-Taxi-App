@@ -14,6 +14,8 @@ import 'screens/driver_ios_update_required_app.dart';
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // The provider notification itself owns background/lock-screen display.
+  // Normal taxi offers must not be converted to CallKit or VoIP calls.
 }
 
 void main() async {

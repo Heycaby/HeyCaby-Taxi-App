@@ -14,6 +14,7 @@ class DriverRateProfileQuickSwitch extends StatelessWidget {
     required this.standardProfile,
     required this.morningProfile,
     required this.eveningProfile,
+    required this.weekendProfile,
     required this.lateNightProfile,
     required this.isSaving,
     required this.onTapProfile,
@@ -26,6 +27,7 @@ class DriverRateProfileQuickSwitch extends StatelessWidget {
   final DriverRateProfile? standardProfile;
   final DriverRateProfile? morningProfile;
   final DriverRateProfile? eveningProfile;
+  final DriverRateProfile? weekendProfile;
   final DriverRateProfile? lateNightProfile;
   final bool isSaving;
   final void Function(DriverRateProfile profile) onTapProfile;
@@ -35,6 +37,7 @@ class DriverRateProfileQuickSwitch extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasMissingPreset = morningProfile == null ||
         eveningProfile == null ||
+        weekendProfile == null ||
         lateNightProfile == null;
 
     return Column(
@@ -93,6 +96,20 @@ class DriverRateProfileQuickSwitch extends StatelessWidget {
                 onTap: eveningProfile == null
                     ? null
                     : () => onTapProfile(eveningProfile!),
+              ),
+            ),
+            SizedBox(
+              width: 156,
+              child: DriverTariffModeChip(
+                title: DriverStrings.weekendTariff,
+                subtitle: DriverStrings.weekendShift,
+                selected: activeProfile?.id == weekendProfile?.id,
+                enabled: weekendProfile != null,
+                colors: colors,
+                typo: typo,
+                onTap: weekendProfile == null
+                    ? null
+                    : () => onTapProfile(weekendProfile!),
               ),
             ),
             SizedBox(

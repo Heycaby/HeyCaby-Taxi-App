@@ -14,23 +14,39 @@ class DriverFcmScope extends ConsumerStatefulWidget {
   ConsumerState<DriverFcmScope> createState() => _DriverFcmScopeState();
 }
 
-class _DriverFcmScopeState extends ConsumerState<DriverFcmScope> {
+class _DriverFcmScopeState extends ConsumerState<DriverFcmScope>
+    with WidgetsBindingObserver {
   StreamSubscription? _authSub;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     HeyCabyFcmRegistration.bindDriver();
-    HeyCabyFcmRegistration.wireTokenRefresh(appRole: 'driver');
+    unawaited(HeyCabyFcmRegistration.wireTokenRefresh(appRole: 'driver'));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (HeyCabySupabase.client.auth.currentUser != null) {
+        unawaited(HeyCabyFcmRegistration.sync(appRole: 'driver'));
+      }
+    });
     _authSub = HeyCabySupabase.client.auth.onAuthStateChange.listen((event) {
       if (event.session?.user != null) {
-        HeyCabyFcmRegistration.sync(appRole: 'driver');
+        unawaited(HeyCabyFcmRegistration.sync(appRole: 'driver'));
       }
     });
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        HeyCabySupabase.client.auth.currentUser != null) {
+      unawaited(HeyCabyFcmRegistration.sync(appRole: 'driver'));
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     unawaited(_authSub?.cancel());
     super.dispose();
   }

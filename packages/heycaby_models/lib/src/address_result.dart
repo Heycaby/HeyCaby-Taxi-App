@@ -29,6 +29,13 @@ class AddressResult {
     );
   }
 
+  /// True when lat/lng are real geographic coordinates (not (0,0) fallback).
+  bool get hasValidCoords =>
+      lat != 0.0 &&
+      lng != 0.0 &&
+      lat.abs() <= 90 &&
+      lng.abs() <= 180;
+
   Map<String, dynamic> toJson() => {
     'display_name': displayName,
     'full_address': fullAddress,

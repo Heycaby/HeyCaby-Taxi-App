@@ -5,11 +5,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class AppNotificationsService {
   const AppNotificationsService();
 
+  static const int defaultMaxAgeHours = 24;
+
   Future<List<Map<String, dynamic>>?> listOrNull({
     required String userType,
     bool unreadOnly = false,
     int limit = 30,
     String? riderIdentityId,
+    int maxAgeHours = defaultMaxAgeHours,
   }) async {
     try {
       final raw = await HeyCabySupabase.client.rpc(
@@ -18,6 +21,7 @@ class AppNotificationsService {
           'p_user_type': userType,
           'p_unread_only': unreadOnly,
           'p_limit': limit,
+          'p_max_age_hours': maxAgeHours,
           if (riderIdentityId != null && riderIdentityId.isNotEmpty)
             'p_rider_identity_id': riderIdentityId,
         },
@@ -39,6 +43,7 @@ class AppNotificationsService {
     bool unreadOnly = false,
     int limit = 30,
     String? riderIdentityId,
+    int maxAgeHours = defaultMaxAgeHours,
   }) async {
     try {
       final raw = await HeyCabySupabase.client.rpc(
@@ -47,6 +52,7 @@ class AppNotificationsService {
           'p_user_type': userType,
           'p_unread_only': unreadOnly,
           'p_limit': limit,
+          'p_max_age_hours': maxAgeHours,
           if (riderIdentityId != null && riderIdentityId.isNotEmpty)
             'p_rider_identity_id': riderIdentityId,
         },
@@ -102,6 +108,47 @@ class AppNotificationsService {
       final raw = await HeyCabySupabase.client.rpc(
         'fn_app_notifications_clear_read',
         params: {
+          'p_user_type': userType,
+          if (riderIdentityId != null && riderIdentityId.isNotEmpty)
+            'p_rider_identity_id': riderIdentityId,
+        },
+      );
+      return raw is Map && raw['ok'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteAll({
+    required String userType,
+    String? riderIdentityId,
+  }) async {
+    try {
+      final raw = await HeyCabySupabase.client.rpc(
+        'fn_app_notifications_delete_all',
+        params: {
+          'p_user_type': userType,
+          if (riderIdentityId != null && riderIdentityId.isNotEmpty)
+            'p_rider_identity_id': riderIdentityId,
+        },
+      );
+      return raw is Map && raw['ok'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteIds({
+    required List<String> notificationIds,
+    required String userType,
+    String? riderIdentityId,
+  }) async {
+    if (notificationIds.isEmpty) return true;
+    try {
+      final raw = await HeyCabySupabase.client.rpc(
+        'fn_app_notifications_delete_ids',
+        params: {
+          'p_notification_ids': notificationIds,
           'p_user_type': userType,
           if (riderIdentityId != null && riderIdentityId.isNotEmpty)
             'p_rider_identity_id': riderIdentityId,

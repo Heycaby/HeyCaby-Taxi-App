@@ -1,149 +1,212 @@
 #!/usr/bin/env python3
+"""Race the canonical production invite-accept RPC with competing Drivers.
+
+This tool intentionally does not create or reset data. Prepare one dedicated
+production smoke ride with a live invite for every supplied Driver, then set:
+
+  SUPABASE_URL=https://fvrprxguoternoxnyhoj.supabase.co
+  SUPABASE_ANON_KEY=<publishable key>
+  DRIVER_ACCEPT_JWTS_JSON='["<driver-a-jwt>","<driver-b-jwt>"]'
+
+The tokens are read only from the environment and are never printed.
+"""
+
 import argparse
 import base64
-import hashlib
-import hmac
 import json
 import os
 import statistics
+import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Dict, List, Tuple
+from dataclasses import dataclass
+from typing import Any
 from urllib import error, request
+from urllib.parse import urlparse
 
 
-def b64url(data: bytes) -> str:
-    return base64.urlsafe_b64encode(data).decode().rstrip("=")
+PRODUCTION_PROJECT_REF = "fvrprxguoternoxnyhoj"
+STAGING_PROJECT_REF = "fdavszxncggswuiwggcp"
+STABLE_LOSER_ERRORS = {
+    "race_lost",
+    "invite_not_pending",
+    "invite_expired",
+    "invite_not_found",
+    "ride_not_open",
+}
 
 
-def make_driver_jwt(driver_id: str, jwt_secret: str, ttl_seconds: int = 3600) -> str:
-    now = int(time.time())
-    header = {"alg": "HS256", "typ": "JWT"}
-    payload = {
-        "sub": driver_id,
-        "role": "authenticated",
-        "aud": "authenticated",
-        "exp": now + ttl_seconds,
-        "iat": now,
-        "user_metadata": {"user_type": "driver"},
-    }
-    unsigned = (
-        f"{b64url(json.dumps(header, separators=(',', ':')).encode())}."
-        f"{b64url(json.dumps(payload, separators=(',', ':')).encode())}"
-    ).encode()
-    sig = hmac.new(jwt_secret.encode(), unsigned, hashlib.sha256).digest()
-    return unsigned.decode() + "." + b64url(sig)
+@dataclass(frozen=True)
+class AcceptResult:
+    http_status: int
+    elapsed_ms: float
+    payload: dict[str, Any]
+
+    @property
+    def won(self) -> bool:
+        return self.http_status == 200 and self.payload.get("ok") is True
+
+    @property
+    def stable_loser(self) -> bool:
+        return (
+            self.http_status == 200
+            and self.payload.get("ok") is False
+            and self.payload.get("error") in STABLE_LOSER_ERRORS
+        )
 
 
-def supabase_reset_ride(supabase_url: str, service_key: str, ride_id: str) -> None:
-    patch_url = f"{supabase_url.rstrip('/')}/rest/v1/ride_requests?id=eq.{ride_id}"
-    body = json.dumps(
-        {
-            "status": "pending",
-            "driver_id": None,
-            "accepted_at": None,
-            "updated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        }
-    ).encode()
-    req = request.Request(patch_url, method="PATCH", data=body)
-    req.add_header("apikey", service_key)
-    req.add_header("Authorization", f"Bearer {service_key}")
-    req.add_header("Content-Type", "application/json")
-    req.add_header("Prefer", "return=minimal")
-    with request.urlopen(req, timeout=10):
-        pass
-
-
-def accept_once(url: str, token: str, timeout: float) -> Tuple[int, float]:
-    started = time.perf_counter()
-    req = request.Request(url, method="POST")
-    req.add_header("Authorization", f"Bearer {token}")
-    try:
-        with request.urlopen(req, timeout=timeout) as resp:
-            code = resp.status
-            resp.read()
-    except error.HTTPError as e:
-        code = e.code
-        e.read()
-    except Exception:
-        code = 0
-    elapsed_ms = (time.perf_counter() - started) * 1000.0
-    return code, elapsed_ms
-
-
-def percentile(values: List[float], pct: float) -> float:
+def _percentile(values: list[float], pct: float) -> float:
     if not values:
         return 0.0
-    idx = max(0, min(len(values) - 1, int(round((pct / 100.0) * (len(values) - 1)))))
-    arr = sorted(values)
-    return arr[idx]
+    ordered = sorted(values)
+    index = round((pct / 100.0) * (len(ordered) - 1))
+    return ordered[max(0, min(index, len(ordered) - 1))]
+
+
+def _decode_payload(raw: bytes) -> dict[str, Any]:
+    try:
+        value = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return {"error": "invalid_response"}
+    return value if isinstance(value, dict) else {"error": "invalid_response"}
+
+
+def _accept_once(
+    endpoint: str,
+    anon_key: str,
+    driver_jwt: str,
+    ride_id: str,
+    timeout_seconds: float,
+) -> AcceptResult:
+    started = time.perf_counter()
+    body = json.dumps({"p_ride_request_id": ride_id}).encode("utf-8")
+    req = request.Request(endpoint, method="POST", data=body)
+    req.add_header("apikey", anon_key)
+    req.add_header("Authorization", f"Bearer {driver_jwt}")
+    req.add_header("Content-Type", "application/json")
+    try:
+        with request.urlopen(req, timeout=timeout_seconds) as response:
+            status = response.status
+            payload = _decode_payload(response.read())
+    except error.HTTPError as exc:
+        status = exc.code
+        payload = _decode_payload(exc.read())
+    except Exception as exc:  # Network failures are reported without secrets.
+        status = 0
+        payload = {"error": type(exc).__name__}
+    return AcceptResult(
+        http_status=status,
+        elapsed_ms=(time.perf_counter() - started) * 1000.0,
+        payload=payload,
+    )
+
+
+def _load_driver_tokens() -> list[str]:
+    raw = os.getenv("DRIVER_ACCEPT_JWTS_JSON", "")
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise SystemExit("DRIVER_ACCEPT_JWTS_JSON must be a JSON array") from exc
+    if not isinstance(parsed, list) or len(parsed) < 2:
+        raise SystemExit("At least two competing Driver JWTs are required")
+    tokens = [token.strip() for token in parsed if isinstance(token, str)]
+    if len(tokens) != len(parsed) or any(not token for token in tokens):
+        raise SystemExit("Every Driver JWT must be a non-empty string")
+    subjects: list[str] = []
+    for token in tokens:
+        try:
+            encoded_payload = token.split(".")[1]
+            padded = encoded_payload + "=" * (-len(encoded_payload) % 4)
+            payload = json.loads(base64.urlsafe_b64decode(padded))
+            subject = payload.get("sub")
+        except (IndexError, ValueError, json.JSONDecodeError) as exc:
+            raise SystemExit("Every Driver credential must be a JWT") from exc
+        if not isinstance(subject, str) or not subject:
+            raise SystemExit("Every Driver JWT must contain a subject")
+        subjects.append(subject)
+    if len(set(subjects)) != len(subjects):
+        raise SystemExit("Driver JWTs must represent distinct test Drivers")
+    return tokens
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Concurrent ride accept race load test")
-    parser.add_argument("--api-base", required=True, help="Backend base URL")
-    parser.add_argument("--ride-id", required=True, help="Ride request ID to race on")
-    parser.add_argument("--driver-id", required=True, help="Driver UUID for JWT sub")
-    parser.add_argument("--rounds", type=int, default=10, help="Number of race rounds")
-    parser.add_argument("--concurrency", type=int, default=20, help="Parallel accept requests per round")
-    parser.add_argument("--timeout-sec", type=float, default=8.0, help="HTTP timeout per request")
-    parser.add_argument(
-        "--sleep-between-rounds-sec",
-        type=float,
-        default=16.0,
-        help="Delay between rounds to allow lock TTL expiry",
+    parser = argparse.ArgumentParser(
+        description="Race competing Drivers against fn_driver_accept_ride_invite",
     )
+    parser.add_argument("--ride-id", required=True, help="Dedicated smoke ride UUID")
+    parser.add_argument(
+        "--fixture-confirmed",
+        action="store_true",
+        help="Confirm the ride and invites are disposable production smoke fixtures",
+    )
+    parser.add_argument("--timeout-sec", type=float, default=8.0)
     args = parser.parse_args()
 
-    jwt_secret = os.getenv("SUPABASE_JWT_SECRET", "")
-    supabase_url = os.getenv("SUPABASE_URL", "")
-    service_key = os.getenv("SUPABASE_SERVICE_KEY", "")
-    if not jwt_secret or not supabase_url or not service_key:
-        raise SystemExit("SUPABASE_JWT_SECRET, SUPABASE_URL, SUPABASE_SERVICE_KEY are required env vars")
+    if not args.fixture_confirmed:
+        raise SystemExit(
+            "Refusing to mutate production without --fixture-confirmed",
+        )
 
-    token = make_driver_jwt(args.driver_id, jwt_secret)
-    accept_url = f"{args.api_base.rstrip('/')}/api/v1/driver/ride/{args.ride_id}/accept"
+    supabase_url = os.getenv("SUPABASE_URL", "").rstrip("/")
+    anon_key = os.getenv("SUPABASE_ANON_KEY", "")
+    host = (urlparse(supabase_url).hostname or "").lower()
+    if STAGING_PROJECT_REF in host:
+        raise SystemExit("Staging is retired; this harness must not use it")
+    if PRODUCTION_PROJECT_REF not in host:
+        raise SystemExit("SUPABASE_URL must be the HeyCaby production project")
+    if not anon_key:
+        raise SystemExit("SUPABASE_ANON_KEY is required")
 
-    all_latencies: List[float] = []
-    per_round: List[Dict[str, int]] = []
+    tokens = _load_driver_tokens()
+    endpoint = f"{supabase_url}/rest/v1/rpc/fn_driver_accept_ride_invite"
 
-    for _ in range(args.rounds):
-        supabase_reset_ride(supabase_url, service_key, args.ride_id)
-        codes: List[int] = []
-        with ThreadPoolExecutor(max_workers=args.concurrency) as ex:
-            futures = [ex.submit(accept_once, accept_url, token, args.timeout_sec) for _ in range(args.concurrency)]
-            for f in as_completed(futures):
-                code, elapsed = f.result()
-                codes.append(code)
-                all_latencies.append(elapsed)
-        summary = {
-            "200": sum(1 for c in codes if c == 200),
-            "409": sum(1 for c in codes if c == 409),
-            "other": sum(1 for c in codes if c not in (200, 409)),
-        }
-        per_round.append(summary)
-        time.sleep(args.sleep_between_rounds_sec)
+    results: list[AcceptResult] = []
+    with ThreadPoolExecutor(max_workers=len(tokens)) as executor:
+        futures = [
+            executor.submit(
+                _accept_once,
+                endpoint,
+                anon_key,
+                token,
+                args.ride_id,
+                args.timeout_sec,
+            )
+            for token in tokens
+        ]
+        for future in as_completed(futures):
+            results.append(future.result())
 
+    winners = sum(result.won for result in results)
+    stable_losers = sum(result.stable_loser for result in results)
+    unexpected = len(results) - winners - stable_losers
+    latencies = [result.elapsed_ms for result in results]
+    error_counts: dict[str, int] = {}
+    for result in results:
+        if result.won:
+            continue
+        code = str(result.payload.get("error") or f"http_{result.http_status}")
+        error_counts[code] = error_counts.get(code, 0) + 1
+
+    passed = winners == 1 and stable_losers == len(results) - 1
     output = {
-        "rounds": args.rounds,
-        "concurrency": args.concurrency,
-        "per_round": per_round,
-        "all_rounds": {
-            "total_requests": len(all_latencies),
-            "latency_ms_avg": round(statistics.mean(all_latencies), 2) if all_latencies else 0.0,
-            "latency_ms_p50": round(percentile(all_latencies, 50), 2),
-            "latency_ms_p95": round(percentile(all_latencies, 95), 2),
-            "latency_ms_p99": round(percentile(all_latencies, 99), 2),
-            "success_200": sum(r["200"] for r in per_round),
-            "conflict_409": sum(r["409"] for r in per_round),
-            "other": sum(r["other"] for r in per_round),
-            "rounds_with_exactly_one_winner": sum(1 for r in per_round if r["200"] == 1),
+        "production_project": PRODUCTION_PROJECT_REF,
+        "ride_id": args.ride_id,
+        "competitors": len(results),
+        "winner_count": winners,
+        "stable_loser_count": stable_losers,
+        "unexpected_count": unexpected,
+        "loser_errors": error_counts,
+        "latency_ms": {
+            "average": round(statistics.mean(latencies), 2),
+            "p50": round(_percentile(latencies, 50), 2),
+            "p95": round(_percentile(latencies, 95), 2),
+            "max": round(max(latencies), 2),
         },
+        "passed": passed,
     }
-    print(json.dumps(output, indent=2))
-    return 0
+    print(json.dumps(output, indent=2, sort_keys=True))
+    return 0 if passed else 1
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
-
+    sys.exit(main())

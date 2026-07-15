@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Support — HeyCaby</title>
+<meta name="description" content="HeyCaby support: hulp en antwoorden voor rijders en chauffeurs. Veelgestelde vragen, contact en app-ondersteuning."/>
+<meta name="keywords" content="HeyCaby support, taxi app help, chauffeur support, rijder support, Nederlandse taxi app hulp"/>
+<meta name="robots" content="index, follow"/>
+<meta name="author" content="HeyCaby"/>
+<meta name="application-name" content="HeyCaby"/>
+<link rel="canonical" href="https://www.heycaby.nl/support"/>
+<meta property="og:title" content="Support — HeyCaby"/>
+<meta property="og:description" content="HeyCaby support: hulp en antwoorden voor rijders en chauffeurs."/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://www.heycaby.nl/support"/>
+<meta property="og:site_name" content="HeyCaby"/>
+<meta property="og:locale" content="nl_NL"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Support — HeyCaby"/>
+<meta name="twitter:description" content="HeyCaby support: hulp en antwoorden voor rijders en chauffeurs."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet"/>
+<style>
+/* HeyCaby driver app: cream #FAF8F4, gold #E6A800, cards white */
+:root{--bg:#FAF8F4;--card:#FFFFFF;--ink:#111111;--muted:#6B7280;--border:#E8E8E6;--accent:#E6A800;--accent-l:#FFF6D6;--green:#1C2B1A;--success:#0D9488;}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;}
+.topbar{position:sticky;top:0;z-index:100;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;box-shadow:0 1px 0 rgba(0,0,0,.03);}
+.topbar-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:19px;color:var(--accent);letter-spacing:-0.5px;text-decoration:none;}
+.topbar-links{display:flex;gap:16px;align-items:center;}
+.topbar-links a{font-size:13px;font-weight:600;color:var(--ink);opacity:.55;text-decoration:none;transition:opacity .2s,color .2s;}
+.topbar-links a:hover{opacity:1;color:var(--accent);}
+.hero{background:linear-gradient(180deg,var(--card) 0%,var(--bg) 100%);padding:48px 24px 32px;border-bottom:1px solid var(--border);}
+.hero-inner{max-width:680px;margin:0 auto;text-align:center;position:relative;z-index:1;}
+.hero-icon{width:56px;height:56px;background:var(--accent-l);border:1px solid rgba(230,168,0,.35);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;}
+.hero-icon svg{width:26px;height:26px;fill:var(--accent);}
+.hero h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(26px,5vw,38px);color:var(--ink);line-height:1.2;margin-bottom:12px;letter-spacing:-0.5px;}
+.hero h1 span{color:var(--accent);}
+.hero-sub{font-size:14px;color:var(--muted);margin-bottom:28px;}
+.search-wrap{max-width:480px;margin:0 auto 40px;position:relative;}
+.search-wrap input{width:100%;padding:14px 50px 14px 18px;border-radius:12px;border:1.5px solid var(--border);background:var(--card);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:all .2s;}
+.search-wrap input::placeholder{color:var(--muted);}
+.search-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-l);}
+.search-wrap svg{position:absolute;right:16px;top:50%;transform:translateY(-50%);width:18px;height:18px;opacity:.4;}
+.main{max-width:900px;margin:0 auto;padding:40px 24px 88px;}
+.contact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:52px;}
+.contact-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px 20px;text-align:center;text-decoration:none;transition:all .2s;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.contact-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.08);}
+.contact-card-icon{width:44px;height:44px;border-radius:12px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;}
+.contact-card-icon svg{width:20px;height:20px;}
+.contact-card h3{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.contact-card p{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5;}
+.contact-card .cta{font-size:12px;font-weight:700;color:var(--accent);}
+.section-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;}
+.faq{margin-bottom:52px;}
+.faq-grid{display:flex;flex-direction:column;gap:8px;}
+.faq-item{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.03);}
+.faq-q{width:100%;background:none;border:none;padding:16px 20px;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;color:var(--ink);transition:color .15s;}
+.faq-q:hover{color:var(--accent);}
+.faq-q svg{width:16px;height:16px;fill:var(--accent);flex-shrink:0;transition:transform .25s;}
+.faq-q.open svg{transform:rotate(45deg);}
+.faq-a{display:none;padding:0 20px 16px;font-size:13px;color:#2d2d2d;line-height:1.7;}
+.faq-a.open{display:block;}
+.faq-a a{color:var(--accent);font-weight:600;}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.tab{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--card);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;}
+.tab:hover,.tab.active{background:var(--accent);color:var(--ink);border-color:var(--accent);}
+.guides{margin-bottom:52px;}
+.guides-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+.guide-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;text-decoration:none;display:block;transition:all .2s;box-shadow:0 1px 4px rgba(0,0,0,.03);}
+.guide-card:hover{border-color:var(--accent);transform:translateY(-1px);}
+.guide-card-tag{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
+.guide-card h4{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--ink);margin-bottom:6px;line-height:1.3;}
+.guide-card p{font-size:12px;color:var(--muted);line-height:1.5;}
+.status-bar{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:12px;margin-bottom:52px;box-shadow:0 1px 4px rgba(0,0,0,.03);}
+.status-dot{width:10px;height:10px;border-radius:50%;background:var(--success);flex-shrink:0;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(13,148,136,.4)}50%{box-shadow:0 0 0 6px rgba(13,148,136,0)}}
+.status-text{font-size:13px;color:var(--ink);font-weight:600;}
+.status-text span{color:var(--muted);font-weight:400;}
+footer{background:var(--card);border-top:1px solid var(--border);padding:32px 24px;text-align:center;}
+footer p{font-size:12px;color:var(--muted);margin:4px 0;}
+footer a{color:var(--accent);text-decoration:none;font-weight:600;}
+.footer-links{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin-bottom:10px;}
+.footer-links a{font-size:12px;color:var(--muted);}
+.footer-links a:hover{color:var(--accent);}
+@media(max-width:600px){.topbar{padding:0 16px;}.hero{padding:40px 16px 24px;}.main{padding:32px 16px 60px;}}
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <a class="topbar-logo" href="https://www.heycaby.nl">HeyCaby</a>
+  <div class="topbar-links">
+    <a href="https://www.heycaby.nl/chauffeur/voorwaarden">Voorwaarden</a>
+    <a href="https://www.heycaby.nl/privacy">Privacy</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+    </div>
+    <h1>Hoe kunnen we<br><span>u helpen?</span></h1>
+    <p class="hero-sub">Support voor chauffeurs en passagiers van HeyCaby</p>
+    <div class="search-wrap">
+      <input type="text" placeholder="Zoek in help-artikelen…" id="searchInput"/>
+      <svg viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M16.65 16.65A7.5 7.5 0 1116.65 2a7.5 7.5 0 010 15z" stroke="rgba(255,255,255,.4)" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- STATUS -->
+  <div class="status-bar">
+    <div class="status-dot"></div>
+    <div class="status-text">Alle systemen operationeel &nbsp;<span>· Laatste controle: vandaag</span></div>
+  </div>
+
+  <!-- CONTACT CHANNELS -->
+  <div class="section-title">Contact opnemen</div>
+  <div class="contact-grid">
+
+    <a class="contact-card" href="mailto:support@heycaby.nl">
+      <div class="contact-card-icon" style="background:#f0f4ff;">
+        <svg viewBox="0 0 24 24" fill="#4a7ff0"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+      </div>
+      <h3>E-mail Support</h3>
+      <p>Stuur ons een e-mail. We reageren binnen 1 werkdag.</p>
+      <span class="cta">support@heycaby.nl →</span>
+    </a>
+
+    <a class="contact-card" href="mailto:legal@heycaby.nl">
+      <div class="contact-card-icon" style="background:#f4f0ff;">
+        <svg viewBox="0 0 24 24" fill="#7c5cbf"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+      </div>
+      <h3>Juridisch &amp; Privacy</h3>
+      <p>Vragen over voorwaarden, AVG of uw gegevens.</p>
+      <span class="cta">legal@heycaby.nl →</span>
+    </a>
+
+    <a class="contact-card" href="mailto:privacy@heycaby.nl">
+      <div class="contact-card-icon" style="background:#f0faf4;">
+        <svg viewBox="0 0 24 24" fill="#27a060"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+      </div>
+      <h3>Privacy verzoeken</h3>
+      <p>Inzage, verwijdering of correctie van uw gegevens.</p>
+      <span class="cta">privacy@heycaby.nl →</span>
+    </a>
+
+    <a class="contact-card" href="https://www.heycaby.nl/app" style="background:var(--green);">
+      <div class="contact-card-icon" style="background:rgba(232,160,32,.2);">
+        <svg viewBox="0 0 24 24" fill="#E8A020"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+      </div>
+      <h3 style="color:#fff;">Live Chat</h3>
+      <p style="color:rgba(255,255,255,.6);">Stel uw vraag direct via Lee in de chauffeurs-app.</p>
+      <span class="cta" style="color:var(--amber);">Open de app →</span>
+    </a>
+
+  </div>
+
+  <!-- FAQ -->
+  <div class="faq" id="faq">
+    <div class="section-title">Veelgestelde vragen</div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="filterFAQ('all',this)">Alle vragen</div>
+      <div class="tab" onclick="filterFAQ('account',this)">Account</div>
+      <div class="tab" onclick="filterFAQ('veriff',this)">Verificatie</div>
+      <div class="tab" onclick="filterFAQ('docs',this)">Documenten</div>
+      <div class="tab" onclick="filterFAQ('betaling',this)">Betalingen</div>
+      <div class="tab" onclick="filterFAQ('ritten',this)">Ritten</div>
+    </div>
+
+    <div class="faq-grid" id="faqGrid">
+
+      <div class="faq-item" data-cat="veriff">
+        <button class="faq-q" onclick="toggleFAQ(this)">
+          Hoe werkt de identiteitsverificatie via Veriff?
+          <svg viewBox="0 0 24 24"><path d="M12 4v16m-8-8h16"/></svg>
+        </button>
+        <div class="faq-a">
+          HeyCaby maakt gebruik van Veriff voor de verificatie van uw identiteit en rijbewijs. Na registratie wordt u doorgestuurd naar de Veriff-omgeving. U uploadt een foto van uw rijbewijs (voor- en achterkant) en maakt een selfie of biometrische liveness-check. Veriff verwerkt dit automatisch en stuurt de uitkomst naar HeyCaby. Het proces duurt gemiddeld 2–5 minuten. Zie voor meer informatie: <a href="https://www.veriff.com/privacy-notice" target="_blank">veriff.com/privacy-notice</a>.
+        </div>
+      </div>
+
+      <div class="faq-item" data-cat="veriff">
+        <button class="faq-q" onclick="toggleFAQ(this)">
+          Mijn Veriff-verificatie is afgewezen — wat nu?
+          <svg viewBox="0 0 24 24"><path d="M12 4v16m-8-8h16"/></svg>
+        </button>
+        <div class="faq-a">
+          Als uw verificatie is afgewezen of aanvullende documenten vereist zijn, ontvangt u hierover een pushmelding en een e-mail. Open de app en volg de instructies om opnieuw te verifiëren. Zorg dat uw rijbewijs goed verlicht, scherp en volledig in beeld is. Als het probleem aanhoudt, neem dan contact op via <a href="mailto:support@heycaby.nl">support@heycaby.nl</a>.
+        </div>
+      </div>
+
+      <div class="faq-item" data-cat="account">
+        <button class="faq-q" onclick="toggleFAQ(this)">
+          Wanneer kan ik beginnen met ritten aannemen?
+          <svg viewBox="0 0 24 24"><path d="M12 4v16m-8-8h16"/></svg>
+        </button>
+        <div class="faq-a">
+          U kunt beginnen met ritten aannemen zodra alle verplichte documenten zijn ingediend én goedgekeurd door ons team. Na goedkeuring ontvangt u een felicitatiebericht in de app en wordt de groene verificatiebadge zichtbaar naast uw naam. Gemiddelde doorlooptijd na indienen van alle documenten: 1–3 werkdagen.
+        </div>
+      </div>
+
+      <div class="faq-item" data-cat="docs">
+        <button class="faq-q" onclick="toggleFAQ(this)">
+          Welke documenten heb ik nodig om te registreren?
+          <svg viewBox="0 0 24 24"><path d="M12 4v16m-8-8h16"/></svg>
+        </button>
+        <div class="faq-a">
+          Voor registratie als chauffeur heeft u nodig: (1) Chauffeurspas (Wpv 2000), (2) Rijbewijs geverifieerd via Veriff, (3) Taxiverzekering (polisblad), (4) KvK-inschrijving als ZZP/BV, (5) Kentekenbewijs van een als taxi geregistreerd voertuig. Alle documenten worden ingediend via de documenten-sectie in de app.
+        </div>
+      </div>
+
+      <div class="faq-item" data-cat="docs">
+        <button class="faq-q" onclick="toggleFAQ(this)">
+          Wat is het formaat van een chauffeurspas nummer?
+          <svg viewBox="0 0 24 24"><path d="M12 4v16m-8-8h16"/></svg>
+        </button>
+        <div class="faq-a">
+          Een Nederlands chauffeurspas nummer bestaat uit 8 tot 12 cijfers, soms voorafgegaan door "NL". Voer alleen de cijfers in — de app valideert het formaat automatisch. Het nummer staat op de voorzijde van uw chauffeurspas. Na indienen verifieert ons team het handmatig.
+        </div>
+      </div>
+
+      <div class="faq-item" data-cat="account">
+        <button class="faq-q" onclick="toggleFAQ(this)">
+          Kan ik mijn profielfoto wijzigen?
+          <svg viewBox="0 0 24 24"><path d="M12 4v16m-8-8h16"/></svg>
+        </button>
+        <div class="faq-a">
+          Uw profielfoto wordt vergrendeld na de eerste upload. Dit is een veiligheidsmaatregel zodat passagiers altijd de juiste chauffeur herkennen. Wilt u uw foto laten wijzigen, neem dan contact op via <a href="mailto:support@heycaby.nl">support@heycaby.nl</a>. Wijzigingen vereisen handmatige beoordeling.
+        </div>
+      </div>
+
+      <div class="faq-item" data-cat="betaling">
+        <button class="faq-q" onclick="toggleFAQ(this)">
+          Welke betaalmethoden kan ik accepteren?
+          <svg viewBox="0 0 24 24"><path d="M12 4v16m-8-8h16"/></svg>
+        </button>
+        <div class="faq-a">
+          Via de Voorkeuren-sectie in de app kunt u instellen welke betaalmethoden u accepteert: Contant, Pinnen (card), Tikkie, en Op rekening (factuur). U moet minimaal één betaalmethode actief hebben. De instelling wordt direct opgeslagen zodra u wijzigingen maakt.
+        </div>
+      </div>
+
+      <div class="faq-item" data-cat="betaling">
+        <button class="faq-q" onclick="toggleFAQ(this)">
+          Hoeveel kost het abonnement?
+          <svg viewBox="0 0 24 24"><path d="M12 4v16m-8-8h16"/></svg>
+        </button>
+        <div class="faq-a">
+          HeyCaby hanteert een abonnementsmodel zonder commissie per rit. U betaalt een vast maandelijks bedrag en houdt 100% van elke ritprijs. Actuele tarieven zijn te vinden op <a href="https://www.heycaby.nl/tarieven">heycaby.nl/tarieven</a>.
+        </div>
+      </div>
+
+      <div class="faq-item" data-cat="ritten">
+        <button class="faq-q" onclick="toggleFAQ(this)">
+          Hoe stel ik mijn ophaalafstand in?
+          <svg viewBox="0 0 24 24"><path d="M12 4v16m-8-8h16"/></svg>
+        </button>
+        <div class="faq-a">
+          Ga naar Voorkeuren → Ophaalafstand. Stel de maximale afstand in kilometers in waarbinnen u ritten wilt accepteren. Tik op Opslaan. De instelling wordt direct opgeslagen in onze systemen. De standaardwaarde is 20 km.
+        </div>
+      </div>
+
+      <div class="faq-item" data-cat="ritten">
+        <button class="faq-q" onclick="toggleFAQ(this)">
+          Wat betekent de groene verificatiebadge?
+          <svg viewBox="0 0 24 24"><path d="M12 4v16m-8-8h16"/></svg>
+        </button>
+        <div class="faq-a">
+          De groene badge naast uw naam toont aan dat alle verplichte documenten zijn ingediend en goedgekeurd door het HeyCaby-team. Uw account is volledig geverifieerd en u kunt ritten aannemen. Passagiers zien deze badge als bewijs van uw betrouwbaarheid.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- GUIDES -->
+  <div class="guides">
+    <div class="section-title">Handleidingen en gidsen</div>
+    <div class="guides-grid">
+      <a class="guide-card" href="#">
+        <div class="guide-card-tag">Aan de slag</div>
+        <h4>Registratie als chauffeur — stap voor stap</h4>
+        <p>Van account aanmaken tot uw eerste rit — alles uitgelegd.</p>
+      </a>
+      <a class="guide-card" href="#">
+        <div class="guide-card-tag">Verificatie</div>
+        <h4>Identiteitsverificatie via Veriff</h4>
+        <p>Hoe de verificatieprocedure werkt en wat u nodig heeft.</p>
+      </a>
+      <a class="guide-card" href="#">
+        <div class="guide-card-tag">Documenten</div>
+        <h4>Welke documenten zijn verplicht?</h4>
+        <p>Overzicht van alle vereiste documenten met uitleg per type.</p>
+      </a>
+      <a class="guide-card" href="#">
+        <div class="guide-card-tag">Voertuig</div>
+        <h4>Voertuig verifiëren via kentekencheck</h4>
+        <p>Hoe de automatische RDW-kentekennachslag werkt.</p>
+      </a>
+      <a class="guide-card" href="#">
+        <div class="guide-card-tag">Tarieven</div>
+        <h4>Hoe stel ik mijn tarieven in?</h4>
+        <p>Vrije tariefstelling — u bepaalt zelf wat u vraagt per rit.</p>
+      </a>
+      <a class="guide-card" href="#">
+        <div class="guide-card-tag">Veiligheid</div>
+        <h4>Omgaan met moeilijke passagiers</h4>
+        <p>Beleid en stappen bij klachten, incidenten of gevaarlijke situaties.</p>
+      </a>
+    </div>
+  </div>
+
+  <!-- LEGAL LINKS -->
+  <div>
+    <div class="section-title">Juridische informatie</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">
+      <a href="https://www.heycaby.nl/chauffeur/voorwaarden" style="display:block;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#E8A020'" onmouseout="this.style.borderColor='#ddd8cf'">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--amber);margin-bottom:5px;">Chauffeurs</div>
+        <div style="font-size:13px;font-weight:600;color:var(--green);">Algemene Voorwaarden</div>
+      </a>
+      <a href="https://www.heycaby.nl/privacy" style="display:block;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#E8A020'" onmouseout="this.style.borderColor='#ddd8cf'">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--amber);margin-bottom:5px;">AVG / GDPR</div>
+        <div style="font-size:13px;font-weight:600;color:var(--green);">Privacyverklaring</div>
+      </a>
+      <a href="https://www.veriff.com/privacy-notice" target="_blank" rel="noopener" style="display:block;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='#E8A020'" onmouseout="this.style.borderColor='#ddd8cf'">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--amber);margin-bottom:5px;">Veriff</div>
+        <div style="font-size:13px;font-weight:600;color:var(--green);">Privacybeleid verificatie</div>
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="https://www.heycaby.nl">Home</a>
+    <a href="https://www.heycaby.nl/chauffeur/voorwaarden">Voorwaarden</a>
+    <a href="https://www.heycaby.nl/privacy">Privacy</a>
+    <a href="mailto:support@heycaby.nl">support@heycaby.nl</a>
+  </div>
+  <p>&copy; 2026 HeyCaby B.V. · Alle rechten voorbehouden</p>
+</footer>
+
+<script>
+function toggleFAQ(btn){
+  const a=btn.nextElementSibling;
+  const open=a.classList.contains('open');
+  document.querySelectorAll('.faq-a.open').forEach(el=>el.classList.remove('open'));
+  document.querySelectorAll('.faq-q.open').forEach(el=>el.classList.remove('open'));
+  if(!open){a.classList.add('open');btn.classList.add('open');}
+}
+function filterFAQ(cat,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.faq-item').forEach(item=>{
+    item.style.display=(cat==='all'||item.dataset.cat===cat)?'':'none';
+  });
+}
+document.getElementById('searchInput').addEventListener('input',function(){
+  const q=this.value.toLowerCase();
+  document.querySelectorAll('.faq-item').forEach(item=>{
+    const txt=item.textContent.toLowerCase();
+    item.style.display=(!q||txt.includes(q))?'':'none';
+  });
+});
+</script>
+</body>
+</html>

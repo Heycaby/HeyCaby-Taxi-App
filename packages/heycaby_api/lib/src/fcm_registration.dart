@@ -13,17 +13,19 @@ class HeyCabyNotificationReadiness {
     required this.alertsEnabled,
     required this.soundsEnabled,
     required this.timeSensitiveEnabled,
-    required this.tokenRegistered,
+    required this.deviceRegistered,
   });
 
   final bool authorized;
   final bool alertsEnabled;
   final bool soundsEnabled;
   final bool timeSensitiveEnabled;
-  final bool tokenRegistered;
+
+  /// True when this device's FCM token exists in [push_devices] for the app role.
+  final bool deviceRegistered;
 
   bool get ready =>
-      authorized && alertsEnabled && soundsEnabled && tokenRegistered;
+      authorized && alertsEnabled && soundsEnabled && deviceRegistered;
 }
 
 /// FCM token lifecycle: [push_devices] via RPC only (no Expo).
@@ -67,45 +69,105 @@ class HeyCabyFcmRegistration {
         sound: true,
         provisional: false,
       );
+      // Proxy is disabled in Info.plist — native AppDelegate forwards the token;
+      // this nudges iOS to deliver it before we poll in [_resolveFcmToken].
+      await FirebaseMessaging.instance.getAPNSToken();
     }
   }
 
-  static Future<String?> _resolveFcmToken() async {
-    final attempts = Platform.isIOS ? 5 : 2;
-    for (var i = 0; i < attempts; i++) {
-      String? token;
+  /// iOS/macOS: FCM requires an APNs device token first (Firebase proxy off).
+  static Future<bool> _waitForApnsToken({
+    int maxAttempts = 20,
+  }) async {
+    if (!Platform.isIOS && !Platform.isMacOS) return true;
+
+    for (var i = 0; i < maxAttempts; i++) {
       try {
-        token = await FirebaseMessaging.instance.getToken();
+        final apns = await FirebaseMessaging.instance.getAPNSToken();
+        if (apns != null && apns.isNotEmpty) {
+          return true;
+        }
+      } catch (e) {
+        if (kDebugMode && i == 0) {
+          debugPrint('HeyCabyFcm getAPNSToken: $e');
+        }
+      }
+      final delayMs = i < 5 ? 400 : 800;
+      await Future<void>.delayed(Duration(milliseconds: delayMs));
+    }
+    return false;
+  }
+
+  static Future<String?> _resolveFcmToken() async {
+    if (Platform.isIOS || Platform.isMacOS) {
+      final apnsReady = await _waitForApnsToken();
+      if (!apnsReady) {
+        if (kDebugMode) {
+          debugPrint(
+            'HeyCabyFcm: APNs token not ready (simulator, entitlements, or '
+            'notification permission?)',
+          );
+        }
+        return null;
+      }
+    }
+
+    final attempts = Platform.isIOS ? 8 : 2;
+    for (var i = 0; i < attempts; i++) {
+      try {
+        final token = await FirebaseMessaging.instance.getToken();
+        if (token != null && token.length >= 10) {
+          return token;
+        }
       } catch (e) {
         if (kDebugMode) {
           debugPrint(
               'HeyCabyFcm getToken attempt ${i + 1}/$attempts failed: $e');
         }
       }
-      if (token != null && token.length >= 10) {
-        return token;
-      }
-      if (Platform.isIOS) {
-        try {
-          await FirebaseMessaging.instance.getAPNSToken();
-        } catch (_) {}
-      }
-      await Future<void>.delayed(const Duration(seconds: 1));
+      await Future<void>.delayed(const Duration(milliseconds: 600));
     }
     return null;
   }
 
+  static Future<String?> _resolveApnsToken() async {
+    if (!Platform.isIOS && !Platform.isMacOS) return null;
+    final ready = await _waitForApnsToken();
+    if (!ready) return null;
+    try {
+      final token = await FirebaseMessaging.instance.getAPNSToken();
+      return token == null || token.isEmpty ? null : token;
+    } catch (e) {
+      if (kDebugMode) debugPrint('HeyCabyFcm getAPNSToken failed: $e');
+      return null;
+    }
+  }
+
   /// Reads native notification readiness without changing driver availability.
-  static Future<HeyCabyNotificationReadiness> readiness() async {
+  /// [appRole] must be `driver` or `rider` — server registration is checked for that role.
+  static Future<HeyCabyNotificationReadiness> readiness({
+    required String appRole,
+  }) async {
     final settings = await FirebaseMessaging.instance.getNotificationSettings();
     final authorized =
         settings.authorizationStatus == AuthorizationStatus.authorized ||
             settings.authorizationStatus == AuthorizationStatus.provisional;
     final isApple = Platform.isIOS || Platform.isMacOS;
-    String? token;
-    try {
-      token = await FirebaseMessaging.instance.getToken();
-    } catch (_) {}
+    final token = await _resolveFcmToken();
+    var deviceRegistered = false;
+    if (token != null && token.length >= 10) {
+      deviceRegistered = await _isDeviceRegisteredOnServer(
+        appRole: appRole,
+        fcmToken: token,
+      );
+      if (!deviceRegistered) {
+        await sync(appRole: appRole);
+        deviceRegistered = await _isDeviceRegisteredOnServer(
+          appRole: appRole,
+          fcmToken: token,
+        );
+      }
+    }
     return HeyCabyNotificationReadiness(
       authorized: authorized,
       alertsEnabled:
@@ -114,17 +176,40 @@ class HeyCabyFcmRegistration {
           !isApple || settings.sound == AppleNotificationSetting.enabled,
       timeSensitiveEnabled: !isApple ||
           settings.timeSensitive == AppleNotificationSetting.enabled,
-      tokenRegistered: token != null && token.length >= 10,
+      deviceRegistered: deviceRegistered,
     );
+  }
+
+  static Future<bool> _isDeviceRegisteredOnServer({
+    required String appRole,
+    required String fcmToken,
+  }) async {
+    try {
+      if (HeyCabySupabase.client.auth.currentUser?.id == null) return false;
+      final res = await HeyCabySupabase.client.rpc(
+        'fn_is_push_device_registered',
+        params: {
+          'p_app_role': appRole,
+          'p_fcm_token': fcmToken,
+        },
+      );
+      if (res is Map) {
+        return res['registered'] == true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
   }
 
   static Future<void> openNotificationSettings() => openAppSettings();
 
   /// Registers or updates the device FCM token for the signed-in user.
-  static Future<void> sync({required String appRole}) async {
+  /// Returns true when the server acknowledged registration.
+  static Future<bool> sync({required String appRole}) async {
     try {
       final uid = HeyCabySupabase.client.auth.currentUser?.id;
-      if (uid == null) return;
+      if (uid == null) return false;
 
       await _ensureOsNotificationPermission();
 
@@ -134,44 +219,62 @@ class HeyCabyFcmRegistration {
           debugPrint(
               'HeyCabyFcm: no FCM token (permission/APNs/Firebase config?)');
         }
-        return;
+        return false;
       }
+
+      final apnsToken = await _resolveApnsToken();
+      // Debug is unambiguously APNs sandbox. Release/profile may be signed
+      // with either development provisioning (local device) or production
+      // provisioning (TestFlight/App Store), so the backend resolves it from
+      // Apple's response instead of trusting Flutter build mode.
+      final apnsEnvironment =
+          (Platform.isIOS || Platform.isMacOS) && kDebugMode ? 'sandbox' : null;
+
+      final deviceParams = <String, dynamic>{
+        'p_fcm_token': token,
+        'p_platform': Platform.isIOS ? 'ios' : 'android',
+        'p_apns_token': apnsToken,
+        'p_apns_environment': apnsEnvironment,
+      };
 
       if (appRole == 'rider') {
         final rid = _riderIdentityId?.call();
-        if (rid == null || rid.isEmpty) return;
+        if (rid == null || rid.isEmpty) return false;
         final res = await HeyCabySupabase.client.rpc(
           'fn_register_push_device',
           params: {
-            'p_fcm_token': token,
-            'p_platform': Platform.isIOS ? 'ios' : 'android',
+            ...deviceParams,
             'p_app_role': 'rider',
             'p_rider_identity_id': rid,
           },
         );
-        if (kDebugMode && res is Map && res['success'] != true) {
+        if (res is Map && res['success'] == true) return true;
+        if (kDebugMode && res is Map) {
           debugPrint('HeyCabyFcm register: $res');
         }
-        return;
+        return false;
       }
 
       if (appRole == 'driver') {
         final res = await HeyCabySupabase.client.rpc(
           'fn_register_push_device',
           params: {
-            'p_fcm_token': token,
-            'p_platform': Platform.isIOS ? 'ios' : 'android',
+            ...deviceParams,
             'p_app_role': 'driver',
           },
         );
-        if (kDebugMode && res is Map && res['success'] != true) {
+        if (res is Map && res['success'] == true) return true;
+        if (kDebugMode && res is Map) {
           debugPrint('HeyCabyFcm register: $res');
         }
+        return false;
       }
+      return false;
     } catch (e) {
       if (kDebugMode) {
         debugPrint('HeyCabyFcm sync failed: $e');
       }
+      return false;
     }
   }
 

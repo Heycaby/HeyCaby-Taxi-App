@@ -168,19 +168,19 @@ ARTICLE 7 — PLATFORM AVAILABILITY AND MODIFICATIONS
 7.3 Modifications to the Platform. HeyCaby may add, modify, or remove features from the Platform at any time. Material changes that affect Driver Access Fees will be communicated with at least 30 days' notice.
 
 ARTICLE 8 — PLATFORM BALANCE, PAYMENT AND PAUSED RIDE REQUESTS
-8.1 Platform Balance. Drivers can start using HeyCaby without paying upfront inside the app. HeyCaby may create an outstanding Platform Balance for each active 7-day operating period. The standard weekly Platform Balance is €50, excluding 21% VAT, unless a separate written driver agreement states otherwise.
+8.1 Driver Service Fee. HeyCaby charges the Driver a backend-configured service fee only after a successfully completed, chargeable ride. The current fee and estimated net earnings are shown before acceptance and are frozen for that ride. The Rider is not charged this fee as an extra Rider surcharge.
 
-8.2 When a Balance Becomes Due. A Platform Balance is created only after the relevant 7-day operating period has started or completed according to HeyCaby's billing rules. HeyCaby may provide a grace period before pausing new ride requests.
+8.2 Platform Balance. For cash, PIN, Tikkie or another direct payment, the Rider pays the Driver and the completed-ride service fee is added to the Driver's Platform Balance. For a prepaid ride, the frozen fee is deducted before the verified Driver payout is routed.
 
-8.3 Effect of an Outstanding Balance. If a Platform Balance remains unpaid after the grace period, HeyCaby may temporarily pause new ride requests for that driver. The driver can still access their account, documents, billing history, support, and other account-management features.
+8.3 Effect of an Outstanding Balance. At the backend-configured balance limit, HeyCaby may pause new direct-payment rides. Eligible prepaid rides remain available because the service fee can be collected automatically. The Driver keeps access to their account, documents, history, support and other tools.
 
-8.4 No Long-Term Plan. HeyCaby does not require a long-term plan. The Platform Balance is tied to 7-day operating periods. Drivers can stop using the Platform before a future period starts.
+8.4 No Subscription. The Driver Service Fee is per chargeable completed ride and is not a weekly subscription or long-term plan.
 
 8.5 Settlement. Drivers settle an outstanding Platform Balance through the payment methods made available by HeyCaby or its payment partners. Bank transfers may require a payment reference so HeyCaby can identify the payment. Payments may take time to appear in the driver's balance.
 
 8.6 Loss of Preferential Status. Any preferential driver status is conditional and may be lost. A driver may lose such status if they: (a) break platform rules; (b) fail to pay on time; (c) remain inactive for an extended period; (d) fail to maintain valid legal documents, permits, insurance, or required taxi credentials; or (e) misuse, abuse, or attempt to manipulate the platform.
 
-8.7 Future Pricing. HeyCaby may update the weekly Platform Balance or access fees for future operating periods. Material changes that affect Driver Access Fees will be communicated with at least 30 days' notice where required by law or contract.
+8.7 Future Pricing. HeyCaby may schedule a future Driver Service Fee. A fee change never alters an already accepted ride's frozen fee. Material changes will be communicated where required by law or contract.
 
 8.8 Payment Processing. Payments are processed by Mollie B.V., a third-party payment service provider based in the Netherlands. By making a payment, you agree to be bound by Mollie's applicable terms and conditions. Mollie may process payment-related data as an independent data controller in accordance with its own privacy policy. HeyCaby does not store or process payment card details on its own servers.
 

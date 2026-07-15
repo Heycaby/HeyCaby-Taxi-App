@@ -7,12 +7,13 @@ import '../utils/driver_address_clipboard.dart';
 import '../l10n/driver_strings.dart';
 import '../utils/driver_nav_app_helpers.dart';
 import '../providers/driver_ride_unread_messages_provider.dart';
+import '../providers/driver_state_provider.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../ui/driver_button.dart';
 import 'driver_ride_bolt_layout.dart';
 import 'driver_ride_flow_common.dart';
-import 'driver_taxi_terug_queued_banner_slot.dart';
+import 'driver_next_ride_banner_slot.dart';
 
 /// **Pickup Arrival** — Bolt-style waiting at pickup; start trip friction-free.
 class DriverPickupArrivalBody extends ConsumerWidget {
@@ -43,6 +44,7 @@ class DriverPickupArrivalBody extends ConsumerWidget {
     this.driverLat,
     this.driverLng,
     this.farePill,
+    this.verificationCard,
     this.onToggleRequests,
     this.onSafety,
     this.requestsPaused = false,
@@ -74,17 +76,20 @@ class DriverPickupArrivalBody extends ConsumerWidget {
   final double? driverLat;
   final double? driverLng;
   final String? farePill;
+  final Widget? verificationCard;
   final VoidCallback? onToggleRequests;
   final VoidCallback? onSafety;
   final bool requestsPaused;
   final bool statusBusy;
 
   void _openRouteDetails(BuildContext context, WidgetRef ref) {
+    final driver = ref.read(driverStateProvider);
     showDriverRideRouteDetailsSheet(
       context: context,
       colors: colors,
       typography: typography,
-      destinationAddress: destinationAddress,
+      destinationAddress: driver.destinationAddress ?? destinationAddress,
+      routeState: driver.activeRouteState,
       farePill: farePill,
       riderName: riderName,
       navAppLabel: watchDriverNavAppLabel(ref),
@@ -146,7 +151,7 @@ class DriverPickupArrivalBody extends ConsumerWidget {
       chatUnreadCount: unreadMessages,
       requestsPaused: requestsPaused,
       statusBusy: statusBusy,
-      headerBanner: DriverTaxiTerugQueuedBannerSlot(
+      headerBanner: DriverNextRideBannerSlot(
         currentRideId: rideId,
         colors: colors,
         typography: typography,
@@ -168,15 +173,24 @@ class DriverPickupArrivalBody extends ConsumerWidget {
                   colors: colors,
                   typography: typography,
                 ),
-        extra: _WaitingFeeCard(
-          colors: colors,
-          typography: typography,
-          waitSeconds: waitSeconds,
-          graceSeconds: waitingGraceSeconds,
-          ratePerMinute: waitingRatePerMinute,
-          waived: waitingFeeWaived,
-          loading: loading,
-          onWaive: onWaiveWaitingFee,
+        extra: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (verificationCard != null) ...[
+              verificationCard!,
+              const SizedBox(height: 12),
+            ],
+            _WaitingFeeCard(
+              colors: colors,
+              typography: typography,
+              waitSeconds: waitSeconds,
+              graceSeconds: waitingGraceSeconds,
+              ratePerMinute: waitingRatePerMinute,
+              waived: waitingFeeWaived,
+              loading: loading,
+              onWaive: onWaiveWaitingFee,
+            ),
+          ],
         ),
       ),
       bottomBar: DriverRideFlowBottomBar(

@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
-import 'package:intl/intl.dart';
 
 import '../l10n/driver_strings.dart';
-import '../providers/driver_data_providers.dart';
+import '../models/driver_ride_line_board.dart';
+import '../providers/driver_ride_line_provider.dart';
 import '../providers/driver_state_provider.dart';
-import '../services/driver_data_service.dart';
 import '../theme/app_icons.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_radius.dart';
@@ -16,26 +15,16 @@ import '../theme/driver_typography.dart';
 import '../ui/driver_accent_rail_card.dart';
 import 'driver_home_premium_style.dart';
 
-String _activeRideRoute(DriverData driver) {
-  final id = driver.activeRideId!;
-  return switch (driver.appState) {
-    DriverAppState.arrived => '/driver/ride/pickup/$id',
-    DriverAppState.inProgress => '/driver/ride/progress/$id',
-    DriverAppState.completingRide => '/driver/ride/complete/$id',
-    _ => '/driver/ride/active/$id',
-  };
-}
-
-String _activeRideStatusLabel(DriverAppState state) {
+String _activeRideRoute(String rideId, DriverAppState state) {
   return switch (state) {
-    DriverAppState.arrived => DriverStrings.waiting,
-    DriverAppState.inProgress => DriverStrings.navigate,
-    DriverAppState.completingRide => DriverStrings.rideDetails,
-    _ => DriverStrings.navigateToPickup,
+    DriverAppState.arrived => '/driver/ride/pickup/$rideId',
+    DriverAppState.inProgress => '/driver/ride/progress/$rideId',
+    DriverAppState.completingRide => '/driver/ride/complete/$rideId',
+    _ => '/driver/ride/active/$rideId',
   };
 }
 
-/// Replaces the duplicate earnings hero — active + incoming ride feed.
+/// Ride line on home: NOW + NEXT + open summary (no ringing).
 class DriverHomeLiveRidesSection extends ConsumerWidget {
   const DriverHomeLiveRidesSection({
     super.key,
@@ -53,147 +42,201 @@ class DriverHomeLiveRidesSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final driver = ref.watch(driverStateProvider);
+    final boardAsync = ref.watch(driverRideLineProvider);
     final isOnline = driver.appState == DriverAppState.onlineAvailable;
     final isOnBreak = driver.appState == DriverAppState.onBreak;
-    final incomingAsync = ref.watch(availableRidesNowProvider);
-    final incoming = incomingAsync.valueOrNull ?? const <ScheduledRide>[];
-    final hasActiveRide = driver.activeRideId != null;
-    final previewIncoming = incoming.take(2).toList();
 
+    return boardAsync.when(
+      data: (board) => _RideLineBody(
+        board: board,
+        colors: colors,
+        typography: typography,
+        themeColors: themeColors,
+        themeTypography: themeTypography,
+        isOnline: isOnline,
+        isOnBreak: isOnBreak,
+        driver: driver,
+      ),
+      loading: () => _RideLineBody(
+        board: DriverRideLineBoard.empty,
+        colors: colors,
+        typography: typography,
+        themeColors: themeColors,
+        themeTypography: themeTypography,
+        isOnline: isOnline,
+        isOnBreak: isOnBreak,
+        driver: driver,
+        loading: true,
+      ),
+      error: (_, __) => _RideLineBody(
+        board: DriverRideLineBoard.empty,
+        colors: colors,
+        typography: typography,
+        themeColors: themeColors,
+        themeTypography: themeTypography,
+        isOnline: isOnline,
+        isOnBreak: isOnBreak,
+        driver: driver,
+      ),
+    );
+  }
+}
+
+class _RideLineBody extends StatelessWidget {
+  const _RideLineBody({
+    required this.board,
+    required this.colors,
+    required this.typography,
+    required this.themeColors,
+    required this.themeTypography,
+    required this.isOnline,
+    required this.isOnBreak,
+    required this.driver,
+    this.loading = false,
+  });
+
+  final DriverRideLineBoard board;
+  final DriverColors colors;
+  final DriverTypography typography;
+  final HeyCabyColorTokens themeColors;
+  final HeyCabyTypography themeTypography;
+  final bool isOnline;
+  final bool isOnBreak;
+  final DriverData driver;
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text(
-              DriverStrings.homeLiveRidesTitle.toUpperCase(),
-              style: typography.labelSmall.copyWith(
-                color: colors.primary,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.1,
-              ),
-            ),
-            const Spacer(),
-            if (isOnline || isOnBreak)
-              TextButton(
-                onPressed: () {
-                  HapticService.selectionClick();
-                  context.push('/driver/work');
-                },
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  DriverStrings.homeViewAllRides,
-                  style: themeTypography.labelSmall.copyWith(
-                    color: colors.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-          ],
+        Text(
+          DriverStrings.homeLiveRidesTitle.toUpperCase(),
+          style: typography.labelSmall.copyWith(
+            color: colors.primary,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.1,
+          ),
         ),
         const SizedBox(height: DriverSpacing.sm),
-        if (hasActiveRide)
-          _ActiveRideCard(
-            driver: driver,
-            colors: colors,
-            typography: typography,
-            themeColors: themeColors,
-            themeTypography: themeTypography,
-            onTap: () {
-              HapticService.selectionClick();
-              context.push(_activeRideRoute(driver));
-            },
-          ),
-        if (hasActiveRide && (previewIncoming.isNotEmpty || isOnline))
-          const SizedBox(height: DriverSpacing.sm),
-        if (isOnBreak && !hasActiveRide)
-          _EmptyLiveCard(
+        if (loading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: DriverSpacing.sm),
+            child: LinearProgressIndicator(minHeight: 2),
+          )
+        else if (isOnBreak && !board.hasNow)
+          _EmptyLine(
             colors: colors,
             typography: typography,
             themeColors: themeColors,
             icon: Icons.coffee_rounded,
             message: DriverStrings.homeLiveRidesOnBreak,
           )
-        else if (isOnline && previewIncoming.isNotEmpty) ...[
-          if (hasActiveRide)
-            Padding(
-              padding: const EdgeInsets.only(bottom: DriverSpacing.xs),
-              child: Text(
-                DriverStrings.homeIncomingRides,
-                style: themeTypography.labelLarge.copyWith(
-                  color: themeColors.textMid,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ...previewIncoming.map(
-            (ride) => Padding(
-              padding: const EdgeInsets.only(bottom: DriverSpacing.sm),
-              child: _IncomingRideTile(
-                ride: ride,
-                colors: colors,
-                themeColors: themeColors,
-                themeTypography: themeTypography,
-                onTap: () {
-                  HapticService.selectionClick();
-                  context.push('/driver/ride/new/${ride.id}');
-                },
-              ),
-            ),
-          ),
-        ] else if (!hasActiveRide && !isOnline)
-          _EmptyLiveCard(
+        else if (!isOnline && !board.hasNow && !board.hasNext)
+          _EmptyLine(
             colors: colors,
             typography: typography,
             themeColors: themeColors,
             icon: Icons.radar_rounded,
             message: DriverStrings.homeNoLiveRidesOffline,
           )
-        else if (isOnline && previewIncoming.isEmpty && !hasActiveRide)
-          _EmptyLiveCard(
-            colors: colors,
-            typography: typography,
-            themeColors: themeColors,
-            icon: Icons.hourglass_top_rounded,
-            message: DriverStrings.homeNoLiveRidesOnline,
-            loading: incomingAsync.isLoading,
-          ),
+        else ...[
+          if (board.now != null)
+            _SlotCard(
+              slot: board.now!,
+              slotLabel: DriverStrings.rideLineNowLabel,
+              accent: colors.success,
+              colors: colors,
+              themeColors: themeColors,
+              themeTypography: themeTypography,
+              onTap: () {
+                HapticService.selectionClick();
+                context.push(_activeRideRoute(board.now!.rideId, driver.appState));
+              },
+            ),
+          if (board.now != null && board.next != null)
+            const SizedBox(height: DriverSpacing.sm),
+          if (board.next != null)
+            _SlotCard(
+              slot: board.next!,
+              slotLabel: DriverStrings.rideLineNextLabel,
+              accent: colors.primary,
+              colors: colors,
+              themeColors: themeColors,
+              themeTypography: themeTypography,
+              onTap: () {
+                HapticService.selectionClick();
+                context.push('/driver/ride/active/${board.next!.rideId}');
+              },
+            )
+          else if (board.hasNow || isOnline)
+            Padding(
+              padding: const EdgeInsets.only(top: DriverSpacing.xs),
+              child: Text(
+                DriverStrings.rideLineNoNextRide,
+                style: typography.bodySmall.copyWith(
+                  color: themeColors.textMid,
+                  fontWeight: FontWeight.w600,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          if (board.open.hasOpen) ...[
+            const SizedBox(height: DriverSpacing.sm),
+            Text(
+              board.open.topFareEuros != null
+                  ? DriverStrings.rideLineOpenInvitesSummary(
+                      board.open.count,
+                      '€${board.open.topFareEuros!.toStringAsFixed(2)}',
+                    )
+                  : (board.open.count == 1
+                      ? DriverStrings.rideLineOpenInvitesOne
+                      : DriverStrings.rideLineOpenInvitesSummary(
+                          board.open.count,
+                          '—',
+                        )),
+              style: themeTypography.bodySmall.copyWith(
+                color: themeColors.textMid,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ] else if (isOnline && !board.hasNow && !board.hasNext)
+            _EmptyLine(
+              colors: colors,
+              typography: typography,
+              themeColors: themeColors,
+              icon: Icons.hourglass_top_rounded,
+              message: DriverStrings.homeNoLiveRidesOnline,
+            ),
+        ],
         const SizedBox(height: DriverSpacing.md),
       ],
     );
   }
 }
 
-class _ActiveRideCard extends StatelessWidget {
-  const _ActiveRideCard({
-    required this.driver,
+class _SlotCard extends StatelessWidget {
+  const _SlotCard({
+    required this.slot,
+    required this.slotLabel,
+    required this.accent,
     required this.colors,
-    required this.typography,
     required this.themeColors,
     required this.themeTypography,
     required this.onTap,
   });
 
-  final DriverData driver;
+  final DriverRideLineSlot slot;
+  final String slotLabel;
+  final Color accent;
   final DriverColors colors;
-  final DriverTypography typography;
   final HeyCabyColorTokens themeColors;
   final HeyCabyTypography themeTypography;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final pickup = driver.pickupAddress?.trim();
-    final destination = driver.destinationAddress?.trim();
-    final route = [
-      if (pickup != null && pickup.isNotEmpty) pickup,
-      if (destination != null && destination.isNotEmpty) destination,
-    ].join(' → ');
-
+    final fare = slot.fareLabel;
     return DriverAccentRailCard(
       colors: colors,
       onTap: onTap,
@@ -201,10 +244,12 @@ class _ActiveRideCard extends StatelessWidget {
       child: Row(
         children: [
           DriverHomeIconOrb(
-            icon: AppIcons.carFront,
+            icon: slot.isQueuedAfterCurrent
+                ? Icons.queue_play_next_rounded
+                : AppIcons.carFront,
             colors: colors,
-            size: 48,
-            iconSize: 22,
+            size: 44,
+            iconSize: 20,
           ),
           const SizedBox(width: DriverSpacing.md),
           Expanded(
@@ -219,20 +264,21 @@ class _ActiveRideCard extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: colors.success.withValues(alpha: 0.14),
+                        color: accent.withValues(alpha: 0.14),
                         borderRadius: BorderRadius.circular(DriverRadius.pill),
                       ),
                       child: Text(
-                        DriverStrings.homeActiveRideTitle,
+                        slotLabel.toUpperCase(),
                         style: themeTypography.labelSmall.copyWith(
-                          color: colors.success,
+                          color: accent,
                           fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
                         ),
                       ),
                     ),
                     const Spacer(),
                     Text(
-                      _activeRideStatusLabel(driver.appState),
+                      slot.statusLabel,
                       style: themeTypography.labelSmall.copyWith(
                         color: themeColors.textMid,
                         fontWeight: FontWeight.w600,
@@ -242,7 +288,7 @@ class _ActiveRideCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  route.isNotEmpty ? route : DriverStrings.rideDetails,
+                  slot.routeLabel,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: themeTypography.bodyMedium.copyWith(
@@ -251,12 +297,13 @@ class _ActiveRideCard extends StatelessWidget {
                     height: 1.25,
                   ),
                 ),
-                if (driver.riderContactName?.trim().isNotEmpty == true) ...[
+                if (fare != null) ...[
                   const SizedBox(height: 4),
                   Text(
-                    driver.riderContactName!.trim(),
+                    fare,
                     style: themeTypography.bodySmall.copyWith(
-                      color: themeColors.textMid,
+                      color: colors.primary,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ],
@@ -274,93 +321,13 @@ class _ActiveRideCard extends StatelessWidget {
   }
 }
 
-class _IncomingRideTile extends StatelessWidget {
-  const _IncomingRideTile({
-    required this.ride,
-    required this.colors,
-    required this.themeColors,
-    required this.themeTypography,
-    required this.onTap,
-  });
-
-  final ScheduledRide ride;
-  final DriverColors colors;
-  final HeyCabyColorTokens themeColors;
-  final HeyCabyTypography themeTypography;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final fare = ride.estimatedFare != null
-        ? '€${ride.estimatedFare!.toStringAsFixed(2)}'
-        : '—';
-    final time = ride.scheduledPickupAt != null
-        ? DateFormat('HH:mm').format(ride.scheduledPickupAt!)
-        : DriverStrings.now;
-    final dist = ride.distanceKm != null
-        ? '${ride.distanceKm!.toStringAsFixed(1)} km'
-        : null;
-
-    return DriverAccentRailCard(
-      colors: colors,
-      onTap: onTap,
-      padding: const EdgeInsets.symmetric(
-        horizontal: DriverSpacing.md,
-        vertical: DriverSpacing.sm + 2,
-      ),
-      child: Row(
-        children: [
-          DriverHomeIconOrb(
-            icon: Icons.bolt_rounded,
-            colors: colors,
-            size: 40,
-            iconSize: 20,
-          ),
-          const SizedBox(width: DriverSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$fare · $time${dist != null ? ' · $dist' : ''}',
-                  style: themeTypography.bodyMedium.copyWith(
-                    color: themeColors.text,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                if (ride.pickupAddress?.trim().isNotEmpty == true) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    ride.pickupAddress!.trim(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: themeTypography.bodySmall.copyWith(
-                      color: themeColors.textMid,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          Icon(
-            AppIcons.chevronRight,
-            color: colors.primary.withValues(alpha: 0.55),
-            size: 18,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyLiveCard extends StatelessWidget {
-  const _EmptyLiveCard({
+class _EmptyLine extends StatelessWidget {
+  const _EmptyLine({
     required this.colors,
     required this.typography,
     required this.themeColors,
     required this.icon,
     required this.message,
-    this.loading = false,
   });
 
   final DriverColors colors;
@@ -368,43 +335,25 @@ class _EmptyLiveCard extends StatelessWidget {
   final HeyCabyColorTokens themeColors;
   final IconData icon;
   final String message;
-  final bool loading;
 
   @override
   Widget build(BuildContext context) {
-    return DriverAccentRailCard(
-      colors: colors,
-      padding: const EdgeInsets.all(DriverSpacing.lg),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: DriverSpacing.xs),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          DriverHomeIconOrb(
-            icon: icon,
-            colors: colors,
-            size: 44,
-            iconSize: 22,
-          ),
-          const SizedBox(width: DriverSpacing.md),
+          Icon(icon, color: colors.primary.withValues(alpha: 0.82), size: 20),
+          const SizedBox(width: DriverSpacing.sm),
           Expanded(
-            child: loading
-                ? Align(
-                    alignment: Alignment.centerLeft,
-                    child: SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: colors.primary,
-                      ),
-                    ),
-                  )
-                : Text(
-                    message,
-                    style: typography.bodyMedium.copyWith(
-                      color: themeColors.textMid,
-                      fontWeight: FontWeight.w500,
-                      height: 1.35,
-                    ),
-                  ),
+            child: Text(
+              message,
+              style: typography.bodySmall.copyWith(
+                color: themeColors.textMid,
+                fontWeight: FontWeight.w600,
+                height: 1.35,
+              ),
+            ),
           ),
         ],
       ),

@@ -110,6 +110,8 @@
   },
   "homeRecentPlacesTitle": "Recente plaatsen",
   "homeRecentPlacesEdit": "Bewerken",
+  "homeQuickPlacesTitle": "Opgeslagen & recent",
+  "homeQuickPlacesManage": "Beheren",
   "savedTripsTitle": "Opgeslagen ritten",
   "homeCompleteProfile": "Profiel aanvullen",
   "vehicleCategoryTitle": "Heb je een specifiek voertuig nodig?",
@@ -1429,6 +1431,12 @@
   "activeRideDestinationNotSet": "Bestemming niet ingesteld",
   "activeRideShareDetails": "Deel ritdetails",
   "activeRideContactDriver": "Contacteer chauffeur",
+  "maskedCallDriver": "Bel chauffeur via HeyCaby",
+  "maskedCallTitle": "Bellen via HeyCaby?",
+  "maskedCallBody": "Je telefoonnummer blijft privé. Gesprekken duren maximaal 5 minuten. Eerst bellen we jou, daarna verbinden we je chauffeur.",
+  "maskedCallNow": "Bel nu",
+  "maskedCallQueued": "HeyCaby belt je nu. Neem op om te verbinden.",
+  "maskedCallUnavailable": "Bellen is tijdelijk niet beschikbaar. Gebruik Ping of Bericht.",
   "activeRideCategoryLabel": "Categorie: {category}",
   "@activeRideCategoryLabel": {
     "placeholders": {
@@ -1662,10 +1670,35 @@
   "taxiTerugTrackerBoostFailed": "Kon aanbod niet verhogen. Probeer het opnieuw.",
   "taxiTerugTrackerCurrentOffer": "Huidig aanbod: €{amount}",
   "activeRouteEditTitle": "Je route bewerken",
-  "activeRouteEditBody": "Je chauffeur ziet wijzigingen direct. De uiteindelijke ritprijs kan door de route veranderen.",
+  "activeRouteEditBody": "Je chauffeur moet extra stops accepteren voordat ze worden toegevoegd. De uiteindelijke ritprijs kan door de route veranderen.",
+  "activeRouteWaitingDriver": "Wachten tot je chauffeur deze stop accepteert",
+  "activeRoutePendingStop": "In afwachting",
+  "activeRouteDuplicateRequest": "Je hebt deze stop al gevraagd. Wacht op je chauffeur.",
+  "activeRouteNoChange": "Die stop staat al op je route.",
   "activeRouteChangeDestination": "Bestemming wijzigen",
   "activeRouteAddStop": "Stop toevoegen",
   "activeRouteStopAdded": "Stop toegevoegd",
   "activeRouteUpdated": "Route bijgewerkt",
-  "activeRouteUpdateFailed": "We konden de route niet bijwerken. Je oorspronkelijke route is ongewijzigd."
+  "activeRouteUpdateFailed": "We konden de route niet bijwerken. Je oorspronkelijke route is ongewijzigd.",
+  "activeRouteDestinationChanged": "Adres gewijzigd",
+  "activeRouteStopsAdded": "{count, plural, =1{1 stop toegevoegd} other{{count} stops toegevoegd}}",
+  "@activeRouteStopsAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "prepayRideTitle": "Veilig betalen in de app",
+  "prepayRideRequiredBody": "Voor deze rit betaal je vooraf nadat de chauffeur accepteert. Mollie bevestigt de betaling veilig.",
+  "prepayRideOptionalBody": "Betaal de chauffeur zoals altijd, of betaal nu veilig via Mollie.",
+  "prepayPayNow": "Nu betalen",
+  "prepayPayDriver": "Betaal chauffeur",
+  "prepayOpenCheckout": "Open veilige betaalpagina",
+  "prepayAwaitingConfirmation": "Wachten op bevestiging van Mollie",
+  "prepayPaid": "Betaling bevestigd",
+  "prepayDriverNotReady": "Deze chauffeur kan nog geen vooruitbetalingen ontvangen. Betaal de chauffeur zoals altijd.",
+  "prepayUnavailable": "Vooraf betalen is tijdelijk niet beschikbaar. Je bestaande betaalmethode blijft ongewijzigd.",
+  "prepayRetry": "Opnieuw proberen",
+  "prepayAmount": "Bedrag: {amount}"
 }

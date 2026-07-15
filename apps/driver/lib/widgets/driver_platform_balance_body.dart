@@ -20,6 +20,9 @@ class DriverPlatformBalanceSummary {
     required this.canSettle,
     required this.isCurrent,
     this.dueLine,
+    this.warningDisplay,
+    this.limitDisplay,
+    this.directPaymentRidesPaused = false,
   });
 
   final String outstandingDisplay;
@@ -30,6 +33,9 @@ class DriverPlatformBalanceSummary {
   final bool paymentPending;
   final bool canSettle;
   final bool isCurrent;
+  final String? warningDisplay;
+  final String? limitDisplay;
+  final bool directPaymentRidesPaused;
 }
 
 class DriverPlatformBalanceBody extends StatelessWidget {
@@ -143,11 +149,15 @@ class _BalanceCard extends StatelessWidget {
                 size: 24,
               ),
               const SizedBox(width: DriverSpacing.md),
-              Text(
-                DriverStrings.platformBalanceTitle,
-                style: typography.labelLarge.copyWith(
-                  color: colors.textSecondary,
-                  fontWeight: FontWeight.w700,
+              Expanded(
+                child: Text(
+                  DriverStrings.platformBalanceTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: typography.labelLarge.copyWith(
+                    color: colors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
@@ -172,6 +182,39 @@ class _BalanceCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: DriverSpacing.md),
+          if (!summary.isCurrent) ...[
+            Text(
+              DriverStrings.platformBalanceBankTransferSubtitle,
+              style: typography.bodySmall.copyWith(
+                color: colors.textSecondary,
+                height: 1.35,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: DriverSpacing.md),
+          ],
+          if (summary.warningDisplay != null ||
+              summary.limitDisplay != null) ...[
+            const SizedBox(height: DriverSpacing.md),
+            Divider(color: colors.border),
+            const SizedBox(height: DriverSpacing.sm),
+            if (summary.warningDisplay != null)
+              _BalanceRuleRow(
+                colors: colors,
+                typography: typography,
+                label: DriverStrings.platformBalanceWarningLevel,
+                value: summary.warningDisplay!,
+              ),
+            if (summary.limitDisplay != null) ...[
+              const SizedBox(height: DriverSpacing.xs),
+              _BalanceRuleRow(
+                colors: colors,
+                typography: typography,
+                label: DriverStrings.platformBalanceDirectRideLimit,
+                value: summary.limitDisplay!,
+              ),
+            ],
+          ],
           DriverStatusBadge(
             label: summary.statusLine,
             colors: colors,
@@ -226,7 +269,7 @@ class _InfoCard extends StatelessWidget {
             child: Text(
               summary.paymentPending
                   ? DriverStrings.platformBalancePaymentPendingBody
-                  : summary.rideRequestsPaused
+                  : summary.directPaymentRidesPaused
                       ? DriverStrings.platformBalancePausedExplainer
                       : DriverStrings.platformBalanceExplainer,
               style: typography.bodySmall.copyWith(
@@ -239,6 +282,30 @@ class _InfoCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _BalanceRuleRow extends StatelessWidget {
+  const _BalanceRuleRow(
+      {required this.colors,
+      required this.typography,
+      required this.label,
+      required this.value});
+  final DriverColors colors;
+  final DriverTypography typography;
+  final String label;
+  final String value;
+  @override
+  Widget build(BuildContext context) => Row(children: [
+        Expanded(
+            child: Text(label,
+                style: typography.bodySmall
+                    .copyWith(color: colors.textSecondary))),
+        Text(value,
+            style: typography.bodySmall.copyWith(
+                color: colors.text,
+                fontWeight: FontWeight.w800,
+                fontFeatures: const [FontFeature.tabularFigures()]))
+      ]);
 }
 
 class _ActionsSection extends StatelessWidget {

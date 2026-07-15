@@ -10,6 +10,8 @@ import '../widgets/booking/booking_flow_screen_header.dart';
 
 import '../providers/chat_provider.dart';
 import '../providers/ride_request_provider.dart';
+import '../providers/rider_ride_unread_messages_provider.dart';
+import '../utils/ride_chat_allowed.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -21,14 +23,19 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
+  String? _retryMessage;
+  String? _retryIdempotencyKey;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final rideId = ref.read(rideRequestProvider).rideRequestId;
       if (rideId != null) {
-        ref.read(chatProvider.notifier).loadMessages(rideId);
+        await ref.read(chatProvider.notifier).loadMessages(rideId);
+        await ref
+            .read(riderRideUnreadMessageCountProvider(rideId).notifier)
+            .markAllRead();
       }
     });
   }
@@ -57,17 +64,34 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final rideId = ref.read(rideRequestProvider).rideRequestId;
     if (rideId == null) return;
     final status = ref.read(rideRequestProvider).status;
-    if (!_isRideChatAllowed(status)) return;
+    if (!isRideChatAllowed(status)) return;
 
     final identity = ref.read(riderIdentityProvider).valueOrNull;
     final senderId = identity?.identityId ??
         HeyCabySupabase.client.auth.currentUser?.id ??
         '';
 
+    final retryKey = _retryMessage == message ? _retryIdempotencyKey : null;
     _messageController.clear();
-    await ref
-        .read(chatProvider.notifier)
-        .sendMessage(rideId, message, senderId: senderId);
+    final failedKey = await ref.read(chatProvider.notifier).sendMessage(
+          rideId,
+          message,
+          senderId: senderId,
+          idempotencyKey: retryKey,
+        );
+    if (failedKey == null) {
+      _retryMessage = null;
+      _retryIdempotencyKey = null;
+    } else {
+      _retryMessage = message;
+      _retryIdempotencyKey = failedKey;
+      if (_messageController.text.trim().isEmpty) {
+        _messageController.text = message;
+        _messageController.selection = TextSelection.collapsed(
+          offset: _messageController.text.length,
+        );
+      }
+    }
 
     Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
   }
@@ -79,7 +103,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final l10n = AppLocalizations.of(context);
     final chatState = ref.watch(chatProvider);
     final rideStatus = ref.watch(rideRequestProvider).status;
-    final chatAllowed = _isRideChatAllowed(rideStatus);
+    final chatAllowed = isRideChatAllowed(rideStatus);
     ref.listen(chatProvider, (_, next) {
       next.whenData((state) {
         if (state.error == null || !context.mounted) return;
@@ -115,7 +139,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   return PopupMenuButton<String>(
                     icon: Icon(Icons.more_vert_rounded, color: colors.text),
                     onSelected: (v) async {
-                      final rideId = ref.read(rideRequestProvider).rideRequestId;
+                      final rideId =
+                          ref.read(rideRequestProvider).rideRequestId;
                       if (rideId == null) return;
 
                       if (v == 'report') {
@@ -126,7 +151,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             backgroundColor: colors.card,
                             title: Text(
                               l10n.reportDriverTitle,
-                              style: typo.titleMedium.copyWith(color: colors.text),
+                              style:
+                                  typo.titleMedium.copyWith(color: colors.text),
                             ),
                             content: SingleChildScrollView(
                               child: Column(
@@ -194,10 +220,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         context: context,
                         builder: (ctx) => AlertDialog(
                           title: Text(l10n.blockDriver,
-                              style: typo.titleMedium.copyWith(color: colors.text)),
+                              style: typo.titleMedium
+                                  .copyWith(color: colors.text)),
                           content: Text(
                             l10n.blockDriverConfirm,
-                            style: typo.bodyMedium.copyWith(color: colors.textMid),
+                            style:
+                                typo.bodyMedium.copyWith(color: colors.textMid),
                           ),
                           actions: [
                             TextButton(
@@ -231,7 +259,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     itemBuilder: (_) => [
                       PopupMenuItem(
                           value: 'report', child: Text(l10n.reportDriver)),
-                      PopupMenuItem(value: 'block', child: Text(l10n.blockDriver)),
+                      PopupMenuItem(
+                          value: 'block', child: Text(l10n.blockDriver)),
                     ],
                   );
                 },
@@ -240,87 +269,80 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
             Expanded(
               child: !chatAllowed
-            ? Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Text(
-                    'Chat is only available while a ride is active.',
-                    textAlign: TextAlign.center,
-                    style: typo.bodyMedium.copyWith(color: colors.textMid),
-                  ),
-                ),
-              )
-            : Column(
-                children: [
-                  Expanded(
-                    child: chatState.when(
-                      data: (state) {
-                        if (state.isLoading) {
-                          return Center(
-                            child:
-                                CircularProgressIndicator(color: colors.accent),
-                          );
-                        }
-
-                        if (state.messages.isEmpty) {
-                          return _EmptyState(
-                              colors: colors, typo: typo, l10n: l10n);
-                        }
-
-                        return ListView.builder(
-                          controller: _scrollController,
-                          padding: const EdgeInsetsDirectional.all(16),
-                          itemCount: state.messages.length,
-                          itemBuilder: (context, index) {
-                            final message = state.messages[index];
-                            final isRider = message.senderType == 'rider';
-                            return _MessageBubble(
-                              message: message.message,
-                              isRider: isRider,
-                              timestamp: message.createdAt,
-                              colors: colors,
-                              typo: typo,
-                            );
-                          },
-                        );
-                      },
-                      loading: () => Center(
-                        child: CircularProgressIndicator(color: colors.accent),
-                      ),
-                      error: (e, _) => Center(
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
                         child: Text(
-                          AppLocalizations.of(context).errorLoadingMessages,
-                          style: typo.bodyMedium.copyWith(color: colors.error),
+                          'Chat is only available while a ride is active.',
+                          textAlign: TextAlign.center,
+                          style:
+                              typo.bodyMedium.copyWith(color: colors.textMid),
                         ),
                       ),
+                    )
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: chatState.when(
+                            data: (state) {
+                              if (state.isLoading) {
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                      color: colors.accent),
+                                );
+                              }
+
+                              if (state.messages.isEmpty) {
+                                return _EmptyState(
+                                    colors: colors, typo: typo, l10n: l10n);
+                              }
+
+                              return ListView.builder(
+                                controller: _scrollController,
+                                padding: const EdgeInsetsDirectional.all(16),
+                                itemCount: state.messages.length,
+                                itemBuilder: (context, index) {
+                                  final message = state.messages[index];
+                                  final isRider = message.senderType == 'rider';
+                                  return _MessageBubble(
+                                    message: message.message,
+                                    isRider: isRider,
+                                    timestamp: message.createdAt,
+                                    colors: colors,
+                                    typo: typo,
+                                  );
+                                },
+                              );
+                            },
+                            loading: () => Center(
+                              child: CircularProgressIndicator(
+                                  color: colors.accent),
+                            ),
+                            error: (e, _) => Center(
+                              child: Text(
+                                AppLocalizations.of(context)
+                                    .errorLoadingMessages,
+                                style: typo.bodyMedium
+                                    .copyWith(color: colors.error),
+                              ),
+                            ),
+                          ),
+                        ),
+                        _MessageInput(
+                          controller: _messageController,
+                          colors: colors,
+                          typo: typo,
+                          l10n: l10n,
+                          onSend: _sendMessage,
+                        ),
+                      ],
                     ),
-                  ),
-                  _MessageInput(
-                    controller: _messageController,
-                    colors: colors,
-                    typo: typo,
-                    l10n: l10n,
-                    onSend: _sendMessage,
-                  ),
-                ],
-              ),
             ),
           ],
         ),
       ),
     );
   }
-}
-
-bool _isRideChatAllowed(String? status) {
-  const activeStatuses = {
-    'assigned',
-    'accepted',
-    'driver_arrived',
-    'arrived',
-    'in_progress',
-  };
-  return status != null && activeStatuses.contains(status);
 }
 
 class _MessageBubble extends StatelessWidget {

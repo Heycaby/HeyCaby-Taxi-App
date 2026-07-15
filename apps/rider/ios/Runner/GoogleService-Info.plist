@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>nl.heycaby.rider</string>
+	<string>nl.heycaby.rider.app</string>
 	<key>PROJECT_ID</key>
 	<string>heycaby-2457a</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:486543076754:ios:d906ea8ab6c93b66f8654b</string>
+	<string>1:486543076754:ios:b75e148a2afb32fff8654b</string>
 </dict>
 </plist>

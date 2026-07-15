@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,17 +12,16 @@ import '../theme/driver_radius.dart';
 import '../theme/driver_spacing.dart';
 import '../theme/driver_typography.dart';
 import '../theme/driver_motion_presets.dart';
-import '../ui/driver_accent_rail_card.dart';
 import '../providers/driver_data_providers.dart';
 import '../providers/driver_state_provider.dart';
-import '../providers/driver_taxi_terug_stats_provider.dart';
 import '../services/driver_data_service.dart';
+import '../providers/driver_ride_line_provider.dart';
+import 'driver_missed_opportunities_card.dart';
 import 'driver_home_live_rides_section.dart';
 import 'driver_home_premium_style.dart';
-import 'driver_hub_saved_by_riders_section.dart';
 import 'driver_progressive_verification_banner.dart';
 import 'driver_ride_alert_readiness_card.dart';
-import 'driver_taxi_terug_stats_card.dart';
+import 'driver_taxi_terug_wizard_sheet.dart';
 import 'three_state_toggle.dart';
 
 /// Bottom sheet on driver home. Offline state: scheduled rides, stats, community.
@@ -44,23 +45,24 @@ class DriverHomeSheet extends ConsumerWidget {
     final driverColors = DriverColors.fromTheme(colors);
     final driverTypo = DriverTypography.fromTheme(typo);
     final driver = ref.watch(driverStateProvider);
-    final scheduledAsync = ref.watch(scheduledRidesProvider);
-    final earningsAsync = ref.watch(driverEarningsProvider);
-    final statsAsync = ref.watch(driverShiftStatsProvider);
+    final scheduledCountAsync = ref.watch(scheduledRidesCountProvider);
     final returnTripsAsync = ref.watch(filteredReturnTripsProvider);
     final returnModeAsync = ref.watch(driverReturnModeProvider);
-    final taxiTerugStatsAsync = ref.watch(driverTaxiTerugStatsProvider);
     final upcomingAsync = ref.watch(upcomingRidesProvider);
+    final todayRidesCount = ref.watch(todayRidesCountProvider);
+    final taxiThruCountAsync = ref.watch(driverTaxiThruPostsCountProvider);
     final billingStatusAsync = ref.watch(driverBillingStatusProvider);
+    final rideLineAsync = ref.watch(driverRideLineProvider);
     final showLiveRidesSection =
         driver.appState == DriverAppState.onlineAvailable ||
-            driver.activeRideId != null;
-    final rides = scheduledAsync.valueOrNull ?? [];
-    final earnings = earningsAsync.valueOrNull;
-    final todayRides =
-        statsAsync.valueOrNull?.shiftRidesToday ?? earnings?.todayRides ?? 0;
+            driver.appState == DriverAppState.onBreak ||
+            driver.activeRideId != null ||
+            (rideLineAsync.valueOrNull?.hasNext ?? false);
+    final scheduledCount = scheduledCountAsync.valueOrNull ?? 0;
+    final todayRides = todayRidesCount;
     final upcomingRides = upcomingAsync.valueOrNull ?? [];
     final upcomingCount = upcomingRides.length;
+    final taxiThruCount = taxiThruCountAsync.valueOrNull ?? 0;
     final returnTripsCount = returnTripsAsync.valueOrNull?.length;
     final returnMode = returnModeAsync.valueOrNull;
 
@@ -96,132 +98,119 @@ class DriverHomeSheet extends ConsumerWidget {
                     },
                   ).driverFadeSlideIn(staggerIndex: 0),
                   const SizedBox(height: DriverSpacing.md),
-                  if (billingStatusAsync.valueOrNull?['ride_requests_paused'] ==
-                      true) ...[
-                    _PlatformRidesPausedCard(
-                      colors: colors,
-                      driverColors: driverColors,
-                      typo: typo,
-                      onViewSettlementDetails: () {
-                        HapticService.selectionClick();
-                        context.push('/driver/billing');
-                      },
-                    ).driverFadeSlideIn(staggerIndex: 1),
-                    const SizedBox(height: DriverSpacing.md),
-                  ],
                   const DriverRideAlertReadinessCard()
                       .driverFadeSlideIn(staggerIndex: 1),
-                  if (driver.activeRideId == null) ...[
-                    _ReturnModeCard(
-                      colors: colors,
-                      driverColors: driverColors,
-                      typo: typo,
-                      status: returnMode,
-                      loading: returnModeAsync.isLoading,
-                      returnTripsCount: returnTripsCount,
-                      onManage: () {
-                        HapticService.selectionClick();
-                        context.push('/driver/journey-intent');
-                      },
-                      onActivate: () async {
-                        HapticService.mediumTap();
-                        context.push('/driver/journey-intent');
-                      },
-                      onDisable: () async {
-                        HapticService.selectionClick();
-                        final confirmed = await showModalBottomSheet<bool>(
-                          context: context,
-                          showDragHandle: true,
-                          builder: (sheetContext) => SafeArea(
-                            child: Padding(
-                              padding: const EdgeInsets.all(DriverSpacing.lg),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Text(
-                                    DriverStrings.returnModeDisableTitle,
-                                    style: typo.titleLarge.copyWith(
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                  const SizedBox(height: DriverSpacing.sm),
-                                  Text(DriverStrings.returnModeDisableBody),
-                                  const SizedBox(height: DriverSpacing.lg),
-                                  FilledButton(
-                                    onPressed: () =>
-                                        Navigator.pop(sheetContext, true),
-                                    child: Text(
-                                      DriverStrings.returnModeDisableConfirm,
-                                    ),
-                                  ),
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(sheetContext, false),
-                                    child: Text(DriverStrings.notNow),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                        if (confirmed != true) return;
-                        final result = await ref
-                            .read(driverDataServiceProvider)
-                            .disableReturnMode();
-                        ref.invalidate(driverReturnModeProvider);
-                        if (context.mounted && !result.ok) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(result.activationErrorMessage),
-                            ),
-                          );
-                        }
-                      },
-                    ).driverFadeSlideIn(staggerIndex: 1),
-                    const SizedBox(height: DriverSpacing.md),
-                    DriverTaxiTerugStatsCard(
-                      colors: colors,
-                      driverColors: driverColors,
-                      typo: driverTypo,
-                      stats: taxiTerugStatsAsync.valueOrNull,
-                      loading: taxiTerugStatsAsync.isLoading,
-                    ).driverFadeSlideIn(staggerIndex: 2),
-                    const SizedBox(height: DriverSpacing.lg),
-                  ],
-                  _DriverHubEntryCard(
+                  const SizedBox(height: DriverSpacing.md),
+                  _DriverSheetInsetGroup(
                     colors: colors,
-                    driverColors: driverColors,
-                    typo: typo,
-                    onTap: onOpenDriverHub,
+                    children: [
+                      _TariffHubStrip(
+                        colors: colors,
+                        typo: typo,
+                        onOpenHub: onOpenDriverHub,
+                      ),
+                      if (driver.activeRideId == null)
+                        _ReturnModeRow(
+                          colors: colors,
+                          typo: typo,
+                          status: returnMode,
+                          loading: returnModeAsync.isLoading,
+                          returnTripsCount: returnTripsCount,
+                          onOpenMatches: () {
+                            HapticService.selectionClick();
+                            context.push('/driver/return-trips');
+                          },
+                          onManage: () {
+                            HapticService.selectionClick();
+                            unawaited(showDriverTaxiTerugWizard(context, ref));
+                          },
+                          onActivate: () async {
+                            HapticService.mediumTap();
+                            await showDriverTaxiTerugWizard(context, ref);
+                          },
+                          onDisable: () async {
+                            HapticService.selectionClick();
+                            final confirmed = await showModalBottomSheet<bool>(
+                              context: context,
+                              showDragHandle: true,
+                              builder: (sheetContext) => SafeArea(
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.all(DriverSpacing.lg),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Text(
+                                        DriverStrings.returnModeDisableTitle,
+                                        style: typo.titleLarge.copyWith(
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                      const SizedBox(height: DriverSpacing.sm),
+                                      Text(DriverStrings.returnModeDisableBody),
+                                      const SizedBox(height: DriverSpacing.lg),
+                                      FilledButton(
+                                        onPressed: () =>
+                                            Navigator.pop(sheetContext, true),
+                                        child: Text(
+                                          DriverStrings
+                                              .returnModeDisableConfirm,
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(sheetContext, false),
+                                        child: Text(DriverStrings.notNow),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                            if (confirmed != true) return;
+                            final result = await ref
+                                .read(driverDataServiceProvider)
+                                .disableReturnMode();
+                            ref.invalidate(driverReturnModeProvider);
+                            if (context.mounted && !result.ok) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    result.activationErrorMessage,
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                    ],
                   ).driverFadeSlideIn(staggerIndex: 2),
-                  const DriverHomeSavedByRidersCard()
-                      .driverFadeSlideIn(staggerIndex: 2),
-                  const DriverProgressiveVerificationBanner(),
                   if (showLiveRidesSection) ...[
-                    const SizedBox(height: DriverSpacing.lg),
+                    const SizedBox(height: DriverSpacing.md),
                     DriverHomeLiveRidesSection(
                       colors: driverColors,
                       typography: driverTypo,
                       themeColors: colors,
                       themeTypography: typo,
                     ).driverFadeSlideIn(staggerIndex: 3),
+                    DriverMissedOpportunitiesCard(
+                      colors: colors,
+                      typo: typo,
+                    ).driverFadeSlideIn(staggerIndex: 4),
                   ],
-                  const SizedBox(height: DriverSpacing.lg),
-                  _SectionLabel(
-                    label: DriverStrings.homeRidesSection,
+                  const SizedBox(height: DriverSpacing.md),
+                  _RideQuickLinksRow(
                     colors: colors,
-                    typo: typo,
-                  ).driverFadeSlideIn(staggerIndex: 4),
-                  const SizedBox(height: DriverSpacing.sm),
-                  _RidesActionGrid(
                     driverColors: driverColors,
-                    colors: colors,
                     typo: typo,
-                    scheduledCount: rides.length,
+                    scheduledCount: scheduledCount,
+                    scheduledCountLoading: scheduledCountAsync.isLoading,
                     todayRides: todayRides,
                     upcomingCount: upcomingCount,
-                    returnTripsCount: returnTripsCount,
+                    taxiThruCount: taxiThruCount,
+                    taxiThruCountLoading: taxiThruCountAsync.isLoading,
                     onScheduledTap: () {
                       HapticService.selectionClick();
                       context.push('/driver/scheduled-rides');
@@ -230,15 +219,25 @@ class DriverHomeSheet extends ConsumerWidget {
                       HapticService.selectionClick();
                       context.push('/driver/rides/today?filter=upcoming');
                     },
-                    onReturnTripsTap: () {
-                      HapticService.selectionClick();
-                      context.push('/driver/return-trips');
-                    },
                     onTaxiThruTap: () {
                       HapticService.selectionClick();
                       context.push('/driver/taxi-thru');
                     },
-                  ).driverFadeSlideIn(staggerIndex: 5),
+                  ).driverFadeSlideIn(staggerIndex: 4),
+                  if (billingStatusAsync.valueOrNull?['ride_requests_paused'] ==
+                      true) ...[
+                    const SizedBox(height: DriverSpacing.md),
+                    _PlatformRidesPausedCard(
+                      colors: colors,
+                      driverColors: driverColors,
+                      typo: typo,
+                      onViewSettlementDetails: () {
+                        HapticService.selectionClick();
+                        context.push('/driver/billing');
+                      },
+                    ).driverFadeSlideIn(staggerIndex: 5),
+                  ],
+                  const DriverProgressiveVerificationBanner(),
                 ],
               ),
             ),
@@ -345,25 +344,138 @@ class _PlatformRidesPausedCard extends StatelessWidget {
   }
 }
 
-class _ReturnModeCard extends StatelessWidget {
-  const _ReturnModeCard({
+class _DriverSheetInsetGroup extends StatelessWidget {
+  const _DriverSheetInsetGroup({
     required this.colors,
-    required this.driverColors,
+    required this.children,
+  });
+
+  final HeyCabyColorTokens colors;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    if (children.isEmpty) return const SizedBox.shrink();
+
+    final rows = <Widget>[];
+    for (var i = 0; i < children.length; i++) {
+      if (i > 0) {
+        rows.add(
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: colors.border.withValues(alpha: 0.55),
+          ),
+        );
+      }
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: DriverSpacing.md,
+            vertical: DriverSpacing.sm + 2,
+          ),
+          child: children[i],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: colors.card.withValues(alpha: 0.52),
+        borderRadius: DriverRadius.lgAll,
+        border: Border.all(
+          color: colors.border.withValues(alpha: 0.72),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: rows,
+      ),
+    );
+  }
+}
+
+class _TariffHubStrip extends ConsumerWidget {
+  const _TariffHubStrip({
+    required this.colors,
+    required this.typo,
+    required this.onOpenHub,
+  });
+
+  final HeyCabyColorTokens colors;
+  final HeyCabyTypography typo;
+  final VoidCallback onOpenHub;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activeRate = ref.watch(activeRateProfileProvider).valueOrNull;
+    final perKm = activeRate == null
+        ? DriverStrings.notSet
+        : '€${activeRate.perKmRate.toStringAsFixed(2)}/km';
+    final profileName = activeRate?.profileName ?? DriverStrings.activeTariff;
+
+    return InkWell(
+      onTap: () {
+        HapticService.mediumTap();
+        onOpenHub();
+      },
+      borderRadius: BorderRadius.circular(DriverRadius.md),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                '$perKm · $profileName',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: typo.titleSmall.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            Text(
+              DriverStrings.driverHub,
+              style: typo.labelLarge.copyWith(
+                color: colors.accent,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(width: 2),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: colors.accent,
+              size: 22,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReturnModeRow extends StatelessWidget {
+  const _ReturnModeRow({
+    required this.colors,
     required this.typo,
     required this.status,
     required this.loading,
     required this.returnTripsCount,
+    required this.onOpenMatches,
     required this.onActivate,
     required this.onManage,
     required this.onDisable,
   });
 
   final HeyCabyColorTokens colors;
-  final DriverColors driverColors;
   final HeyCabyTypography typo;
   final DriverReturnModeStatus? status;
   final bool loading;
   final int? returnTripsCount;
+  final VoidCallback onOpenMatches;
   final Future<void> Function() onActivate;
   final VoidCallback onManage;
   final Future<void> Function() onDisable;
@@ -395,151 +507,135 @@ class _ReturnModeCard extends StatelessWidget {
                 : hasDestination
                     ? DriverStrings.returnModeHeadingHomeBody(destination!)
                     : DriverStrings.returnModeOffBody;
-    final detail = isActive
-        ? [
-            DriverStrings.returnModeActiveBody(
-              pickupRadiusKm: status?.pickupRadiusKm ?? 10,
-            ),
-            if (status?.kmFromHome != null)
-              DriverStrings.returnModeKmFromHome(status!.kmFromHome!),
-          ].join(' · ')
-        : null;
+
+    void onRowTap() {
+      if (loading) return;
+      if (!isActive) {
+        unawaited(onActivate());
+        return;
+      }
+      if (hasMatches) {
+        onOpenMatches();
+      } else {
+        onManage();
+      }
+    }
 
     return InkWell(
-      onTap: isActive ? onManage : null,
-      borderRadius: DriverRadius.lgAll,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(DriverSpacing.lg),
-        decoration: BoxDecoration(
-          color: colors.card.withValues(alpha: 0.55),
-          borderRadius: DriverRadius.lgAll,
-          border: Border.all(
-            color: hasMatches
-                ? colors.success.withValues(alpha: 0.42)
-                : isActive
-                    ? colors.success.withValues(alpha: 0.24)
-                    : colors.border.withValues(alpha: 0.85),
-            width: 1.2,
-          ),
-          boxShadow: DriverHomePremiumStyle.tileShadow(driverColors),
-        ),
+      onTap: onRowTap,
+      borderRadius: BorderRadius.circular(DriverRadius.md),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: colors.success.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(DriverRadius.md),
+                color: colors.success.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 AppIcons.arrowBack,
                 color: colors.success,
-                size: 24,
+                size: 22,
               ),
             ),
-            const SizedBox(width: DriverSpacing.md),
+            const SizedBox(width: DriverSpacing.sm + 2),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          DriverStrings.returnMode,
-                          style: typo.titleSmall.copyWith(
-                            color: colors.text,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: (hasMatches ? colors.success : colors.textMid)
-                              .withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          statusLabel,
-                          style: typo.labelSmall.copyWith(
-                            color: hasMatches ? colors.success : colors.textMid,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ],
+                  Text(
+                    DriverStrings.returnMode,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: typo.titleSmall.copyWith(
+                      color: colors.text,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                  const SizedBox(height: DriverSpacing.xs),
+                  const SizedBox(height: 2),
                   Text(
                     body,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: typo.bodySmall.copyWith(
                       color: colors.textMid,
-                      height: 1.35,
+                      height: 1.3,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (detail != null) ...[
-                    const SizedBox(height: DriverSpacing.xs),
-                    Text(
-                      detail,
-                      style: typo.labelSmall.copyWith(
-                        color: colors.textSoft,
-                        height: 1.25,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: DriverSpacing.sm),
-                  if (isActive)
-                    Wrap(
-                      spacing: DriverSpacing.sm,
-                      runSpacing: DriverSpacing.xs,
-                      children: [
-                        _ReturnModeActionChip(
-                          colors: colors,
-                          typo: typo,
-                          label: DriverStrings.returnModeManage,
-                          filled: false,
-                          onTap: onManage,
-                        ),
-                        _ReturnModeActionChip(
-                          colors: colors,
-                          typo: typo,
-                          label: DriverStrings.returnModeDisable,
-                          filled: false,
-                          onTap: onDisable,
-                        ),
-                      ],
-                    )
-                  else
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed: loading ? null : onActivate,
-                        icon: const Icon(Icons.route_rounded, size: 20),
-                        label: Text(DriverStrings.returnModeActivateFull),
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: DriverSpacing.md,
-                            vertical: 14,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(DriverRadius.md),
-                          ),
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),
+            const SizedBox(width: DriverSpacing.xs),
+            if (isActive) ...[
+              if (hasMatches)
+                Container(
+                  margin: const EdgeInsets.only(right: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: colors.success.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    returnTripsCount!.toString(),
+                    style: typo.labelSmall.copyWith(
+                      color: colors.success,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              TextButton(
+                onPressed: () => unawaited(onDisable()),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: const Size(0, DriverSpacing.touchTarget),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  foregroundColor: colors.textMid,
+                ),
+                child: Text(
+                  DriverStrings.returnModeDisable,
+                  style: typo.labelSmall.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: colors.textMid,
+                size: 22,
+              ),
+            ] else ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: colors.textMid.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  statusLabel,
+                  style: typo.labelSmall.copyWith(
+                    color: colors.textMid,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              TextButton(
+                onPressed: loading ? null : () => unawaited(onActivate()),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: const Size(0, DriverSpacing.touchTarget),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  DriverStrings.returnModeActivate,
+                  style: typo.labelLarge.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -547,424 +643,225 @@ class _ReturnModeCard extends StatelessWidget {
   }
 }
 
-class _ReturnModeActionChip extends StatelessWidget {
-  const _ReturnModeActionChip({
-    required this.colors,
-    required this.typo,
-    required this.label,
-    required this.filled,
-    required this.onTap,
-  });
-
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-  final String label;
-  final bool filled;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color:
-              filled ? colors.success : colors.success.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: colors.success.withValues(alpha: filled ? 0 : 0.22),
-          ),
-        ),
-        child: Text(
-          label,
-          style: typo.labelSmall.copyWith(
-            color: filled ? colors.onAccent : colors.success,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DriverHubEntryCard extends ConsumerWidget {
-  const _DriverHubEntryCard({
+class _RideQuickLinksRow extends StatelessWidget {
+  const _RideQuickLinksRow({
     required this.colors,
     required this.driverColors,
-    required this.typo,
-    required this.onTap,
-  });
-
-  final HeyCabyColorTokens colors;
-  final DriverColors driverColors;
-  final HeyCabyTypography typo;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final activeRate = ref.watch(activeRateProfileProvider).valueOrNull;
-    final earnings = ref.watch(driverEarningsProvider).valueOrNull;
-    final perKm = activeRate == null
-        ? DriverStrings.notSet
-        : '€${activeRate.perKmRate.toStringAsFixed(2)}/km';
-    final profileName = activeRate?.profileName ?? DriverStrings.activeTariff;
-    final today = earnings?.formatEuros(earnings.todayEuros) ?? '€0.00';
-
-    return DriverAccentRailCard(
-      colors: driverColors,
-      onTap: () {
-        HapticService.mediumTap();
-        onTap();
-      },
-      padding: const EdgeInsets.all(DriverSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: colors.accent.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(
-                  AppIcons.hubGrid,
-                  color: colors.accent,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: DriverSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      DriverStrings.driverHub,
-                      style: typo.titleMedium.copyWith(
-                        color: colors.text,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      DriverStrings.driverHubHomeSubtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: typo.bodySmall.copyWith(
-                        color: colors.textMid,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_rounded,
-                color: colors.accent,
-              ),
-            ],
-          ),
-          const SizedBox(height: DriverSpacing.md),
-          Row(
-            children: [
-              Expanded(
-                child: _HubEntryMetric(
-                  label: DriverStrings.driverHubCurrentTariff,
-                  value: perKm,
-                  helper: profileName,
-                  colors: colors,
-                  typo: typo,
-                ),
-              ),
-              const SizedBox(width: DriverSpacing.sm),
-              Expanded(
-                child: _HubEntryMetric(
-                  label: DriverStrings.driverHubToday,
-                  value: today,
-                  helper: DriverStrings.earnedLabel,
-                  colors: colors,
-                  typo: typo,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HubEntryMetric extends StatelessWidget {
-  const _HubEntryMetric({
-    required this.label,
-    required this.value,
-    required this.helper,
-    required this.colors,
-    required this.typo,
-  });
-
-  final String label;
-  final String value;
-  final String helper;
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colors.surface.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.border.withValues(alpha: 0.65)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: typo.labelSmall.copyWith(
-              color: colors.textSoft,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: typo.titleSmall.copyWith(
-              color: colors.text,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            helper,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: typo.labelSmall.copyWith(
-              color: colors.textMid,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel({
-    required this.label,
-    required this.colors,
-    required this.typo,
-  });
-
-  final String label;
-  final HeyCabyColorTokens colors;
-  final HeyCabyTypography typo;
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        label,
-        style: typo.titleSmall.copyWith(
-          color: colors.textMid,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    );
-  }
-}
-
-class _RidesActionGrid extends StatelessWidget {
-  const _RidesActionGrid({
-    required this.driverColors,
-    required this.colors,
     required this.typo,
     required this.scheduledCount,
+    required this.scheduledCountLoading,
     required this.todayRides,
     required this.upcomingCount,
-    required this.returnTripsCount,
+    required this.taxiThruCount,
+    required this.taxiThruCountLoading,
     required this.onScheduledTap,
     required this.onTodayTap,
-    required this.onReturnTripsTap,
     required this.onTaxiThruTap,
   });
 
-  final DriverColors driverColors;
   final HeyCabyColorTokens colors;
+  final DriverColors driverColors;
   final HeyCabyTypography typo;
   final int scheduledCount;
+  final bool scheduledCountLoading;
   final int todayRides;
   final int upcomingCount;
-  final int? returnTripsCount;
+  final int taxiThruCount;
+  final bool taxiThruCountLoading;
   final VoidCallback onScheduledTap;
   final VoidCallback onTodayTap;
-  final VoidCallback onReturnTripsTap;
   final VoidCallback onTaxiThruTap;
 
   @override
   Widget build(BuildContext context) {
-    final scheduledSubtitle =
-        DriverStrings.homePlannedScheduledCount(scheduledCount);
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _RideActionCard(
-                colors: colors,
-                driverColors: driverColors,
-                typo: typo,
-                icon: AppIcons.calendar,
-                title: DriverStrings.scheduledRides,
-                subtitle: scheduledSubtitle,
-                onTap: onScheduledTap,
+    final todaySubtitle = DriverStrings.homeTodayRidesCount(todayRides);
+    final postsSubtitle = taxiThruCountLoading
+        ? DriverStrings.loading
+        : taxiThruCount == 0
+            ? DriverStrings.homeReturnTaxiPostsSubtitle
+            : DriverStrings.homeAvailableCount(taxiThruCount);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(
+        DriverSpacing.md,
+        DriverSpacing.md + 2,
+        DriverSpacing.md,
+        DriverSpacing.md,
+      ),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.border.withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(
+              left: DriverSpacing.xs,
+              bottom: DriverSpacing.md + 2,
+            ),
+            child: Text(
+              DriverStrings.homeQuickActionsTitle,
+              style: typo.titleSmall.copyWith(
+                color: colors.text,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _RideActionCard(
-                colors: colors,
-                driverColors: driverColors,
-                typo: typo,
-                icon: AppIcons.carFront,
-                title: DriverStrings.today,
-                subtitle: upcomingCount > 0
-                    ? DriverStrings.homeUpcomingCount(upcomingCount)
-                    : DriverStrings.homeTodayRidesCount(todayRides),
-                badgeCount: upcomingCount > 0 ? upcomingCount : null,
-                onTap: onTodayTap,
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: _DriverHomeQuickActionTile(
+                  colors: colors,
+                  typo: typo,
+                  icon: Icons.event_rounded,
+                  label: DriverStrings.scheduledRides,
+                  subtitle: scheduledCountLoading
+                      ? DriverStrings.loading
+                      : DriverStrings.homePlannedScheduledCount(
+                          scheduledCount,
+                        ),
+                  onTap: onScheduledTap,
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _RideActionCard(
-                colors: colors,
-                driverColors: driverColors,
-                typo: typo,
-                icon: AppIcons.arrowBack,
-                title: DriverStrings.returnTrips,
-                subtitle: returnTripsCount == null
-                    ? DriverStrings.loading
-                    : returnTripsCount == 0
-                        ? DriverStrings.off
-                        : DriverStrings.homeAvailableCount(returnTripsCount!),
-                onTap: onReturnTripsTap,
+              Expanded(
+                child: _DriverHomeQuickActionTile(
+                  colors: colors,
+                  typo: typo,
+                  icon: Icons.local_taxi_rounded,
+                  label: DriverStrings.today,
+                  subtitle: todaySubtitle,
+                  badgeCount: upcomingCount > 0 ? upcomingCount : null,
+                  onTap: onTodayTap,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _RideActionCard(
-                colors: colors,
-                driverColors: driverColors,
-                typo: typo,
-                icon: Icons.travel_explore_rounded,
-                title: DriverStrings.taxiThruTitle,
-                subtitle: DriverStrings.taxiThruTitle,
-                onTap: onTaxiThruTap,
+              Expanded(
+                child: _DriverHomeQuickActionTile(
+                  colors: colors,
+                  typo: typo,
+                  icon: Icons.campaign_rounded,
+                  label: DriverStrings.homeOverviewRiderPosts,
+                  subtitle: postsSubtitle,
+                  badgeCount: taxiThruCount > 0 ? taxiThruCount : null,
+                  onTap: onTaxiThruTap,
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _RideActionCard extends StatelessWidget {
-  const _RideActionCard({
+class _DriverHomeQuickActionTile extends StatelessWidget {
+  const _DriverHomeQuickActionTile({
     required this.colors,
-    required this.driverColors,
     required this.typo,
     required this.icon,
-    required this.title,
+    required this.label,
     required this.subtitle,
     required this.onTap,
     this.badgeCount,
   });
 
   final HeyCabyColorTokens colors;
-  final DriverColors driverColors;
   final HeyCabyTypography typo;
   final IconData icon;
-  final String title;
+  final String label;
   final String subtitle;
   final VoidCallback onTap;
   final int? badgeCount;
 
   @override
   Widget build(BuildContext context) {
-    return DriverAccentRailCard(
-      colors: driverColors,
-      onTap: onTap,
-      padding: const EdgeInsets.all(DriverSpacing.md),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 112),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Icon(
-                  icon,
-                  color: colors.textMid,
-                  size: 25,
-                ),
-                if (badgeCount != null && badgeCount! > 0)
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(DriverRadius.md),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 4,
+            vertical: DriverSpacing.sm,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
-                      color: colors.accent,
-                      borderRadius: BorderRadius.circular(10),
+                      shape: BoxShape.circle,
+                      color: colors.bgAlt,
                     ),
-                    child: Text(
-                      '$badgeCount',
-                      style: typo.labelSmall.copyWith(
-                        color: colors.onAccent,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    child: Icon(
+                      icon,
+                      color: colors.text,
+                      size: 22,
                     ),
                   ),
-              ],
-            ),
-            const SizedBox(height: DriverSpacing.xl),
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: typo.titleSmall.copyWith(
-                color: colors.text,
-                fontWeight: FontWeight.w800,
+                  if (badgeCount != null && badgeCount! > 0)
+                    Positioned(
+                      top: -2,
+                      right: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 1,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.accent,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: colors.card, width: 1.5),
+                        ),
+                        child: Text(
+                          '$badgeCount',
+                          style: typo.labelSmall.copyWith(
+                            color: colors.onAccent,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 9,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: typo.bodySmall.copyWith(
-                color: colors.textMid,
-                fontWeight: FontWeight.w600,
+              const SizedBox(height: 8),
+              Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: typo.labelSmall.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w600,
+                  height: 1.15,
+                  fontSize: 11,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: typo.labelSmall.copyWith(
+                  color: colors.textSoft,
+                  fontWeight: FontWeight.w500,
+                  height: 1.1,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

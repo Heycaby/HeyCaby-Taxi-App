@@ -2,87 +2,126 @@
  * Firebase Cloud Messaging HTTP v1 (single delivery path; no Expo).
  * Requires secret FIREBASE_SERVICE_ACCOUNT_JSON (full service account JSON object as string).
  */
-import { GoogleAuth } from "npm:google-auth-library@9.15.1"
+import { GoogleAuth } from "npm:google-auth-library@9.15.1";
 
-const scope = "https://www.googleapis.com/auth/firebase.messaging"
+const scope = "https://www.googleapis.com/auth/firebase.messaging";
 
-type CachedToken = { token: string; expiresMs: number }
-let cachedAccess: CachedToken | null = null
+type CachedToken = { token: string; expiresMs: number };
+let cachedAccess: CachedToken | null = null;
 
 export function getFirebaseProjectId(): string | null {
-  const raw = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON")
-  if (!raw) return null
+  const raw = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON");
+  if (!raw) return null;
   try {
-    return (JSON.parse(raw) as { project_id?: string }).project_id ?? null
+    return (JSON.parse(raw) as { project_id?: string }).project_id ?? null;
   } catch {
-    return null
+    return null;
   }
 }
 
 export async function getFirebaseAccessToken(): Promise<string | null> {
-  const raw = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON")
+  const raw = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON");
   if (!raw) {
-    console.error("FIREBASE_SERVICE_ACCOUNT_JSON is not set — FCM disabled")
-    return null
+    console.error("FIREBASE_SERVICE_ACCOUNT_JSON is not set — FCM disabled");
+    return null;
   }
-  const now = Date.now()
+  const now = Date.now();
   if (cachedAccess && cachedAccess.expiresMs > now + 60_000) {
-    return cachedAccess.token
+    return cachedAccess.token;
   }
-  let credentials: Record<string, unknown>
+  let credentials: Record<string, unknown>;
   try {
-    credentials = JSON.parse(raw) as Record<string, unknown>
+    credentials = JSON.parse(raw) as Record<string, unknown>;
   } catch (e) {
-    console.error("FIREBASE_SERVICE_ACCOUNT_JSON parse error:", e)
-    return null
+    console.error("FIREBASE_SERVICE_ACCOUNT_JSON parse error:", e);
+    return null;
   }
   const auth = new GoogleAuth({
     credentials,
     scopes: [scope],
-  })
-  const client = await auth.getClient()
-  const res = await client.getAccessToken()
-  const token = res.token ?? null
+  });
+  const client = await auth.getClient();
+  const res = await client.getAccessToken();
+  const token = res.token ?? null;
   if (!token) {
-    console.error("FCM: empty access token from GoogleAuth")
-    return null
+    console.error("FCM: empty access token from GoogleAuth");
+    return null;
   }
-  cachedAccess = { token, expiresMs: now + 3_500_000 }
-  return token
+  cachedAccess = { token, expiresMs: now + 3_500_000 };
+  return token;
 }
 
 export type FcmSendInput = {
-  title: string
-  body: string | null
-  data?: Record<string, unknown>
-  priority?: string
-  androidChannelId?: string
+  title: string;
+  body: string | null;
+  data?: Record<string, unknown>;
+  priority?: string;
+  androidChannelId?: string;
+};
+
+export type FcmSendResult = {
+  ok: boolean;
+  permanentFailure: boolean;
+  statusCode?: number;
+  errorCode?: string;
+  providerMessageId?: string;
+};
+
+export function classifyFcmError(
+  body: string,
+): { errorCode: string; permanentFailure: boolean } {
+  let errorCode = "provider_error";
+  try {
+    const parsed = JSON.parse(body) as {
+      error?: {
+        status?: string;
+        details?: Array<{ errorCode?: string }>;
+      };
+    };
+    errorCode = parsed.error?.details?.find((d) => d.errorCode)?.errorCode ??
+      parsed.error?.status ?? errorCode;
+  } catch {
+    // Provider bodies are never logged or persisted.
+  }
+  return {
+    errorCode,
+    permanentFailure: errorCode === "UNREGISTERED" ||
+      errorCode === "SENDER_ID_MISMATCH",
+  };
 }
 
-function stringifyData(data: Record<string, unknown> | undefined): Record<string, string> | undefined {
-  if (!data || Object.keys(data).length === 0) return undefined
-  const out: Record<string, string> = {}
+function stringifyData(
+  data: Record<string, unknown> | undefined,
+): Record<string, string> | undefined {
+  if (!data || Object.keys(data).length === 0) return undefined;
+  const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(data)) {
-    if (v === null || v === undefined) continue
-    out[k] = typeof v === "string" ? v : JSON.stringify(v)
+    if (v === null || v === undefined) continue;
+    out[k] = typeof v === "string" ? v : JSON.stringify(v);
   }
-  return Object.keys(out).length ? out : undefined
+  return Object.keys(out).length ? out : undefined;
 }
 
 export async function sendFcmV1ToToken(
   deviceToken: string,
   nudge: FcmSendInput,
-): Promise<boolean> {
-  const access = await getFirebaseAccessToken()
-  const projectId = getFirebaseProjectId()
-  if (!access || !projectId) return false
+): Promise<FcmSendResult> {
+  const access = await getFirebaseAccessToken();
+  const projectId = getFirebaseProjectId();
+  if (!access || !projectId) {
+    return {
+      ok: false,
+      permanentFailure: false,
+      errorCode: "fcm_not_configured",
+    };
+  }
 
-  const high = nudge.priority === "critical" || nudge.priority === "high"
-  const dataPayload = stringifyData(nudge.data)
+  const high = nudge.priority === "critical" || nudge.priority === "high";
+  const dataPayload = stringifyData(nudge.data);
 
   const androidBlock: Record<string, unknown> = {
     priority: high ? "HIGH" : "NORMAL",
-  }
+  };
   if (nudge.androidChannelId) {
     androidBlock.notification = {
       channel_id: nudge.androidChannelId,
@@ -91,7 +130,7 @@ export async function sendFcmV1ToToken(
       vibrate_timings: high
         ? ["0s", "0.4s", "0.2s", "0.4s"]
         : ["0s", "0.25s", "0.15s", "0.25s"],
-    }
+    };
   }
 
   const message: Record<string, unknown> = {
@@ -111,9 +150,9 @@ export async function sendFcmV1ToToken(
         },
       },
     },
-  }
+  };
   if (dataPayload) {
-    message.data = dataPayload
+    message.data = dataPayload;
   }
 
   const res = await fetch(
@@ -126,44 +165,63 @@ export async function sendFcmV1ToToken(
       },
       body: JSON.stringify({ message }),
     },
-  )
+  );
 
   if (!res.ok) {
-    const errText = await res.text()
-    console.error("FCM v1 send failed:", res.status, errText)
-    return false
+    const classified = classifyFcmError(await res.text());
+    console.error("FCM v1 send failed:", res.status, classified.errorCode);
+    return {
+      ok: false,
+      permanentFailure: classified.permanentFailure,
+      statusCode: res.status,
+      errorCode: classified.errorCode,
+    };
   }
-  return true
+  let providerMessageId: string | undefined;
+  try {
+    const parsed = await res.json() as { name?: string };
+    providerMessageId = parsed.name;
+  } catch {
+    // HTTP success is the provider acceptance contract.
+  }
+  return {
+    ok: true,
+    permanentFailure: false,
+    statusCode: res.status,
+    providerMessageId,
+  };
 }
 
 export type LiveActivityPushInput = {
-  fcmToken: string
-  activityToken: string
-  event: "update" | "end"
-  contentState: Record<string, unknown>
-  title?: string
-  body?: string
-  staleDate?: number
-  dismissalDate?: number
-}
+  fcmToken: string;
+  activityToken: string;
+  event: "update" | "end";
+  contentState: Record<string, unknown>;
+  title?: string;
+  body?: string;
+  staleDate?: number;
+  dismissalDate?: number;
+};
 
 /** Update ActivityKit even while the Flutter process is suspended or terminated. */
 export async function sendFcmLiveActivityUpdate(
   input: LiveActivityPushInput,
 ): Promise<{ ok: boolean; error?: string }> {
-  const access = await getFirebaseAccessToken()
-  const projectId = getFirebaseProjectId()
-  if (!access || !projectId) return { ok: false, error: "firebase_unavailable" }
+  const access = await getFirebaseAccessToken();
+  const projectId = getFirebaseProjectId();
+  if (!access || !projectId) {
+    return { ok: false, error: "firebase_unavailable" };
+  }
 
   const aps: Record<string, unknown> = {
     timestamp: Math.floor(Date.now() / 1000),
     event: input.event,
     "content-state": input.contentState,
-  }
-  if (input.staleDate) aps["stale-date"] = input.staleDate
-  if (input.dismissalDate) aps["dismissal-date"] = input.dismissalDate
+  };
+  if (input.staleDate) aps["stale-date"] = input.staleDate;
+  if (input.dismissalDate) aps["dismissal-date"] = input.dismissalDate;
   if (input.title || input.body) {
-    aps.alert = { title: input.title ?? "HeyCaby", body: input.body ?? "" }
+    aps.alert = { title: input.title ?? "HeyCaby", body: input.body ?? "" };
   }
 
   const res = await fetch(
@@ -185,9 +243,13 @@ export async function sendFcmLiveActivityUpdate(
         },
       }),
     },
-  )
-  if (res.ok) return { ok: true }
-  const error = `${res.status}:${await res.text()}`
-  console.error("FCM Live Activity update failed:", error)
-  return { ok: false, error }
+  );
+  if (res.ok) return { ok: true };
+  const classified = classifyFcmError(await res.text());
+  console.error(
+    "FCM Live Activity update failed:",
+    res.status,
+    classified.errorCode,
+  );
+  return { ok: false, error: classified.errorCode };
 }

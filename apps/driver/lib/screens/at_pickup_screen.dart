@@ -9,8 +9,10 @@ import 'package:heycaby_utils/heycaby_utils.dart';
 
 import '../l10n/driver_strings.dart';
 import '../providers/driver_location_provider.dart';
+import '../providers/driver_runtime_providers.dart';
 import '../providers/driver_state_provider.dart';
 import '../services/driver_pickup_wait_service.dart';
+import '../services/ride_gps_tracker.dart';
 import '../utils/driver_cancel_ride_flow.dart';
 import '../utils/driver_communication_distance.dart';
 import '../utils/driver_navigation_launch.dart';
@@ -44,15 +46,35 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
   Timer? _waitTimer;
   static const int _noShowAfterSeconds = 300;
   static const _pickupWaitService = DriverPickupWaitService();
+  final _boardingPinController = TextEditingController();
+  bool _verificationProtected = false;
+  bool _boardingVerified = false;
+  String? _boardingError;
 
   @override
   void initState() {
     super.initState();
     unawaited(_bootstrapWaitTimer());
     unawaited(_loadFarePill());
+    unawaited(_loadVerification());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(hydrateDriverRideCoordsIfNeeded(ref, widget.rideId));
     });
+  }
+
+  Future<void> _loadVerification() async {
+    try {
+      final snapshot = await const RideVerificationService().snapshot(
+        rideId: widget.rideId,
+      );
+      if (!mounted) return;
+      setState(() {
+        _verificationProtected = snapshot.isProtected;
+        _boardingVerified = snapshot.boardingVerified;
+      });
+    } catch (_) {
+      // The backend start command remains fail-closed when protection is on.
+    }
   }
 
   Future<void> _loadFarePill() async {
@@ -126,14 +148,63 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
   @override
   void dispose() {
     _waitTimer?.cancel();
+    _boardingPinController.dispose();
     super.dispose();
   }
 
   Future<void> _startRide() async {
     setState(() => _loading = true);
     try {
-      await ref.read(driverApiProvider).startRide(rideRequestId: widget.rideId);
+      final pinEnabled = ref
+              .read(driverRemoteConfigProvider)
+              .valueOrNull
+              ?.boardingPinEnabled ==
+          true;
+      if (pinEnabled && _verificationProtected && !_boardingVerified) {
+        final pin = _boardingPinController.text.trim();
+        if (!RegExp(r'^\d{4,6}$').hasMatch(pin)) {
+          setState(() =>
+              _boardingError = 'Enter the passenger’s 4- or 6-digit trip PIN.');
+          return;
+        }
+        try {
+          await const RideVerificationService().verifyBoardingPin(
+            rideId: widget.rideId,
+            pin: pin,
+          );
+          if (mounted) {
+            setState(() {
+              _boardingVerified = true;
+              _boardingError = null;
+            });
+          }
+        } on RideVerificationException catch (error) {
+          if (mounted) {
+            setState(() => _boardingError = switch (error.code) {
+                  'boarding_pin_invalid' =>
+                    'That PIN is not correct. Ask the passenger to check it.',
+                  'boarding_pin_locked' =>
+                    'PIN attempts are locked. Contact support for a controlled override.',
+                  'boarding_pin_expired' =>
+                    'This PIN expired. Contact support before starting the ride.',
+                  _ => 'Boarding could not be verified. Try again.',
+                });
+          }
+          return;
+        }
+      }
+      if (pinEnabled) {
+        await const RideVerificationService().startVerifiedRide(
+          rideId: widget.rideId,
+        );
+      } else {
+        await ref
+            .read(driverApiProvider)
+            .startRide(rideRequestId: widget.rideId);
+      }
       await _pickupWaitService.clear(widget.rideId);
+      // Start GPS breadcrumb recording for actual distance calculation.
+      unawaited(RideGpsTracker().startTracking(widget.rideId));
       ref
           .read(driverStateProvider.notifier)
           .setStatus(DriverAppState.inProgress);
@@ -169,9 +240,20 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
 
     setState(() => _loading = true);
     try {
-      await ref.read(driverApiProvider).reportNoShow(payload: {
-        'ride_request_id': widget.rideId,
-      });
+      final protectedNoShow = ref
+              .read(driverRemoteConfigProvider)
+              .valueOrNull
+              ?.arrivalVerificationEnabled ==
+          true;
+      if (protectedNoShow) {
+        await const RideVerificationService().requestDriverNoShow(
+          rideId: widget.rideId,
+        );
+      } else {
+        await ref.read(driverApiProvider).reportNoShow(payload: {
+          'ride_request_id': widget.rideId,
+        });
+      }
       await _pickupWaitService.clear(widget.rideId);
       ref.read(driverStateProvider.notifier).clearActiveRide();
       if (!mounted) return;
@@ -326,6 +408,21 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
       driverLat: driverPos?.latitude,
       driverLng: driverPos?.longitude,
       farePill: _farePill,
+      verificationCard: _verificationProtected
+          ? _BoardingPinCard(
+              colors: colors,
+              typography: typography,
+              controller: _boardingPinController,
+              verified: _boardingVerified,
+              error: _boardingError,
+              enabled: !_loading,
+              onChanged: (_) {
+                if (_boardingError != null) {
+                  setState(() => _boardingError = null);
+                }
+              },
+            )
+          : null,
       onStartRide: _startRide,
       onOpenCommunication: _openCommunication,
       onNavigate: _openNavigationApp,
@@ -336,6 +433,87 @@ class _AtPickupScreenState extends ConsumerState<AtPickupScreen> {
       onSafety: _openSafety,
       requestsPaused: driver.appState == DriverAppState.onBreak,
       statusBusy: _statusBusy,
+    );
+  }
+}
+
+class _BoardingPinCard extends StatelessWidget {
+  const _BoardingPinCard({
+    required this.colors,
+    required this.typography,
+    required this.controller,
+    required this.verified,
+    required this.error,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final DriverColors colors;
+  final DriverTypography typography;
+  final TextEditingController controller;
+  final bool verified;
+  final String? error;
+  final bool enabled;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colors.backgroundAlt.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color:
+              verified ? colors.success : colors.border.withValues(alpha: 0.55),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                verified ? Icons.verified_user_rounded : Icons.pin_rounded,
+                color: verified ? colors.success : colors.text,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  verified
+                      ? 'Passenger boarding verified'
+                      : 'Verify passenger boarding',
+                  style: typography.titleSmall
+                      .copyWith(fontWeight: FontWeight.w900),
+                ),
+              ),
+            ],
+          ),
+          if (!verified) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Ask the passenger for the trip PIN. The ride cannot start until the backend verifies it.',
+              style: typography.bodySmall.copyWith(color: colors.textSecondary),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              enabled: enabled,
+              onChanged: onChanged,
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.done,
+              autofillHints: const [AutofillHints.oneTimeCode],
+              maxLength: 6,
+              decoration: InputDecoration(
+                labelText: 'Trip PIN',
+                hintText: '••••••',
+                errorText: error,
+                counterText: '',
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

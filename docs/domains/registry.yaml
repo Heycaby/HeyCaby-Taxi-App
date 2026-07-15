@@ -1,0 +1,193 @@
+version: 1
+policy: One authoritative state and command boundary per business domain.
+production_project: fvrprxguoternoxnyhoj
+domains:
+  identity:
+    owner: Platform Backend
+    state: [auth.users, rider_identities, rider_sessions, drivers.user_id]
+    commands: [Supabase Auth, auth-bound session RPCs]
+    consumers: [rider, driver, admin, support]
+    tests: [supabase/tests/domain_authority_phase0_test.sql]
+    monitor: [Auth logs, denied privileged RPCs, identity repair events]
+  booking:
+    owner: Marketplace Backend
+    state: [ride_requests]
+    commands: [fn_rider_create_ride, booking-mode update RPCs]
+    consumers: [rider, driver, admin]
+    tests: [supabase/tests/rider_create_ride_command_authority_harness.sql, apps/rider/test/rider_booking_command_authority_test.dart, supabase/tests/domain_authority_phase0_test.sql]
+    monitor: [ride_audit_log, create error codes, idempotent retries, rejected authority writes]
+  dispatch:
+    owner: Marketplace Backend
+    state: [ride_request_invites, ride_requests.dispatch_status]
+    commands: [auth-bound fn_seed_ride_matching_batch booking-mode router, fn_driver_accept_ride_invite with locked live-invite and runtime eligibility recheck, fn_driver_accept_scheduled_ride with locked future-ride and shared ride-fit recheck, service-only wave jobs]
+    consumers: [rider, driver, cron, rider-agent, driver-agent]
+    tests: [supabase/tests/canonical_dispatch_seed_boundary_test.sql, supabase/tests/driver_accept_runtime_eligibility_harness.sql, supabase/tests/driver_accept_runtime_recheck_compile.sql, supabase/tests/scheduled_accept_authority_compile.sql, apps/driver/test/driver_accept_authority_test.dart, scripts/load_accept_race.py, scripts/load_dispatch_scale.py]
+    monitor: [search-to-assign latency, accept conflicts by stable reason, expired accept rejections, runtime and ride-fit eligibility rejections, scheduled overlap/departed rejections, wave exhaustion]
+  marketplace_offers:
+    owner: Marketplace Backend
+    state: [ride_bids, ride_requests.marketplace_offered_fare]
+    commands: [fn_rider_accept_marketplace_offer, fn_rider_boost_marketplace_offer, fn_rider_set_marketplace_bid_status]
+    consumers: [rider, driver, admin]
+    tests: [supabase/tests/domain_authority_phase0_test.sql, supabase/tests/taxi_terug_offer_boost_test.sql, apps/rider/test/taxi_terug_offer_boost_authority_test.dart, apps/rider/test/marketplace_cancel_authority_test.dart]
+    monitor: [ride_audit_log, rejected ineligible offers, offer boost enqueue and delivery correlation]
+  ride_lifecycle:
+    owner: Ride Operations Backend
+    state: [ride_requests, ride_audit_log]
+    commands: [driver lifecycle RPCs, fn_rider_ride_snapshot, RiderRideLifecycleEngine read projection]
+    consumers: [rider, driver, widgets, Live Activity, support]
+    tests: [apps/rider/test/live_ride_activity_payload_test.dart, apps/rider/test/rider_ride_state_version_test.dart, apps/rider/test/rider_lifecycle_listener_authority_test.dart, supabase/tests/rider_snapshot_ping_projection_test.sql, supabase/tests/lifecycle_notification_internal_grant_boundary_test.sql]
+    monitor: [transition rejections, stalled states, duplicate commands, Driver ping audit-to-projection latency]
+  ride_verification:
+    owner: Ride Operations Backend and Trust & Safety
+    state: [ride_verification_state, ride_pickup_versions, ride_pickup_change_requests, ride_contact_attempts, ride_protection_cases, ride_gps_track, ride_audit_log]
+    commands: [request_driver_arrival, request_pickup_change, respond_to_pickup_change, verify_boarding_pin, start_verified_ride, complete_verified_ride, request_driver_no_show, request_rider_cancellation, open_ride_dispute, fn_ride_payment_evidence_gate]
+    consumers: [rider, driver, finance, admin, support]
+    tests: [supabase/tests/ride_verification_payment_protection_contract_test.sql, packages/heycaby_api/test/ride_verification_service_test.dart, apps/driver/test/visual/ride_flow_golden_test.dart]
+    monitor: [arrival verification rejection, PIN rejection and lockout, route evidence rejection, completion review, verified-arrival cancellation attempt, paid-unrouted evidence gate rejection]
+  taxi_terug:
+    owner: Marketplace Backend
+    state: [drivers return-mode columns, return_mode_events, ride_requests]
+    commands: [Taxi Terug activation, candidate, config, seed RPCs, auth-bound fn_rider_boost_marketplace_offer]
+    consumers: [rider, driver, dispatch, operations]
+    tests: [supabase/tests/domain_authority_phase0_test.sql, supabase/tests/taxi_terug_offer_boost_test.sql, supabase/functions/driver-agent/invite_expiry_test.ts, apps/driver/test/driver_fcm_payload_test.dart]
+    monitor: [return_mode_events, candidate and conversion counts, offer increase enqueue/delivery/suppression by source_event_id]
+  driver_readiness:
+    owner: Trust & Safety Backend
+    state: [drivers, driver_verifications, driver_readiness_events]
+    commands: [fn_driver_readiness_eval, fn_admin_set_manual_verifications]
+    consumers: [driver, dispatch, admin]
+    tests: [supabase/tests/domain_authority_phase0_test.sql, supabase/tests/driver_profile_actor_and_internal_helper_boundary_test.sql]
+    monitor: [readiness blocker counts, denied protected-column writes, driver_profile actor_mismatch events]
+  driver_availability:
+    owner: Marketplace Backend
+    state: [drivers.status, driver_locations]
+    commands: [fn_driver_set_status, validated location upsert]
+    consumers: [driver, dispatch, operations]
+    tests: [scripts/sql/smoke_driver_runtime.sql]
+    monitor: [online-without-fresh-GPS, status rejection codes]
+  fleet:
+    owner: Fleet Operations
+    state: [taxi_vehicles, taxi_vehicle_sessions, shift_handover_requests]
+    commands: [step-up-aware handover RPCs]
+    consumers: [driver, operations]
+    tests: [supabase/tests/admin_domain_contract_test.sql, scripts/check_domain_authority.sh]
+    monitor: [handover failures, stale vehicle sessions, denied and changed allowlist events by correlation_id]
+  tariffs:
+    owner: Pricing Backend
+    state: [driver_rate_profiles, driver_tariff_events, ride fare snapshots]
+    commands: [tariff validation RPCs, accept_fare_snapshot_authority trigger]
+    consumers: [driver, dispatch, billing]
+    tests: [supabase/tests/accept_fare_snapshot_authority_test.sql, apps/driver/test/driver_accept_authority_test.dart, scripts/check_domain_authority.sh]
+    monitor: [rejected tariff changes, pricing.accept_fare_snapshotted, pricing.accept_fare_snapshot_missing, snapshot drift]
+  fare:
+    owner: Pricing Backend
+    state: [ride_requests fare snapshot columns]
+    commands: [quote functions, accept_fare_snapshot_authority trigger, waiting-fee and GPS final-fare functions]
+    consumers: [rider, driver, receipts, finance]
+    tests: [supabase/tests/accept_fare_snapshot_authority_test.sql, supabase/tests/receipt_single_authority_test.sql, apps/driver/test/driver_accept_authority_test.dart]
+    monitor: [accept snapshot missing, quote-to-final variance, fare recalculation audit]
+  payments:
+    owner: Finance Backend
+    state: [ride_requests payment columns, ride_payments, ride_payment_events, ride_payment_refunds, ride_payment_routes, billing_ledger]
+    commands: [fn_confirm_ride_payment, ride-payment-create, ride-payment-mollie-webhook, fn_ride_payment_evidence_gate, ride-payment-route, fn_admin_update_ride_payment_config, provider billing Edge Functions]
+    consumers: [rider, driver, finance, receipts, admin]
+    tests: [packages/heycaby_api/test/prepaid_ride_payment_service_test.dart, supabase/functions/_shared/ride_payment_service_test.ts, apps/rider/test/rider_prepay_contract_test.dart, apps/rider/test/rider_prepay_visual_test.dart, supabase/tests/ride_prepayment_start_guard_test.sql, supabase/tests/ride_prepayment_hardening_contract_test.sql, supabase/tests/receipt_single_authority_test.sql]
+    monitor: [confirmation age, double-confirm attempts, payment created but not paid, webhook reconciliation, amount mismatch, refund failure, route failure]
+  platform_balance:
+    owner: Finance Backend
+    state: [platform balance accounts and cycles, billing_ledger]
+    commands: [platform-balance eligibility and ledger RPCs]
+    consumers: [driver, dispatch, finance]
+    tests: [scripts/sql/smoke_phase2_billing_ledger_manual.sql]
+    monitor: [overdue cycles, eligibility-versus-presence, ledger drift]
+  receipts:
+    owner: Finance Backend
+    state: [receipts, completed ride fare snapshot]
+    commands: [fn_driver_ride_issue_auto_receipt]
+    consumers: [rider, driver, finance]
+    tests: [supabase/tests/receipt_single_authority_test.sql]
+    monitor: [missing receipts, duplicate index violations, amount mismatch audits]
+  notifications:
+    owner: Messaging Platform
+    state: [notifications, lifecycle jobs, delivery logs]
+    commands: [backend intent RPCs, rider-agent, driver-agent, send-push]
+    consumers: [rider, driver, admin, cron]
+    tests: [supabase/tests/domain_authority_phase0_test.sql, supabase/tests/lifecycle_notification_internal_grant_boundary_test.sql, supabase/tests/rider_lifecycle_cron_vault_boundary_test.sql, supabase/functions/rider-lifecycle-dispatch/auth_test.ts, supabase/functions/driver-agent/invite_expiry_test.ts, supabase/functions/rider-agent/webhook_auth_test.ts, supabase/functions/rider-agent/fcm_delivery_test.ts, apps/driver/test/driver_fcm_payload_test.dart, scripts/check_domain_authority.sh]
+    monitor: [intent-to-delivery latency, retries, unauthorized broadcast attempts, lifecycle dry-run and scheduled HTTP status, missing or invalid webhook secrets, lifecycle dispatch correlation IDs]
+  live_activity:
+    owner: Messaging Platform
+    state: [rider_live_activities, push_devices]
+    commands: [registration and rotation RPCs, rider-agent delivery]
+    consumers: [rider, ActivityKit, Edge Functions]
+    tests: [apps/rider/test/live_ride_activity_payload_test.dart, supabase/functions/rider-agent/notify_live_activity_test.ts]
+    monitor: [token rotation failures, stale activity cleanup, delivery errors]
+  shared_ride_tracking:
+    owner: Rider Experience
+    state: [ride_shares, ride_requests, driver_locations]
+    commands: [fn_rider_create_share_token, get-shared-ride]
+    consumers: [rider, public tracking web]
+    tests: [supabase/tests/shared_ride_tracking_test.sql, production shared-link smoke test]
+    monitor: [share creation failures, public projection failures, stale driver location]
+  chat:
+    owner: Messaging Platform
+    state: [conversations, messages]
+    commands: [fn_send_ride_message, recipient-only acknowledgement, auth-bound moderation RPCs]
+    consumers: [rider, driver, driver-agent, support]
+    tests: [supabase/tests/domain_authority_phase0_test.sql, supabase/tests/ride_chat_command_and_actor_binding_test.sql, packages/heycaby_api/test/ride_chat_messages_test.dart, apps/rider/test/ride_chat_authority_test.dart, apps/driver/test/ride_chat_authority_test.dart, supabase/functions/driver-agent/invite_expiry_test.ts]
+    monitor: [chat.message_sent audit, send failure codes, unread age, duplicate source_event_id rejection, push delivery counters]
+  support:
+    owner: Trust & Safety
+    state: [tickets, support messages]
+    commands: [rider-support-chat, driver-support-chat, escalation RPCs]
+    consumers: [rider, driver, support, admin]
+    tests: [scripts/check_domain_authority.sh]
+    monitor: [escalation SLA, failed replies, moderation actions]
+  safety_reports:
+    owner: Trust & Safety
+    state: [driver_safety_events, rider_driver_reports, ride_audit_log]
+    commands: [fn_rider_log_safety_event, report RPCs]
+    consumers: [rider, driver, support, admin]
+    tests: [supabase/tests/domain_authority_phase0_test.sql]
+    monitor: [event volume, severity, unresolved reports]
+  ratings:
+    owner: Trust & Safety
+    state: [ride_ratings, rating projections]
+    commands: [participant-bound rating RPCs]
+    consumers: [rider, driver, support]
+    tests: [scripts/check_domain_authority.sh]
+    monitor: [submission failures, projection drift, moderation]
+  favorite_drivers:
+    owner: Rider Experience
+    state: [rider_favorite_drivers]
+    commands: [auth-bound favorite CRUD]
+    consumers: [rider, dispatch]
+    tests: [scripts/check_domain_authority.sh]
+    monitor: [CRUD failures, favorite audience eligibility rejections]
+  growth:
+    owner: Growth Backend
+    state: [founding_driver_signups, referral tables, driver_email_events]
+    commands: [founding-driver-signup, claim-founding-driver, send-driver-email]
+    consumers: [driver, marketing, admin]
+    tests: [scripts/check_domain_authority.sh]
+    monitor: [claim conflicts, email failures, referral conversion]
+  analytics:
+    owner: Data Platform
+    state: [app_analytics, agent_logs, domain audit tables]
+    commands: [normalized append-only ingestion]
+    consumers: [apps, operations, BI]
+    tests: [scripts/check_domain_authority.sh]
+    monitor: [ingestion rate, rejected events, retention and PII audits]
+  configuration:
+    owner: Platform Backend
+    state: [app_config, dispatch and Taxi Terug config tables]
+    commands: [versioned read-only config RPCs]
+    consumers: [rider, driver, backend jobs, Edge Functions]
+    tests: [scripts/check_domain_authority.sh]
+    monitor: [config version adoption, fallback use, invalid values]
+  admin_operations:
+    owner: Internal Tools and Platform Backend
+    state: [admin audit and verification tables]
+    commands: [app-metadata-authorized admin RPCs]
+    consumers: [admin tools, support, Trust & Safety]
+    tests: [supabase/tests/domain_authority_phase0_test.sql, supabase/tests/admin_domain_contract_test.sql]
+    monitor: [privileged mutation audit, authorization denials]

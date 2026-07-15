@@ -60,7 +60,7 @@ class HomeRideAgainSection extends ConsumerWidget {
         final ratingLabel = driver.rating.toStringAsFixed(2);
 
         return Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(16, 22, 16, 0),
+          padding: const EdgeInsetsDirectional.fromSTEB(16, 18, 16, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

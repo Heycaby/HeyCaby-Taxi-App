@@ -1089,19 +1089,29 @@ class _SavingsHero extends StatelessWidget {
   }
 
   int _weeksInRange(String label) {
-    if (label.contains('week') || label.contains('Week')) return 1;
+    if (label.contains('week') || label.contains('Week')) {
+      return 1;
+    }
     if (label.contains('maand') ||
         label.contains('month') ||
-        label.contains('Month')) return 4;
+        label.contains('Month')) {
+      return 4;
+    }
     if (label.contains('kwartaal') ||
         label.contains('quarter') ||
-        label.contains('Quarter')) return 13;
+        label.contains('Quarter')) {
+      return 13;
+    }
     if (label.contains('jaar') ||
         label.contains('year') ||
-        label.contains('Year')) return 52;
+        label.contains('Year')) {
+      return 52;
+    }
     if (label.contains('vandaag') ||
         label.contains('today') ||
-        label.contains('Today')) return 1;
+        label.contains('Today')) {
+      return 1;
+    }
     return 4;
   }
 
@@ -1210,8 +1220,9 @@ class _SavingsChartCard extends StatelessWidget {
                           DriverStrings.financeSavingsEstimatedCommission,
                         ];
                         final idx = value.toInt();
-                        if (idx < 0 || idx >= labels.length)
+                        if (idx < 0 || idx >= labels.length) {
                           return const SizedBox();
+                        }
                         return Padding(
                           padding: const EdgeInsets.only(top: DriverSpacing.xs),
                           child: Text(

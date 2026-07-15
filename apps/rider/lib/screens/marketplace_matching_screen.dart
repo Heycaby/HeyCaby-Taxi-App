@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:heycaby_api/heycaby_api.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../constants/rider_search_window.dart';
 import '../models/marketplace_driver_offer.dart';
@@ -19,6 +18,7 @@ import '../providers/near_term_ride_request_provider.dart';
 import '../providers/recent_destinations_provider.dart';
 import '../providers/ride_request_provider.dart';
 import '../services/heycaby_widget_sync.dart';
+import '../services/rider_ride_lifecycle_engine.dart';
 import '../services/sound_service.dart';
 import '../services/stale_ride_cleanup.dart';
 import '../widgets/driver_search_expired_dialog.dart';
@@ -35,7 +35,6 @@ class MarketplaceMatchingScreen extends ConsumerStatefulWidget {
 
 class _MarketplaceMatchingScreenState
     extends ConsumerState<MarketplaceMatchingScreen> {
-  RealtimeChannel? _rideChannel;
   Timer? _searchWindowTimer;
   Timer? _countdownTimer;
   String? _acceptingBidId;
@@ -51,7 +50,6 @@ class _MarketplaceMatchingScreenState
 
   @override
   void dispose() {
-    _rideChannel?.unsubscribe();
     _searchWindowTimer?.cancel();
     _countdownTimer?.cancel();
     super.dispose();
@@ -98,7 +96,6 @@ class _MarketplaceMatchingScreenState
     }
 
     await ref.read(marketplaceOffersProvider.notifier).start(rideId);
-    _subscribeRide(rideId);
     _startExpiryCountdown();
     _scheduleSearchWindowExpiry();
   }
@@ -108,7 +105,8 @@ class _MarketplaceMatchingScreenState
     void tick() {
       final created = ref.read(rideRequestProvider).rideCreatedAt;
       if (created == null) return;
-      final left = created.add(kRiderDriverSearchWindow).difference(DateTime.now());
+      final left =
+          created.add(kRiderDriverSearchWindow).difference(DateTime.now());
       if (mounted) {
         setState(() => _expiresIn = left.isNegative ? Duration.zero : left);
       }
@@ -122,7 +120,8 @@ class _MarketplaceMatchingScreenState
     _searchWindowTimer?.cancel();
     final created = ref.read(rideRequestProvider).rideCreatedAt;
     if (created == null) return;
-    final left = created.add(kRiderDriverSearchWindow).difference(DateTime.now());
+    final left =
+        created.add(kRiderDriverSearchWindow).difference(DateTime.now());
     if (left <= Duration.zero) {
       unawaited(_onSearchExpired());
       return;
@@ -143,37 +142,27 @@ class _MarketplaceMatchingScreenState
     if (mounted) context.go('/home');
   }
 
-  void _subscribeRide(String rideId) {
-    _rideChannel = HeyCabySupabase.client
-        .channel('marketplace_ride:$rideId')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.update,
-          schema: 'public',
-          table: 'ride_requests',
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'id',
-            value: rideId,
-          ),
-          callback: (payload) async {
-            final newStatus = payload.newRecord['status'] as String?;
-            if (newStatus == null) return;
-            ref.read(rideRequestProvider.notifier).updateStatus(newStatus);
-            if (newStatus == 'assigned' ||
-                newStatus == 'accepted' ||
-                newStatus == 'driver_found' ||
-                newStatus == 'driver_en_route') {
-              final pickup =
-                  ref.read(bookingProvider).pickup?.displayName ?? '';
-              await HeycabyWidgetSync.refreshInstantDriverFromRide(
-                rideId: rideId,
-                pickup: pickup,
-              );
-              if (mounted) context.go('/active');
-            }
-          },
-        )
-        .subscribe();
+  Future<void> _handleLifecycleRecord(
+    RiderRideBackendRecord projection,
+  ) async {
+    if (!mounted) return;
+    final rideId = ref.read(rideRequestProvider).rideRequestId;
+    if (rideId == null || projection.rideRequestId != rideId) return;
+    final newStatus =
+        (projection.record['provider_status'] ?? projection.record['status'])
+            ?.toString()
+            .toLowerCase();
+    if (newStatus != 'assigned' &&
+        newStatus != 'accepted' &&
+        newStatus != 'driver_found' &&
+        newStatus != 'driver_en_route') {
+      return;
+    }
+    await HeycabyWidgetSync.refreshInstantDriverFromRide(
+      rideId: rideId,
+      pickup: ref.read(bookingProvider).pickup?.displayName ?? '',
+    );
+    if (mounted) context.go('/active');
   }
 
   MarketplaceDriverOffer? _offerById(String bidId) {
@@ -243,9 +232,6 @@ class _MarketplaceMatchingScreenState
 
     _searchWindowTimer?.cancel();
     _countdownTimer?.cancel();
-    _rideChannel?.unsubscribe();
-    _rideChannel = null;
-
     final rideId = ref.read(rideRequestProvider).rideRequestId;
     if (rideId != null) {
       try {
@@ -256,14 +242,6 @@ class _MarketplaceMatchingScreenState
           riderToken: ride.riderToken ?? identity.riderToken,
           cancellationReason: 'rider_cancelled_marketplace_matching',
         );
-
-        try {
-          await HeyCabySupabase.client
-              .from('ride_bids')
-              .update({'status': 'expired'})
-              .eq('ride_request_id', rideId)
-              .eq('status', 'pending');
-        } catch (_) {}
       } catch (_) {}
     }
 
@@ -342,6 +320,12 @@ class _MarketplaceMatchingScreenState
     final notified = offersState.driversNotifiedCount > 0
         ? offersState.driversNotifiedCount
         : offersState.nearbyDriverCount;
+    ref.listen<RiderRideBackendRecord?>(
+      riderRideBackendRecordProvider,
+      (previous, next) {
+        if (next != null) unawaited(_handleLifecycleRecord(next));
+      },
+    );
 
     return PopScope(
       canPop: false,
@@ -369,7 +353,8 @@ class _MarketplaceMatchingScreenState
                         child: SizedBox(
                           width: 44,
                           height: 44,
-                          child: Icon(Icons.close_rounded, color: colors.text, size: 22),
+                          child: Icon(Icons.close_rounded,
+                              color: colors.text, size: 22),
                         ),
                       ),
                     ),
@@ -381,7 +366,8 @@ class _MarketplaceMatchingScreenState
                         color: colors.accentL,
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: Icon(Icons.storefront_rounded, color: colors.accent, size: 24),
+                      child: Icon(Icons.storefront_rounded,
+                          color: colors.accent, size: 24),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -410,8 +396,7 @@ class _MarketplaceMatchingScreenState
               ),
               Expanded(
                 child: ListView(
-                  padding:
-                      const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 16),
+                  padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 20, 16),
                   children: [
                     _StatusCard(
                       colors: colors,
@@ -487,7 +472,8 @@ class _MarketplaceMatchingScreenState
                     onPressed: _isCancelling ? null : _confirmCancelRequest,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: colors.error,
-                      side: BorderSide(color: colors.error.withValues(alpha: 0.7)),
+                      side: BorderSide(
+                          color: colors.error.withValues(alpha: 0.7)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(999),
                       ),

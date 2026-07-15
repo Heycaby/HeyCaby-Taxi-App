@@ -153,6 +153,30 @@ class DriverStrings {
         es: 'viajes disponibles en tu zona',
         ar: 'رحلات متاحة في منطقتك',
       );
+  static String get homeQuickActionsTitle => _t(
+        'Overzicht',
+        en: 'Your overview',
+        es: 'Tu resumen',
+        ar: 'نظرة عامة',
+      );
+  static String get homeReturnTaxiPostsSubtitle => _t(
+        'Riterposts',
+        en: 'Rider posts',
+        es: 'Publicaciones',
+        ar: 'منشورات الركاب',
+      );
+  static String get homeOverviewReturnMatches => _t(
+        'Matches',
+        en: 'Matches',
+        es: 'Coincidencias',
+        ar: 'مطابقات',
+      );
+  static String get homeOverviewRiderPosts => _t(
+        'Posts',
+        en: 'Posts',
+        es: 'Posts',
+        ar: 'منشورات',
+      );
   static String get driverRating => _t(
         'Chauffeursscore',
         en: 'Driver score',
@@ -1640,8 +1664,8 @@ class DriverStrings {
         ar: 'التواصل',
       );
   static String get communicationCenterSubtitle => _t(
-        'Geen telefoonnummers — chat of stuur een snelle status.',
-        en: 'No phone numbers — chat or send a quick status.',
+        'Privé communiceren zonder telefoonnummers te delen.',
+        en: 'Communicate privately without sharing phone numbers.',
         es: 'Sin números de teléfono — chatea o envía un estado rápido.',
         ar: 'لا أرقام هواتف — دردش أو أرسل حالة سريعة.',
       );
@@ -1650,6 +1674,38 @@ class DriverStrings {
         en: 'Chat with rider',
         es: 'Chatear con el pasajero',
         ar: 'الدردشة مع الراكب',
+      );
+  static String get communicationMaskedCall => _t(
+        'Bel reiziger via HeyCaby',
+        en: 'Call rider through HeyCaby',
+        es: 'Llamar al pasajero mediante HeyCaby',
+        ar: 'اتصل بالراكب عبر HeyCaby',
+      );
+  static String get communicationCallTitle => _t(
+        'Bellen via HeyCaby?',
+        en: 'Call through HeyCaby?',
+        es: '¿Llamar mediante HeyCaby?',
+        ar: 'الاتصال عبر HeyCaby؟',
+      );
+  static String get communicationCallBody => _t(
+        'Je telefoonnummer blijft privé. Gesprekken duren maximaal 5 minuten. Eerst word jij gebeld, daarna verbinden we de reiziger.',
+        en: 'Your phone number stays private. Calls last up to 5 minutes. We call you first, then connect the rider.',
+        es: 'Tu número permanece privado. Las llamadas duran hasta 5 minutos. Primero te llamamos y luego conectamos al pasajero.',
+        ar: 'يبقى رقمك خاصًا. تستمر المكالمات حتى 5 دقائق. نتصل بك أولاً ثم نصل الراكب.',
+      );
+  static String get communicationCallNow =>
+      _t('Bel nu', en: 'Call now', es: 'Llamar ahora', ar: 'اتصل الآن');
+  static String get communicationCallQueued => _t(
+        'HeyCaby belt je nu. Neem op om te verbinden.',
+        en: 'HeyCaby is calling you now. Answer to connect.',
+        es: 'HeyCaby te está llamando. Contesta para conectar.',
+        ar: 'يتصل بك HeyCaby الآن. أجب للاتصال.',
+      );
+  static String get communicationCallUnavailable => _t(
+        'Bellen is tijdelijk niet beschikbaar. Gebruik een ping of chat.',
+        en: 'Calling is temporarily unavailable. Use a ping or chat.',
+        es: 'Las llamadas no están disponibles temporalmente. Usa un aviso o chat.',
+        ar: 'الاتصال غير متاح مؤقتًا. استخدم تنبيهًا أو الدردشة.',
       );
   static String get communicationQuickActions => _t(
         'Snelle acties',
@@ -2022,6 +2078,72 @@ class DriverStrings {
         en: 'Live rides',
         es: 'Viajes en vivo',
         ar: 'رحلات مباشرة',
+      );
+  static String get rideLineNowLabel => _t(
+        'Nu',
+        en: 'Now',
+        es: 'Ahora',
+        ar: 'الآن',
+      );
+  static String get rideLineNextLabel => _t(
+        'Volgende',
+        en: 'Next',
+        es: 'Siguiente',
+        ar: 'التالي',
+      );
+  static String get rideLineNextAfterDropOff => _t(
+        'Na deze rit',
+        en: 'After drop-off',
+        es: 'Tras la entrega',
+        ar: 'بعد إنزال الراكب',
+      );
+  static String get rideLineNoNextRide => _t(
+        'Geen volgende rit — blijf online voor nieuwe kansen.',
+        en: 'No next ride — stay online for new opportunities.',
+        es: 'Sin siguiente viaje — mantente en línea para nuevas oportunidades.',
+        ar: 'لا توجد رحلة تالية — ابق متصلاً لفرص جديدة.',
+      );
+  static String rideLineOpenInvitesSummary(int count, String topFare) => _t(
+        '$count open uitnodigingen · tot $topFare',
+        en: '$count open invites · up to $topFare',
+        es: '$count invitaciones abiertas · hasta $topFare',
+        ar: '$count دعوات مفتوحة · حتى $topFare',
+      );
+  static String get rideLineOpenInvitesOne => _t(
+        '1 open uitnodiging',
+        en: '1 open invite',
+        es: '1 invitación abierta',
+        ar: 'دعوة واحدة مفتوحة',
+      );
+  static String get missedOpportunitiesTitle => _t(
+        'Gemiste kansen',
+        en: 'Missed opportunities',
+        es: 'Oportunidades perdidas',
+        ar: 'فرص فائتة',
+      );
+  static String missedOpportunitiesSummary(int count, String totalFare) => _t(
+        '$count vandaag · $totalFare gemist',
+        en: '$count today · $totalFare missed',
+        es: '$count hoy · $totalFare perdidos',
+        ar: '$count اليوم · $totalFare فائتة',
+      );
+  static String get missedOpportunitiesTapHint => _t(
+        'Tik om te zien wat je liet liggen',
+        en: 'Tap to see what you left on the table',
+        es: 'Toca para ver lo que dejaste pasar',
+        ar: 'اضغط لرؤية ما فاتك',
+      );
+  static String get missedOpportunitiesEmpty => _t(
+        'Nog geen gemiste kansen vandaag.',
+        en: 'No missed opportunities today.',
+        es: 'Sin oportunidades perdidas hoy.',
+        ar: 'لا توجد فرص فائتة اليوم.',
+      );
+  static String missedOpportunityAgo(String when) => _t(
+        '$when geleden',
+        en: '$when ago',
+        es: 'hace $when',
+        ar: 'منذ $when',
       );
   static String get homeActiveRideTitle => _t(
         'Actieve rit',
@@ -4242,40 +4364,30 @@ class DriverStrings {
 
   /// Legacy compatibility labels for the old platform-fee gate.
   /// Active UI should use Platform Balance wording.
-  static String get platformFeeTitle => _t(
-        'Platformbalans',
-        en: 'Platform balance',
-        es: 'Saldo de plataforma',
-        ar: 'رصيد المنصة',
-      );
+  static String get platformFeeTitle => platformBalanceTitle;
   static String platformFeeBody(String euros) => _t(
-      'Je openstaande platformbalans is €$euros. Vereffen deze om weer nieuwe ritaanvragen te ontvangen.',
-      en: 'Your outstanding platform balance is €$euros. Settle it to receive new ride requests again.',
-      es: 'Tu saldo de plataforma pendiente es €$euros. Liquídalo para recibir nuevas solicitudes de viaje.',
-      ar: 'رصيد منصتك المستحق هو €$euros. ساوِه لتلقي طلبات رحلة جديدة مرة أخرى.');
+      'Je openstaande contant-ritten saldo is €$euros. Vereffen dit om weer nieuwe ritaanvragen te ontvangen.',
+      en: 'Your outstanding cash rides balance is €$euros. Settle it to receive new ride requests again.',
+      es: 'Tu saldo pendiente de viajes en efectivo es €$euros. Liquídalo para recibir nuevas solicitudes de viaje.',
+      ar: 'رصيد رحلاتك النقدية المستحق هو €$euros. ساوِه لتلقي طلبات رحلة جديدة مرة أخرى.');
   static String get platformFeePay => _t(
-        'Platformbalans vereffenen',
-        en: 'Settle platform balance',
-        es: 'Saldar balance de plataforma',
-        ar: 'تسوية رصيد المنصة',
+        'Contant-ritten saldo vereffenen',
+        en: 'Settle cash rides balance',
+        es: 'Liquidar saldo de viajes en efectivo',
+        ar: 'تسوية رصيد الرحلات النقدية',
       );
-  static String get platformFeeCheckoutTitle => _t(
-        'Platformbalans',
-        en: 'Platform balance',
-        es: 'Saldo de plataforma',
-        ar: 'رصيد المنصة',
-      );
+  static String get platformFeeCheckoutTitle => platformBalanceTitle;
   static String get platformFeeStartingCheckout => _t(
-        'Betaling voorbereiden…',
-        en: 'Preparing payment…',
-        es: 'Preparando pago…',
-        ar: 'جاري تحضير الدفع…',
+        'Vereffening voorbereiden…',
+        en: 'Preparing settlement…',
+        es: 'Preparando liquidación…',
+        ar: 'جار تحضير التسوية…',
       );
   static String get platformFeeInvalidUrl => _t(
-        'Ongeldige betaallink. Probeer opnieuw.',
-        en: 'Invalid payment link. Try again.',
-        es: 'Enlace de pago inválido. Inténtalo de nuevo.',
-        ar: 'رابط دفع غير صالح. حاول مرة أخرى.',
+        'Ongeldige vereffeningslink. Probeer opnieuw.',
+        en: 'Invalid settlement link. Try again.',
+        es: 'Enlace de liquidación no válido. Inténtalo de nuevo.',
+        ar: 'رابط تسوية غير صالح. حاول مرة أخرى.',
       );
   static String get platformFeeStatusError => _t(
         'Kon je status niet ophalen. Controleer je verbinding.',
@@ -4284,10 +4396,10 @@ class DriverStrings {
         ar: 'تعذر جلب حالتك. تحقق من اتصالك.',
       );
   static String get platformFeeStartError => _t(
-        'Betaling starten mislukt. Probeer opnieuw.',
-        en: 'Failed to start payment. Try again.',
-        es: 'Error al iniciar pago. Inténtalo de nuevo.',
-        ar: 'فشل بدء الدفع. حاول مرة أخرى.',
+        'Vereffening starten mislukt. Probeer opnieuw.',
+        en: 'Failed to start settlement. Try again.',
+        es: 'Error al iniciar la liquidación. Inténtalo de nuevo.',
+        ar: 'فشل بدء التسوية. حاول مرة أخرى.',
       );
   static String get goOnlineFailed => _t(
         'Online gaan mislukt. Controleer je verbinding en probeer opnieuw.',
@@ -4308,34 +4420,34 @@ class DriverStrings {
         ar: 'تعذر عدم الاتصال. تحقق من اتصالك وحاول مرة أخرى.',
       );
   static String get platformFeeStillPending => _t(
-        'Betaling nog niet bevestigd. Wacht even of probeer opnieuw.',
-        en: 'Payment not confirmed yet. Wait a moment or try again.',
-        es: 'Pago aún no confirmado. Espera un momento o inténtalo de nuevo.',
-        ar: 'لم يتم تأكيد الدفع بعد. انتظر لحظة أو حاول مرة أخرى.',
+        'Vereffening nog niet bevestigd. Wacht even of probeer opnieuw.',
+        en: 'Settlement not confirmed yet. Wait a moment or try again.',
+        es: 'Liquidación aún no confirmada. Espera un momento o inténtalo de nuevo.',
+        ar: 'لم يتم تأكيد التسوية بعد. انتظر لحظة أو حاول مرة أخرى.',
       );
   static String get platformBalanceTitle => _t(
-        'Platformbalans',
-        en: 'Platform Balance',
-        es: 'Balance de plataforma',
-        ar: 'رصيد المنصة',
+        'Contant-ritten saldo',
+        en: 'Cash Rides Balance',
+        es: 'Saldo de viajes en efectivo',
+        ar: 'رصيد الرحلات النقدية',
       );
   static String get platformBalanceOutstanding => _t(
-        'Openstaand',
-        en: 'Outstanding',
-        es: 'Pendiente',
-        ar: 'مستحق',
+        'Openstaand saldo',
+        en: 'Outstanding Balance',
+        es: 'Saldo pendiente',
+        ar: 'الرصيد المستحق',
       );
   static String get platformBalanceNoOutstanding => _t(
-        'Geen openstaand bedrag',
+        'Geen openstaand saldo',
         en: 'No outstanding balance',
         es: 'Sin saldo pendiente',
         ar: 'لا يوجد رصيد مستحق',
       );
   static String get platformBalanceCurrent => _t(
-        'Balans op orde',
-        en: 'Balance current',
-        es: 'Balance al día',
-        ar: 'الرصيد محدث',
+        'Saldo vereffend',
+        en: 'Balance settled',
+        es: 'Saldo liquidado',
+        ar: 'تم تسوية الرصيد',
       );
   static String get platformBalanceRequestsPaused => _t(
         'Ritaanvragen tijdelijk gepauzeerd',
@@ -4343,23 +4455,36 @@ class DriverStrings {
         es: 'Solicitudes de viaje pausadas temporalmente',
         ar: 'طلبات الرحلات متوقفة مؤقتا',
       );
+  static String get platformBalanceDirectRidesPaused => _t(
+        'Contant, PIN en Tikkie tijdelijk gepauzeerd',
+        en: 'Cash, PIN and Tikkie rides paused',
+        es: 'Viajes en efectivo, PIN y Tikkie pausados',
+        ar: 'تم إيقاف رحلات النقد وPIN وTikkie',
+      );
+  static String get platformBalanceWarningLevel => _t('Waarschuwingsniveau',
+      en: 'Warning level', es: 'Nivel de aviso', ar: 'مستوى التحذير');
+  static String get platformBalanceDirectRideLimit =>
+      _t('Limiet directe betaling',
+          en: 'Direct-payment limit',
+          es: 'Límite de pago directo',
+          ar: 'حد الدفع المباشر');
   static String get platformBalanceCurrentBody => _t(
-        'Je hebt geen openstaande platformbalans.',
-        en: 'You have no outstanding platform balance.',
-        es: 'No tienes saldo pendiente de plataforma.',
-        ar: 'لا يوجد لديك رصيد مستحق للمنصة.',
+        'Je hebt geen openstaand contant-ritten saldo.',
+        en: 'You have no outstanding cash rides balance.',
+        es: 'No tienes saldo pendiente de viajes en efectivo.',
+        ar: 'لا يوجد لديك رصيد رحلات نقدية مستحق.',
       );
   static String get platformBalanceDueBody => _t(
-        'Vereffen je balans binnen de betaaltermijn om nieuwe ritaanvragen te blijven ontvangen.',
-        en: 'Settle your balance within the payment window to keep receiving new ride requests.',
-        es: 'Liquida tu balance dentro del plazo para seguir recibiendo solicitudes de viaje.',
-        ar: 'سوّ رصيدك ضمن مهلة الدفع للاستمرار في تلقي طلبات رحلات جديدة.',
+        'Je hebt contant van passagiers geïnd. Vereffen het openstaande saldo binnen de termijn om nieuwe ritaanvragen te blijven ontvangen.',
+        en: 'You collected cash from riders. Settle the outstanding balance within the due window to keep receiving new ride requests.',
+        es: 'Cobraste en efectivo a los pasajeros. Liquida el saldo pendiente dentro del plazo para seguir recibiendo solicitudes de viaje.',
+        ar: 'حصلت على نقد من الركاب. سوّ الرصيد المستحق ضمن المهلة للاستمرار في تلقي طلبات رحلات جديدة.',
       );
   static String get platformBalancePausedBody => _t(
-        'Nieuwe ritaanvragen zijn tijdelijk gepauzeerd totdat je platformbalans is vereffend.',
-        en: 'New ride requests are temporarily paused until your platform balance is settled.',
-        es: 'Las nuevas solicitudes de viaje están pausadas temporalmente hasta que liquides tu balance de plataforma.',
-        ar: 'طلبات الرحلات الجديدة متوقفة مؤقتا حتى تتم تسوية رصيد المنصة.',
+        'Nieuwe ritaanvragen zijn tijdelijk gepauzeerd totdat je openstaande contant-ritten saldo is vereffend.',
+        en: 'New ride requests are temporarily paused until your outstanding cash rides balance is settled.',
+        es: 'Las nuevas solicitudes de viaje están pausadas temporalmente hasta que liquides el saldo pendiente de viajes en efectivo.',
+        ar: 'طلبات الرحلات الجديدة متوقفة مؤقتا حتى تتم تسوية رصيد الرحلات النقدية المستحق.',
       );
   static String get platformBalanceDueToday => _t(
         'Vereffen je balans vandaag om nieuwe ritaanvragen te blijven ontvangen.',
@@ -4380,28 +4505,28 @@ class DriverStrings {
         ar: 'سوّ رصيدك خلال $days أيام.',
       );
   static String get platformBalanceExplainer => _t(
-        'HeyCaby maakt na elke actieve week automatisch een platformbalans aan. Je houdt 100% van je ritopbrengst.',
-        en: 'HeyCaby creates a platform balance after each active week. You keep 100% of your ride earnings.',
-        es: 'HeyCaby crea un balance de plataforma después de cada semana activa. Conservas el 100% de tus ingresos por viajes.',
-        ar: 'تنشئ HeyCaby رصيد منصة بعد كل أسبوع نشط. تحتفظ بنسبة 100% من أرباح رحلاتك.',
+        'Je hebt contant van passagiers geïnd namens het platform. Dit scherm helpt je dat openstaande saldo te vereffenen — geen aankoop van app-functies.',
+        en: 'You collected cash from riders on behalf of the platform. This screen helps you settle that outstanding balance — not a purchase of app features.',
+        es: 'Cobraste en efectivo a los pasajeros en nombre de la plataforma. Esta pantalla te ayuda a liquidar ese saldo pendiente — no es una compra de funciones de la app.',
+        ar: 'حصلت على نقد من الركاب نيابة عن المنصة. تساعدك هذه الشاشة على تسوية ذلك الرصيد المستحق — وليست شراء ميزات التطبيق.',
       );
   static String get platformBalancePausedExplainer => _t(
-        'Je kunt geschiedenis, inkomsten, profiel, community en support blijven gebruiken. Alleen nieuwe ritaanvragen zijn gepauzeerd.',
-        en: 'You can still use history, earnings, profile, community, and support. Only new ride requests are paused.',
-        es: 'Puedes seguir usando historial, ingresos, perfil, comunidad y soporte. Solo las nuevas solicitudes de viaje están pausadas.',
-        ar: 'يمكنك الاستمرار في استخدام السجل والأرباح والملف الشخصي والمجتمع والدعم. فقط طلبات الرحلات الجديدة متوقفة.',
+        'Contant-, PIN- en Tikkie-ritten zijn gepauzeerd. Vooruitbetaalde ritten blijven beschikbaar en je kunt HeyCaby gewoon blijven gebruiken.',
+        en: 'Cash, PIN and Tikkie rides are paused. Prepaid rides remain available and you can keep using HeyCaby normally.',
+        es: 'Los viajes en efectivo, PIN y Tikkie están pausados. Los viajes prepagados siguen disponibles.',
+        ar: 'تم إيقاف رحلات النقد وPIN وTikkie. تظل الرحلات المدفوعة مسبقًا متاحة.',
       );
   static String get platformRidesPausedTitle => _t(
-        'Platformritten gepauzeerd',
-        en: 'Platform rides paused',
-        es: 'Viajes de plataforma pausados',
-        ar: 'رحلات المنصة متوقفة مؤقتا',
+        'Contant-ritten saldo openstaand',
+        en: 'Cash rides balance due',
+        es: 'Saldo de viajes en efectivo pendiente',
+        ar: 'رصيد الرحلات النقدية مستحق',
       );
   static String get platformRidesPausedBody => _t(
-        'Je Platformbalans is achterstallig. Je kunt online blijven en HeyCaby gebruiken, maar je ontvangt geen nieuwe Directe, Geplande of Taxi Terug-ritten totdat de balans is vereffend.',
-        en: 'Your Platform Balance is overdue. You can remain online and use HeyCaby, but you will not receive new Instant, Scheduled or Taxi Terug rides until the balance is settled.',
-        es: 'Tu Balance de plataforma está vencido. Puedes seguir en línea y usar HeyCaby, pero no recibirás nuevos viajes Instantáneos, Programados o Taxi Terug hasta liquidarlo.',
-        ar: 'رصيد المنصة متأخر. يمكنك البقاء متصلا واستخدام HeyCaby، لكنك لن تتلقى رحلات فورية أو مجدولة أو Taxi Terug جديدة حتى تتم تسوية الرصيد.',
+        'Je contant-ritten saldo is achterstallig. Je kunt online blijven en HeyCaby gebruiken, maar je ontvangt geen nieuwe Directe, Geplande of Taxi Terug-ritten totdat het saldo is vereffend.',
+        en: 'Your cash rides balance is overdue. You can remain online and use HeyCaby, but you will not receive new Instant, Scheduled or Return Taxi rides until the balance is settled.',
+        es: 'Tu saldo de viajes en efectivo está vencido. Puedes seguir en línea y usar HeyCaby, pero no recibirás nuevos viajes Instantáneos, Programados o Taxi Terug hasta liquidarlo.',
+        ar: 'رصيد رحلاتك النقدية متأخر. يمكنك البقاء متصلا واستخدام HeyCaby، لكنك لن تتلقى رحلات فورية أو مجدولة أو Taxi Terug جديدة حتى تتم تسوية الرصيد.',
       );
   static String get platformRidesPausedCta => _t(
         'Vereffeningsgegevens bekijken',
@@ -4410,22 +4535,22 @@ class DriverStrings {
         ar: 'عرض تفاصيل التسوية',
       );
   static String get platformBalancePaymentPending => _t(
-        'Betaling in behandeling',
-        en: 'Payment Pending',
-        es: 'Pago pendiente',
-        ar: 'الدفع قيد المعالجة',
+        'Vereffening in behandeling',
+        en: 'Settlement Pending',
+        es: 'Liquidación pendiente',
+        ar: 'التسوية قيد المعالجة',
       );
   static String get platformBalancePaymentPendingBody => _t(
-        'We wachten op bevestiging van je betaling. De meeste betalingen worden binnen enkele minuten bevestigd. Bankoverschrijvingen kunnen langer duren.',
-        en: 'We are waiting for your payment confirmation. Most payments are confirmed within a few minutes. Bank transfers may take longer.',
-        es: 'Estamos esperando la confirmación de tu pago. La mayoría de pagos se confirman en unos minutos. Las transferencias bancarias pueden tardar más.',
-        ar: 'نحن ننتظر تأكيد دفعتك. يتم تأكيد معظم المدفوعات خلال دقائق. قد تستغرق التحويلات البنكية وقتًا أطول.',
+        'We wachten op bevestiging van je overschrijving. De meeste overboekingen worden binnen enkele minuten bevestigd. Bankoverschrijvingen kunnen langer duren.',
+        en: 'We are waiting for your transfer confirmation. Most settlements are confirmed within a few minutes. Bank transfers may take longer.',
+        es: 'Estamos esperando la confirmación de tu transferencia. La mayoría de liquidaciones se confirman en unos minutos. Las transferencias bancarias pueden tardar más.',
+        ar: 'نحن ننتظر تأكيد تحويلك. يتم تأكيد معظم التسويات خلال دقائق. قد تستغرق التحويلات البنكية وقتًا أطول.',
       );
   static String get platformBalanceSettleBalance => _t(
-        'Platformbalans vereffenen',
-        en: 'Settle Platform Balance',
-        es: 'Liquidar balance de plataforma',
-        ar: 'تسوية رصيد المنصة',
+        'Contant-ritten saldo vereffenen',
+        en: 'Settle Cash Rides Balance',
+        es: 'Liquidar saldo de viajes en efectivo',
+        ar: 'تسوية رصيد الرحلات النقدية',
       );
   static String get platformBalanceViewSettlementDetails => _t(
         'Vereffeningsgegevens bekijken',
@@ -4446,26 +4571,26 @@ class DriverStrings {
         ar: 'تعذر فتح صفحة التسوية. حاول مرة أخرى.',
       );
   static String get platformBalanceBankTransferTitle => _t(
-        'Betalen via bankoverschrijving',
-        en: 'Pay by bank transfer',
-        es: 'Pagar por transferencia bancaria',
-        ar: 'الدفع عن طريق التحويل البنكي',
+        'Vereffeningsgegevens',
+        en: 'Settlement Details',
+        es: 'Datos de liquidación',
+        ar: 'تفاصيل التسوية',
       );
   static String get platformBalanceBankTransferSubtitle => _t(
-        'Gebruik deze gegevens om je platformbalans te vereffenen.',
-        en: 'Use these details to settle your Platform Balance.',
-        es: 'Usa estos datos para liquidar tu balance de plataforma.',
-        ar: 'استخدم هذه البيانات لتسوية رصيد المنصة.',
+        'Je hebt contant van passagiers geïnd. Maak het openstaande saldo over met onderstaande bankgegevens.',
+        en: 'You collected cash from riders. Please transfer the outstanding balance using the bank details below.',
+        es: 'Cobraste en efectivo a los pasajeros. Transfiere el saldo pendiente con los datos bancarios de abajo.',
+        ar: 'حصلت على نقد من الركاب. يرجى تحويل الرصيد المستحق باستخدام بيانات الحساب البنكي أدناه.',
       );
   static String get platformBalanceTransferAmount => _t(
-        'Over te maken bedrag',
-        en: 'Amount to transfer',
-        es: 'Importe a transferir',
-        ar: 'المبلغ المراد تحويله',
+        'Openstaand saldo',
+        en: 'Outstanding Balance',
+        es: 'Saldo pendiente',
+        ar: 'الرصيد المستحق',
       );
   static String get platformBalanceAccountHolder => _t(
         'Rekeninghouder',
-        en: 'Account holder',
+        en: 'Account Holder',
         es: 'Titular de la cuenta',
         ar: 'صاحب الحساب',
       );
@@ -4478,28 +4603,34 @@ class DriverStrings {
       );
   static String get platformBalanceBic => 'BIC';
   static String get platformBalancePaymentReference => _t(
-        'Betalingskenmerk',
-        en: 'Payment reference',
-        es: 'Referencia de pago',
-        ar: 'مرجع الدفع',
+        'Vereffeningskenmerk',
+        en: 'Settlement Reference',
+        es: 'Referencia de liquidación',
+        ar: 'مرجع التسوية',
       );
   static String get platformBalanceReferenceWarning => _t(
-        'Vermeld altijd het exacte betalingskenmerk. Zonder dit kenmerk kan je betaling niet automatisch worden verwerkt.',
-        en: 'Always include the exact payment reference. Without it, your payment cannot be matched automatically.',
-        es: 'Incluye siempre la referencia de pago exacta. Sin ella, tu pago no puede identificarse automáticamente.',
-        ar: 'أدرج دائما مرجع الدفع الدقيق. بدونه لا يمكن مطابقة دفعتك تلقائيا.',
+        'Vermeld altijd het exacte vereffeningskenmerk. Zonder dit kenmerk kan je overschrijving niet automatisch worden verwerkt.',
+        en: 'Always include the exact settlement reference. Without it, your transfer cannot be matched automatically.',
+        es: 'Incluye siempre la referencia de liquidación exacta. Sin ella, tu transferencia no puede identificarse automáticamente.',
+        ar: 'أدرج دائما مرجع التسوية الدقيق. بدونه لا يمكن مطابقة تحويلك تلقائيا.',
       );
   static String get platformBalanceBankTransferTiming => _t(
-        'Je platformbalans wordt bijgewerkt zodra de bankbetaling is ontvangen. Dit kan tot één werkdag duren.',
-        en: 'Your Platform Balance updates after the bank transfer is received. This can take up to one business day.',
-        es: 'Tu balance de plataforma se actualiza cuando se recibe la transferencia. Puede tardar hasta un día laborable.',
-        ar: 'يتم تحديث رصيد المنصة بعد استلام التحويل البنكي. قد يستغرق ذلك يوم عمل واحدا.',
+        'Je contant-ritten saldo wordt bijgewerkt zodra de overschrijving is ontvangen. Dit kan tot één werkdag duren.',
+        en: 'Your cash rides balance updates after the bank transfer is received. This can take up to one business day.',
+        es: 'Tu saldo de viajes en efectivo se actualiza cuando se recibe la transferencia. Puede tardar hasta un día laborable.',
+        ar: 'يتم تحديث رصيد رحلاتك النقدية بعد استلام التحويل البنكي. قد يستغرق ذلك يوم عمل واحدا.',
+      );
+  static String get platformBalanceSettlementFooter => _t(
+        'Deze overschrijving vereffent het contant geïnde bedrag van passagiers. Het is geen aankoop van app-functies of digitale content.',
+        en: 'This transfer settles the cash collected from riders. It is not a purchase of app features or digital content.',
+        es: 'Esta transferencia liquida el efectivo cobrado a los pasajeros. No es una compra de funciones de la app ni contenido digital.',
+        ar: 'هذا التحويل يسوي النقد المحصل من الركاب. إنه ليس شراء ميزات التطبيق أو محتوى رقمي.',
       );
   static String get platformBalancePayOnlineInstead => _t(
-        'Liever online betalen',
-        en: 'Pay online instead',
-        es: 'Pagar en línea',
-        ar: 'الدفع عبر الإنترنت بدلا من ذلك',
+        'Online vereffenen',
+        en: 'Settle online instead',
+        es: 'Liquidar en línea',
+        ar: 'التسوية عبر الإنترنت بدلا من ذلك',
       );
   static String get platformBalanceCopy => _t(
         'Kopieer',
@@ -4514,30 +4645,25 @@ class DriverStrings {
         ar: 'تم نسخ $field',
       );
   static String get platformBalanceViewHistory => _t(
-        'Platformactiviteit bekijken',
-        en: 'View Platform Activity',
-        es: 'Ver actividad de plataforma',
-        ar: 'عرض نشاط المنصة',
+        'Vereffeningsgeschiedenis bekijken',
+        en: 'View Settlement History',
+        es: 'Ver historial de liquidación',
+        ar: 'عرض سجل التسوية',
       );
   static String get platformBalancePreparingSettlement => _t(
-        'Betaling voorbereiden…',
+        'Vereffening voorbereiden…',
         en: 'Preparing settlement…',
         es: 'Preparando liquidación…',
         ar: 'جار تحضير التسوية…',
       );
   static String get platformBalanceVerifyPayment => _t(
-        'We verifiëren je betaling. De meeste betalingen worden binnen enkele minuten bevestigd.',
-        en: 'We’ll verify your payment. Most payments are confirmed within a few minutes.',
-        es: 'Verificaremos tu pago. La mayoría de pagos se confirman en unos minutos.',
-        ar: 'سنتحقق من دفعتك. يتم تأكيد معظم المدفوعات خلال دقائق.',
+        'We verifiëren je overschrijving. De meeste vereffeningen worden binnen enkele minuten bevestigd.',
+        en: 'We’ll verify your transfer. Most settlements are confirmed within a few minutes.',
+        es: 'Verificaremos tu transferencia. La mayoría de liquidaciones se confirman en unos minutos.',
+        ar: 'سنتحقق من تحويلك. يتم تأكيد معظم التسويات خلال دقائق.',
       );
   static String get billingTitle => platformBalanceTitle;
-  static String get billingCurrentPlan => _t(
-        'Platformbalans',
-        en: 'Platform balance',
-        es: 'Saldo de plataforma',
-        ar: 'رصيد المنصة',
-      );
+  static String get billingCurrentPlan => platformBalanceTitle;
   static String get billingFoundingMember => _t(
         'Founding Driver',
         en: 'Founding Driver',
@@ -4562,6 +4688,33 @@ class DriverStrings {
         es: 'por viaje',
         ar: 'لكل رحلة',
       );
+  static String incomingRideNetAfterServiceFee(String net, String fee) => _t(
+        '$net geschat na $fee HeyCaby-servicekosten',
+        en: '$net estimated after $fee HeyCaby service fee',
+        es: '$net estimados después de $fee de tarifa de servicio HeyCaby',
+        ar: '$net تقديري بعد رسوم خدمة HeyCaby البالغة $fee',
+      );
+  static String get incomingRideFareLabel => _t('Ritprijs',
+      en: 'Ride fare', es: 'Tarifa del viaje', ar: 'أجرة الرحلة');
+  static String get incomingRideServiceFeeLabel => _t('HeyCaby-servicekosten',
+      en: 'HeyCaby service fee',
+      es: 'Tarifa de servicio HeyCaby',
+      ar: 'رسوم خدمة HeyCaby');
+  static String get incomingRideEstimatedEarningsLabel =>
+      _t('Geschatte opbrengst',
+          en: 'Estimated earnings',
+          es: 'Ganancias estimadas',
+          ar: 'الأرباح المقدرة');
+  static String get incomingRideFeeDeductedFromPrepay => _t(
+      'De servicekosten worden na een geverifieerde rit ingehouden op de vooruitbetaling.',
+      en: 'The service fee is deducted from the prepayment after a verified ride.',
+      es: 'La tarifa se deduce del prepago después de verificar el viaje.',
+      ar: 'تُخصم الرسوم من الدفع المسبق بعد التحقق من الرحلة.');
+  static String get incomingRideFeeAddedToBalance => _t(
+      'De passagier betaalt jou rechtstreeks. De servicekosten komen na de voltooide rit op je Platformbalans.',
+      en: 'The rider pays you directly. The service fee is added to your Platform Balance after completion.',
+      es: 'El pasajero te paga directamente. La tarifa se añade a tu saldo de plataforma al finalizar.',
+      ar: 'يدفع لك الراكب مباشرة وتُضاف الرسوم إلى رصيد المنصة بعد الإكمال.');
   static String get billingOutstandingLimit => _t(
         'Openstaand',
         en: 'Outstanding',
@@ -5454,16 +5607,16 @@ class DriverStrings {
         ar: 'أكمل المتطلبات الناقصة قبل الاتصال.',
       );
   static String get runtimePaymentBlockedTitle => _t(
-        'Platform Balance vereist',
-        en: 'Platform Balance required',
-        es: 'Balance de plataforma requerido',
-        ar: 'رصيد المنصة مطلوب',
+        'Contant-ritten saldo openstaand',
+        en: 'Cash rides balance due',
+        es: 'Saldo de viajes en efectivo pendiente',
+        ar: 'رصيد الرحلات النقدية مستحق',
       );
   static String get runtimePaymentBlockedBody => _t(
-        'Vereffen je Platform Balance voordat je nieuwe ritten ontvangt.',
-        en: 'Settle your Platform Balance before receiving new rides.',
-        es: 'Liquida tu balance de plataforma antes de recibir nuevos viajes.',
-        ar: 'سو رصيد المنصة قبل استقبال رحلات جديدة.',
+        'Vereffen je openstaande contant-ritten saldo voordat je nieuwe ritten ontvangt.',
+        en: 'Settle your outstanding cash rides balance before receiving new rides.',
+        es: 'Liquida tu saldo pendiente de viajes en efectivo antes de recibir nuevos viajes.',
+        ar: 'سوّ رصيد رحلاتك النقدية المستحق قبل استقبال رحلات جديدة.',
       );
   static String get runtimeUnknownBlockedTitle => _t(
         'Actie vereist',
@@ -5484,10 +5637,10 @@ class DriverStrings {
         ar: 'افتح المستندات',
       );
   static String get runtimeOpenBilling => _t(
-        'Platform Balance openen',
-        en: 'Open Platform Balance',
-        es: 'Abrir balance de plataforma',
-        ar: 'افتح رصيد المنصة',
+        'Vereffening openen',
+        en: 'Open settlement',
+        es: 'Abrir liquidación',
+        ar: 'افتح التسوية',
       );
   static String get runtimeOpenTariffs => _t(
         'Tarief instellen',
@@ -5640,6 +5793,18 @@ class DriverStrings {
         es: 'Tarifa de tarde',
         ar: 'تعرفة المساء',
       );
+  static String get weekendTariff => _t(
+        'Weekendtarief',
+        en: 'Weekend tariff',
+        es: 'Tarifa de fin de semana',
+        ar: 'تعرفة عطلة نهاية الأسبوع',
+      );
+  static String get weekendShift => _t(
+        'Za & zo',
+        en: 'Sat & Sun',
+        es: 'Sáb y dom',
+        ar: 'السبت والأحد',
+      );
   static String get lateNightTariff => _t(
         'Nachtarief',
         en: 'Late night tariff',
@@ -5683,10 +5848,10 @@ class DriverStrings {
         ar: 'بعد غروب الشمس',
       );
   static String get createDayPartProfiles => _t(
-        'Ochtend, avond & nacht instellen',
-        en: 'Set up morning, evening & night',
-        es: 'Configurar mañana, tarde y noche',
-        ar: 'إعداد الصباح والمساء والليل',
+        'Ochtend, avond, weekend & nacht instellen',
+        en: 'Set up morning, evening, weekend & night',
+        es: 'Configurar mañana, tarde, fin de semana y noche',
+        ar: 'إعداد الصباح والمساء وعطلة نهاية الأسبوع والليل',
       );
   static String get creatingDayPartProfiles => _t(
         'Profielen instellen…',
@@ -5707,10 +5872,10 @@ class DriverStrings {
         ar: 'محرر الأسعار',
       );
   static String get tariffEditorSubtitle => _t(
-        'Stel prijzen per tarief in en sla globaal op.',
-        en: 'Set prices per tariff and save globally.',
-        es: 'Configura precios por tarifa y guarda globalmente.',
-        ar: 'حدد الأسعار لكل تعريفة واحفظ عالميا.',
+        'Kies een tarief. Pas de vier prijzen aan. Sla alles in één keer op.',
+        en: 'Pick a tariff. Adjust the four prices. Save everything at once.',
+        es: 'Elige una tarifa. Ajusta los cuatro precios. Guarda todo de una vez.',
+        ar: 'اختر تعريفة. عدّل الأسعار الأربعة. احفظ الكل دفعة واحدة.',
       );
   static String get initialTariffTitle => _t(
         'Stel je eerste tarief in',
@@ -5785,10 +5950,10 @@ class DriverStrings {
         ar: 'تعريفات مقترحة حسب وقت اليوم',
       );
   static String get tariffSuggestionCardBody => _t(
-        'Je mist nog profielen voor ochtend, avond en/of nacht. Tik op de knop hieronder om die toe te voegen met voorstellen op basis van je standaardtarief. Pas daarna gerust elk bedrag aan.',
-        en: 'You\'re still missing profiles for morning, evening and/or night. Tap the button below to add them with suggestions based on your standard tariff. Then adjust any amount as you like.',
-        es: 'Todavía te faltan perfiles para mañana, tarde y/o noche. Toca el botón de abajo para añadirlos con sugerencias basadas en tu tarifa estándar. Luego ajusta cualquier importe.',
-        ar: 'لا يزال ينقصك ملفات شخصية للصباح والمساء و/أو الليل. انقر على الزر أدناه لإضافتها مع اقتراحات مبنية على تعريفتك القياسية. ثم اضبط أي مبلغ كما تريد.',
+        'Je mist nog profielen voor ochtend, avond, weekend en/of nacht. Tik op de knop hieronder om die toe te voegen met voorstellen op basis van je standaardtarief. Pas daarna gerust elk bedrag aan.',
+        en: 'You\'re still missing profiles for morning, evening, weekend and/or night. Tap the button below to add them with suggestions based on your standard tariff. Then adjust any amount as you like.',
+        es: 'Todavía te faltan perfiles para mañana, tarde, fin de semana y/o noche. Toca el botón de abajo para añadirlos con sugerencias basadas en tu tarifa estándar. Luego ajusta cualquier importe.',
+        ar: 'لا يزال ينقصك ملفات شخصية للصباح والمساء وعطلة نهاية الأسبوع و/أو الليل. انقر على الزر أدناه لإضافتها مع اقتراحات مبنية على تعريفتك القياسية. ثم اضبط أي مبلغ كما تريد.',
       );
   static String get tariffSuggestionCardButton => _t(
         'Voorgestelde tarieven toevoegen',
@@ -5929,6 +6094,258 @@ class DriverStrings {
         en: 'Manage your goals, tariffs, and safety.',
         es: 'Gestiona tus objetivos, tarifas y seguridad.',
         ar: 'أدر أهدافك وتعريفاتك وسلامتك.',
+      );
+  static String get hubTileMoney => _t(
+        'Geld',
+        en: 'Money',
+        es: 'Dinero',
+        ar: 'المال',
+      );
+  static String get hubTileSetGoal => _t(
+        'Stel een doel in',
+        en: 'Set a goal',
+        es: 'Establece una meta',
+        ar: 'حدّد هدفاً',
+      );
+  static String get hubTilePrices => _t(
+        'Tarieven',
+        en: 'Prices',
+        es: 'Tarifas',
+        ar: 'الأسعار',
+      );
+  static String get hubTileSetTariff => _t(
+        'Stel tarief in',
+        en: 'Set your tariff',
+        es: 'Configura tu tarifa',
+        ar: 'حدّد تعريفتك',
+      );
+  static String get hubTariffTooltipTitle => _t(
+        'Meerdere tarieven',
+        en: 'Multiple tariffs',
+        es: 'Varias tarifas',
+        ar: 'تعريفات متعددة',
+      );
+  static String get hubTariffTooltipBody => _t(
+        'Je kunt verschillende tarieven instellen voor ochtend, avond, weekend en meer. Kies het tarief dat bij je dienst past.',
+        en: 'You can set different tariffs for morning, night, weekend, and more. Pick the one that matches your shift.',
+        es: 'Puedes configurar tarifas distintas para mañana, noche, fin de semana y más. Elige la que encaje con tu turno.',
+        ar: 'يمكنك ضبط تعريفات مختلفة للصباح والليل وعطلة نهاية الأسبوع والمزيد. اختر ما يناسب ورديتك.',
+      );
+  static String get hubGoalPeriodDaily => _t(
+        'Dagelijks doel',
+        en: 'Daily goal',
+        es: 'Meta diaria',
+        ar: 'هدف يومي',
+      );
+  static String get hubGoalPeriodWeekly => _t(
+        'Weekdoel',
+        en: 'Weekly goal',
+        es: 'Meta semanal',
+        ar: 'هدف أسبوعي',
+      );
+  static String get hubGoalPeriodBiweekly => _t(
+        'Twee-weken doel',
+        en: 'Bi-weekly goal',
+        es: 'Meta quincenal',
+        ar: 'هدف كل أسبوعين',
+      );
+  static String get hubGoalPeriodMonthly => _t(
+        'Maanddoel',
+        en: 'Monthly goal',
+        es: 'Meta mensual',
+        ar: 'هدف شهري',
+      );
+  static String get hubGoalPeriodDailyShort => _t(
+        'Dag',
+        en: 'Day',
+        es: 'Día',
+        ar: 'يوم',
+      );
+  static String get hubGoalPeriodWeeklyShort => _t(
+        'Week',
+        en: 'Week',
+        es: 'Sem',
+        ar: 'أسبوع',
+      );
+  static String get hubGoalPeriodBiweeklyShort => _t(
+        '2 wkn',
+        en: '2 wks',
+        es: '2 sem',
+        ar: 'أسبوعان',
+      );
+  static String get hubGoalPeriodMonthlyShort => _t(
+        'Maand',
+        en: 'Month',
+        es: 'Mes',
+        ar: 'شهر',
+      );
+  static String get hubSetGoalForPeriod => _t(
+        'Doel instellen',
+        en: 'Set goal',
+        es: 'Establecer meta',
+        ar: 'تحديد الهدف',
+      );
+  static String get hubEditGoalForPeriod => _t(
+        'Doel bewerken',
+        en: 'Edit goal',
+        es: 'Editar meta',
+        ar: 'تعديل الهدف',
+      );
+  static String get hubRemoveGoal => _t(
+        'Doel verwijderen',
+        en: 'Remove goal',
+        es: 'Eliminar meta',
+        ar: 'إزالة الهدف',
+      );
+  static String get hubGoalAmountHint => _t(
+        'Bijv. 500',
+        en: 'e.g. 500',
+        es: 'p. ej. 500',
+        ar: 'مثال: 500',
+      );
+  static String hubGoalStarted(int percent) => _t(
+        '$percent% van je doel — goed begin!',
+        en: '$percent% of your goal — good start!',
+        es: '$percent% de tu meta — buen comienzo!',
+        ar: '$percent% من هدفك — بداية جيدة!',
+      );
+  static String hubGoalProgressMilestone(int percent) => _t(
+        '$percent% naar je doel — doorzetten!',
+        en: '$percent% toward your goal — keep going!',
+        es: '$percent% hacia tu meta — ¡sigue!',
+        ar: '$percent% نحو هدفك — استمر!',
+      );
+  static String hubGoalKeepMoving(int percentLeft) => _t(
+        'Nog $percentLeft% — blijf doorrijden!',
+        en: '$percentLeft% to go — keep it moving!',
+        es: 'Faltan $percentLeft% — ¡sigue adelante!',
+        ar: 'بقي $percentLeft% — واصل!',
+      );
+  static String hubGoalAlmostThere(int percentLeft) => _t(
+        'Nog $percentLeft% — je bent er bijna!',
+        en: 'Only $percentLeft% left — you\'re almost there!',
+        es: 'Solo $percentLeft% — ¡casi lo logras!',
+        ar: 'بقي $percentLeft% فقط — أوشكت على الوصول!',
+      );
+  static String hubGoalAchieved(String periodLabel) => _t(
+        'Doel behaald ($periodLabel)! We zijn trots op je. Ga door of stel een nieuw doel in.',
+        en: 'Goal achieved ($periodLabel)! We\'re very proud of you. Keep going or set a new goal.',
+        es: '¡Meta lograda ($periodLabel)! Estamos muy orgullosos. Sigue o establece una nueva meta.',
+        ar: 'تم تحقيق الهدف ($periodLabel)! نحن فخورون بك. واصل أو حدّد هدفاً جديداً.',
+      );
+  static String get hubTileTaxi => _t(
+        'Taxi',
+        en: 'Taxi',
+        es: 'Taxi',
+        ar: 'التاكسي',
+      );
+  static String get hubTileBalance => _t(
+        'Contant saldo',
+        en: 'Cash balance',
+        es: 'Saldo en efectivo',
+        ar: 'الرصيد النقدي',
+      );
+  static String get hubTileSafety => _t(
+        'Veilig',
+        en: 'Safety',
+        es: 'Seguridad',
+        ar: 'الأمان',
+      );
+  static String get hubTileHelp => _t(
+        'Hulp',
+        en: 'Help',
+        es: 'Ayuda',
+        ar: 'مساعدة',
+      );
+  static String get hubTileSettings => _t(
+        'Instellingen',
+        en: 'Settings',
+        es: 'Ajustes',
+        ar: 'الإعدادات',
+      );
+  static String get hubMoreTitle => _t(
+        'Meer',
+        en: 'More',
+        es: 'Más',
+        ar: 'المزيد',
+      );
+  static String get hubTodayLabel => _t(
+        'Vandaag',
+        en: 'Today',
+        es: 'Hoy',
+        ar: 'اليوم',
+      );
+  static String hubRidesToday(int count) => _t(
+        '$count ritten',
+        en: '$count rides',
+        es: '$count viajes',
+        ar: '$count رحلات',
+      );
+  static String get hubPricesStepPick => _t(
+        'Kies je tarief',
+        en: 'Pick your price list',
+        es: 'Elige tu tarifa',
+        ar: 'اختر قائمة الأسعار',
+      );
+  static String get hubPricesStepShow => _t(
+        'Wat betaalt de klant',
+        en: 'What passengers pay',
+        es: 'Lo que paga el pasajero',
+        ar: 'ما يدفعه الراكب',
+      );
+  static String get hubManageAllPrices => _t(
+        'Alle prijzen wijzigen',
+        en: 'Change all prices',
+        es: 'Cambiar todos los precios',
+        ar: 'تغيير كل الأسعار',
+      );
+  static String get hubPerKmHero => _t(
+        'per km',
+        en: 'per km',
+        es: 'por km',
+        ar: 'لكل كم',
+      );
+  static String get hubMoneyWeek => _t(
+        'Deze week',
+        en: 'This week',
+        es: 'Esta semana',
+        ar: 'هذا الأسبوع',
+      );
+  static String get hubHelpChat => _t(
+        'Chat',
+        en: 'Chat',
+        es: 'Chat',
+        ar: 'محادثة',
+      );
+  static String get hubHelpIdea => _t(
+        'Idee',
+        en: 'Idea',
+        es: 'Idea',
+        ar: 'فكرة',
+      );
+  static String get hubShareFamily => _t(
+        'Deel rit met familie',
+        en: 'Share ride with family',
+        es: 'Compartir viaje con familia',
+        ar: 'شارك الرحلة مع العائلة',
+      );
+  static String get hubNext => _t(
+        'Volgende',
+        en: 'Next',
+        es: 'Siguiente',
+        ar: 'التالي',
+      );
+  static String get hubBack => _t(
+        'Terug',
+        en: 'Back',
+        es: 'Atrás',
+        ar: 'رجوع',
+      );
+  static String get hubDone => _t(
+        'Klaar',
+        en: 'Done',
+        es: 'Listo',
+        ar: 'تم',
       );
   static String get goalsSectionTitle => _t(
         'Goals',
@@ -6196,13 +6613,13 @@ class DriverStrings {
   // Return trips
   static String get returnTrips => _t(
         'Taxi Terug',
-        en: 'Taxi Terug',
+        en: 'Return Taxi',
         es: 'Taxi Terug',
         ar: 'Taxi Terug',
       );
   static String get returnMode => _t(
         'Taxi Terug',
-        en: 'Taxi Terug',
+        en: 'Return Taxi',
         es: 'Taxi Terug',
         ar: 'Taxi Terug',
       );
@@ -6214,7 +6631,7 @@ class DriverStrings {
       );
   static String get returnModeOffBody => _t(
         'Op weg naar huis? Verdien onderweg met Taxi Terug.',
-        en: 'Heading home? Earn on the way with Taxi Terug.',
+        en: 'Heading home? Earn on the way with Return Taxi.',
         es: '¿Vuelves a casa? Gana en el camino con Taxi Terug.',
         ar: 'هل تتجه إلى المنزل؟ اربح في الطريق مع Taxi Terug.',
       );
@@ -6235,13 +6652,13 @@ class DriverStrings {
       );
   static String get returnModeNoMatchesYet => _t(
         'Nog geen Taxi Terug ritten. We blijven zoeken terwijl u rijdt.',
-        en: "No Taxi Terug rides yet. We'll keep looking while you drive.",
+        en: "No Return Taxi rides yet. We'll keep looking while you drive.",
         es: 'Aún no hay viajes Taxi Terug. Seguiremos buscando mientras conduces.',
         ar: 'لا توجد رحلات Taxi Terug بعد. سنواصل البحث أثناء قيادتك.',
       );
   static String returnModeAvailableCount(int count) => _t(
         '$count Taxi Terug ritten beschikbaar',
-        en: '$count Taxi Terug rides available',
+        en: '$count Return Taxi rides available',
         es: '$count viajes Taxi Terug disponibles',
         ar: '$count رحلات Taxi Terug متاحة',
       );
@@ -6253,7 +6670,7 @@ class DriverStrings {
       );
   static String get returnModeActivateFull => _t(
         'Taxi Terug activeren',
-        en: 'Activate Taxi Terug',
+        en: 'Activate Return Taxi',
         es: 'Activar Taxi Terug',
         ar: 'تفعيل Taxi Terug',
       );
@@ -6271,13 +6688,13 @@ class DriverStrings {
       );
   static String get returnModeDisableTitle => _t(
         'Taxi Terug uitschakelen?',
-        en: 'Turn off Taxi Terug?',
+        en: 'Turn off Return Taxi?',
         es: '¿Desactivar Taxi Terug?',
         ar: 'إيقاف Taxi Terug؟',
       );
   static String get returnModeDisableBody => _t(
         'U ontvangt geen nieuwe Taxi Terug-matches meer voor deze reis. Bevestigde ritten blijven staan.',
-        en: 'You will stop receiving new Taxi Terug matches for this journey. Confirmed rides stay in place.',
+        en: 'You will stop receiving new Return Taxi matches for this journey. Confirmed rides stay in place.',
         es: 'Dejarás de recibir nuevas coincidencias de Taxi Terug para este viaje. Los viajes confirmados se mantienen.',
         ar: 'ستتوقف عن تلقي مطابقات Taxi Terug الجديدة لهذه الرحلة. تبقى الرحلات المؤكدة كما هي.',
       );
@@ -6295,7 +6712,7 @@ class DriverStrings {
       );
   static String get returnModeActivationFailed => _t(
         'Taxi Terug kon niet worden geactiveerd.',
-        en: 'Taxi Terug could not be activated.',
+        en: 'Return Taxi could not be activated.',
         es: 'No se pudo activar Taxi Terug.',
         ar: 'تعذر تفعيل Taxi Terug.',
       );
@@ -6325,7 +6742,7 @@ class DriverStrings {
       );
   static String get returnModeBackendNotReady => _t(
         'Taxi Terug is nog niet beschikbaar op de server. Probeer later opnieuw.',
-        en: 'Taxi Terug is not available on the server yet. Try again later.',
+        en: 'Return Taxi is not available on the server yet. Try again later.',
         es: 'Taxi Terug aún no está disponible en el servidor. Inténtalo más tarde.',
         ar: 'Taxi Terug غير متاح على الخادم بعد. حاول مرة أخرى لاحقاً.',
       );
@@ -6337,13 +6754,13 @@ class DriverStrings {
       );
   static String returnModeSuggestBody(double km, String destination) => _t(
         'U bent $km km van $destination. Activeer Taxi Terug om ritten mee te nemen.',
-        en: 'You are $km km from $destination. Activate Taxi Terug to pick up rides on the way.',
+        en: 'You are $km km from $destination. Activate Return Taxi to pick up rides on the way.',
         es: 'Estás a $km km de $destination. Activa Taxi Terug para recoger viajes de camino.',
         ar: 'أنت على بعد $km كم من $destination. فعّل Taxi Terug لالتقاط الرحلات في الطريق.',
       );
   static String get returnModeHeadingHomeTitle => _t(
         'Taxi Terug?',
-        en: 'Taxi Terug?',
+        en: 'Return Taxi?',
         es: '¿Taxi Terug?',
         ar: 'Taxi Terug؟',
       );
@@ -7245,6 +7662,20 @@ class DriverStrings {
           es: 'Esta acción no está disponible para este viaje ahora. Actualiza la pantalla e inténtalo de nuevo.',
           ar: 'هذا الإجراء غير متاح لهذه الرحلة الآن. حدّث الشاشة وحاول مرة أخرى.',
         );
+      case 'ride_prepayment_required':
+        return _t(
+          'De passagier moet de vooruitbetaling nog afronden. Start de rit zodra de betaling is bevestigd.',
+          en: 'The passenger still needs to complete prepayment. Start the ride once payment is confirmed.',
+          es: 'El pasajero aún debe completar el pago por adelantado. Inicia el viaje cuando se confirme el pago.',
+          ar: 'لا يزال على الراكب إكمال الدفع المسبق. ابدأ الرحلة بعد تأكيد الدفع.',
+        );
+      case 'ride_prepayment_config_invalid':
+        return _t(
+          'De betaalcontrole is tijdelijk niet beschikbaar. Start de rit niet en neem contact op met support.',
+          en: 'Payment verification is temporarily unavailable. Do not start the ride; contact support.',
+          es: 'La verificación del pago no está disponible temporalmente. No inicies el viaje; contacta con soporte.',
+          ar: 'التحقق من الدفع غير متاح مؤقتاً. لا تبدأ الرحلة وتواصل مع الدعم.',
+        );
       case 'not_a_driver':
         return _t(
           'Je chauffeursprofiel kon niet worden gevonden. Log opnieuw in.',
@@ -7545,10 +7976,28 @@ class DriverStrings {
         ar: 'حساس للوقت',
       );
   static String get rideAlertsRegistered => _t(
-        'Apparaat geregistreerd',
-        en: 'Device registered',
-        es: 'Dispositivo registrado',
-        ar: 'الجهاز مسجل',
+        'Push gekoppeld',
+        en: 'Push linked',
+        es: 'Push vinculado',
+        ar: 'الإشعارات مرتبطة',
+      );
+  static String get rideAlertsNotRegistered => _t(
+        'Push niet gekoppeld',
+        en: 'Push not linked',
+        es: 'Push no vinculado',
+        ar: 'الإشعارات غير مرتبطة',
+      );
+  static String get rideAlertsRetryPush => _t(
+        'Opnieuw koppelen',
+        en: 'Link again',
+        es: 'Vincular de nuevo',
+        ar: 'إعادة الربط',
+      );
+  static String get rideAlertsPushHint => _t(
+        'iOS-meldingen staan goed. Koppel dit apparaat opnieuw voor ritmeldingen.',
+        en: 'iOS notifications look fine. Link this device again for ride alerts.',
+        es: 'Las notificaciones de iOS están bien. Vincula este dispositivo de nuevo para alertas.',
+        ar: 'إشعارات iOS جيدة. أعد ربط هذا الجهاز لتنبيهات الرحلات.',
       );
   static String get openSettings => _t(
         'Open instellingen',
@@ -7575,6 +8024,84 @@ class DriverStrings {
           en: 'Your invite for this ride has expired. Wait for a new request.',
           es: 'Tu invitación para este viaje ha caducado. Espera una nueva solicitud.',
           ar: 'انتهت دعوتك لهذه الرحلة. انتظر طلبًا جديدًا.',
+        );
+      case 'ride_expired':
+        return _t(
+          'Deze rit is niet meer beschikbaar.',
+          en: 'This ride is no longer available.',
+          es: 'Este viaje ya no está disponible.',
+          ar: 'هذه الرحلة لم تعد متاحة.',
+        );
+      case 'scheduled_departed':
+        return _t(
+          'De geplande ophaaltijd van deze rit is verstreken.',
+          en: 'The scheduled pickup time for this ride has passed.',
+          es: 'La hora de recogida programada de este viaje ya pasó.',
+          ar: 'انتهى وقت الاستلام المجدول لهذه الرحلة.',
+        );
+      case 'driver_offline':
+        return _t(
+          'Ga online voordat je een rit accepteert.',
+          en: 'Go online before accepting a ride.',
+          es: 'Conéctate antes de aceptar un viaje.',
+          ar: 'اتصل بالإنترنت قبل قبول رحلة.',
+        );
+      case 'driver_not_eligible':
+      case 'driver_not_ready':
+        return _t(
+          'Je voldoet nu niet aan alle voorwaarden voor deze rit. Controleer je chauffeursstatus.',
+          en: 'You no longer meet all requirements for this ride. Check your Driver status.',
+          es: 'Ya no cumples todos los requisitos para este viaje. Revisa tu estado de conductor.',
+          ar: 'لم تعد تستوفي جميع متطلبات هذه الرحلة. تحقق من حالة السائق.',
+        );
+      case 'driver_not_prepay_ready':
+        return _t(
+          'Koppel en verifieer Mollie voordat je een vooraf betaalde rit accepteert.',
+          en: 'Connect and verify Mollie before accepting a prepaid ride.',
+          es: 'Conecta y verifica Mollie antes de aceptar un viaje prepagado.',
+          ar: 'اربط حساب Mollie وتحقق منه قبل قبول رحلة مدفوعة مسبقًا.',
+        );
+      case 'driver_suspended':
+        return _t(
+          'Je chauffeursaccount is momenteel geschorst.',
+          en: 'Your Driver account is currently suspended.',
+          es: 'Tu cuenta de conductor está suspendida actualmente.',
+          ar: 'حساب السائق الخاص بك موقوف حاليًا.',
+        );
+      case 'queued_taxi_terug':
+        return _t(
+          'Je hebt al een Taxi Terug-rit als volgende rit gereserveerd.',
+          en: 'You already have a Taxi Terug ride reserved next.',
+          es: 'Ya tienes un viaje Taxi Terug reservado como próximo viaje.',
+          ar: 'لديك بالفعل رحلة Taxi Terug محجوزة كرحلتك التالية.',
+        );
+      case 'vehicle_mismatch':
+        return _t(
+          'Je actieve voertuig past niet bij deze rit.',
+          en: 'Your active vehicle does not match this ride.',
+          es: 'Tu vehículo activo no coincide con este viaje.',
+          ar: 'مركبتك النشطة لا تتوافق مع هذه الرحلة.',
+        );
+      case 'electric_vehicle_required':
+        return _t(
+          'Voor deze rit is een elektrische taxi nodig.',
+          en: 'This ride requires an electric taxi.',
+          es: 'Este viaje requiere un taxi eléctrico.',
+          ar: 'تتطلب هذه الرحلة سيارة أجرة كهربائية.',
+        );
+      case 'wheelchair_vehicle_required':
+        return _t(
+          'Voor deze rit is een rolstoeltoegankelijke taxi nodig.',
+          en: 'This ride requires a wheelchair-accessible taxi.',
+          es: 'Este viaje requiere un taxi accesible para sillas de ruedas.',
+          ar: 'تتطلب هذه الرحلة سيارة أجرة مهيأة للكراسي المتحركة.',
+        );
+      case 'pets_not_supported':
+        return _t(
+          'Voor deze rit is een huisdiervriendelijke taxi nodig.',
+          en: 'This ride requires a pet-friendly vehicle.',
+          es: 'Este viaje requiere un vehículo que admita mascotas.',
+          ar: 'تتطلب هذه الرحلة مركبة تسمح بالحيوانات الأليفة.',
         );
       case 'stale_location':
       case 'gps_stale':
@@ -8050,7 +8577,7 @@ class DriverStrings {
       );
   static String get incomingRideTerugTaxiBadge => _t(
         'TAXI TERUG',
-        en: 'TAXI TERUG',
+        en: 'RETURN TAXI',
         es: 'TAXI TERUG',
         ar: 'TAXI TERUG',
       );
@@ -8062,7 +8589,7 @@ class DriverStrings {
       );
   static String get taxiTerugQueuedBookedTitle => _t(
         'Taxi Terug geboekt',
-        en: 'Taxi Terug booked',
+        en: 'Return Taxi booked',
         es: 'Taxi Terug reservado',
         ar: 'تم حجز Taxi Terug',
       );
@@ -8087,13 +8614,13 @@ class DriverStrings {
       );
   static String get taxiTerugStatsTitle => _t(
         'Taxi Terug — deze maand',
-        en: 'Taxi Terug — this month',
+        en: 'Return Taxi — this month',
         es: 'Taxi Terug — este mes',
         ar: 'Taxi Terug — هذا الشهر',
       );
   static String get taxiTerugStatsEmpty => _t(
         'Voltooi je eerste Taxi Terug rit om km bespaard en verdiensten te zien.',
-        en: 'Complete your first Taxi Terug ride to see km saved and earnings.',
+        en: 'Complete your first Return Taxi ride to see km saved and earnings.',
         es: 'Completa tu primer viaje Taxi Terug para ver km ahorrados y ganancias.',
         ar: 'أكمل أول رحلة Taxi Terug لرؤية الكيلومترات الموفرة والأرباح.',
       );
@@ -8117,7 +8644,7 @@ class DriverStrings {
       );
   static String taxiTerugStatsRidesCount(int count) => _t(
         '$count terugritten deze maand',
-        en: '$count Taxi Terug rides this month',
+        en: '$count Return Taxi rides this month',
         es: '$count viajes Taxi Terug este mes',
         ar: '$count رحلات Taxi Terug هذا الشهر',
       );
@@ -8192,6 +8719,48 @@ class DriverStrings {
         en: 'Change',
         es: 'Cambiar',
         ar: 'تغيير',
+      );
+  static String get rideRouteDestinationChanged => _t(
+        'Adres gewijzigd',
+        en: 'Changed address',
+        es: 'Dirección cambiada',
+        ar: 'تم تغيير العنوان',
+      );
+  static String rideRouteStopsAdded(int count) => _t(
+        count == 1 ? '1 stop toegevoegd' : '$count stops toegevoegd',
+        en: count == 1 ? '1 stop added' : '$count stops added',
+        es: count == 1 ? '1 parada añadida' : '$count paradas añadidas',
+        ar: count == 1 ? 'تمت إضافة توقف واحد' : 'تمت إضافة $count توقفات',
+      );
+  static String get routeChangeRequestTitle => _t(
+        'Nieuwe stop',
+        en: 'Rider added a stop',
+        es: 'El pasajero añadió una parada',
+        ar: 'أضاف الراكب توقفًا',
+      );
+  static String routeChangeRequestBody(String stopLabel) => _t(
+        'Kan je $stopLabel meenemen?',
+        en: 'Can you take $stopLabel?',
+        es: '¿Puedes ir a $stopLabel?',
+        ar: 'هل يمكنك التوجه إلى $stopLabel؟',
+      );
+  static String get routeChangeRequestYes => _t(
+        'Ja',
+        en: 'Yes',
+        es: 'Sí',
+        ar: 'نعم',
+      );
+  static String get routeChangeRequestNo => _t(
+        'Nee',
+        en: 'No',
+        es: 'No',
+        ar: 'لا',
+      );
+  static String get routeChangeRespondFailed => _t(
+        'Kon routewijziging niet verwerken. Probeer opnieuw.',
+        en: 'Could not process the route change. Try again.',
+        es: 'No se pudo procesar el cambio de ruta. Inténtalo de nuevo.',
+        ar: 'تعذر معالجة تغيير المسار. حاول مرة أخرى.',
       );
   static String get rideMapWaitHere => _t(
         'Wacht hier',
@@ -9804,6 +10373,66 @@ class DriverStrings {
         es: 'Borrar leídas',
         ar: 'مسح المقروء',
       );
+  static String get communityNotificationsRetentionHint => _t(
+        'Alleen meldingen van de laatste 24 uur',
+        en: 'Only notifications from the last 24 hours',
+        es: 'Solo notificaciones de las últimas 24 horas',
+        ar: 'إشعارات آخر 24 ساعة فقط',
+      );
+  static String get communitySelect => _t(
+        'Selecteren',
+        en: 'Select',
+        es: 'Seleccionar',
+        ar: 'تحديد',
+      );
+  static String get communitySelectAll => _t(
+        'Alles selecteren',
+        en: 'Select all',
+        es: 'Seleccionar todo',
+        ar: 'تحديد الكل',
+      );
+  static String get communityDeselectAll => _t(
+        'Deselecteren',
+        en: 'Deselect all',
+        es: 'Deseleccionar todo',
+        ar: 'إلغاء تحديد الكل',
+      );
+  static String get communityDeleteAll => _t(
+        'Alles verwijderen',
+        en: 'Delete all',
+        es: 'Eliminar todo',
+        ar: 'حذف الكل',
+      );
+  static String communityDeleteSelected(int count) => _t(
+        'Verwijder ($count)',
+        en: 'Delete ($count)',
+        es: 'Eliminar ($count)',
+        ar: 'حذف ($count)',
+      );
+  static String get communityDeleteAllConfirmTitle => _t(
+        'Alle meldingen verwijderen?',
+        en: 'Delete all notifications?',
+        es: '¿Eliminar todas las notificaciones?',
+        ar: 'حذف جميع الإشعارات؟',
+      );
+  static String get communityDeleteAllConfirmBody => _t(
+        'Dit verwijdert alle meldingen van de laatste 24 uur.',
+        en: 'This removes all notifications from the last 24 hours.',
+        es: 'Esto elimina todas las notificaciones de las últimas 24 horas.',
+        ar: 'سيؤدي هذا إلى حذف جميع إشعارات آخر 24 ساعة.',
+      );
+  static String communityDeleteSelectedConfirmTitle(int count) => _t(
+        '$count meldingen verwijderen?',
+        en: 'Delete $count notifications?',
+        es: '¿Eliminar $count notificaciones?',
+        ar: 'حذف $count إشعارات؟',
+      );
+  static String get communityDeleteSelectedConfirmBody => _t(
+        'Deze meldingen worden permanent verwijderd.',
+        en: 'These notifications will be permanently removed.',
+        es: 'Estas notificaciones se eliminarán permanentemente.',
+        ar: 'سيتم حذف هذه الإشعارات نهائياً.',
+      );
   static String get communityNotificationsEmpty => _t(
         'Nog geen meldingen.',
         en: 'No notifications yet.',
@@ -10353,12 +10982,7 @@ class DriverStrings {
         es: 'Invita a otros conductores. Cuantos más conductores haya, más pasajeros confiarán y usarán la plataforma.',
         ar: 'ادعُ سائقين آخرين. كلما زاد عدد السائقين على المنصة، زاد ثقة الركاب واستخدامهم لها.',
       );
-  static String get featureTour4Kicker => _t(
-        'Platformbalans',
-        en: 'Platform balance',
-        es: 'Saldo de plataforma',
-        ar: 'رصيد المنصة',
-      );
+  static String get featureTour4Kicker => platformBalanceTitle;
   static String get featureTour4Heading => _t(
         'Werk eerst, vereffen later',
         en: 'Work first, settle later',
@@ -10366,10 +10990,10 @@ class DriverStrings {
         ar: 'اعمل أولاً، ثم ساوِ لاحقا',
       );
   static String get featureTour4Body => _t(
-        'HeyCaby toont alleen een openstaand platformsaldo wanneer er echt iets te vereffenen is. Nieuwe ritverzoeken pauzeren pas als dat saldo na de betaaltermijn open blijft.',
-        en: 'HeyCaby only shows an outstanding platform balance when there\'s actually something to settle. New ride requests only pause if that balance remains open after the payment period.',
-        es: 'HeyCaby solo muestra un saldo pendiente cuando hay algo que liquidar. Las nuevas solicitudes solo se pausan si el saldo sigue abierto tras el período de pago.',
-        ar: 'يعرض HeyCaby رصيد منصة مستحقا فقط عندما يكون هناك ما يسوى. يتم إيقاف طلبات الرحلات الجديدة فقط إذا بقي الرصيد مستحقا بعد فترة الدفع.',
+        'HeyCaby toont alleen een openstaand contant-ritten saldo wanneer er echt iets te vereffenen is. Nieuwe ritverzoeken pauzeren pas als dat saldo na de termijn open blijft.',
+        en: 'HeyCaby only shows an outstanding cash rides balance when there\'s actually something to settle. New ride requests only pause if that balance remains open after the due window.',
+        es: 'HeyCaby solo muestra un saldo pendiente de viajes en efectivo cuando hay algo que liquidar. Las nuevas solicitudes solo se pausan si el saldo sigue abierto tras el plazo.',
+        ar: 'يعرض HeyCaby رصيد رحلات نقدية مستحقا فقط عندما يكون هناك ما يسوى. يتم إيقاف طلبات الرحلات الجديدة فقط إذا بقي الرصيد مستحقا بعد مهلة الاستحقاق.',
       );
   static String get featureTour5Kicker => _t(
         'Founding-leden',
@@ -10426,6 +11050,24 @@ class DriverStrings {
         en: '$n riders saved you',
         es: '$n pasajeros te guardaron',
         ar: '$n راكب حفظك',
+      );
+  static String savedByRidersAsFavorite(int n) => _t(
+        n == 1
+            ? '1 passagier heeft je als favoriet opgeslagen'
+            : '$n passagiers hebben je als favoriet opgeslagen',
+        en: n == 1
+            ? '1 rider saved you as a favorite driver'
+            : '$n riders saved you as favorite drivers',
+        es: n == 1
+            ? '1 pasajero te guardó como favorito'
+            : '$n pasajeros te guardaron como favoritos',
+        ar: n == 1 ? 'حفظك راكب واحد كسائق مفضل' : 'حفظك $n راكب كسائق مفضل',
+      );
+  static String savedByRidersRecentNames(String names) => _t(
+        names,
+        en: names,
+        es: names,
+        ar: names,
       );
   static String savedByRidersThisWeek(int n) => _t(
         '+$n deze week',
@@ -10499,6 +11141,39 @@ class DriverStrings {
         en: 'Upcoming',
         es: 'Próximos',
         ar: 'القادمة',
+      );
+  static String get ridesFilterTaxiTerug => _t(
+        'Taxi Terug',
+        en: 'Return Taxi',
+        es: 'Taxi Terug',
+        ar: 'Taxi Terug',
+      );
+  static String get noTaxiTerugRides => _t(
+        'Nog geen voltooide Taxi Terug ritten met betaling.',
+        en: 'No completed Return Taxi rides with payment collected yet.',
+        es: 'Aún no hay viajes Taxi Terug completados con pago cobrado.',
+        ar: 'لا توجد رحلات Taxi Terug مكتملة مع تحصيل الدفع بعد.',
+      );
+  static String myRidesTaxiTerugMonthSummary({
+    required int rides,
+    required String km,
+    required String euros,
+  }) =>
+      _t(
+        'Deze maand: $rides Taxi Terug ritten · $km km bespaard · $euros verdiend',
+        en: 'This month: $rides Return Taxi rides · $km km saved · $euros earned',
+        es: 'Este mes: $rides viajes Taxi Terug · $km km ahorrados · $euros ganados',
+        ar: 'هذا الشهر: $rides رحلات Taxi Terug · $km كم موفر · $euros أرباح',
+      );
+  static String myRidesTaxiTerugRideDetail({
+    required String km,
+    required String euros,
+  }) =>
+      _t(
+        '$km km bespaard · $euros verdiend',
+        en: '$km km saved · $euros earned',
+        es: '$km km ahorrados · $euros ganados',
+        ar: '$km كم موفر · $euros أرباح',
       );
   static String get noCompletedRides => _t(
         'Nog geen voltooide ritten.',
@@ -10654,7 +11329,7 @@ class DriverStrings {
       );
   static String get journeyIntentActivate => _t(
         'Taxi Terug activeren',
-        en: 'Activate Taxi Terug',
+        en: 'Activate Return Taxi',
         es: 'Activar Taxi Terug',
         ar: 'تفعيل Taxi Terug',
       );
@@ -10683,12 +11358,327 @@ class DriverStrings {
         ar: 'وقت المغادرة بعيد جداً في المستقبل.',
       );
 
-  // ─── Taxi Thru (driver browse rider posts) ──────────────────────────
+  // ─── Taxi Terug step-by-step wizard ─────────────────────────────────
+  static String get taxiTerugWizardNext => _t(
+        'Volgende',
+        en: 'Next',
+        es: 'Siguiente',
+        ar: 'التالي',
+      );
+  static String get taxiTerugWizardTurnOn => _t(
+        'Taxi Terug aanzetten',
+        en: 'Turn on Return Taxi',
+        es: 'Activar Taxi Terug',
+        ar: 'تشغيل Taxi Terug',
+      );
+  static String get taxiTerugWizardPostTrip => _t(
+        'Rit plaatsen',
+        en: 'Post trip',
+        es: 'Publicar viaje',
+        ar: 'نشر الرحلة',
+      );
+  static String get taxiTerugWizardWhyAsk => _t(
+        'Waarom vragen we dit?',
+        en: 'Why do we ask this?',
+        es: '¿Por qué preguntamos esto?',
+        ar: 'لماذا نسأل هذا؟',
+      );
+  static String get taxiTerugWizardGotIt => _t(
+        'Begrepen',
+        en: 'Got it',
+        es: 'Entendido',
+        ar: 'فهمت',
+      );
+  static String get taxiTerugWizardPathTitle => _t(
+        'Wat ga je doen?',
+        en: 'What are you doing?',
+        es: '¿Qué vas a hacer?',
+        ar: 'ماذا ستفعل؟',
+      );
+  static String get taxiTerugWizardPathSubtitle => _t(
+        'Kies wat het beste past',
+        en: 'Pick what fits best',
+        es: 'Elige lo que mejor encaje',
+        ar: 'اختر ما يناسبك',
+      );
+  static String get taxiTerugWizardGoingHome => _t(
+        'Naar huis',
+        en: 'Going home',
+        es: 'A casa',
+        ar: 'العودة للمنزل',
+      );
+  static String get taxiTerugWizardGoingHomeHint => _t(
+        'Rijders mee op je route naar huis',
+        en: 'Take riders on your way home',
+        es: 'Lleva pasajeros de camino a casa',
+        ar: 'خذ ركاباً في طريقك للمنزل',
+      );
+  static String get taxiTerugWizardGoingSomewhere => _t(
+        'Ergens naartoe',
+        en: 'Going somewhere',
+        es: 'Voy a algún sitio',
+        ar: 'ذاهب إلى مكان',
+      );
+  static String get taxiTerugWizardGoingSomewhereHint => _t(
+        'Bijv. winkelen — geen lege rit',
+        en: 'e.g. shopping — no empty drive',
+        es: 'p. ej. compras — sin ir vacío',
+        ar: 'مثلاً تسوق — بدون سفر فارغ',
+      );
+  static String get taxiTerugWizardHomeTitle => _t(
+        'Waar woon je?',
+        en: 'Where do you live?',
+        es: '¿Dónde vives?',
+        ar: 'أين تسكن؟',
+      );
+  static String get taxiTerugWizardHomeSubtitle => _t(
+        'Dit onthouden we voor later',
+        en: 'We save this for next time',
+        es: 'Lo guardamos para la próxima vez',
+        ar: 'نحفظ هذا للمرة القادمة',
+      );
+  static String get taxiTerugWizardUseMyLocation => _t(
+        'Gebruik mijn locatie',
+        en: 'Use my location',
+        es: 'Usar mi ubicación',
+        ar: 'استخدم موقعي',
+      );
+  static String get taxiTerugWizardDropTitle => _t(
+        'Hoe dicht bij huis?',
+        en: 'How close to home?',
+        es: '¿Qué tan cerca de casa?',
+        ar: 'كم قرب المنزل؟',
+      );
+  static String get taxiTerugWizardDropSubtitle => _t(
+        'Kies afstand — max 30 km van huis',
+        en: 'Pick distance — up to 30 km from home',
+        es: 'Elige distancia — hasta 30 km de casa',
+        ar: 'اختر المسافة — حتى 30 كم من المنزل',
+      );
+  static String get taxiTerugWizardDropShort => _t(
+        'van huis',
+        en: 'from home',
+        es: 'de casa',
+        ar: 'من المنزل',
+      );
+  static String get taxiTerugWizardPickupTitle => _t(
+        'Hoe ver rij je voor ophalen?',
+        en: 'How far to pick up?',
+        es: '¿Qué tan lejos para recoger?',
+        ar: 'كم بعيداً للالتقاط؟',
+      );
+  static String get taxiTerugWizardPickupSubtitle => _t(
+        'Veeg — max 50 km om op te halen',
+        en: 'Swipe — up to 50 km to pick up',
+        es: 'Desliza — hasta 50 km para recoger',
+        ar: 'اسحب — حتى 50 كم للالتقاط',
+      );
+  static String taxiTerugWizardPickupKmLabel(int km) => _t(
+        '$km km',
+        en: '$km km',
+        es: '$km km',
+        ar: '$km كم',
+      );
+  static String get taxiTerugWizardPickupRadiusHint => _t(
+        'Zo ver rijd je om een passagier op te halen',
+        en: 'How far you will drive to pick up a rider',
+        es: 'Qué tan lejos irás a recoger al pasajero',
+        ar: 'إلى أي مدى ستسافر لاصطحاب راكب',
+      );
+  static String get taxiTerugWizardDiscountTitle => _t(
+        'Korting voor rit',
+        en: 'Ride discount',
+        es: 'Descuento del viaje',
+        ar: 'خصم الرحلة',
+      );
+  static String get taxiTerugWizardDiscountSubtitle => _t(
+        'Veeg — meer korting = sneller vol',
+        en: 'Swipe — more discount = faster pickup',
+        es: 'Desliza — más descuento = pasajero antes',
+        ar: 'اسحب — خصم أكبر = راكب أسرع',
+      );
+  static String taxiTerugWizardDiscountValue(int pct) => _t(
+        '$pct%',
+        en: '$pct%',
+        es: '$pct%',
+        ar: '$pct%',
+      );
+  static String get taxiTerugWizardDiscountFastPickup => _t(
+        'Meer korting = sneller een passagier',
+        en: 'More discount = faster passenger pickup',
+        es: 'Más descuento = pasajero más rápido',
+        ar: 'خصم أكبر = راكب أسرع',
+      );
+  static String get taxiTerugWizardWhenTitle => _t(
+        'Wanneer vertrek je?',
+        en: 'When do you leave?',
+        es: '¿Cuándo sales?',
+        ar: 'متى تنطلق؟',
+      );
+  static String get taxiTerugWizardWhenSubtitle => _t(
+        'Alleen vandaag — max 10 uur',
+        en: 'Today only — up to 10 hours',
+        es: 'Solo hoy — hasta 10 horas',
+        ar: 'اليوم فقط — حتى 10 ساعات',
+      );
+  static String taxiTerugWizardDepartureHoursLabel(double hours) {
+    if (hours <= 0) return journeyIntentDepartureNow;
+    final totalMinutes = (hours * 60).round();
+    if (totalMinutes < 60) {
+      return _t(
+        'Over $totalMinutes min',
+        en: 'In $totalMinutes min',
+        es: 'En $totalMinutes min',
+        ar: 'خلال $totalMinutes د',
+      );
+    }
+    final h = totalMinutes ~/ 60;
+    final m = totalMinutes % 60;
+    if (m == 0) {
+      return _t(
+        'Over $h uur',
+        en: 'In $h hr',
+        es: 'En $h h',
+        ar: 'خلال $h س',
+      );
+    }
+    return _t(
+      'Over $h u $m min',
+      en: 'In $h hr $m min',
+      es: 'En $h h $m min',
+      ar: 'خلال $h س $m د',
+    );
+  }
+
+  static String taxiTerugWizardDepartureMaxHours(int hours) => _t(
+        'Max $hours u',
+        en: 'Max $hours hr',
+        es: 'Máx $hours h',
+        ar: 'حد $hours س',
+      );
+
+  static String taxiTerugWizardLeavesAt(String clockTime) => _t(
+        'Vertrek om $clockTime',
+        en: 'Leaves at $clockTime',
+        es: 'Sale a las $clockTime',
+        ar: 'المغادرة $clockTime',
+      );
+
+  static String taxiTerugWizardClockTime(DateTime time) {
+    final h = time.hour.toString().padLeft(2, '0');
+    final m = time.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
+  static String get taxiTerugWizardDestTitle => _t(
+        'Waar ga je naartoe?',
+        en: 'Where are you going?',
+        es: '¿A dónde vas?',
+        ar: 'إلى أين تذهب؟',
+      );
+  static String get taxiTerugWizardDestSubtitle => _t(
+        'Bijv. Roermond, Amsterdam',
+        en: 'e.g. Roermond, Amsterdam',
+        es: 'p. ej. Roermond, Ámsterdam',
+        ar: 'مثلاً رورموند، أمستردام',
+      );
+  static String get taxiTerugWizardConfirmTitle => _t(
+        'Klaar om te starten',
+        en: 'Ready to go',
+        es: 'Listo para empezar',
+        ar: 'جاهز للانطلاق',
+      );
+  static String get taxiTerugWizardConfirmSubtitle => _t(
+        'Controleer je keuzes',
+        en: 'Check your choices',
+        es: 'Revisa tus opciones',
+        ar: 'راجع اختياراتك',
+      );
+  static String get taxiTerugWizardWhyHomeTitle => _t(
+        'Je thuisgebied',
+        en: 'Your home area',
+        es: 'Tu zona de casa',
+        ar: 'منطقة منزلك',
+      );
+  static String get taxiTerugWizardWhyHomeBody => _t(
+        'We matchen alleen ritters die op weg zijn naar jouw buurt.',
+        en: 'We only match riders heading toward your area.',
+        es: 'Solo emparejamos pasajeros que van hacia tu zona.',
+        ar: 'نطابق فقط الركاب المتجهين إلى منطقتك.',
+      );
+  static String get taxiTerugWizardWhyDropTitle => _t(
+        'Afstand van huis',
+        en: 'Distance from home',
+        es: 'Distancia de casa',
+        ar: 'المسافة من المنزل',
+      );
+  static String get taxiTerugWizardWhyDropBody => _t(
+        'Jij kiest hoe dicht bij huis de rit eindigt.\nKies tot 30 km van je huis.',
+        en: 'You choose how close to home the ride must end.\nPick up to 30 km from home.',
+        es: 'Tú eliges qué tan cerca de casa termina el viaje.\nHasta 30 km de casa.',
+        ar: 'أنت تختار مدى قرب نهاية الرحلة من المنزل.\nحتى 30 كم من المنزل.',
+      );
+  static String get taxiTerugWizardWhyPickupTitle => _t(
+        'Ophaalafstand',
+        en: 'Pickup distance',
+        es: 'Distancia de recogida',
+        ar: 'مسافة الالتقاط',
+      );
+  static String get taxiTerugWizardWhyPickupBody => _t(
+        'Zo ver rijd je om een passagier op te halen.\nVeeg tot 50 km — jij kiest.',
+        en: 'How far you will drive to pick up a rider.\nSwipe up to 50 km — your choice.',
+        es: 'Qué tan lejos irás a recoger al pasajero.\nDesliza hasta 50 km — tú eliges.',
+        ar: 'إلى أي مدى ستسافر لاصطحاب راكب.\nاسحب حتى 50 كم — اختيارك.',
+      );
+  static String get taxiTerugWizardWhyDiscountTitle => _t(
+        'Korting',
+        en: 'Discount',
+        es: 'Descuento',
+        ar: 'الخصم',
+      );
+  static String get taxiTerugWizardWhyDiscountBody => _t(
+        'Meer korting trekt sneller een passagier.\nVeeg tot 50% — jij kiest.',
+        en: 'More discount attracts a passenger faster.\nSwipe up to 50% — your choice.',
+        es: 'Más descuento atrae pasajero más rápido.\nDesliza hasta 50% — tú eliges.',
+        ar: 'خصم أكبر يجذب راكباً أسرع.\nاسحب حتى 50% — اختيارك.',
+      );
+  static String get taxiTerugWizardWhyWhenTitle => _t(
+        'Vertrektijd',
+        en: 'Departure time',
+        es: 'Hora de salida',
+        ar: 'وقت المغادرة',
+      );
+  static String get taxiTerugWizardWhyWhenBody => _t(
+        'Alleen vandaag — geen andere datum.\nVeeg wanneer je vertrekt (max 10 uur).',
+        en: 'Today only — no other date.\nSwipe when you leave (max 10 hours).',
+        es: 'Solo hoy — sin otra fecha.\nDesliza cuándo sales (máx 10 h).',
+        ar: 'اليوم فقط — بدون تاريخ آخر.\nاسحب وقت المغادرة (حد 10 ساعات).',
+      );
+  static String get taxiTerugWizardHeadHome => _t(
+        'Naar huis met Taxi Terug?',
+        en: 'Head home with Return Taxi?',
+        es: '¿A casa con Taxi Terug?',
+        ar: 'العودة للمنزل مع Taxi Terug؟',
+      );
+  static String get taxiTerugWizardOneTapActivate => _t(
+        'Aanzetten',
+        en: 'Turn on',
+        es: 'Activar',
+        ar: 'تشغيل',
+      );
+  static String get taxiTerugWizardChangeSettings => _t(
+        'Aanpassen',
+        en: 'Change',
+        es: 'Cambiar',
+        ar: 'تغيير',
+      );
+
+  // ─── Return Taxi browse (driver rider posts) ──────────────────────────
   static String get taxiThruTitle => _t(
-        'Taxi Thru',
-        en: 'Taxi Thru',
-        es: 'Taxi Thru',
-        ar: 'Taxi Thru',
+        'Riterposts',
+        en: 'Rider posts',
+        es: 'Publicaciones de pasajeros',
+        ar: 'منشورات الركاب',
       );
   static String get taxiThruEmpty => _t(
         'Geen riterposts gevonden. Trek om te vernieuwen.',
@@ -10697,10 +11687,10 @@ class DriverStrings {
         ar: 'لا توجد منشورات للركاب. اسحب للتحديث.',
       );
   static String get taxiThruDisabled => _t(
-        'Taxi Thru is momenteel niet beschikbaar.',
-        en: 'Taxi Thru is currently unavailable.',
-        es: 'Taxi Thru no está disponible actualmente.',
-        ar: 'Taxi Thru غير متاح حالياً.',
+        'Taxi Terug is momenteel niet beschikbaar.',
+        en: 'Return Taxi is currently unavailable.',
+        es: 'Return Taxi no está disponible actualmente.',
+        ar: 'Return Taxi غير متاح حالياً.',
       );
   static String get taxiThruLoadError => _t(
         'Kan posts niet laden. Controleer je verbinding.',
@@ -10719,5 +11709,85 @@ class DriverStrings {
         en: 'Accept',
         es: 'Aceptar',
         ar: 'قبول',
+      );
+
+  // ─── Mollie Connect / prepaid rides ──────────────────────────────────
+  static String get molliePayments => _t(
+        'Vooraf betaalde ritten',
+        en: 'Prepaid rides',
+        es: 'Viajes prepagados',
+        ar: 'الرحلات المدفوعة مسبقاً',
+      );
+  static String get mollieConnectTitle => _t(
+        'Koppel Mollie',
+        en: 'Connect Mollie',
+        es: 'Conectar Mollie',
+        ar: 'ربط Mollie',
+      );
+  static String get mollieConnectBody => _t(
+        'Mollie verifieert je onderneming en ontvangt betalingen veilig. Je krijgt pas vooraf betaalde ritten na goedkeuring.',
+        en: 'Mollie verifies your business and securely receives payments. You only receive prepaid rides after approval.',
+        es: 'Mollie verifica tu empresa y recibe pagos de forma segura. Solo recibirás viajes prepagados tras la aprobación.',
+        ar: 'تتحقق Mollie من نشاطك وتستلم المدفوعات بأمان. لن تتلقى رحلات مدفوعة مسبقاً إلا بعد الموافقة.',
+      );
+  static String get mollieConnectAction => _t(
+        'Koppelen met Mollie',
+        en: 'Connect with Mollie',
+        es: 'Conectar con Mollie',
+        ar: 'الربط مع Mollie',
+      );
+  static String get mollieRefreshAction => _t(
+        'Status vernieuwen',
+        en: 'Refresh status',
+        es: 'Actualizar estado',
+        ar: 'تحديث الحالة',
+      );
+  static String get mollieStatusNotConnected => _t(
+        'Niet gekoppeld',
+        en: 'Not connected',
+        es: 'No conectado',
+        ar: 'غير متصل',
+      );
+  static String get mollieStatusPending => _t(
+        'Controle door Mollie',
+        en: 'Mollie review in progress',
+        es: 'Revisión de Mollie en curso',
+        ar: 'مراجعة Mollie قيد التنفيذ',
+      );
+  static String get mollieStatusReady => _t(
+        'Klaar voor vooraf betaalde ritten',
+        en: 'Ready for prepaid rides',
+        es: 'Listo para viajes prepagados',
+        ar: 'جاهز للرحلات المدفوعة مسبقاً',
+      );
+  static String get mollieStatusRestricted => _t(
+        'Actie vereist in Mollie',
+        en: 'Action required in Mollie',
+        es: 'Acción requerida en Mollie',
+        ar: 'يلزم اتخاذ إجراء في Mollie',
+      );
+  static String get mollieOpening => _t(
+        'Mollie wordt geopend…',
+        en: 'Opening Mollie…',
+        es: 'Abriendo Mollie…',
+        ar: 'جارٍ فتح Mollie…',
+      );
+  static String get mollieLaunchFailed => _t(
+        'Mollie kon niet worden geopend. Probeer opnieuw.',
+        en: 'Mollie could not be opened. Try again.',
+        es: 'No se pudo abrir Mollie. Inténtalo de nuevo.',
+        ar: 'تعذر فتح Mollie. حاول مرة أخرى.',
+      );
+  static String get mollieLoadFailed => _t(
+        'De Mollie-status kon niet worden geladen.',
+        en: 'The Mollie status could not be loaded.',
+        es: 'No se pudo cargar el estado de Mollie.',
+        ar: 'تعذر تحميل حالة Mollie.',
+      );
+  static String get mollieRolloutUnavailable => _t(
+        'Vooraf betaalde ritten zijn nog niet beschikbaar voor jouw account.',
+        en: 'Prepaid rides are not available for your account yet.',
+        es: 'Los viajes prepagados aún no están disponibles para tu cuenta.',
+        ar: 'الرحلات المدفوعة مسبقاً غير متاحة لحسابك بعد.',
       );
 }

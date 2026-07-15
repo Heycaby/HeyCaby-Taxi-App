@@ -88,7 +88,10 @@ class _DriverTaxiThruScreenState extends ConsumerState<DriverTaxiThruScreen> {
 
   void _onAcceptPost(DriverTaxiThruRiderPost post) {
     HapticService.mediumTap();
-    context.push('/driver/ride/new/${post.id}');
+    context.push(
+      '/driver/ride/new/${post.id}',
+      extra: const {'urgent': false},
+    );
   }
 }
 

@@ -1,0 +1,15 @@
+import type { Metadata } from "next";
+import { adminRpc } from "@/lib/admin";
+import { dateTime, integer, relative } from "@/lib/format";
+import { PageHeader, Section, Status, Empty } from "@/components/ui";
+import { setDriverRestriction } from "@/app/actions";
+
+export const metadata: Metadata = { title: "Drivers" };
+type Driver = {id:string;full_name:string;email:string;phone:string;status:string;profile_status:string;compliance_status:string;account_status:string;rating:number;trip_count:number;last_active:string;location_fresh_at:string;city:string;restricted:boolean};
+export default async function DriversPage({ searchParams }: { searchParams: Promise<{q?:string;status?:string}> }) {
+  const p=await searchParams; const drivers=await adminRpc<Driver[]>("fn_admin_os_drivers",{p_search:p.q||null,p_status:p.status||null,p_limit:100,p_offset:0});
+  return <><PageHeader eyebrow="Supply & compliance" title="Drivers" description="Operational readiness without exposing exact live GPS. Sensitive profiles require a recorded access reason."/>
+    <Section title="Driver directory" description={`${integer(drivers.length)} results from production`} action={<form className="filters"><input name="q" defaultValue={p.q} placeholder="Search name, email or phone"/><select name="status" defaultValue={p.status||""}><option value="">All states</option><option value="available">Available</option><option value="on_ride">On ride</option><option value="offline">Offline</option><option value="pending_review">Pending review</option><option value="suspended">Restricted</option></select><button className="button button-small">Filter</button></form>}>
+      {drivers.length===0?<Empty title="No drivers found" body="Try a broader search or clear the status filter."/>:<div className="table-wrap"><table><thead><tr><th>Driver</th><th>Runtime</th><th>Compliance</th><th>Area / location</th><th>Performance</th><th>Last active</th><th>Control</th></tr></thead><tbody>{drivers.map(d=><tr key={d.id}><td><strong>{d.full_name||"Unnamed driver"}</strong><small>{d.email}<br/>{d.phone}</small></td><td><Status value={d.restricted?"restricted":d.status}/></td><td><Status value={d.compliance_status||d.profile_status}/><small>{d.account_status}</small></td><td><strong>{d.city||"Area unknown"}</strong><small>Location {relative(d.location_fresh_at)}</small></td><td><strong>★ {Number(d.rating||0).toFixed(1)}</strong><small>{integer(d.trip_count)} rides</small></td><td>{dateTime(d.last_active)}</td><td><details className="command"><summary>{d.restricted?"Lift restriction":"Restrict access"}</summary><form action={setDriverRestriction}><input type="hidden" name="driver_id" value={d.id}/><input type="hidden" name="restricted" value={String(!d.restricted)}/><textarea name="reason" minLength={8} maxLength={1000} placeholder={d.restricted?"Why access is safe to restore":"Evidence-based restriction reason"} required/>{!d.restricted&&<input name="expires_at" type="datetime-local"/>}<button className="button button-small">{d.restricted?"Lift with MFA":"Restrict with MFA"}</button></form></details></td></tr>)}</tbody></table></div>}
+    </Section></>;
+}

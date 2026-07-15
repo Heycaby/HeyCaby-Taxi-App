@@ -1,6 +1,42 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
+const ACTIVE_TRACKING_STATUSES = new Set([
+  "assigned",
+  "accepted",
+  "driver_found",
+  "driver_en_route",
+  "driver_arrived",
+  "arrived",
+  "in_progress",
+]);
+
+const TERMINAL_STATUSES = new Set([
+  "completed",
+  "cancelled",
+  "canceled",
+  "rider_cancelled",
+  "driver_cancelled",
+  "declined",
+  "expired",
+  "no_driver",
+]);
+
+const baseHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Cache-Control": "no-store, max-age=0",
+  "Content-Type": "application/json; charset=utf-8",
+  "Referrer-Policy": "no-referrer",
+  "X-Content-Type-Options": "nosniff",
+};
+
+function json(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), { status, headers: baseHeaders });
+}
+
 function firstName(full: string | null): string | null {
   if (!full) return null;
   const t = full.trim().split(/\s+/)[0];
@@ -9,29 +45,30 @@ function firstName(full: string | null): string | null {
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-        "Access-Control-Allow-Headers":
-          "authorization, x-client-info, apikey, content-type",
-      },
-    });
+    return new Response(null, { status: 204, headers: baseHeaders });
   }
-  if (req.method !== "GET") {
-    return new Response(JSON.stringify({ error: "method_not_allowed" }), {
-      status: 405,
-      headers: { "Content-Type": "application/json" },
-    });
+  if (req.method !== "GET" && req.method !== "POST") {
+    return json({ error: "method_not_allowed" }, 405);
   }
 
-  const url = new URL(req.url);
-  const token = url.searchParams.get("token")?.trim();
+  let token: string | undefined;
+  if (req.method === "POST") {
+    try {
+      const body = await req.json() as { token?: unknown };
+      token = typeof body.token === "string" ? body.token.trim() : undefined;
+    } catch {
+      token = undefined;
+    }
+  } else {
+    // Temporary compatibility for direct callers deployed before POST support.
+    const url = new URL(req.url);
+    token = url.searchParams.get("token")?.trim();
+  }
   if (!token) {
-    return new Response(JSON.stringify({ error: "missing_token" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json({ error: "not_found" }, 404);
+  }
+  if (!/^[a-f0-9]{24}$/i.test(token)) {
+    return json({ error: "not_found" }, 404);
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -47,13 +84,7 @@ Deno.serve(async (req: Request) => {
   const expired = row?.expires_at &&
     new Date(row.expires_at as string).getTime() <= Date.now();
   if (e1 || !row || !row.is_active || expired) {
-    return new Response(JSON.stringify({ error: "not_found" }), {
-      status: 404,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
+    return json({ error: "not_found" }, 404);
   }
 
   const rideId = row.ride_request_id as string;
@@ -67,18 +98,16 @@ Deno.serve(async (req: Request) => {
     .maybeSingle();
 
   if (e2 || !ride) {
-    return new Response(JSON.stringify({ error: "not_found" }), {
-      status: 404,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
+    return json({ error: "not_found" }, 404);
   }
+
+  const status = String(ride.status ?? "");
+  const trackingActive = ACTIVE_TRACKING_STATUSES.has(status);
+  const terminal = TERMINAL_STATUSES.has(status);
 
   let driver: Record<string, unknown> | null = null;
   const driverId = ride.driver_id as string | null;
-  if (driverId) {
+  if (driverId && trackingActive) {
     const { data: d } = await supabase
       .from("drivers")
       .select("full_name, vehicle_model, vehicle_make, vehicle_plate")
@@ -101,7 +130,7 @@ Deno.serve(async (req: Request) => {
   let lng: number | null = null;
   let heading: number | null = null;
   let locUpdated: string | null = null;
-  if (driverId) {
+  if (driverId && trackingActive) {
     const { data: loc } = await supabase
       .from("driver_locations")
       .select("latitude, longitude, heading, updated_at")
@@ -118,10 +147,17 @@ Deno.serve(async (req: Request) => {
   }
 
   const snap = row.driver_snapshot as Record<string, unknown> | null;
+  const locationAgeSeconds = locUpdated
+    ? Math.max(0, Math.floor((Date.now() - new Date(locUpdated).getTime()) / 1000))
+    : null;
 
   const body = {
     ride_id: ride.id,
-    status: ride.status,
+    status,
+    tracking_active: trackingActive,
+    terminal,
+    expires_at: row.expires_at,
+    server_time: new Date().toISOString(),
     pickup_address: ride.pickup_address,
     destination_address: ride.destination_address,
     pickup: ride.pickup_lat != null && ride.pickup_lng != null
@@ -150,15 +186,16 @@ Deno.serve(async (req: Request) => {
       }
       : null,
     driver_location: lat != null && lng != null
-      ? { lat, lng, heading, updated_at: locUpdated }
+      ? {
+        lat,
+        lng,
+        heading,
+        updated_at: locUpdated,
+        stale: locationAgeSeconds == null || locationAgeSeconds > 90,
+        age_seconds: locationAgeSeconds,
+      }
       : null,
   };
 
-  return new Response(JSON.stringify(body), {
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      "Cache-Control": "no-store",
-    },
-  });
+  return json(body);
 });

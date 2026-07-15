@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heycaby_ui/heycaby_ui.dart';
 
 import '../l10n/driver_strings.dart';
+import '../utils/driver_tariff_profile_slots.dart';
 import '../providers/driver_data_providers.dart';
 import '../services/driver_data_service.dart';
 import '../services/sound_service.dart';
@@ -45,16 +46,6 @@ class _DriverRateProfileSectionState
   bool _saving = false;
   String? _selectedProfileIdOverride;
 
-  DriverRateProfile? _findByNames(List<String> names) {
-    for (final p in widget.profiles) {
-      final n = p.profileName.toLowerCase().trim();
-      for (final name in names) {
-        if (n.contains(name)) return p;
-      }
-    }
-    return null;
-  }
-
   DriverRateProfile? _findById(String id) {
     for (final p in widget.profiles) {
       if (p.id == id) return p;
@@ -90,16 +81,18 @@ class _DriverRateProfileSectionState
     final displayedActiveProfile = _selectedProfileIdOverride == null
         ? widget.activeProfile
         : (_findById(_selectedProfileIdOverride!) ?? widget.activeProfile);
-    final standardProfile = _findByNames(['standard', 'standaard', 'default']);
-    final morningProfile = _findByNames(['morning', 'day', 'dag', 'ochtend']);
-    final eveningProfile = _findByNames(['evening', 'eve', 'avond', 'pm']);
-    final lateNightProfile = _findByNames([
-      'late night',
-      'night',
-      'nacht',
-      'overnight',
-      'midnight',
-    ]);
+    final standardProfile =
+        findTariffProfileBySlot(widget.profiles, DriverTariffProfileSlot.standard);
+    final morningProfile =
+        findTariffProfileBySlot(widget.profiles, DriverTariffProfileSlot.morning);
+    final eveningProfile =
+        findTariffProfileBySlot(widget.profiles, DriverTariffProfileSlot.evening);
+    final weekendProfile =
+        findTariffProfileBySlot(widget.profiles, DriverTariffProfileSlot.weekend);
+    final lateNightProfile = findTariffProfileBySlot(
+      widget.profiles,
+      DriverTariffProfileSlot.lateNight,
+    );
 
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
@@ -273,6 +266,7 @@ class _DriverRateProfileSectionState
               standardProfile: standardProfile,
               morningProfile: morningProfile,
               eveningProfile: eveningProfile,
+              weekendProfile: weekendProfile,
               lateNightProfile: lateNightProfile,
               isSaving: _saving,
               onTapProfile: (profile) => _onChipTap(profile.id),

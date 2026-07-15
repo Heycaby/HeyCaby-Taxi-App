@@ -19,13 +19,13 @@
   "homeDestinationPrompt": "Where do you want to go?",
   "homeContinue": "Continue",
   "homeSmartOptionsTitle": "How do you want to ride?",
-  "homeBestPriceTitle": "TAXI TERUG",
+  "homeBestPriceTitle": "RETURN TAXI",
   "homeBestPriceSubtitle": "Find drivers already heading your way.",
-  "homeTaxiTerugTitle": "TAXI TERUG",
+  "homeTaxiTerugTitle": "RETURN TAXI",
   "homeTaxiTerugSubtitle": "Find drivers already heading your way.",
   "taxiTerugOfferHeadline": "Ride with taxis already heading your way.",
   "taxiTerugIntroBody": "Name your price. Drivers already travelling your direction can accept your offer.",
-  "taxiTerugFareExplanation": "Taxi Terug means the taxi is already going your direction. The fare depends on the driver's tariff — not a platform discount.",
+  "taxiTerugFareExplanation": "Return Taxi means the taxi is already going your direction. The fare depends on the driver's tariff — not a platform discount.",
   "taxiTerugDriversAcceptHint": "Independent drivers decide whether to accept your offer.",
   "taxiTerugCandidatesTitle": "Taxis heading your way",
   "taxiTerugCandidatesEmpty": "No taxis heading your way yet. Name your price below — we'll notify matching drivers.",
@@ -61,7 +61,7 @@
     }
   },
   "taxiTerugWaitToleranceTitle": "How long can you wait?",
-  "taxiTerugWaitToleranceBody": "Taxi Terug drivers may finish a ride nearby first. We only show taxis that can reach you within your wait time.",
+  "taxiTerugWaitToleranceBody": "Return Taxi drivers may finish a ride nearby first. We only show taxis that can reach you within your wait time.",
   "taxiTerugWaitMinutes": "{minutes} min",
   "@taxiTerugWaitMinutes": {
     "placeholders": {
@@ -84,7 +84,7 @@
       "time": { "type": "String" }
     }
   },
-  "taxiTerugQueuedConfirmed": "Taxi Terug confirmed",
+  "taxiTerugQueuedConfirmed": "Return Taxi confirmed",
   "taxiTerugQueuedWaitingForDriver": "Your driver is finishing their current ride first.",
   "homeScheduleLaterTitle": "Schedule later",
   "homeScheduleLaterSubtitle": "Pick a pickup time that works for you.",
@@ -96,7 +96,7 @@
   "homeEnterDestination": "Enter your destination",
   "homeNoTaxisNearbySubtitle": "You can still request a ride. We will notify you when a driver accepts.",
   "homeSupplyNoneTitle": "No drivers near you",
-  "homeSupplyNoneSubtitle": "Try TAXI TERUG or schedule a ride for later.",
+  "homeSupplyNoneSubtitle": "Try RETURN TAXI or schedule a ride for later.",
   "homeSupplyNearbyTitle": "{count, plural, one{1 driver nearby} other{{count} drivers nearby}}",
   "@homeSupplyNearbyTitle": {
     "placeholders": {
@@ -152,6 +152,8 @@
   },
   "homeRecentPlacesTitle": "Recent places",
   "homeRecentPlacesEdit": "Edit",
+  "homeQuickPlacesTitle": "Saved & recent",
+  "homeQuickPlacesManage": "Manage",
   "savedTripsTitle": "Saved trips",
   "homeCompleteProfile": "Complete profile",
   "vehicleCategoryTitle": "Do you need a specific vehicle?",
@@ -1261,7 +1263,7 @@
   "searchFactDriversKeep100": "Drivers keep 100% of their earnings. HeyCaby takes zero commission per ride.",
   "searchFactNoSurgePricing": "No surge pricing. Ever. The price you see is the price you pay.",
   "searchFactAllVerified": "HeyCaby is built for licensed taxis — professional transport, not private gig-hail cars.",
-  "searchFactMarketplace": "Drivers heading home sometimes ride for less. Try TAXI TERUG for a better price.",
+  "searchFactMarketplace": "Drivers heading home sometimes ride for less. Try RETURN TAXI for a better price.",
   "searchFactZZP": "Every Caby driver is an independent professional. You ride with someone proud of their work.",
   "searchFactSaveAddresses": "Live in Rotterdam? Tap the house icon once and your destination is filled in. Always.",
   "searchFactPayHowYouWant": "Cash, Tikkie, card or invoice — your driver will tell you which options are available.",
@@ -1384,7 +1386,7 @@
   "activeBookingScheduledQueuedBody": "We'll start searching 30 minutes before pickup and notify you.",
   "rideMatchingTypeLabelInstant": "Instant ride",
   "rideMatchingTypeLabelMarketplace": "Marketplace",
-  "rideMatchingTypeLabelTerug": "TAXI TERUG",
+  "rideMatchingTypeLabelTerug": "RETURN TAXI",
   "rideMatchingTypeLabelScheduled": "Scheduled",
   "activeSearchStopTitle": "Stop searching?",
   "activeSearchStopBody": "We'll cancel this ride request. Drivers will stop seeing it, and you won't get driver notifications for it. You can book again anytime.",
@@ -1523,6 +1525,12 @@
   "activeRideDestinationNotSet": "Destination not set",
   "activeRideShareDetails": "Share ride details",
   "activeRideContactDriver": "Contact driver",
+  "maskedCallDriver": "Call driver through HeyCaby",
+  "maskedCallTitle": "Call through HeyCaby?",
+  "maskedCallBody": "Your phone number stays private. Calls last up to 5 minutes. We call you first, then connect your driver.",
+  "maskedCallNow": "Call now",
+  "maskedCallQueued": "HeyCaby is calling you now. Answer to connect.",
+  "maskedCallUnavailable": "Calling is temporarily unavailable. Use Ping or Message instead.",
   "activeRideCategoryLabel": "Category: {category}",
   "@activeRideCategoryLabel": {
     "placeholders": {
@@ -1721,7 +1729,7 @@
   },
   "smartBundleDriverPricingNote": "Drivers set their own prices. We'll match you with the best options nearby.",
   "smartBundleTapToHide": "Tap to hide ride classes",
-  "taxiTerugScreenTitle": "Taxi Terug",
+  "taxiTerugScreenTitle": "Return Taxi",
   "taxiTerugScreenSubtitle": "Ride with taxis already heading your way.",
   "taxiTerugScreenTabAvailable": "Available taxis",
   "taxiTerugScreenTabPostRequest": "Post a request",
@@ -1729,12 +1737,12 @@
   "taxiTerugScreenDestinationPlaceholder": "Where are you going?",
   "taxiTerugScreenSetRoute": "Set your pickup and destination to see matching taxis.",
   "taxiTerugScreenLoadError": "Could not load taxis. Try again.",
-  "taxiTerugScreenDisabled": "Taxi Terug is not available right now.",
-  "taxiTerugScreenNoRides": "No Taxi Terug rides found.",
+  "taxiTerugScreenDisabled": "Return Taxi is not available right now.",
+  "taxiTerugScreenNoRides": "No Return Taxi rides found.",
   "taxiTerugScreenNoRidesBody": "Post your trip so drivers heading that way can accept.",
-  "taxiTerugScreenPostCta": "Post Taxi Terug Request",
+  "taxiTerugScreenPostCta": "Post Return Taxi Request",
   "taxiTerugScreenBook": "Book",
-  "taxiTerugScreenPostTitle": "Post Taxi Terug Request",
+  "taxiTerugScreenPostTitle": "Post Return Taxi Request",
   "taxiTerugScreenPostBody": "Drivers heading your way can accept or send an offer.",
   "taxiTerugScreenOfferLabel": "Your offer",
   "taxiTerugScreenPostButton": "Post Request",
@@ -1743,12 +1751,12 @@
   "taxiTerugHotDestinationsTitle": "Drivers heading to",
   "taxiTerugHotDestinationsSubtitle": "Tap a city to see taxis on your route.",
   "taxiTerugPickCityHint": "Pick a city above",
-  "taxiTerugTrackerSearching": "Finding your Taxi Terug match",
+  "taxiTerugTrackerSearching": "Finding your Return Taxi match",
   "taxiTerugTrackerSearchingBody": "We're looking for taxis heading your way. You can wait here or go about your day.",
   "taxiTerugTrackerNoMatch": "No match found",
-  "taxiTerugTrackerNoMatchBody": "No Taxi Terug drivers were found within 1 hour. Please try again later.",
+  "taxiTerugTrackerNoMatchBody": "No Return Taxi drivers were found within 1 hour. Please try again later.",
   "taxiTerugTrackerCancelTitle": "Cancel request",
-  "taxiTerugTrackerCancelConfirm": "Are you sure you want to cancel your Taxi Terug request?",
+  "taxiTerugTrackerCancelConfirm": "Are you sure you want to cancel your Return Taxi request?",
   "taxiTerugTrackerBoost": "Boost offer",
   "taxiTerugTrackerBoostTitle": "Boost your offer",
   "taxiTerugTrackerBoostSubtitle": "Increase your offer so more drivers can see it and accept faster.",
@@ -1756,10 +1764,40 @@
   "taxiTerugTrackerBoostFailed": "Could not boost offer. Please try again.",
   "taxiTerugTrackerCurrentOffer": "Current offer: €{amount}",
   "activeRouteEditTitle": "Edit your route",
-  "activeRouteEditBody": "Your driver will see changes instantly. The final fare may change with the route.",
+  "activeRouteEditBody": "Your driver must accept extra stops before they are added. The final fare may change with the route.",
   "activeRouteChangeDestination": "Change destination",
   "activeRouteAddStop": "Add a stop",
   "activeRouteStopAdded": "Stop added",
   "activeRouteUpdated": "Route updated",
-  "activeRouteUpdateFailed": "We couldn’t update the route. Your original route is unchanged."
+  "activeRouteUpdateFailed": "We couldn’t update the route. Your original route is unchanged.",
+  "activeRouteWaitingDriver": "Waiting for your driver to accept this stop",
+  "activeRoutePendingStop": "Pending",
+  "activeRouteDuplicateRequest": "You already asked for this stop. Waiting for your driver.",
+  "activeRouteNoChange": "That stop is already on your route.",
+  "activeRouteDestinationChanged": "Changed address",
+  "activeRouteStopsAdded": "{count, plural, =1{1 stop added} other{{count} stops added}}",
+  "@activeRouteStopsAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "prepayRideTitle": "Pay securely in the app",
+  "prepayRideRequiredBody": "This ride requires prepayment after your driver accepts. Mollie confirms the payment securely.",
+  "prepayRideOptionalBody": "Pay your driver as usual, or pay now securely through Mollie.",
+  "prepayPayNow": "Pay now",
+  "prepayPayDriver": "Pay driver",
+  "prepayOpenCheckout": "Open secure checkout",
+  "prepayAwaitingConfirmation": "Waiting for Mollie confirmation",
+  "prepayPaid": "Payment confirmed",
+  "prepayDriverNotReady": "This driver cannot receive prepaid rides yet. Pay the driver as usual.",
+  "prepayUnavailable": "Prepayment is temporarily unavailable. Your existing payment method is unchanged.",
+  "prepayRetry": "Try again",
+  "prepayAmount": "Amount: {amount}",
+  "@prepayAmount": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  }
 }

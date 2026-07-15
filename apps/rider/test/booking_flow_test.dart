@@ -10,8 +10,15 @@ void main() {
 
     test('ride_requests status values are correct', () {
       const validStatuses = [
-        'pending', 'bidding', 'accepted', 'driver_arrived',
-        'in_progress', 'completed', 'cancelled', 'expired', 'declined',
+        'pending',
+        'bidding',
+        'accepted',
+        'driver_arrived',
+        'in_progress',
+        'completed',
+        'cancelled',
+        'expired',
+        'declined',
       ];
       expect(validStatuses.length, 9);
       expect(validStatuses.contains('pending'), true);
@@ -51,36 +58,39 @@ void main() {
   group('Ride create payload validation', () {
     test('payload has required fields with correct format', () {
       final payload = {
-        'pickup_coords': 'POINT(4.89 52.37)',
-        'destination_coords': 'POINT(4.47 51.92)',
+        'request_id': '30000000-0000-4000-8000-000000000001',
+        'pickup_lat': 52.37,
+        'pickup_lng': 4.89,
+        'destination_lat': 51.92,
+        'destination_lng': 4.47,
         'pickup_address': 'Damrak 1, 1012 LG Amsterdam',
         'destination_address': 'Coolsingel 40, 3011 AD Rotterdam',
         'rider_token': 'test-token',
         'rider_identity_id': 'test-identity-id',
-        'status': 'pending',
         'booking_mode': 'instant',
-        'payment_method': 'cash',
+        'payment_methods': ['cash'],
         'pickup_contact_name': 'Test User',
       };
 
-      expect(payload['status'], 'pending');
+      expect(payload, isNot(contains('status')));
       expect(payload['booking_mode'], 'instant');
-      expect((payload['pickup_coords'] as String).startsWith('POINT('), true);
-      expect((payload['destination_coords'] as String).startsWith('POINT('), true);
+      expect(payload['pickup_lat'], 52.37);
+      expect(payload['pickup_lng'], 4.89);
       expect(payload['pickup_contact_name'], isNotEmpty);
     });
 
-    test('PostGIS POINT format uses longitude FIRST', () {
+    test('backend PostGIS projection uses longitude first', () {
       const lng = 4.89;
       const lat = 52.37;
       final point = 'POINT($lng $lat)';
       expect(point, 'POINT(4.89 52.37)');
-      final parts = point.replaceAll('POINT(', '').replaceAll(')', '').split(' ');
+      final parts =
+          point.replaceAll('POINT(', '').replaceAll(')', '').split(' ');
       expect(double.parse(parts[0]), lng);
       expect(double.parse(parts[1]), lat);
     });
 
-    test('status must be pending not searching', () {
+    test('backend owns initial pending status', () {
       const status = 'pending';
       expect(status, isNot('searching'));
       expect(status, 'pending');

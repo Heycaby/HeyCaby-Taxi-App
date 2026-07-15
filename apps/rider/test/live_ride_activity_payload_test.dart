@@ -51,6 +51,33 @@ void main() {
       );
       expect(snap.resolveEffectiveStatus(), 'payment_confirmed');
     });
+
+    test('backend payment confirmed maps to payment_confirmed', () {
+      final snap = RiderRideLifecycleSnapshot.fromRow(
+        const {
+          'status': 'completed',
+          'payment_status': 'confirmed',
+        },
+        rideRequestId: 'ride-payment-confirmed',
+      );
+
+      expect(snap.resolveEffectiveStatus(), 'payment_confirmed');
+    });
+
+    test('backend lifecycle projection wins over local timestamp inference',
+        () {
+      final snap = RiderRideLifecycleSnapshot.fromRow(
+        const {
+          'status': 'accepted',
+          'started_at': '2026-07-13T10:00:00Z',
+          'effective_status': 'driver_arrived',
+          'provider_status': 'driver_arrived',
+        },
+        rideRequestId: 'ride-backend-projection',
+      );
+
+      expect(snap.resolveEffectiveStatus(), 'driver_arrived');
+    });
   });
 
   group('LiveRideActivityPayload.resolveActivePhase', () {
@@ -70,7 +97,8 @@ void main() {
     });
 
     test('maps arrived in grace to outsideFreeWait', () {
-      final arrived = DateTime.now().toUtc().subtract(const Duration(seconds: 30));
+      final arrived =
+          DateTime.now().toUtc().subtract(const Duration(seconds: 30));
       final info = RideWaitingInfo(
         arrivedAt: arrived,
         graceSeconds: 120,
@@ -87,7 +115,8 @@ void main() {
     });
 
     test('maps arrived after grace to outsidePaidWait', () {
-      final arrived = DateTime.now().toUtc().subtract(const Duration(minutes: 3));
+      final arrived =
+          DateTime.now().toUtc().subtract(const Duration(minutes: 3));
       final info = RideWaitingInfo(
         arrivedAt: arrived,
         graceSeconds: 120,

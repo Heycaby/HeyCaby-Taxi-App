@@ -11,6 +11,7 @@ import 'services/notify_search_notification_scope.dart';
 import 'services/rider_invite_attribution.dart';
 import 'services/rider_fcm_scope.dart';
 import 'services/rider_live_activity_scope.dart';
+import 'services/rider_ride_chat_scope.dart';
 import 'utils/rider_locale_utils.dart';
 import 'widgets/rider_locale_bridge_sync.dart';
 import 'widgets/rider_locale_observer.dart';
@@ -37,42 +38,46 @@ class _HeyCabyRiderAppState extends ConsumerState<HeyCabyRiderApp> {
     final themeId = ref.watch(themeProvider).id;
     final appLocale = ref.watch(riderAppLocaleProvider);
 
-    return RiderInviteAttributionScope(
-      child: RiderFcmScope(
-        child: HeyCabyWidgetDeepLinkScope(
-          child: RiderLiveActivityScope(
-            child: NotifySearchNotificationScope(
-              child: RiderLocaleObserver(
-                child: RiderLocaleBridgeSync(
-                  child: _GlobalTapHaptics(
-                    child: MaterialApp.router(
-                      title: 'HeyCaby',
-                      debugShowCheckedModeBanner: false,
-                      localizationsDelegates: const [
-                        AppLocalizations.delegate,
-                        GlobalMaterialLocalizations.delegate,
-                        GlobalWidgetsLocalizations.delegate,
-                        GlobalCupertinoLocalizations.delegate,
-                      ],
-                      supportedLocales: AppLocalizations.supportedLocales,
-                      locale: appLocale,
-                      localeResolutionCallback: (deviceLocale, supportedLocales) {
-                        return resolveRiderSupportedLocale(deviceLocale);
-                      },
-                      theme: buildHeyCabyMaterialTheme(
-                        colors: colors,
-                        textTheme: buildHeyCabyBrandMaterialTextTheme(),
-                        themeId: themeId,
+    return MaterialApp.router(
+      title: 'HeyCaby',
+      debugShowCheckedModeBanner: false,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: appLocale,
+      localeResolutionCallback: (deviceLocale, supportedLocales) {
+        return resolveRiderSupportedLocale(deviceLocale);
+      },
+      theme: buildHeyCabyMaterialTheme(
+        colors: colors,
+        textTheme: buildHeyCabyBrandMaterialTextTheme(),
+        themeId: themeId,
+      ),
+      routerConfig: ref.watch(appRouterProvider),
+      builder: (context, routerChild) {
+        final shell = routerChild ?? const SizedBox.shrink();
+        return RiderInviteAttributionScope(
+          child: RiderFcmScope(
+            child: RiderRideChatScope(
+              child: HeyCabyWidgetDeepLinkScope(
+                child: RiderLiveActivityScope(
+                  child: NotifySearchNotificationScope(
+                    child: RiderLocaleObserver(
+                      child: RiderLocaleBridgeSync(
+                        child: _GlobalTapHaptics(child: shell),
                       ),
-                      routerConfig: ref.watch(appRouterProvider),
                     ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

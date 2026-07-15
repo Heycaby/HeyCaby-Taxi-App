@@ -13,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/driver_strings.dart';
 import '../providers/driver_location_provider.dart';
+import '../utils/driver_today_rides_refresh.dart';
 import '../theme/driver_colors.dart';
 import '../theme/driver_typography.dart';
 import '../widgets/driver_manual_ride_entry_body.dart';
@@ -235,6 +236,7 @@ class _DriverAddManualRideScreenState
           ],
         ),
       );
+      invalidateTodayRideProviders(ref);
       if (!mounted) return;
       context.go('/driver');
     } on DioException catch (e) {

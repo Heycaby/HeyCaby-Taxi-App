@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:heycaby_rider/l10n/app_localizations.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' hide Size;
 import 'package:heycaby_ui/heycaby_ui.dart';
@@ -13,6 +14,7 @@ import '../providers/active_search_provider.dart';
 import '../providers/location_provider.dart';
 import '../providers/booking_provider.dart';
 import '../providers/near_term_ride_request_provider.dart';
+import '../providers/ride_request_provider.dart';
 import '../services/heycaby_widget_sync.dart';
 import '../services/rider_notify_search_notifications.dart';
 import '../services/location_service.dart';
@@ -97,6 +99,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       unawaited(riderRuntimeConfig.refresh());
       unawaited(ref.read(activeSearchProvider.notifier).expireIfStale());
       unawaited(_enforceGlobalSearchWindow());
+      _restoreLiveRideIfNeeded();
+    }
+  }
+
+  Future<void> _restoreLiveRideIfNeeded() async {
+    final ride = ref.read(rideRequestProvider);
+    if (ride.rideRequestId != null && ride.rideRequestId!.isNotEmpty) return;
+    final restored = await ref
+        .read(rideRequestProvider.notifier)
+        .tryRestoreActiveRideRequest();
+    if (!mounted || !restored) return;
+    final updated = ref.read(rideRequestProvider);
+    if (updated.status == 'pending' || updated.status == 'bidding') return;
+    if (NearTermRideSnapshot.liveStatuses.contains(updated.status)) {
+      ref.invalidate(nearTermRideRequestProvider);
+      context.go('/active');
     }
   }
 
@@ -167,25 +185,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final token = identity.riderToken;
     if (!identity.hasSession || token == null || token.isEmpty) return;
 
-    final now = DateTime.now();
     bool cancelledAny = false;
     try {
-      final rows = await HeyCabySupabase.client
-          .from('ride_requests')
-          .select('id, created_at')
-          .eq('rider_token', token)
-          .inFilter('status', ['pending', 'bidding'])
-          .order('created_at', ascending: false)
-          .limit(25);
-      for (final raw in (rows as List<dynamic>)) {
-        final m = Map<String, dynamic>.from(raw as Map);
-        final id = m['id'] as String?;
-        if (id == null) continue;
-        final created = DateTime.tryParse((m['created_at'] ?? '').toString());
-        if (created == null) continue;
-        if (now.difference(created) <= kRiderDriverSearchWindow) continue;
-        final cancelled =
-            await cancelExpiredRiderOpenRide(rideId: id, riderToken: token);
+      final rides = await ref.read(ridesTabUpcomingRequestsProvider.future);
+      final now = DateTime.now();
+      for (final ride in rides) {
+        if (ride.status != 'pending' && ride.status != 'bidding') continue;
+        if (now.difference(ride.createdAt) <= kRiderDriverSearchWindow) {
+          continue;
+        }
+        final cancelled = await cancelExpiredRiderOpenRide(
+            rideId: ride.id, riderToken: token);
         cancelledAny = cancelledAny || cancelled;
       }
     } catch (_) {

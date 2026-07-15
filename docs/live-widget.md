@@ -518,7 +518,10 @@ Payload includes `rideVersion` for native debugging; Swift may ignore until APNs
 
 ### Lifecycle matrix (staging proof checklist)
 
-Run one two-phone ride on **HeyCaby Staging** (`fdavszxncggswuiwggcp`). After each driver action, verify all columns.
+Run one explicitly approved disposable two-phone ride on **HeyCaby Production**
+(`fvrprxguoternoxnyhoj`). Staging is retired. After each Driver action, verify
+all columns and correlation IDs; do not use or mutate a customer ride as a test
+fixture.
 
 | Driver action | RPC | DB fields | Realtime | Push (FCM) | Widget (LA) | Rider UI |
 |---------------|-----|-----------|----------|------------|-------------|----------|

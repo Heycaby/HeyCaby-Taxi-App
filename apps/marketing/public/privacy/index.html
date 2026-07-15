@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Privacyverklaring — HeyCaby</title>
+<meta name="description" content="Privacyverklaring van HeyCaby. Lees hoe wij persoonsgegevens verwerken voor rijders en chauffeurs, conform de AVG/GDPR."/>
+<meta name="robots" content="index, follow"/>
+<meta name="author" content="HeyCaby"/>
+<link rel="canonical" href="https://www.heycaby.nl/privacy"/>
+<meta property="og:title" content="Privacyverklaring — HeyCaby"/>
+<meta property="og:description" content="Hoe HeyCaby persoonsgegevens verwerkt voor rijders en chauffeurs."/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://www.heycaby.nl/privacy"/>
+<meta property="og:site_name" content="HeyCaby"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#f6f8f7;--card:#fff;--ink:#102019;--muted:#5e6f66;--border:#dce6e0;--accent:#00b35a;--accent-l:#dff8eb;--deep:#063d2b;}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;font-size:15px;}
+.topbar{position:sticky;top:0;z-index:100;background:rgb(246 248 247/92%);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;}
+.topbar-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:19px;color:var(--deep);letter-spacing:-0.5px;text-decoration:none;}
+.topbar-logo b{color:var(--accent);font-weight:850}
+.topbar-links{display:flex;gap:16px;align-items:center;flex-wrap:wrap;}
+.topbar-links a{font-size:13px;font-weight:650;color:var(--muted);text-decoration:none;transition:color .2s;}
+.topbar-links a:hover{color:var(--accent);}
+.hero{background:linear-gradient(165deg,var(--card) 0%,var(--bg) 55%);padding:48px 24px 40px;border-bottom:1px solid var(--border);}
+.hero-inner{max-width:760px;margin:0 auto;}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--accent-l);border:1px solid rgb(0 179 90/25%);color:var(--deep);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:6px 14px;border-radius:999px;margin-bottom:16px;}
+.hero h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(26px,5vw,40px);color:var(--ink);line-height:1.15;margin-bottom:12px;letter-spacing:-0.5px;}
+.hero h1 span{color:var(--accent);}
+.hero-sub{font-size:14px;color:var(--muted);max-width:560px;}
+.hero-meta{margin-top:24px;display:flex;gap:24px;flex-wrap:wrap;}
+.hero-meta-item{display:flex;flex-direction:column;gap:2px;}
+.hero-meta-item .lbl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+.hero-meta-item .val{font-size:13px;color:var(--ink);font-weight:600;}
+.layout{max-width:960px;margin:0 auto;padding:36px 24px 88px;display:grid;grid-template-columns:210px 1fr;gap:36px;align-items:start;}
+@media(max-width:720px){.layout{grid-template-columns:1fr;}.sidebar{display:none;}}
+.sidebar{position:sticky;top:72px;}
+.toc-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:0 2px 8px rgb(6 61 43/4%);}
+.toc-card h3{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.toc-card ol{list-style:none;counter-reset:toc;}
+.toc-card ol li{counter-increment:toc;margin-bottom:2px;}
+.toc-card ol li a{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--muted);text-decoration:none;line-height:1.4;padding:4px 6px;border-radius:6px;transition:all .15s;}
+.toc-card ol li a::before{content:counter(toc);font-size:10px;font-weight:700;color:var(--accent);min-width:14px;margin-top:1px;}
+.toc-card ol li a:hover{background:var(--accent-l);color:var(--ink);}
+.notice{background:var(--accent-l);border:1px solid rgb(0 179 90/25%);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:14px 18px;font-size:13px;color:var(--deep);margin-bottom:28px;line-height:1.6;}
+article{display:flex;flex-direction:column;gap:24px;}
+.art{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgb(6 61 43/4%);}
+.art-head{padding:16px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:11px;}
+.art-num{width:28px;height:28px;border-radius:8px;background:var(--accent);font-family:'Syne',sans-serif;font-size:11px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.art-head h2{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--ink);}
+.art-body{padding:18px 22px;font-size:14px;color:#2a3832;line-height:1.75;}
+.art-body p{margin-bottom:12px}.art-body p:last-child{margin-bottom:0}
+.art-body ul{margin:8px 0 12px 18px}.art-body li{margin-bottom:6px}
+.art-body a{color:var(--accent);font-weight:650;text-decoration:underline;text-underline-offset:2px}
+footer{background:var(--card);border-top:1px solid var(--border);padding:32px 24px;text-align:center;}
+.footer-links{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin-bottom:10px;}
+.footer-links a{font-size:12px;color:var(--muted);text-decoration:none;font-weight:650;}
+.footer-links a:hover{color:var(--accent);}
+footer p{font-size:12px;color:var(--muted);margin:4px 0;}
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <a class="topbar-logo" href="https://www.heycaby.nl">Hey<b>Caby</b></a>
+  <div class="topbar-links">
+    <a href="https://www.heycaby.nl/support">Support &amp; FAQ</a>
+    <a href="https://www.heycaby.nl/chauffeur/voorwaarden">Voorwaarden</a>
+    <a href="https://www.heycaby.nl">Home</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">AVG / GDPR</div>
+    <h1>Privacy<span>verklaring</span></h1>
+    <p class="hero-sub">Deze verklaring legt uit welke persoonsgegevens HeyCaby verwerkt wanneer u de Rider- of Driver-app gebruikt, en welke rechten u heeft onder de AVG.</p>
+    <div class="hero-meta">
+      <div class="hero-meta-item"><span class="lbl">Ingangsdatum</span><span class="val">1 mei 2026</span></div>
+      <div class="hero-meta-item"><span class="lbl">Verantwoordelijke</span><span class="val">HeyCaby B.V.</span></div>
+      <div class="hero-meta-item"><span class="lbl">Contact</span><span class="val"><a href="mailto:support@heycaby.nl" style="color:inherit">support@heycaby.nl</a></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="toc-card">
+      <h3>Inhoud</h3>
+      <ol>
+        <li><a href="#s1">Gegevens die we verzamelen</a></li>
+        <li><a href="#s2">Locatiegegevens</a></li>
+        <li><a href="#s3">Doeleinden van verwerking</a></li>
+        <li><a href="#s4">AI-ondersteuning (Lee)</a></li>
+        <li><a href="#s5">Gegevensdeling</a></li>
+        <li><a href="#s6">Veriff-verificatie</a></li>
+        <li><a href="#s7">Bewaring &amp; beveiliging</a></li>
+        <li><a href="#s8">Uw rechten</a></li>
+        <li><a href="#s9">Contact &amp; klachten</a></li>
+      </ol>
+    </div>
+  </aside>
+
+  <div>
+    <div class="notice">HeyCaby verkoopt uw persoonsgegevens niet. Wij verwerken alleen wat nodig is om ritten veilig, transparant en eerlijk te laten verlopen.</div>
+
+    <article>
+      <section class="art" id="s1">
+        <div class="art-head"><div class="art-num">1</div><h2>Gegevens die we verzamelen</h2></div>
+        <div class="art-body">
+          <p>Afhankelijk van uw rol (rijder of chauffeur) kunnen wij de volgende categorieën verwerken:</p>
+          <ul>
+            <li><strong>Accountgegevens</strong> — naam, e-mailadres en telefoonnummer</li>
+            <li><strong>Profiel- en voertuiggegevens</strong> — servicegebied, tarieven, kenteken en voertuigtype (chauffeurs)</li>
+            <li><strong>Nalevingsgegevens</strong> — rijbewijs, vergunningen, verificatiestatus</li>
+            <li><strong>Rit- en betalingsgegevens</strong> — boekingen, ritstatus, tarieven en transactiecontext</li>
+            <li><strong>Supportgegevens</strong> — berichten en verzoeken aan ons supportteam</li>
+            <li><strong>Technische gegevens</strong> — apparaatinformatie, app-gebruik en beveiligingslogs</li>
+          </ul>
+          <p><strong>Rechtsgronden:</strong> uitvoering van overeenkomst (art. 6 lid 1 sub b AVG), wettelijke verplichting (sub c), en gerechtvaardigd belang zoals platformbeveiliging en fraudepreventie (sub f).</p>
+        </div>
+      </section>
+
+      <section class="art" id="s2">
+        <div class="art-head"><div class="art-num">2</div><h2>Locatiegegevens</h2></div>
+        <div class="art-body">
+          <p>Locatie wordt alleen verwerkt wanneer dat nodig is voor het platform: bij het zoeken naar een rit, wanneer een chauffeur online is, bij het matchen van ritten, tijdens actieve ritten en voor veiligheidsdoeleinden.</p>
+          <p>Wanneer u offline bent of geen actieve rit heeft, is continue live-locatie-tracking niet actief voor chauffeurs.</p>
+        </div>
+      </section>
+
+      <section class="art" id="s3">
+        <div class="art-head"><div class="art-num">3</div><h2>Doeleinden van verwerking</h2></div>
+        <div class="art-body">
+          <ul>
+            <li>Het platform exploiteren en onderhouden</li>
+            <li>Rijders en chauffeurs matchen</li>
+            <li>Veiligheid, fraudepreventie en naleving</li>
+            <li>Klantensupport en geschillenafhandeling</li>
+            <li>Verbetering van servicekwaliteit</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="art" id="s4">
+        <div class="art-head"><div class="art-num">4</div><h2>AI-ondersteuning (Lee)</h2></div>
+        <div class="art-body">
+          <p>HeyCaby biedt optionele AI-ondersteuning. Als u ervoor kiest om AI-chat te gebruiken, worden uw berichten en beperkte supportcontext verwerkt door externe AI-providers. Dit gebeurt alleen na duidelijke kennisgeving en uw expliciete toestemming (art. 6 lid 1 sub a AVG). U kunt altijd kiezen voor menselijke support.</p>
+        </div>
+      </section>
+
+      <section class="art" id="s5">
+        <div class="art-head"><div class="art-num">5</div><h2>Gegevensdeling</h2></div>
+        <div class="art-body">
+          <p>Wij delen gegevens alleen waar nodig met serviceproviders (hosting, betalingen, verificatie), wettelijke autoriteiten wanneer de wet dat vereist, en partners die strikt noodzakelijk zijn om het platform te laten functioneren. Alle verwerkers zijn gebonden door verwerkersovereenkomsten en AVG-verplichtingen.</p>
+        </div>
+      </section>
+
+      <section class="art" id="s6">
+        <div class="art-head"><div class="art-num">6</div><h2>Veriff-verificatie</h2></div>
+        <div class="art-body">
+          <p>Identiteits- en rijbewijsverificatie voor chauffeurs wordt uitgevoerd door Veriff als onafhankelijke verwerkingsverantwoordelijke. HeyCaby ontvangt en bewaart alleen beperkte verificatiemetagegevens die nodig zijn om nalevingsstatus te bevestigen. Zie ook het <a href="https://www.veriff.com/privacy-notice" target="_blank" rel="noopener">Veriff privacybeleid</a>.</p>
+        </div>
+      </section>
+
+      <section class="art" id="s7">
+        <div class="art-head"><div class="art-num">7</div><h2>Bewaring &amp; beveiliging</h2></div>
+        <div class="art-body">
+          <p>Wij bewaren persoonsgegevens niet langer dan nodig voor operationele, juridische, fiscale en veiligheidsdoeleinden. Wij passen passende technische en organisatorische maatregelen toe om gegevens te beschermen tegen ongeautoriseerde toegang, verlies of misbruik.</p>
+        </div>
+      </section>
+
+      <section class="art" id="s8">
+        <div class="art-head"><div class="art-num">8</div><h2>Uw rechten</h2></div>
+        <div class="art-body">
+          <p>Onder de AVG heeft u het recht op inzage, rectificatie, verwijdering, beperking, bezwaar en dataportabiliteit. U kunt uw rechten uitoefenen via in-app support of via <a href="mailto:support@heycaby.nl">support@heycaby.nl</a>.</p>
+        </div>
+      </section>
+
+      <section class="art" id="s9">
+        <div class="art-head"><div class="art-num">9</div><h2>Contact &amp; klachten</h2></div>
+        <div class="art-body">
+          <p>Voor privacyvragen: <a href="mailto:support@heycaby.nl">support@heycaby.nl</a>. U heeft ook het recht om een klacht in te dienen bij de <a href="https://autoriteitpersoonsgegevens.nl" target="_blank" rel="noopener">Autoriteit Persoonsgegevens</a>.</p>
+          <p>Gerelateerde documenten: <a href="https://www.heycaby.nl/chauffeur/voorwaarden">Algemene voorwaarden chauffeurs</a> · <a href="https://www.heycaby.nl/chauffeur/vrijwaring">Vrijwaring</a> · <a href="https://www.heycaby.nl/support">Support &amp; FAQ</a></p>
+        </div>
+      </section>
+    </article>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="https://www.heycaby.nl">Home</a>
+    <a href="https://www.heycaby.nl/support">Support &amp; FAQ</a>
+    <a href="https://www.heycaby.nl/chauffeur/voorwaarden">Voorwaarden</a>
+    <a href="mailto:support@heycaby.nl">support@heycaby.nl</a>
+  </div>
+  <p>&copy; 2026 HeyCaby B.V. · Alle rechten voorbehouden</p>
+</footer>
+
+</body>
+</html>
